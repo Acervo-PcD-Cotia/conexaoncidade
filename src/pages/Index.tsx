@@ -13,37 +13,41 @@ import { AdSlot } from "@/components/home/AdSlot";
 const Index = () => {
   return (
     <div className="space-y-0">
+      {/* 1. Breaking news ticker */}
       <BreakingNewsTicker />
+      
+      {/* 2. Market/Weather data bar */}
       <MarketDataBar />
       
-      {/* Ad Slot: Home Top - 728x90 - Below menu, above content */}
+      {/* 3. Super Banner Slide */}
+      <SuperBanner />
+      
+      {/* 4. Ad Slot: Home Top - 728x90 */}
       <div className="container py-2">
         <AdSlot slotType="home_top" />
       </div>
       
-      {/* Main hero - dominant headline */}
+      {/* 5. Main hero - dominant headline */}
       <HeroSection />
       
-      {/* Real-time city updates */}
+      {/* 6. Real-time city updates */}
       <AgoraNaCidade />
       
-      {/* Dense latest news list */}
+      {/* 7. Dense latest news list */}
       <LatestNewsList />
       
-      <SuperBanner />
-      
-      {/* Quick notes - short updates */}
+      {/* 8. Quick notes - short updates */}
       <QuickNotes />
       
-      {/* Most read - social proof */}
+      {/* 9. Most read - social proof */}
       <MostReadSection />
       
-      {/* Category sections - dense format */}
+      {/* 10. Category sections - dense format */}
       <CategorySection title="Política" slug="politica" />
       <CategorySection title="Esportes" slug="esportes" />
       <CategorySection title="Polícia" slug="policia" />
       
-      {/* Stories bar moved lower */}
+      {/* 11. Stories bar */}
       <StoriesBar />
     </div>
   );

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCategories } from "@/hooks/useCategories";
 import { SearchBar } from "./SearchBar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -15,20 +16,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import logoFull from "@/assets/logo-full.png";
 
-const categories = [
-  { name: "Política", slug: "politica", color: "category-politics" },
-  { name: "Esportes", slug: "esportes", color: "category-sports" },
-  { name: "Cultura", slug: "cultura", color: "category-culture" },
-  { name: "Economia", slug: "economia", color: "category-economy" },
-  { name: "Polícia", slug: "policia", color: "category-police" },
-  { name: "Saúde", slug: "saude", color: "category-health" },
-  { name: "Educação", slug: "educacao", color: "category-education" },
-];
-
 export function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const { user, signOut } = useAuth();
+  const { data: categories } = useCategories();
   
   const today = new Date().toLocaleDateString("pt-BR", {
     weekday: "long",
@@ -77,7 +69,7 @@ export function Header() {
                 <Link to="/" className="text-lg font-semibold text-primary">
                   Início
                 </Link>
-                {categories.map((cat) => (
+                {categories?.map((cat) => (
                   <Link
                     key={cat.slug}
                     to={`/categoria/${cat.slug}`}
@@ -163,11 +155,11 @@ export function Header() {
           </div>
         )}
 
-        {/* Categories navigation */}
+        {/* Categories navigation - Dynamic from database */}
         <nav className="hidden border-t lg:block">
           <div className="container">
             <ul className="flex items-center justify-center gap-1">
-              {categories.map((cat) => (
+              {categories?.map((cat) => (
                 <li key={cat.slug}>
                   <Link
                     to={`/categoria/${cat.slug}`}
