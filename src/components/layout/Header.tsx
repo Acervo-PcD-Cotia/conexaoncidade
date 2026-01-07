@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Search, Sun, Moon, MapPin, Calendar, LogOut, User } from "lucide-react";
+import { Menu, X, Search, Sun, Moon, MapPin, Calendar, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTheme } from "@/hooks/useTheme";
@@ -13,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import logoFull from "@/assets/logo-full.png";
 
 const categories = [
   { name: "Política", slug: "politica", color: "category-politics" },
@@ -58,32 +59,6 @@ export function Header() {
               <span className="capitalize">{today}</span>
             </span>
           </div>
-          <div className="flex items-center gap-2">
-            {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-2 hover:opacity-80">
-                    <Avatar className="h-6 w-6">
-                      <AvatarFallback className="text-xs bg-primary-foreground text-primary">
-                        {userInitials}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="hidden sm:inline">{user.user_metadata?.full_name || user.email}</span>
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => signOut()}>
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Sair
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Link to="/auth" className="hover:underline">
-                Entrar
-              </Link>
-            )}
-          </div>
         </div>
       </div>
 
@@ -121,15 +96,12 @@ export function Header() {
           </Sheet>
 
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
-            <div className="flex flex-col items-center">
-              <span className="font-heading text-xl font-extrabold tracking-tight text-primary sm:text-2xl">
-                Conexão
-              </span>
-              <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-                Na Cidade
-              </span>
-            </div>
+          <Link to="/" className="flex items-center">
+            <img 
+              src={logoFull} 
+              alt="Conexão na Cidade" 
+              className="h-10 w-auto sm:h-12"
+            />
           </Link>
 
           {/* Desktop search */}
@@ -137,7 +109,7 @@ export function Header() {
             <SearchBar />
           </div>
 
-          {/* Actions */}
+          {/* Actions - Login + Dark Mode grouped together */}
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
@@ -147,6 +119,33 @@ export function Header() {
             >
               {isSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
             </Button>
+            
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="relative">
+                    <Avatar className="h-7 w-7">
+                      <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+                        {userInitials}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => signOut()}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sair
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link to="/auth">
+                <Button variant="ghost" size="sm" className="text-xs">
+                  Entrar
+                </Button>
+              </Link>
+            )}
+            
             <Button variant="ghost" size="icon" onClick={toggleTheme}>
               {theme === "dark" ? (
                 <Sun className="h-5 w-5" />

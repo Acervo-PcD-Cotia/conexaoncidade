@@ -2,7 +2,7 @@ import { TrendingUp, TrendingDown, Cloud, DollarSign } from "lucide-react";
 
 // Mock data - will be replaced with real API data
 const marketData = {
-  dolar: { value: 5.38, change: -0.5 },
+  dolar: { value: 5.38, change: 0.5 },
   euro: { value: 6.28, change: 0.2 },
   bovespa: { value: 128500, change: 1.2 },
   weather: { temp: 24, description: "Parcialmente nublado", city: "São Paulo" },
@@ -19,6 +19,13 @@ export function MarketDataBar() {
   const formatNumber = (value: number) => {
     return new Intl.NumberFormat("pt-BR").format(value);
   };
+
+  const today = new Date().toLocaleDateString("pt-BR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
   return (
     <div className="border-b bg-card">
@@ -77,6 +84,11 @@ export function MarketDataBar() {
               )}
               {Math.abs(marketData.bovespa.change).toFixed(2)}%
             </span>
+          </div>
+
+          {/* Date */}
+          <div className="hidden shrink-0 items-center gap-2 lg:flex">
+            <span className="text-muted-foreground capitalize">{today}</span>
           </div>
         </div>
 

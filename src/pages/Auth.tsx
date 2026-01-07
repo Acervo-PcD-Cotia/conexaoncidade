@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
 import { Loader2, Mail, Lock, User } from 'lucide-react';
+import logoFull from "@/assets/logo-full.png";
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -156,11 +157,13 @@ export default function Auth() {
       <Card className="w-full max-w-md border-border/50 shadow-2xl">
         <CardHeader className="text-center pb-2">
           <div className="flex justify-center mb-4">
-            <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-xl">C</span>
-            </div>
+            <img 
+              src={logoFull} 
+              alt="Conexão na Cidade" 
+              className="h-14 w-auto"
+            />
           </div>
-          <CardTitle className="text-2xl font-heading">Conexão na Cidade</CardTitle>
+          <CardTitle className="text-2xl font-heading">Área Restrita</CardTitle>
           <CardDescription>Entre ou crie sua conta</CardDescription>
         </CardHeader>
         
