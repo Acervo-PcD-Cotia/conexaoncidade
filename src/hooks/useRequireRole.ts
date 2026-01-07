@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
-type AppRole = "admin" | "editor" | "columnist" | "moderator";
+type AppRole = "admin" | "editor" | "columnist" | "moderator" | "editor_chief" | "reporter" | "collaborator";
 
 export function useRequireRole(allowedRoles: AppRole[]) {
   const { user, isLoading } = useAuth();
