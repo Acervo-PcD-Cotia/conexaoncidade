@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 type AppRole = "admin" | "editor" | "columnist" | "moderator";
 
 export function useRequireRole(allowedRoles: AppRole[]) {
-  const { user, loading } = useAuth();
+  const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   const [hasAccess, setHasAccess] = useState(false);
   const [checkingRole, setCheckingRole] = useState(true);
@@ -14,7 +14,7 @@ export function useRequireRole(allowedRoles: AppRole[]) {
 
   useEffect(() => {
     async function checkRole() {
-      if (loading) return;
+      if (isLoading) return;
 
       if (!user) {
         navigate("/auth");
@@ -49,7 +49,7 @@ export function useRequireRole(allowedRoles: AppRole[]) {
     }
 
     checkRole();
-  }, [user, loading, navigate, allowedRoles]);
+  }, [user, isLoading, navigate, allowedRoles]);
 
   return { hasAccess, checkingRole, userRole };
 }

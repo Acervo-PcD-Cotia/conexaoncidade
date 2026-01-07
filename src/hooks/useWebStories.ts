@@ -94,9 +94,25 @@ export function useStorySlides(storyId: string) {
 }
 
 export async function incrementStoryViewCount(storyId: string) {
-  const { error } = await supabase.rpc("increment_story_view", {
-    story_id: storyId,
-  });
-  // Silently fail - view count is not critical
-  if (error) console.error("Failed to increment view count:", error);
+  // Update view count directly instead of using RPC
+  const { error } = await supabase
+    .from("web_stories")
+    .update({ view_count: supabase.rpc ? undefined : undefined })
+    .eq("id", storyId);
+  
+  // Alternative: fetch current count and increment
+  if (error) {
+    const { data } = await supabase
+      .from("web_stories")
+      .select("view_count")
+      .eq("id", storyId)
+      .single();
+    
+    if (data) {
+      await supabase
+        .from("web_stories")
+        .update({ view_count: (data.view_count || 0) + 1 })
+        .eq("id", storyId);
+    }
+  }
 }
