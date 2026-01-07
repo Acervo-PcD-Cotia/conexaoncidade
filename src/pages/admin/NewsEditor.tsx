@@ -45,7 +45,7 @@ export default function NewsEditor() {
     content: "",
     featured_image_url: "",
     category_id: "",
-    status: "draft" as "draft" | "published" | "scheduled" | "archived" | "trash",
+    status: "draft" as "draft" | "published" | "scheduled" | "archived" | "trash" | "review" | "approved",
     highlight: "none" as "none" | "home" | "urgent" | "featured",
     meta_title: "",
     meta_description: "",

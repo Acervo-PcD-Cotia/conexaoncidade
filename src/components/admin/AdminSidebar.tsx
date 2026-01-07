@@ -7,6 +7,10 @@ import {
   PlaySquare,
   Settings,
   Home,
+  Zap,
+  BarChart3,
+  History,
+  PanelTop,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useUserRole } from "@/hooks/useRequireRole";
@@ -24,16 +28,23 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const menuItems = [
+const mainMenuItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
   { title: "Notícias", url: "/admin/news", icon: Newspaper },
+  { title: "Notas Rápidas", url: "/admin/quick-notes", icon: Zap },
   { title: "Categorias", url: "/admin/categories", icon: FolderTree },
-  { title: "Banners", url: "/admin/banners", icon: Image },
   { title: "Web Stories", url: "/admin/stories", icon: PlaySquare },
+];
+
+const editorialItems = [
+  { title: "Editor da Home", url: "/admin/home-editor", icon: PanelTop },
+  { title: "Banners", url: "/admin/banners", icon: Image },
+  { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
 ];
 
 const adminOnlyItems = [
   { title: "Usuários", url: "/admin/users", icon: Users },
+  { title: "Logs", url: "/admin/logs", icon: History },
   { title: "Configurações", url: "/admin/settings", icon: Settings },
 ];
 
@@ -57,15 +68,37 @@ export function AdminSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
+          <SidebarGroupLabel>Principal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {mainMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={item.url}
                       end={item.url === "/admin"}
+                      className="flex items-center gap-2"
+                      activeClassName="bg-primary/10 text-primary"
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {!collapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Editorial</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {editorialItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to={item.url}
                       className="flex items-center gap-2"
                       activeClassName="bg-primary/10 text-primary"
                     >
