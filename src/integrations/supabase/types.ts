@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           color: string
@@ -50,6 +83,33 @@ export type Database = {
         }
         Relationships: []
       }
+      home_config: {
+        Row: {
+          block_name: string
+          id: string
+          news_ids: string[] | null
+          settings: Json | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          block_name: string
+          id?: string
+          news_ids?: string[] | null
+          settings?: Json | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          block_name?: string
+          id?: string
+          news_ids?: string[] | null
+          settings?: Json | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       news: {
         Row: {
           author_id: string | null
@@ -60,6 +120,7 @@ export type Database = {
           deleted_at: string | null
           excerpt: string | null
           featured_image_url: string | null
+          gallery_urls: string[] | null
           hat: string | null
           highlight: Database["public"]["Enums"]["highlight_type"]
           id: string
@@ -70,8 +131,10 @@ export type Database = {
           meta_title: string | null
           og_image_url: string | null
           published_at: string | null
+          scheduled_at: string | null
           share_count: number
           slug: string
+          source: string | null
           status: Database["public"]["Enums"]["news_status"]
           subtitle: string | null
           title: string
@@ -87,6 +150,7 @@ export type Database = {
           deleted_at?: string | null
           excerpt?: string | null
           featured_image_url?: string | null
+          gallery_urls?: string[] | null
           hat?: string | null
           highlight?: Database["public"]["Enums"]["highlight_type"]
           id?: string
@@ -97,8 +161,10 @@ export type Database = {
           meta_title?: string | null
           og_image_url?: string | null
           published_at?: string | null
+          scheduled_at?: string | null
           share_count?: number
           slug: string
+          source?: string | null
           status?: Database["public"]["Enums"]["news_status"]
           subtitle?: string | null
           title: string
@@ -114,6 +180,7 @@ export type Database = {
           deleted_at?: string | null
           excerpt?: string | null
           featured_image_url?: string | null
+          gallery_urls?: string[] | null
           hat?: string | null
           highlight?: Database["public"]["Enums"]["highlight_type"]
           id?: string
@@ -124,8 +191,10 @@ export type Database = {
           meta_title?: string | null
           og_image_url?: string | null
           published_at?: string | null
+          scheduled_at?: string | null
           share_count?: number
           slug?: string
+          source?: string | null
           status?: Database["public"]["Enums"]["news_status"]
           subtitle?: string | null
           title?: string
@@ -198,6 +267,44 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      quick_notes: {
+        Row: {
+          author_id: string | null
+          category_id: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quick_notes_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       super_banners: {
         Row: {
@@ -399,9 +506,23 @@ export type Database = {
       is_admin_or_editor: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "editor" | "columnist" | "moderator"
+      app_role:
+        | "admin"
+        | "editor"
+        | "columnist"
+        | "moderator"
+        | "editor_chief"
+        | "reporter"
+        | "collaborator"
       highlight_type: "none" | "home" | "urgent" | "featured"
-      news_status: "draft" | "scheduled" | "published" | "archived" | "trash"
+      news_status:
+        | "draft"
+        | "scheduled"
+        | "published"
+        | "archived"
+        | "trash"
+        | "review"
+        | "approved"
       story_status: "draft" | "published" | "archived"
     }
     CompositeTypes: {
@@ -530,9 +651,25 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "editor", "columnist", "moderator"],
+      app_role: [
+        "admin",
+        "editor",
+        "columnist",
+        "moderator",
+        "editor_chief",
+        "reporter",
+        "collaborator",
+      ],
       highlight_type: ["none", "home", "urgent", "featured"],
-      news_status: ["draft", "scheduled", "published", "archived", "trash"],
+      news_status: [
+        "draft",
+        "scheduled",
+        "published",
+        "archived",
+        "trash",
+        "review",
+        "approved",
+      ],
       story_status: ["draft", "published", "archived"],
     },
   },

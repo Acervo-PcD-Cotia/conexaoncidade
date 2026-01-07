@@ -5,11 +5,28 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PublicLayout } from "@/components/layout/PublicLayout";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NewsDetail from "./pages/NewsDetail";
 import CategoryPage from "./pages/CategoryPage";
 import NotFound from "./pages/NotFound";
+import StoryViewer from "./pages/StoryViewer";
+
+// Admin Pages
+import Dashboard from "./pages/admin/Dashboard";
+import NewsList from "./pages/admin/NewsList";
+import NewsEditor from "./pages/admin/NewsEditor";
+import Categories from "./pages/admin/Categories";
+import Banners from "./pages/admin/Banners";
+import StoriesList from "./pages/admin/StoriesList";
+import StoryEditor from "./pages/admin/StoryEditor";
+import Users from "./pages/admin/Users";
+import HomeEditor from "./pages/admin/HomeEditor";
+import QuickNotesAdmin from "./pages/admin/QuickNotesAdmin";
+import Analytics from "./pages/admin/Analytics";
+import AuditLogs from "./pages/admin/AuditLogs";
+import Settings from "./pages/admin/Settings";
 
 const queryClient = new QueryClient();
 
@@ -21,12 +38,34 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+            {/* Public Routes */}
             <Route element={<PublicLayout />}>
               <Route path="/" element={<Index />} />
               <Route path="/noticia/:slug" element={<NewsDetail />} />
               <Route path="/categoria/:slug" element={<CategoryPage />} />
             </Route>
+            <Route path="/story/:slug" element={<StoryViewer />} />
             <Route path="/auth" element={<Auth />} />
+
+            {/* Admin Routes */}
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="news" element={<NewsList />} />
+              <Route path="news/new" element={<NewsEditor />} />
+              <Route path="news/:id/edit" element={<NewsEditor />} />
+              <Route path="categories" element={<Categories />} />
+              <Route path="banners" element={<Banners />} />
+              <Route path="stories" element={<StoriesList />} />
+              <Route path="stories/new" element={<StoryEditor />} />
+              <Route path="stories/:id/edit" element={<StoryEditor />} />
+              <Route path="users" element={<Users />} />
+              <Route path="home-editor" element={<HomeEditor />} />
+              <Route path="quick-notes" element={<QuickNotesAdmin />} />
+              <Route path="analytics" element={<Analytics />} />
+              <Route path="logs" element={<AuditLogs />} />
+              <Route path="settings" element={<Settings />} />
+            </Route>
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
