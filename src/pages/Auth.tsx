@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
 import { Loader2, Mail, Lock, User } from 'lucide-react';
 import logoFull from "@/assets/logo-full.png";
+
+const ADMIN_ROLES = ['admin', 'editor', 'editor_chief', 'reporter', 'columnist', 'moderator'];
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -46,7 +49,19 @@ export default function Auth() {
 
   useEffect(() => {
     if (user) {
-      navigate('/');
+      // Verificar se o usuário tem papel administrativo
+      supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .single()
+        .then(({ data }) => {
+          if (data && ADMIN_ROLES.includes(data.role)) {
+            navigate('/admin');
+          } else {
+            navigate('/');
+          }
+        });
     }
   }, [user, navigate]);
 

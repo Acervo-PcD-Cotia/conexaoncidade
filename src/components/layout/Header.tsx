@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Search, Sun, Moon, MapPin, Calendar, LogOut } from "lucide-react";
+import { Menu, X, Search, Sun, Moon, MapPin, Calendar, LogOut, LayoutDashboard, Newspaper, FolderOpen, Megaphone, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useRequireRole";
 import { useCategories } from "@/hooks/useCategories";
 import { SearchBar } from "./SearchBar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -12,6 +13,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import logoFull from "@/assets/logo-full.png";
@@ -20,7 +22,10 @@ export function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const { user, signOut } = useAuth();
+  const { role, isAdmin, isEditor } = useUserRole();
   const { data: categories } = useCategories();
+  
+  const hasAdminAccess = isAdmin || isEditor || ['editor_chief', 'reporter', 'columnist', 'moderator'].includes(role || '');
   
   const today = new Date().toLocaleDateString("pt-BR", {
     weekday: "long",
@@ -124,6 +129,41 @@ export function Header() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  {hasAdminAccess && (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin">
+                          <LayoutDashboard className="h-4 w-4 mr-2" />
+                          Dashboard
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin/news">
+                          <Newspaper className="h-4 w-4 mr-2" />
+                          Gerenciar Notícias
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin/categories">
+                          <FolderOpen className="h-4 w-4 mr-2" />
+                          Categorias
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin/ads">
+                          <Megaphone className="h-4 w-4 mr-2" />
+                          Anúncios
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin/settings">
+                          <Settings className="h-4 w-4 mr-2" />
+                          Configurações
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
                   <DropdownMenuItem onClick={() => signOut()}>
                     <LogOut className="h-4 w-4 mr-2" />
                     Sair

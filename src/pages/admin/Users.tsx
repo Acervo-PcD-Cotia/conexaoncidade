@@ -61,30 +61,29 @@ export default function Users() {
   const { data: usersWithRoles, isLoading } = useQuery({
     queryKey: ["admin-users-roles"],
     queryFn: async () => {
-      // Get all user roles with profiles
+      // Buscar TODOS os profiles primeiro
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, full_name, avatar_url")
+        .order("created_at", { ascending: false });
+
+      if (profilesError) throw profilesError;
+
+      // Buscar roles existentes
       const { data: roles, error: rolesError } = await supabase
         .from("user_roles")
         .select("user_id, role");
 
       if (rolesError) throw rolesError;
 
-      // Get profiles for those users
-      const userIds = roles?.map((r) => r.user_id) || [];
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, full_name, avatar_url")
-        .in("id", userIds);
-
-      if (profilesError) throw profilesError;
-
-      // Combine data
-      return roles?.map((role) => {
-        const profile = profiles?.find((p) => p.id === role.user_id);
+      // Combinar dados - mostrar TODOS os usuários
+      return profiles?.map((profile) => {
+        const roleData = roles?.find((r) => r.user_id === profile.id);
         return {
-          id: role.user_id,
-          role: role.role as AppRole,
-          full_name: profile?.full_name,
-          avatar_url: profile?.avatar_url,
+          id: profile.id,
+          role: (roleData?.role as AppRole) || null,
+          full_name: profile.full_name,
+          avatar_url: profile.avatar_url,
         };
       }) || [];
     },
@@ -123,9 +122,9 @@ export default function Users() {
     },
   });
 
-  const handleEditRole = (user: { id: string; full_name?: string | null; role: AppRole }) => {
-    setSelectedUser({ id: user.id, email: user.full_name || user.id, role: user.role });
-    setNewRole(user.role);
+  const handleEditRole = (user: { id: string; full_name?: string | null; role: AppRole | null }) => {
+    setSelectedUser({ id: user.id, email: user.full_name || user.id, role: user.role || undefined });
+    setNewRole(user.role || "collaborator");
     setOpen(true);
   };
 
@@ -157,7 +156,7 @@ export default function Users() {
             ) : usersWithRoles?.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={3} className="py-8 text-center">
-                  Nenhum usuário com role encontrado
+                  Nenhum usuário encontrado
                 </TableCell>
               </TableRow>
             ) : (
@@ -178,10 +177,16 @@ export default function Users() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge className={roleColors[user.role]}>
-                      <Shield className="mr-1 h-3 w-3" />
-                      {roleLabels[user.role]}
-                    </Badge>
+                    {user.role ? (
+                      <Badge className={roleColors[user.role]}>
+                        <Shield className="mr-1 h-3 w-3" />
+                        {roleLabels[user.role]}
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-muted-foreground">
+                        Sem permissão
+                      </Badge>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Button
@@ -189,7 +194,7 @@ export default function Users() {
                       size="sm"
                       onClick={() => handleEditRole(user)}
                     >
-                      Alterar Role
+                      {user.role ? "Alterar Role" : "Atribuir Role"}
                     </Button>
                   </TableCell>
                 </TableRow>
