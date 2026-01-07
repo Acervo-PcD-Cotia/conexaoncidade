@@ -5,7 +5,14 @@ import { AdminHeader } from "./AdminHeader";
 import { useRequireRole } from "@/hooks/useRequireRole";
 
 export function AdminLayout() {
-  const { hasAccess, checkingRole } = useRequireRole(["admin", "editor"]);
+  const { hasAccess, checkingRole } = useRequireRole([
+    "admin", 
+    "editor", 
+    "editor_chief", 
+    "reporter", 
+    "columnist",
+    "moderator"
+  ]);
 
   if (checkingRole) {
     return (

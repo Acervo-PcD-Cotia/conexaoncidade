@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 type AppRole = "admin" | "editor" | "columnist" | "moderator" | "editor_chief" | "reporter" | "collaborator";
 
@@ -29,6 +30,7 @@ export function useRequireRole(allowedRoles: AppRole[]) {
           .single();
 
         if (error || !data) {
+          toast.error("Acesso negado. Você não possui permissão para acessar esta área.");
           navigate("/");
           return;
         }
@@ -39,6 +41,7 @@ export function useRequireRole(allowedRoles: AppRole[]) {
         if (allowedRoles.includes(role)) {
           setHasAccess(true);
         } else {
+          toast.error("Seu perfil não tem acesso a esta funcionalidade.");
           navigate("/");
         }
       } catch {
