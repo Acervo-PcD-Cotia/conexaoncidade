@@ -1,15 +1,7 @@
 import { Link } from "react-router-dom";
 import { Facebook, Instagram, Twitter, Youtube, Mail, Phone, MapPin } from "lucide-react";
+import { useCategories } from "@/hooks/useCategories";
 import logoFull from "@/assets/logo-full.png";
-
-const categories = [
-  { name: "Política", slug: "politica" },
-  { name: "Esportes", slug: "esportes" },
-  { name: "Cultura", slug: "cultura" },
-  { name: "Economia", slug: "economia" },
-  { name: "Polícia", slug: "policia" },
-  { name: "Saúde", slug: "saude" },
-];
 
 const institutionalLinks = [
   { name: "Sobre", href: "/sobre" },
@@ -28,6 +20,7 @@ const socialLinks = [
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
+  const { data: categories } = useCategories();
 
   return (
     <footer className="mt-16 border-t bg-card">
@@ -61,13 +54,13 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Categories */}
+          {/* Categories - Dynamic from database */}
           <div>
             <h3 className="mb-4 font-heading text-sm font-semibold uppercase tracking-wider text-foreground">
               Categorias
             </h3>
             <ul className="space-y-2">
-              {categories.map((cat) => (
+              {categories?.slice(0, 8).map((cat) => (
                 <li key={cat.slug}>
                   <Link
                     to={`/categoria/${cat.slug}`}
