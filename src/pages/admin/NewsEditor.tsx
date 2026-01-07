@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Save, Eye, Loader2, Calendar } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ import { NewsAIPanel } from "@/components/admin/NewsAIPanel";
 import { SeoValidator } from "@/components/admin/SeoValidator";
 import { ImageUploader } from "@/components/admin/ImageUploader";
 import { TagSelector } from "@/components/admin/TagSelector";
+import { NewsPreview } from "@/components/admin/NewsPreview";
 import { useRequireRole } from "@/hooks/useRequireRole";
 
 function generateSlug(title: string) {
@@ -190,14 +191,18 @@ export default function NewsEditor() {
           <h1 className="font-heading text-2xl font-bold">{isEditing ? "Editar Notícia" : "Nova Notícia"}</h1>
         </div>
         <div className="flex items-center gap-2">
-          {formData.slug && (
-            <Button type="button" variant="outline" asChild>
-              <a href={`/noticia/${formData.slug}`} target="_blank" rel="noreferrer">
-                <Eye className="mr-2 h-4 w-4" />
-                Visualizar
-              </a>
-            </Button>
-          )}
+          <NewsPreview
+            title={formData.title}
+            subtitle={formData.subtitle}
+            hat={formData.hat}
+            content={formData.content}
+            excerpt={formData.excerpt}
+            featuredImageUrl={formData.featured_image_url}
+            imageAlt={formData.image_alt}
+            imageCredit={formData.image_credit}
+            categoryName={categories?.find((c) => c.id === formData.category_id)?.name}
+            categoryColor={categories?.find((c) => c.id === formData.category_id)?.color}
+          />
           <Button type="submit" disabled={saveMutation.isPending}>
             {saveMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             Salvar

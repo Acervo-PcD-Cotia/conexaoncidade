@@ -30,19 +30,25 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
-type AppRole = "admin" | "editor" | "columnist" | "moderator";
+type AppRole = "admin" | "editor_chief" | "editor" | "reporter" | "columnist" | "collaborator" | "moderator";
 
 const roleLabels: Record<AppRole, string> = {
   admin: "Administrador",
+  editor_chief: "Editor-Chefe",
   editor: "Editor",
+  reporter: "Repórter",
   columnist: "Colunista",
+  collaborator: "Colaborador",
   moderator: "Moderador",
 };
 
 const roleColors: Record<AppRole, string> = {
   admin: "bg-red-100 text-red-700",
+  editor_chief: "bg-orange-100 text-orange-700",
   editor: "bg-blue-100 text-blue-700",
+  reporter: "bg-cyan-100 text-cyan-700",
   columnist: "bg-purple-100 text-purple-700",
+  collaborator: "bg-yellow-100 text-yellow-700",
   moderator: "bg-green-100 text-green-700",
 };
 
@@ -211,8 +217,11 @@ export default function Users() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="admin">Administrador</SelectItem>
+                  <SelectItem value="editor_chief">Editor-Chefe</SelectItem>
                   <SelectItem value="editor">Editor</SelectItem>
+                  <SelectItem value="reporter">Repórter</SelectItem>
                   <SelectItem value="columnist">Colunista</SelectItem>
+                  <SelectItem value="collaborator">Colaborador</SelectItem>
                   <SelectItem value="moderator">Moderador</SelectItem>
                 </SelectContent>
               </Select>
