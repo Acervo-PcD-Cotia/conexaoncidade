@@ -1,10 +1,18 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Search, Sun, Moon, MapPin, Calendar } from "lucide-react";
+import { Menu, X, Search, Sun, Moon, MapPin, Calendar, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTheme } from "@/hooks/useTheme";
+import { useAuth } from "@/contexts/AuthContext";
 import { SearchBar } from "./SearchBar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const categories = [
   { name: "Política", slug: "politica", color: "category-politics" },
@@ -19,6 +27,7 @@ const categories = [
 export function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const { user, signOut } = useAuth();
   
   const today = new Date().toLocaleDateString("pt-BR", {
     weekday: "long",
@@ -26,6 +35,13 @@ export function Header() {
     month: "long",
     year: "numeric",
   });
+
+  const userInitials = user?.user_metadata?.full_name
+    ?.split(' ')
+    .map((n: string) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U';
 
   return (
     <header className="sticky top-0 z-50 w-full">
@@ -43,9 +59,30 @@ export function Header() {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Link to="/auth" className="hover:underline">
-              Entrar
-            </Link>
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 hover:opacity-80">
+                    <Avatar className="h-6 w-6">
+                      <AvatarFallback className="text-xs bg-primary-foreground text-primary">
+                        {userInitials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="hidden sm:inline">{user.user_metadata?.full_name || user.email}</span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => signOut()}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sair
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link to="/auth" className="hover:underline">
+                Entrar
+              </Link>
+            )}
           </div>
         </div>
       </div>
