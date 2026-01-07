@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Save, Eye } from "lucide-react";
+import { ArrowLeft, Save, Eye, Loader2, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -17,6 +16,12 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { RichTextEditor } from "@/components/admin/RichTextEditor";
+import { NewsAIPanel } from "@/components/admin/NewsAIPanel";
+import { SeoValidator } from "@/components/admin/SeoValidator";
+import { ImageUploader } from "@/components/admin/ImageUploader";
+import { TagSelector } from "@/components/admin/TagSelector";
+import { useRequireRole } from "@/hooks/useRequireRole";
 
 function generateSlug(title: string) {
   return title
@@ -34,6 +39,7 @@ export default function NewsEditor() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { userRole } = useRequireRole(["admin", "editor", "editor_chief", "reporter", "columnist", "collaborator"]);
   const isEditing = !!id;
 
   const [formData, setFormData] = useState({
@@ -43,45 +49,50 @@ export default function NewsEditor() {
     slug: "",
     excerpt: "",
     content: "",
+    source: "",
     featured_image_url: "",
+    image_alt: "",
+    image_credit: "",
     category_id: "",
     status: "draft" as "draft" | "published" | "scheduled" | "archived" | "trash" | "review" | "approved",
     highlight: "none" as "none" | "home" | "urgent" | "featured",
     meta_title: "",
     meta_description: "",
+    scheduled_at: "",
   });
 
-  // Fetch news if editing
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
   const { data: news, isLoading: loadingNews } = useQuery({
     queryKey: ["admin-news", id],
     queryFn: async () => {
       if (!id) return null;
-      const { data, error } = await supabase
-        .from("news")
-        .select("*")
-        .eq("id", id)
-        .single();
+      const { data, error } = await supabase.from("news").select("*").eq("id", id).single();
       if (error) throw error;
       return data;
     },
     enabled: isEditing,
   });
 
-  // Fetch categories
   const { data: categories } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("categories")
-        .select("*")
-        .eq("is_active", true)
-        .order("sort_order");
+      const { data, error } = await supabase.from("categories").select("*").eq("is_active", true).order("sort_order");
       if (error) throw error;
       return data;
     },
   });
 
-  // Populate form when editing
+  const { data: newsTags = [] } = useQuery({
+    queryKey: ["news-tags", id],
+    queryFn: async () => {
+      if (!id) return [];
+      const { data } = await supabase.from("news_tags").select("tag_id").eq("news_id", id);
+      return data?.map((t) => t.tag_id) || [];
+    },
+    enabled: isEditing,
+  });
+
   useEffect(() => {
     if (news) {
       setFormData({
@@ -91,24 +102,30 @@ export default function NewsEditor() {
         slug: news.slug || "",
         excerpt: news.excerpt || "",
         content: news.content || "",
+        source: news.source || "",
         featured_image_url: news.featured_image_url || "",
+        image_alt: news.image_alt || "",
+        image_credit: news.image_credit || "",
         category_id: news.category_id || "",
-        status: (news.status === "trash" ? "draft" : news.status) || "draft",
+        status: news.status || "draft",
         highlight: news.highlight || "none",
         meta_title: news.meta_title || "",
         meta_description: news.meta_description || "",
+        scheduled_at: news.scheduled_at || "",
       });
     }
   }, [news]);
 
-  // Auto-generate slug from title
+  useEffect(() => {
+    if (newsTags.length > 0) setSelectedTags(newsTags);
+  }, [newsTags]);
+
   useEffect(() => {
     if (!isEditing && formData.title && !formData.slug) {
       setFormData((prev) => ({ ...prev, slug: generateSlug(prev.title) }));
     }
   }, [formData.title, isEditing]);
 
-  // Save mutation
   const saveMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       const payload = {
@@ -118,21 +135,28 @@ export default function NewsEditor() {
       };
 
       if (isEditing) {
-        const { error } = await supabase.from("news").update(payload).eq("id", id);
+        const { data: updated, error } = await supabase.from("news").update(payload).eq("id", id).select().single();
         if (error) throw error;
+        await supabase.from("news_tags").delete().eq("news_id", id);
+        if (selectedTags.length > 0) {
+          await supabase.from("news_tags").insert(selectedTags.map((tag_id) => ({ news_id: id!, tag_id })));
+        }
+        return updated;
       } else {
-        const { error } = await supabase.from("news").insert(payload);
+        const { data: created, error } = await supabase.from("news").insert(payload).select().single();
         if (error) throw error;
+        if (selectedTags.length > 0) {
+          await supabase.from("news_tags").insert(selectedTags.map((tag_id) => ({ news_id: created.id, tag_id })));
+        }
+        return created;
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["admin-news"] });
       toast.success(isEditing ? "Notícia atualizada!" : "Notícia criada!");
-      navigate("/admin/news");
+      if (!isEditing) navigate(`/admin/news/${data.id}`);
     },
-    onError: (error) => {
-      toast.error("Erro ao salvar: " + (error as Error).message);
-    },
+    onError: (error) => toast.error("Erro ao salvar: " + (error as Error).message),
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -144,30 +168,26 @@ export default function NewsEditor() {
     saveMutation.mutate(formData);
   };
 
+  const updateField = (field: string, value: string) => setFormData((prev) => ({ ...prev, [field]: value }));
+
+  const canPublish = userRole === "admin" || userRole === "editor" || userRole === "editor_chief";
+
   if (loadingNews) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button type="button" variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div>
-            <h1 className="font-heading text-2xl font-bold">
-              {isEditing ? "Editar Notícia" : "Nova Notícia"}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {isEditing ? "Atualize os dados da notícia" : "Preencha os campos para criar uma notícia"}
-            </p>
-          </div>
+          <h1 className="font-heading text-2xl font-bold">{isEditing ? "Editar Notícia" : "Nova Notícia"}</h1>
         </div>
         <div className="flex items-center gap-2">
           {formData.slug && (
@@ -179,214 +199,139 @@ export default function NewsEditor() {
             </Button>
           )}
           <Button type="submit" disabled={saveMutation.isPending}>
-            <Save className="mr-2 h-4 w-4" />
-            {saveMutation.isPending ? "Salvando..." : "Salvar"}
+            {saveMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+            Salvar
           </Button>
         </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Main content */}
         <div className="lg:col-span-2 space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle>Conteúdo</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle>Conteúdo</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="hat">Chapéu</Label>
-                <Input
-                  id="hat"
-                  value={formData.hat}
-                  onChange={(e) => setFormData({ ...formData, hat: e.target.value })}
-                  placeholder="Ex: Exclusivo, Urgente, Opinião"
-                />
+                <Label>Chapéu <span className="text-xs text-muted-foreground">({formData.hat.length}/19)</span></Label>
+                <Input value={formData.hat} onChange={(e) => updateField("hat", e.target.value.slice(0, 19))} placeholder="Ex: POLÍTICA" maxLength={19} />
               </div>
               <div>
-                <Label htmlFor="title">Título *</Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="Título da notícia"
-                  required
-                />
+                <Label>Título *</Label>
+                <Input value={formData.title} onChange={(e) => updateField("title", e.target.value)} placeholder="Título da notícia" required />
               </div>
               <div>
-                <Label htmlFor="subtitle">Subtítulo</Label>
-                <Input
-                  id="subtitle"
-                  value={formData.subtitle}
-                  onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-                  placeholder="Subtítulo da notícia"
-                />
+                <Label>Subtítulo</Label>
+                <Input value={formData.subtitle} onChange={(e) => updateField("subtitle", e.target.value)} placeholder="Linha de apoio" />
               </div>
               <div>
-                <Label htmlFor="slug">Slug *</Label>
-                <Input
-                  id="slug"
-                  value={formData.slug}
-                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                  placeholder="url-da-noticia"
-                  required
-                />
+                <Label>Slug *</Label>
+                <Input value={formData.slug} onChange={(e) => updateField("slug", e.target.value)} placeholder="url-da-noticia" required />
               </div>
               <div>
-                <Label htmlFor="excerpt">Resumo</Label>
-                <Textarea
-                  id="excerpt"
-                  value={formData.excerpt}
-                  onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                  placeholder="Breve resumo da notícia"
-                  rows={3}
-                />
+                <Label>Conteúdo</Label>
+                <RichTextEditor content={formData.content} onChange={(c) => updateField("content", c)} />
               </div>
               <div>
-                <Label htmlFor="content">Conteúdo</Label>
-                <Textarea
-                  id="content"
-                  value={formData.content}
-                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                  placeholder="Conteúdo completo da notícia (aceita HTML)"
-                  rows={12}
-                  className="font-mono text-sm"
-                />
+                <Label>Resumo / Lead</Label>
+                <Input value={formData.excerpt} onChange={(e) => updateField("excerpt", e.target.value)} placeholder="Breve resumo" />
+              </div>
+              <div>
+                <Label>Fonte</Label>
+                <Input value={formData.source} onChange={(e) => updateField("source", e.target.value)} placeholder="Origem da informação" />
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>SEO</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle>Imagem</CardTitle></CardHeader>
+            <CardContent>
+              <ImageUploader
+                value={formData.featured_image_url}
+                onChange={(url) => updateField("featured_image_url", url)}
+                alt={formData.image_alt}
+                onAltChange={(alt) => updateField("image_alt", alt)}
+                credit={formData.image_credit}
+                onCreditChange={(c) => updateField("image_credit", c)}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>SEO</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="meta_title">Meta Title</Label>
-                <Input
-                  id="meta_title"
-                  value={formData.meta_title}
-                  onChange={(e) => setFormData({ ...formData, meta_title: e.target.value })}
-                  placeholder="Título para SEO (max 60 caracteres)"
-                  maxLength={60}
-                />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {formData.meta_title.length}/60 caracteres
-                </p>
+                <Label>Meta Título <span className="text-xs text-muted-foreground">({formData.meta_title.length}/60)</span></Label>
+                <Input value={formData.meta_title} onChange={(e) => updateField("meta_title", e.target.value)} maxLength={70} />
               </div>
               <div>
-                <Label htmlFor="meta_description">Meta Description</Label>
-                <Textarea
-                  id="meta_description"
-                  value={formData.meta_description}
-                  onChange={(e) => setFormData({ ...formData, meta_description: e.target.value })}
-                  placeholder="Descrição para SEO (max 160 caracteres)"
-                  maxLength={160}
-                  rows={2}
-                />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {formData.meta_description.length}/160 caracteres
-                </p>
+                <Label>Meta Descrição <span className="text-xs text-muted-foreground">({formData.meta_description.length}/160)</span></Label>
+                <Input value={formData.meta_description} onChange={(e) => updateField("meta_description", e.target.value)} maxLength={170} />
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Sidebar */}
         <div className="space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle>Publicação</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle>Publicação</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="status">Status</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, status: value as typeof formData.status })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                <Label>Status</Label>
+                <Select value={formData.status} onValueChange={(v) => updateField("status", v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="draft">Rascunho</SelectItem>
-                    <SelectItem value="published">Publicado</SelectItem>
+                    <SelectItem value="review">Em Revisão</SelectItem>
+                    {canPublish && <SelectItem value="approved">Aprovado</SelectItem>}
                     <SelectItem value="scheduled">Agendado</SelectItem>
+                    {canPublish && <SelectItem value="published">Publicado</SelectItem>}
                     <SelectItem value="archived">Arquivado</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+              {formData.status === "scheduled" && (
+                <div>
+                  <Label className="flex items-center gap-2"><Calendar className="h-4 w-4" />Agendar para</Label>
+                  <Input type="datetime-local" value={formData.scheduled_at?.slice(0, 16) || ""} onChange={(e) => updateField("scheduled_at", e.target.value ? new Date(e.target.value).toISOString() : "")} />
+                </div>
+              )}
               <div>
-                <Label htmlFor="highlight">Destaque</Label>
-                <Select
-                  value={formData.highlight}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, highlight: value as typeof formData.highlight })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                <Label>Destaque</Label>
+                <Select value={formData.highlight} onValueChange={(v) => updateField("highlight", v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Nenhum</SelectItem>
                     <SelectItem value="home">Home</SelectItem>
                     <SelectItem value="urgent">Urgente</SelectItem>
-                    <SelectItem value="featured">Destaque</SelectItem>
+                    <SelectItem value="featured">Manchete</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label htmlFor="category">Categoria</Label>
-                <Select
-                  value={formData.category_id}
-                  onValueChange={(value) => setFormData({ ...formData, category_id: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
+                <Label>Categoria</Label>
+                <Select value={formData.category_id} onValueChange={(v) => updateField("category_id", v)}>
+                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                   <SelectContent>
-                    {categories?.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
+                    {categories?.map((cat) => <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
+              <TagSelector selectedTags={selectedTags} onChange={setSelectedTags} />
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Imagem Destacada</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="featured_image_url">URL da Imagem</Label>
-                <Input
-                  id="featured_image_url"
-                  value={formData.featured_image_url}
-                  onChange={(e) =>
-                    setFormData({ ...formData, featured_image_url: e.target.value })
-                  }
-                  placeholder="https://..."
-                />
-              </div>
-              {formData.featured_image_url && (
-                <div className="overflow-hidden rounded-lg border">
-                  <img
-                    src={formData.featured_image_url}
-                    alt="Preview"
-                    className="aspect-video w-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = "/placeholder.svg";
-                    }}
-                  />
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <SeoValidator title={formData.title} metaTitle={formData.meta_title} metaDescription={formData.meta_description} hat={formData.hat} featuredImageUrl={formData.featured_image_url} imageAlt={formData.image_alt} slug={formData.slug} />
+
+          <NewsAIPanel
+            content={formData.content}
+            title={formData.title}
+            metaTitle={formData.meta_title}
+            metaDescription={formData.meta_description}
+            onApplyTitle={(t) => updateField("title", t)}
+            onApplySubtitle={(s) => updateField("subtitle", s)}
+            onApplyContent={(c) => updateField("content", c)}
+            onApplyMetaTitle={(m) => updateField("meta_title", m)}
+            onApplyMetaDescription={(m) => updateField("meta_description", m)}
+          />
         </div>
       </div>
     </form>
