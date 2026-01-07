@@ -256,10 +256,39 @@ export function useFeaturedNews(limit = 5) {
   });
 }
 
+export function useMostReadNews(limit = 10) {
+  return useQuery({
+    queryKey: ['news', 'most-read', limit],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('news')
+        .select(`
+          *,
+          category:categories(id, name, slug, color)
+        `)
+        .eq('status', 'published')
+        .is('deleted_at', null)
+        .order('view_count', { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+      return (data || []) as unknown as NewsItem[];
+    },
+  });
+}
+
 export async function incrementViewCount(newsId: string) {
-  // Simple update without RPC
-  await supabase
+  // Fetch current count and increment
+  const { data } = await supabase
     .from('news')
-    .update({ view_count: 1 }) // This will be handled differently
-    .eq('id', newsId);
+    .select('view_count')
+    .eq('id', newsId)
+    .single();
+
+  if (data) {
+    await supabase
+      .from('news')
+      .update({ view_count: (data.view_count || 0) + 1 })
+      .eq('id', newsId);
+  }
 }

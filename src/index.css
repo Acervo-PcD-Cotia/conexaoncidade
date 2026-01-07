@@ -140,12 +140,21 @@
 @layer components {
   /* News card hover effects */
   .news-card {
-    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+    @apply transition-all duration-200 hover:shadow-md;
+  }
+
+  /* Dense list styling */
+  .dense-list {
+    @apply divide-y divide-border;
+  }
+
+  .dense-list > * {
+    @apply py-2;
   }
 
   /* Category badge */
   .category-badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide;
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide;
   }
 
   /* Breaking news animation */
