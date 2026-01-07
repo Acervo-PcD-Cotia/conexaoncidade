@@ -8,12 +8,18 @@ import { LatestNewsList } from "@/components/home/LatestNewsList";
 import { QuickNotes } from "@/components/home/QuickNotes";
 import { MostReadSection } from "@/components/home/MostReadSection";
 import { CategorySection } from "@/components/home/CategorySection";
+import { AdSlot } from "@/components/home/AdSlot";
 
 const Index = () => {
   return (
     <div className="space-y-0">
       <BreakingNewsTicker />
       <MarketDataBar />
+      
+      {/* Ad Slot: Home Top - 728x90 - Below menu, above content */}
+      <div className="container py-2">
+        <AdSlot slotType="home_top" />
+      </div>
       
       {/* Main hero - dominant headline */}
       <HeroSection />

@@ -11,6 +11,7 @@ import {
   BarChart3,
   History,
   PanelTop,
+  Megaphone,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useUserRole } from "@/hooks/useRequireRole";
@@ -40,6 +41,7 @@ const mainMenuItems = [
 const editorialItems = [
   { title: "Editor da Home", url: "/admin/home-editor", icon: PanelTop },
   { title: "Banners", url: "/admin/banners", icon: Image },
+  { title: "Anúncios", url: "/admin/ads", icon: Megaphone },
   { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
 ];
 
