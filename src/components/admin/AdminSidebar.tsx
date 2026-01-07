@@ -27,6 +27,7 @@ import {
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
+import logoFull from "@/assets/logo-full.png";
 
 const mainMenuItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
@@ -57,11 +58,16 @@ export function AdminSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b p-4">
         <NavLink to="/admin" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Newspaper className="h-4 w-4" />
-          </div>
-          {!collapsed && (
-            <span className="font-heading text-lg font-bold">Admin</span>
+          {collapsed ? (
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <Newspaper className="h-4 w-4" />
+            </div>
+          ) : (
+            <img 
+              src={logoFull} 
+              alt="Conexão na Cidade" 
+              className="h-8 w-auto"
+            />
           )}
         </NavLink>
       </SidebarHeader>

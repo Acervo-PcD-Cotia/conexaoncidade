@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Facebook, Instagram, Twitter, Youtube, Mail, Phone, MapPin } from "lucide-react";
+import logoFull from "@/assets/logo-full.png";
 
 const categories = [
   { name: "Política", slug: "politica" },
@@ -35,14 +36,11 @@ export function Footer() {
           {/* Brand */}
           <div className="space-y-4">
             <Link to="/" className="inline-block">
-              <div className="flex flex-col">
-                <span className="font-heading text-2xl font-extrabold tracking-tight text-primary">
-                  Conexão
-                </span>
-                <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-                  Na Cidade
-                </span>
-              </div>
+              <img 
+                src={logoFull} 
+                alt="Conexão na Cidade" 
+                className="h-12 w-auto"
+              />
             </Link>
             <p className="text-sm text-muted-foreground">
               Seu portal de notícias da região metropolitana. Informação de qualidade, 24 horas por dia.

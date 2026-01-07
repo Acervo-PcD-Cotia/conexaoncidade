@@ -17,7 +17,7 @@ export function BreakingNewsTicker() {
       <div className="container flex items-center gap-3 py-2">
         <div className="flex shrink-0 items-center gap-2 font-semibold">
           <Megaphone className="h-4 w-4 breaking-pulse" />
-          <span className="text-xs uppercase tracking-wider">Última Hora</span>
+          <span className="text-xs uppercase tracking-wider">ÚLTIMAS NOTÍCIAS</span>
         </div>
         <div className="relative flex-1 overflow-hidden">
           <div className="animate-marquee flex whitespace-nowrap">
