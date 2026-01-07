@@ -1,8 +1,4 @@
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Image from '@tiptap/extension-image';
-import Link from '@tiptap/extension-link';
-import Placeholder from '@tiptap/extension-placeholder';
+import { useState, useRef, useCallback } from 'react';
 import { 
   Bold, 
   Italic, 
@@ -15,12 +11,13 @@ import {
   Image as ImageIcon,
   Undo,
   Redo,
-  Minus
+  Minus,
+  Code
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Toggle } from '@/components/ui/toggle';
 import { Separator } from '@/components/ui/separator';
-import { useCallback, useEffect } from 'react';
+import { Textarea } from '@/components/ui/textarea';
 
 interface RichTextEditorProps {
   content: string;
@@ -29,70 +26,83 @@ interface RichTextEditorProps {
 }
 
 export function RichTextEditor({ content, onChange, placeholder = 'Escreva o conteúdo da notícia...' }: RichTextEditorProps) {
-  const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        heading: {
-          levels: [2, 3, 4],
-        },
-      }),
-      Image.configure({
-        HTMLAttributes: {
-          class: 'rounded-lg max-w-full h-auto',
-        },
-      }),
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          class: 'text-primary underline',
-        },
-      }),
-      Placeholder.configure({
-        placeholder,
-      }),
-    ],
-    content,
-    onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
-    },
-    editorProps: {
-      attributes: {
-        class: 'prose prose-sm sm:prose-base max-w-none focus:outline-none min-h-[300px] p-4',
-      },
-    },
-  });
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [showHtml, setShowHtml] = useState(false);
 
-  useEffect(() => {
-    if (editor && content !== editor.getHTML()) {
-      editor.commands.setContent(content);
-    }
-  }, [content, editor]);
+  const insertTag = useCallback((openTag: string, closeTag: string = '') => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
 
-  const addImage = useCallback(() => {
-    const url = window.prompt('URL da imagem:');
-    if (url && editor) {
-      editor.chain().focus().setImage({ src: url }).run();
-    }
-  }, [editor]);
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = content.substring(start, end);
+    const beforeText = content.substring(0, start);
+    const afterText = content.substring(end);
+
+    const newContent = beforeText + openTag + selectedText + (closeTag || openTag.replace('<', '</')) + afterText;
+    onChange(newContent);
+
+    // Restore cursor position
+    setTimeout(() => {
+      textarea.focus();
+      const newCursorPos = start + openTag.length + selectedText.length;
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    }, 0);
+  }, [content, onChange]);
+
+  const wrapSelection = useCallback((tag: string) => {
+    insertTag(`<${tag}>`, `</${tag}>`);
+  }, [insertTag]);
+
+  const insertElement = useCallback((element: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const beforeText = content.substring(0, start);
+    const afterText = content.substring(start);
+
+    onChange(beforeText + element + afterText);
+
+    setTimeout(() => {
+      textarea.focus();
+      const newCursorPos = start + element.length;
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    }, 0);
+  }, [content, onChange]);
 
   const addLink = useCallback(() => {
     const url = window.prompt('URL do link:');
-    if (url && editor) {
-      editor.chain().focus().setLink({ href: url }).run();
-    }
-  }, [editor]);
+    if (url) {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
 
-  if (!editor) {
-    return null;
-  }
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selectedText = content.substring(start, end) || 'texto do link';
+      const beforeText = content.substring(0, start);
+      const afterText = content.substring(end);
+
+      const newContent = beforeText + `<a href="${url}">${selectedText}</a>` + afterText;
+      onChange(newContent);
+    }
+  }, [content, onChange]);
+
+  const addImage = useCallback(() => {
+    const url = window.prompt('URL da imagem:');
+    if (url) {
+      const alt = window.prompt('Texto alternativo (alt):') || '';
+      insertElement(`<img src="${url}" alt="${alt}" class="w-full rounded-lg" />`);
+    }
+  }, [insertElement]);
 
   return (
     <div className="border rounded-lg bg-background">
       <div className="flex flex-wrap items-center gap-1 p-2 border-b bg-muted/30">
         <Toggle
           size="sm"
-          pressed={editor.isActive('bold')}
-          onPressedChange={() => editor.chain().focus().toggleBold().run()}
+          pressed={false}
+          onPressedChange={() => wrapSelection('strong')}
           aria-label="Negrito"
         >
           <Bold className="h-4 w-4" />
@@ -100,8 +110,8 @@ export function RichTextEditor({ content, onChange, placeholder = 'Escreva o con
         
         <Toggle
           size="sm"
-          pressed={editor.isActive('italic')}
-          onPressedChange={() => editor.chain().focus().toggleItalic().run()}
+          pressed={false}
+          onPressedChange={() => wrapSelection('em')}
           aria-label="Itálico"
         >
           <Italic className="h-4 w-4" />
@@ -111,8 +121,8 @@ export function RichTextEditor({ content, onChange, placeholder = 'Escreva o con
 
         <Toggle
           size="sm"
-          pressed={editor.isActive('heading', { level: 2 })}
-          onPressedChange={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          pressed={false}
+          onPressedChange={() => wrapSelection('h2')}
           aria-label="Título 2"
         >
           <Heading2 className="h-4 w-4" />
@@ -120,8 +130,8 @@ export function RichTextEditor({ content, onChange, placeholder = 'Escreva o con
 
         <Toggle
           size="sm"
-          pressed={editor.isActive('heading', { level: 3 })}
-          onPressedChange={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+          pressed={false}
+          onPressedChange={() => wrapSelection('h3')}
           aria-label="Título 3"
         >
           <Heading3 className="h-4 w-4" />
@@ -131,8 +141,8 @@ export function RichTextEditor({ content, onChange, placeholder = 'Escreva o con
 
         <Toggle
           size="sm"
-          pressed={editor.isActive('bulletList')}
-          onPressedChange={() => editor.chain().focus().toggleBulletList().run()}
+          pressed={false}
+          onPressedChange={() => insertElement('<ul>\n  <li>Item</li>\n</ul>')}
           aria-label="Lista"
         >
           <List className="h-4 w-4" />
@@ -140,8 +150,8 @@ export function RichTextEditor({ content, onChange, placeholder = 'Escreva o con
 
         <Toggle
           size="sm"
-          pressed={editor.isActive('orderedList')}
-          onPressedChange={() => editor.chain().focus().toggleOrderedList().run()}
+          pressed={false}
+          onPressedChange={() => insertElement('<ol>\n  <li>Item</li>\n</ol>')}
           aria-label="Lista numerada"
         >
           <ListOrdered className="h-4 w-4" />
@@ -149,8 +159,8 @@ export function RichTextEditor({ content, onChange, placeholder = 'Escreva o con
 
         <Toggle
           size="sm"
-          pressed={editor.isActive('blockquote')}
-          onPressedChange={() => editor.chain().focus().toggleBlockquote().run()}
+          pressed={false}
+          onPressedChange={() => wrapSelection('blockquote')}
           aria-label="Citação"
         >
           <Quote className="h-4 w-4" />
@@ -182,38 +192,41 @@ export function RichTextEditor({ content, onChange, placeholder = 'Escreva o con
           type="button"
           variant="ghost"
           size="sm"
-          onClick={() => editor.chain().focus().setHorizontalRule().run()}
+          onClick={() => insertElement('<hr />')}
           className="h-8 w-8 p-0"
         >
           <Minus className="h-4 w-4" />
         </Button>
 
-        <Separator orientation="vertical" className="mx-1 h-6" />
+        <div className="flex-1" />
 
-        <Button
-          type="button"
-          variant="ghost"
+        <Toggle
           size="sm"
-          onClick={() => editor.chain().focus().undo().run()}
-          disabled={!editor.can().undo()}
-          className="h-8 w-8 p-0"
+          pressed={showHtml}
+          onPressedChange={setShowHtml}
+          aria-label="Ver HTML"
         >
-          <Undo className="h-4 w-4" />
-        </Button>
-
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => editor.chain().focus().redo().run()}
-          disabled={!editor.can().redo()}
-          className="h-8 w-8 p-0"
-        >
-          <Redo className="h-4 w-4" />
-        </Button>
+          <Code className="h-4 w-4" />
+        </Toggle>
       </div>
 
-      <EditorContent editor={editor} />
+      <Textarea
+        ref={textareaRef}
+        value={content}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className={`min-h-[300px] border-0 rounded-t-none focus-visible:ring-0 resize-y ${showHtml ? 'font-mono text-sm' : ''}`}
+      />
+      
+      {!showHtml && content && (
+        <div className="border-t p-4 bg-muted/20">
+          <p className="text-xs text-muted-foreground mb-2">Preview:</p>
+          <div 
+            className="prose prose-sm max-w-none"
+            dangerouslySetInnerHTML={{ __html: content }}
+          />
+        </div>
+      )}
     </div>
   );
 }
