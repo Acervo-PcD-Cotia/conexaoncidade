@@ -15,14 +15,14 @@ function formatTimeAgo(date: string) {
 }
 
 export function LatestNewsList() {
-  const { data: news, isLoading } = useNews(16);
+  const { data: news, isLoading } = useNews(20);
 
   if (isLoading) {
     return (
-      <section className="container py-4">
-        <div className="rounded-lg bg-card p-4">
-          <div className="animate-pulse space-y-3">
-            {Array.from({ length: 8 }).map((_, i) => (
+      <section className="container py-2">
+        <div className="rounded-lg bg-card p-3">
+          <div className="animate-pulse space-y-2">
+            {Array.from({ length: 10 }).map((_, i) => (
               <div key={i} className="h-4 bg-muted rounded w-full" />
             ))}
           </div>
@@ -33,51 +33,86 @@ export function LatestNewsList() {
 
   if (!news || news.length === 0) return null;
 
+  // Split: first 5 are "AGORA"
+  const recentNews = news.slice(0, 5);
+  const olderNews = news.slice(5);
+
   return (
-    <section className="container py-4">
-      <div className="rounded-lg bg-card border border-border">
+    <section className="container py-2">
+      <div className="rounded-lg bg-card border border-border overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <div className="flex items-center justify-between border-b border-border px-3 py-2">
           <div className="flex items-center gap-2">
-            <RefreshCw className="h-4 w-4 text-primary" />
-            <h2 className="font-heading text-sm font-bold uppercase tracking-wide">
+            <RefreshCw className="h-3.5 w-3.5 text-primary" />
+            <h2 className="font-heading text-xs font-bold uppercase tracking-wide">
               Últimas Notícias
             </h2>
           </div>
           <Link
             to="/noticias"
-            className="text-xs font-medium text-primary hover:underline"
+            className="text-[10px] font-medium text-primary hover:underline"
           >
             Ver todas
           </Link>
         </div>
 
-        {/* News Grid - Dense list */}
+        {/* AGORA section - most recent 5 */}
+        <div className="border-b border-primary/20 bg-primary/5">
+          <div className="px-3 py-1 border-b border-border/50">
+            <span className="text-[10px] font-bold uppercase text-primary tracking-wider">Agora</span>
+          </div>
+          <div className="grid gap-0 divide-y divide-border/50 md:grid-cols-2 md:divide-y-0">
+            {recentNews.map((item, index) => (
+              <Link
+                key={item.id}
+                to={`/noticia/${item.slug}`}
+                className={`group flex items-start gap-2 px-3 py-1.5 transition-colors hover:bg-primary/10 ${
+                  index % 2 === 0 ? "md:border-r md:border-border/50" : ""
+                }`}
+              >
+                <span
+                  className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full"
+                  style={{
+                    backgroundColor: item.category?.color || "hsl(var(--primary))",
+                  }}
+                />
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-xs font-medium leading-snug line-clamp-1 group-hover:text-primary">
+                    {item.title}
+                  </h3>
+                </div>
+                <div className="flex shrink-0 items-center gap-1 text-[10px] text-muted-foreground">
+                  <Clock className="h-2.5 w-2.5" />
+                  {item.published_at && formatTimeAgo(item.published_at)}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Older news - Dense list */}
         <div className="grid gap-0 divide-y divide-border md:grid-cols-2 md:divide-y-0">
-          {news.map((item, index) => (
+          {olderNews.map((item, index) => (
             <Link
               key={item.id}
               to={`/noticia/${item.slug}`}
-              className={`group flex items-start gap-3 px-4 py-2.5 transition-colors hover:bg-muted/50 ${
+              className={`group flex items-start gap-2 px-3 py-1.5 transition-colors hover:bg-muted/50 ${
                 index % 2 === 0 ? "md:border-r md:border-border" : ""
               }`}
             >
-              {/* Category bullet */}
               <span
-                className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
+                className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full"
                 style={{
                   backgroundColor: item.category?.color || "hsl(var(--primary))",
                 }}
               />
-              {/* Content */}
               <div className="min-w-0 flex-1">
-                <h3 className="text-sm font-medium leading-snug line-clamp-2 group-hover:text-primary">
+                <h3 className="text-xs font-medium leading-snug line-clamp-1 group-hover:text-primary">
                   {item.title}
                 </h3>
               </div>
-              {/* Time */}
-              <div className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
-                <Clock className="h-3 w-3" />
+              <div className="flex shrink-0 items-center gap-1 text-[10px] text-muted-foreground">
+                <Clock className="h-2.5 w-2.5" />
                 {item.published_at && formatTimeAgo(item.published_at)}
               </div>
             </Link>

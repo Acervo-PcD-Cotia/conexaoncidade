@@ -17,7 +17,7 @@ function formatTimeAgo(date: string) {
 
 export function HeroSection() {
   const { data: featuredNews, isLoading: loadingFeatured } = useFeaturedNews(6);
-  const { data: latestNews, isLoading: loadingLatest } = useNews(10);
+  const { data: latestNews, isLoading: loadingLatest } = useNews(14);
 
   const isLoading = loadingFeatured || loadingLatest;
 
@@ -31,14 +31,14 @@ export function HeroSection() {
 
   const heroNews = allNews[0];
   const sideNews = allNews.slice(1, 3);
-  const textNews = allNews.slice(3, 7);
+  const textNews = allNews.slice(3, 11); // 8 text-only items
 
   if (isLoading) {
     return (
-      <section className="container py-4">
-        <div className="grid gap-3 lg:grid-cols-3">
+      <section className="container py-3">
+        <div className="grid gap-2 lg:grid-cols-3">
           <div className="lg:col-span-2 aspect-[16/9] bg-muted rounded-lg animate-pulse" />
-          <div className="space-y-3">
+          <div className="space-y-2">
             <div className="aspect-[16/10] bg-muted rounded-lg animate-pulse" />
             <div className="aspect-[16/10] bg-muted rounded-lg animate-pulse" />
           </div>
@@ -50,8 +50,8 @@ export function HeroSection() {
   if (!heroNews) return null;
 
   return (
-    <section className="container py-4">
-      <div className="grid gap-3 lg:grid-cols-3">
+    <section className="container py-3">
+      <div className="grid gap-2 lg:grid-cols-3">
         {/* Main hero - Dominant */}
         <div className="lg:col-span-2">
           <Link to={`/noticia/${heroNews.slug}`} className="group block">
@@ -66,7 +66,7 @@ export function HeroSection() {
               {/* Overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
               {/* Content */}
-              <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 text-white">
+              <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5 text-white">
                 <div className="mb-2 flex flex-wrap items-center gap-2">
                   {heroNews.hat && (
                     <Badge className="bg-accent text-accent-foreground text-xs">
@@ -89,11 +89,11 @@ export function HeroSection() {
                     {heroNews.category?.name || "Notícia"}
                   </Badge>
                 </div>
-                <h1 className="mb-2 font-heading text-xl font-bold leading-tight md:text-2xl lg:text-3xl">
+                <h1 className="mb-2 font-heading text-xl font-bold leading-tight md:text-2xl lg:text-3xl xl:text-4xl">
                   {heroNews.title}
                 </h1>
                 {heroNews.subtitle && (
-                  <p className="mb-2 line-clamp-2 text-sm text-white/80 md:text-base">
+                  <p className="mb-2 line-clamp-2 text-sm text-white/80">
                     {heroNews.subtitle}
                   </p>
                 )}
@@ -106,11 +106,11 @@ export function HeroSection() {
           </Link>
         </div>
 
-        {/* Side news - Medium */}
-        <div className="flex flex-col gap-3">
+        {/* Side news - Medium, more compact */}
+        <div className="flex flex-col gap-2">
           {sideNews.map((news) => (
             <Link key={news.id} to={`/noticia/${news.slug}`} className="group block flex-1">
-              <article className="news-card relative h-full min-h-[140px] overflow-hidden rounded-lg">
+              <article className="news-card relative h-full min-h-[120px] overflow-hidden rounded-lg">
                 <div className="absolute inset-0">
                   <img
                     src={news.featured_image_url || "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=400&h=300&fit=crop"}
@@ -119,10 +119,10 @@ export function HeroSection() {
                   />
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
+                <div className="absolute bottom-0 left-0 right-0 p-2.5 text-white">
                   <Badge
                     variant="secondary"
-                    className="mb-1.5 text-[10px]"
+                    className="mb-1 text-[10px]"
                     style={{
                       backgroundColor: news.category?.color || "hsl(var(--primary))",
                       color: "white",
@@ -130,7 +130,7 @@ export function HeroSection() {
                   >
                     {news.category?.name || "Notícia"}
                   </Badge>
-                  <h2 className="font-heading text-sm font-bold leading-tight line-clamp-2">
+                  <h2 className="font-heading text-xs font-bold leading-tight line-clamp-2">
                     {news.title}
                   </h2>
                   <div className="mt-1 flex items-center gap-1 text-[10px] text-white/70">
@@ -144,29 +144,31 @@ export function HeroSection() {
         </div>
       </div>
 
-      {/* Text-only headlines below hero */}
+      {/* Text-only headlines below hero - 8 items in 4 columns */}
       {textNews.length > 0 && (
-        <div className="mt-3 grid gap-0 divide-y divide-border rounded-lg border border-border bg-card sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4">
+        <div className="mt-2 grid gap-0 divide-y divide-border rounded-lg border border-border bg-card sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4">
           {textNews.map((news, index) => (
             <Link
               key={news.id}
               to={`/noticia/${news.slug}`}
-              className={`group flex items-start gap-2 p-3 transition-colors hover:bg-muted/50 ${
-                index < textNews.length - 1 ? "sm:border-r sm:border-border" : ""
+              className={`group flex items-start gap-1.5 p-2 transition-colors hover:bg-muted/50 ${
+                index % 4 !== 3 ? "lg:border-r lg:border-border" : ""
+              } ${index % 2 === 0 ? "sm:border-r sm:border-border lg:border-r-0" : "sm:border-r-0"} ${
+                index % 4 !== 3 ? "lg:border-r" : ""
               }`}
             >
               <span
-                className="mt-1 h-2 w-2 shrink-0 rounded-full"
+                className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full"
                 style={{
                   backgroundColor: news.category?.color || "hsl(var(--primary))",
                 }}
               />
-              <div className="min-w-0">
-                <h3 className="text-sm font-medium leading-snug line-clamp-2 group-hover:text-primary">
+              <div className="min-w-0 flex-1">
+                <h3 className="text-xs font-medium leading-snug line-clamp-2 group-hover:text-primary">
                   {news.title}
                 </h3>
-                <span className="mt-1 inline-flex items-center gap-1 text-[10px] text-muted-foreground">
-                  <Clock className="h-2.5 w-2.5" />
+                <span className="mt-0.5 inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+                  <Clock className="h-2 w-2" />
                   {news.published_at && formatTimeAgo(news.published_at)}
                 </span>
               </div>
