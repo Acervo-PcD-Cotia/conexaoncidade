@@ -95,12 +95,12 @@ export function Header() {
             </SheetContent>
           </Sheet>
 
-          {/* Logo */}
+          {/* Logo - Increased size for visual hierarchy */}
           <Link to="/" className="flex items-center">
             <img 
               src={logoFull} 
               alt="Conexão na Cidade" 
-              className="h-10 w-auto sm:h-12"
+              className="h-12 w-auto sm:h-14 md:h-16"
             />
           </Link>
 

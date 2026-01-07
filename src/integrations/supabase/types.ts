@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      ads: {
+        Row: {
+          advertiser: string | null
+          alt_text: string | null
+          click_count: number | null
+          created_at: string
+          ends_at: string | null
+          id: string
+          image_url: string
+          impression_count: number | null
+          is_active: boolean | null
+          link_target: string | null
+          link_url: string | null
+          name: string
+          size: string
+          slot_type: string
+          sort_order: number | null
+          starts_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          advertiser?: string | null
+          alt_text?: string | null
+          click_count?: number | null
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          image_url: string
+          impression_count?: number | null
+          is_active?: boolean | null
+          link_target?: string | null
+          link_url?: string | null
+          name: string
+          size: string
+          slot_type: string
+          sort_order?: number | null
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          advertiser?: string | null
+          alt_text?: string | null
+          click_count?: number | null
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          image_url?: string
+          impression_count?: number | null
+          is_active?: boolean | null
+          link_target?: string | null
+          link_url?: string | null
+          name?: string
+          size?: string
+          slot_type?: string
+          sort_order?: number | null
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string

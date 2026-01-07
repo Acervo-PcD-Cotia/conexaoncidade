@@ -19,6 +19,7 @@ import NewsList from "./pages/admin/NewsList";
 import NewsEditor from "./pages/admin/NewsEditor";
 import Categories from "./pages/admin/Categories";
 import Banners from "./pages/admin/Banners";
+import Ads from "./pages/admin/Ads";
 import StoriesList from "./pages/admin/StoriesList";
 import StoryEditor from "./pages/admin/StoryEditor";
 import Users from "./pages/admin/Users";
@@ -55,6 +56,7 @@ const App = () => (
               <Route path="news/:id/edit" element={<NewsEditor />} />
               <Route path="categories" element={<Categories />} />
               <Route path="banners" element={<Banners />} />
+              <Route path="ads" element={<Ads />} />
               <Route path="stories" element={<StoriesList />} />
               <Route path="stories/new" element={<StoryEditor />} />
               <Route path="stories/:id/edit" element={<StoryEditor />} />

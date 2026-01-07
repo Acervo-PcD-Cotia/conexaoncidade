@@ -10,6 +10,7 @@ import {
   Calendar,
   Edit3,
   Zap,
+  FileSearch,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +32,7 @@ export default function Dashboard() {
         totalNews,
         publishedToday,
         drafts,
+        inReview,
         scheduled,
         storiesCount,
         viewsSum,
@@ -48,6 +50,10 @@ export default function Dashboard() {
         supabase
           .from("news")
           .select("id", { count: "exact", head: true })
+          .eq("status", "review"),
+        supabase
+          .from("news")
+          .select("id", { count: "exact", head: true })
           .eq("status", "scheduled"),
         supabase.from("web_stories").select("id", { count: "exact", head: true }),
         supabase.from("news").select("view_count"),
@@ -60,6 +66,7 @@ export default function Dashboard() {
         totalNews: totalNews.count || 0,
         publishedToday: publishedToday.count || 0,
         drafts: drafts.count || 0,
+        inReview: inReview.count || 0,
         scheduled: scheduled.count || 0,
         totalStories: storiesCount.count || 0,
         totalViews,
@@ -142,6 +149,13 @@ export default function Dashboard() {
       bgColor: "bg-yellow-500/10",
     },
     {
+      title: "Em Revisão",
+      value: stats?.inReview || 0,
+      icon: FileSearch,
+      color: "text-orange-500",
+      bgColor: "bg-orange-500/10",
+    },
+    {
       title: "Agendadas",
       value: stats?.scheduled || 0,
       icon: Calendar,
@@ -204,7 +218,7 @@ export default function Dashboard() {
       </div>
 
       {/* Operational Stats */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         {operationalCards.map((stat) => (
           <Card key={stat.title}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
