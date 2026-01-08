@@ -13,6 +13,7 @@ import {
   PanelTop,
   Megaphone,
   Tag,
+  Sparkles,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useUserRole } from "@/hooks/useRequireRole";
@@ -34,6 +35,7 @@ import logoFull from "@/assets/logo-full.png";
 const mainMenuItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
   { title: "Notícias", url: "/admin/news", icon: Newspaper },
+  { title: "Notícias AI", url: "/admin/noticias-ai", icon: Sparkles },
   { title: "Notas Rápidas", url: "/admin/quick-notes", icon: Zap },
   { title: "Categorias", url: "/admin/categories", icon: FolderTree },
   { title: "Tags", url: "/admin/tags", icon: Tag },

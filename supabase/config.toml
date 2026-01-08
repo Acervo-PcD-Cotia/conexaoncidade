@@ -8,3 +8,9 @@ verify_jwt = false
 
 [functions.send-invite-email]
 verify_jwt = false
+
+[functions.noticias-ai-generate]
+verify_jwt = false
+
+[functions.reporter-batch]
+verify_jwt = false

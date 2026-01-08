@@ -348,6 +348,225 @@ export type Database = {
           },
         ]
       }
+      noticias_ai_imports: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          format_corrected: boolean | null
+          id: string
+          import_type: string | null
+          news_id: string | null
+          source_badge: string | null
+          source_name: string | null
+          source_url: string | null
+          status: string | null
+          title: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          format_corrected?: boolean | null
+          id?: string
+          import_type?: string | null
+          news_id?: string | null
+          source_badge?: string | null
+          source_name?: string | null
+          source_url?: string | null
+          status?: string | null
+          title?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          format_corrected?: boolean | null
+          id?: string
+          import_type?: string | null
+          news_id?: string | null
+          source_badge?: string | null
+          source_name?: string | null
+          source_url?: string | null
+          status?: string | null
+          title?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "noticias_ai_imports_news_id_fkey"
+            columns: ["news_id"]
+            isOneToOne: false
+            referencedRelation: "news"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      noticias_ai_schedule_logs: {
+        Row: {
+          articles_imported: number | null
+          created_at: string | null
+          errors: string[] | null
+          id: string
+          schedule_id: string | null
+          status: string | null
+        }
+        Insert: {
+          articles_imported?: number | null
+          created_at?: string | null
+          errors?: string[] | null
+          id?: string
+          schedule_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          articles_imported?: number | null
+          created_at?: string | null
+          errors?: string[] | null
+          id?: string
+          schedule_id?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "noticias_ai_schedule_logs_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "noticias_ai_schedules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      noticias_ai_schedules: {
+        Row: {
+          auto_publish: boolean | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          interval: string
+          is_active: boolean | null
+          last_run_at: string | null
+          max_articles: number | null
+          name: string
+          next_run_at: string | null
+          source_id: string | null
+          updated_at: string | null
+          urls: string[]
+        }
+        Insert: {
+          auto_publish?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          interval: string
+          is_active?: boolean | null
+          last_run_at?: string | null
+          max_articles?: number | null
+          name: string
+          next_run_at?: string | null
+          source_id?: string | null
+          updated_at?: string | null
+          urls: string[]
+        }
+        Update: {
+          auto_publish?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          interval?: string
+          is_active?: boolean | null
+          last_run_at?: string | null
+          max_articles?: number | null
+          name?: string
+          next_run_at?: string | null
+          source_id?: string | null
+          updated_at?: string | null
+          urls?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "noticias_ai_schedules_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "noticias_ai_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      noticias_ai_sources: {
+        Row: {
+          badge: string
+          badge_color: string | null
+          created_at: string | null
+          domain_pattern: string
+          id: string
+          is_active: boolean | null
+          is_system: boolean | null
+          name: string
+          parsing_instructions: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          badge: string
+          badge_color?: string | null
+          created_at?: string | null
+          domain_pattern: string
+          id?: string
+          is_active?: boolean | null
+          is_system?: boolean | null
+          name: string
+          parsing_instructions?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          badge?: string
+          badge_color?: string | null
+          created_at?: string | null
+          domain_pattern?: string
+          id?: string
+          is_active?: boolean | null
+          is_system?: boolean | null
+          name?: string
+          parsing_instructions?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      noticias_ai_user_progress: {
+        Row: {
+          completed_milestones: string[] | null
+          created_at: string | null
+          id: string
+          imports_count: number | null
+          level: string | null
+          points: number | null
+          tour_completed: boolean | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          completed_milestones?: string[] | null
+          created_at?: string | null
+          id?: string
+          imports_count?: number | null
+          level?: string | null
+          points?: number | null
+          tour_completed?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          completed_milestones?: string[] | null
+          created_at?: string | null
+          id?: string
+          imports_count?: number | null
+          level?: string | null
+          points?: number | null
+          tour_completed?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       page_views: {
         Row: {
           created_at: string
