@@ -37,6 +37,7 @@ import SocialLogs from "./pages/admin/SocialLogs";
 import SocialSettings from "./pages/admin/SocialSettings";
 import LinksDashboard from "./pages/admin/LinksDashboard";
 import LinksBuilder from "./pages/admin/LinksBuilder";
+import Solutions from "./pages/admin/Solutions";
 
 const queryClient = new QueryClient();
 
@@ -85,6 +86,7 @@ const App = () => (
               <Route path="links/create" element={<LinksBuilder />} />
               <Route path="logs" element={<AuditLogs />} />
               <Route path="settings" element={<Settings />} />
+              <Route path="solutions" element={<Solutions />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
