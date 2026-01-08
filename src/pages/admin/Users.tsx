@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Shield, UserPlus, Loader2, Power, Key } from "lucide-react";
+import { Shield, UserPlus, Loader2, Power, Key, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,6 +67,7 @@ export default function Users() {
     email: "",
     password: "",
     role: "collaborator" as AppRole,
+    sendInvite: true,
   });
   const queryClient = useQueryClient();
 
@@ -187,6 +188,7 @@ export default function Users() {
           password: data.password,
           fullName: data.fullName,
           role: data.role,
+          sendInvite: data.sendInvite,
         },
       });
 
@@ -195,11 +197,15 @@ export default function Users() {
       
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["admin-users-roles"] });
-      toast.success("Usuário criado com sucesso!");
+      if (data.inviteSent) {
+        toast.success("Usuário criado e email de convite enviado!");
+      } else {
+        toast.success("Usuário criado com sucesso!");
+      }
       setNewUserDialogOpen(false);
-      setNewUserForm({ fullName: "", email: "", password: "", role: "collaborator" });
+      setNewUserForm({ fullName: "", email: "", password: "", role: "collaborator", sendInvite: true });
     },
     onError: (error) => {
       toast.error("Erro ao criar usuário: " + (error as Error).message);
@@ -446,6 +452,25 @@ export default function Users() {
                   <SelectItem value="moderator">Moderador</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            
+            {/* Email Invite Checkbox */}
+            <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/30">
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <Label className="cursor-pointer">Enviar email de convite</Label>
+                  <p className="text-xs text-muted-foreground">
+                    O usuário receberá suas credenciais por email
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={newUserForm.sendInvite}
+                onCheckedChange={(checked) =>
+                  setNewUserForm({ ...newUserForm, sendInvite: checked })
+                }
+              />
             </div>
           </div>
           <DialogFooter>

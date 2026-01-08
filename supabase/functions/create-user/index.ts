@@ -106,6 +106,32 @@ Deno.serve(async (req) => {
       .update({ full_name: fullName })
       .eq("id", newUserId);
 
+    // Enviar email de convite se solicitado
+    if (sendInvite) {
+      try {
+        const { error: inviteError } = await supabaseAdmin.functions.invoke(
+          "send-invite-email",
+          {
+            body: {
+              email,
+              fullName,
+              password,
+              role,
+            },
+          }
+        );
+
+        if (inviteError) {
+          console.error("Erro ao enviar email de convite:", inviteError);
+          // Não falha a criação do usuário se o email falhar
+        } else {
+          console.log(`Email de convite enviado para ${email}`);
+        }
+      } catch (emailError) {
+        console.error("Erro ao chamar send-invite-email:", emailError);
+      }
+    }
+
     console.log(`Usuário ${email} criado com sucesso por ${user.email}`);
 
     return new Response(
@@ -117,6 +143,7 @@ Deno.serve(async (req) => {
           fullName,
           role,
         },
+        inviteSent: sendInvite || false,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
