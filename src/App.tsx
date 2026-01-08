@@ -29,6 +29,7 @@ import QuickNotesAdmin from "./pages/admin/QuickNotesAdmin";
 import Analytics from "./pages/admin/Analytics";
 import AuditLogs from "./pages/admin/AuditLogs";
 import Settings from "./pages/admin/Settings";
+import NoticiasAI from "./pages/admin/NoticiasAI";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +54,7 @@ const App = () => (
             {/* Admin Routes */}
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<Dashboard />} />
+              <Route path="noticias-ai" element={<NoticiasAI />} />
               <Route path="news" element={<NewsList />} />
               <Route path="news/new" element={<NewsEditor />} />
               <Route path="news/:id/edit" element={<NewsEditor />} />
