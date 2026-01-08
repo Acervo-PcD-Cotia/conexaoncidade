@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown, Cloud, DollarSign } from "lucide-react";
+import { TrendingUp, TrendingDown, Cloud, DollarSign, MapPin, Calendar } from "lucide-react";
 
 // Mock data - will be replaced with real API data
 const marketData = {
@@ -30,6 +30,19 @@ export function MarketDataBar() {
   return (
     <div className="border-b bg-card">
       <div className="container flex items-center justify-between py-2 text-xs">
+        {/* Left: Location + Date */}
+        <div className="flex shrink-0 items-center gap-3">
+          <span className="flex items-center gap-1 text-muted-foreground">
+            <MapPin className="h-3 w-3" />
+            <span className="hidden sm:inline">Região Metropolitana</span>
+          </span>
+          <span className="hidden items-center gap-1 text-muted-foreground md:flex">
+            <Calendar className="h-3 w-3" />
+            <span className="capitalize">{today}</span>
+          </span>
+        </div>
+
+        {/* Center: Financial indicators */}
         <div className="flex items-center gap-4 overflow-x-auto md:gap-6">
           {/* Dollar */}
           <div className="flex shrink-0 items-center gap-2">
@@ -69,7 +82,7 @@ export function MarketDataBar() {
           </div>
 
           {/* Bovespa */}
-          <div className="hidden shrink-0 items-center gap-2 md:flex">
+          <div className="hidden shrink-0 items-center gap-2 lg:flex">
             <span className="font-medium">Bovespa</span>
             <span className="font-semibold">{formatNumber(marketData.bovespa.value)}</span>
             <span
@@ -84,11 +97,6 @@ export function MarketDataBar() {
               )}
               {Math.abs(marketData.bovespa.change).toFixed(2)}%
             </span>
-          </div>
-
-          {/* Date */}
-          <div className="hidden shrink-0 items-center gap-2 lg:flex">
-            <span className="text-muted-foreground capitalize">{today}</span>
           </div>
         </div>
 
