@@ -214,6 +214,66 @@ export type Database = {
           },
         ]
       }
+      audio_generation_queue: {
+        Row: {
+          attempts: number | null
+          audio_type: string | null
+          created_at: string | null
+          created_by: string | null
+          error_message: string | null
+          id: string
+          news_id: string | null
+          priority: number | null
+          processed_at: string | null
+          status: string | null
+          tenant_id: string | null
+          voice_id: string | null
+        }
+        Insert: {
+          attempts?: number | null
+          audio_type?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          news_id?: string | null
+          priority?: number | null
+          processed_at?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          voice_id?: string | null
+        }
+        Update: {
+          attempts?: number | null
+          audio_type?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          news_id?: string | null
+          priority?: number | null
+          processed_at?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          voice_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audio_generation_queue_news_id_fkey"
+            columns: ["news_id"]
+            isOneToOne: false
+            referencedRelation: "news"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audio_generation_queue_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -1617,12 +1677,21 @@ export type Database = {
       }
       news: {
         Row: {
+          ai_summary_bullets: string[] | null
+          ai_summary_generated_at: string | null
+          audio_duration_seconds: number | null
+          audio_generated_at: string | null
+          audio_status: string | null
+          audio_type: string | null
+          audio_url: string | null
+          audio_voice_id: string | null
           author_id: string | null
           card_image_url: string | null
           category_id: string | null
           content: string | null
           created_at: string
           deleted_at: string | null
+          distribute_audio: boolean | null
           excerpt: string | null
           featured_image_url: string | null
           gallery_urls: string[] | null
@@ -1638,6 +1707,8 @@ export type Database = {
           published_at: string | null
           scheduled_at: string | null
           share_count: number
+          show_audio_player: boolean | null
+          show_summary_button: boolean | null
           slug: string
           source: string | null
           status: Database["public"]["Enums"]["news_status"]
@@ -1648,12 +1719,21 @@ export type Database = {
           view_count: number
         }
         Insert: {
+          ai_summary_bullets?: string[] | null
+          ai_summary_generated_at?: string | null
+          audio_duration_seconds?: number | null
+          audio_generated_at?: string | null
+          audio_status?: string | null
+          audio_type?: string | null
+          audio_url?: string | null
+          audio_voice_id?: string | null
           author_id?: string | null
           card_image_url?: string | null
           category_id?: string | null
           content?: string | null
           created_at?: string
           deleted_at?: string | null
+          distribute_audio?: boolean | null
           excerpt?: string | null
           featured_image_url?: string | null
           gallery_urls?: string[] | null
@@ -1669,6 +1749,8 @@ export type Database = {
           published_at?: string | null
           scheduled_at?: string | null
           share_count?: number
+          show_audio_player?: boolean | null
+          show_summary_button?: boolean | null
           slug: string
           source?: string | null
           status?: Database["public"]["Enums"]["news_status"]
@@ -1679,12 +1761,21 @@ export type Database = {
           view_count?: number
         }
         Update: {
+          ai_summary_bullets?: string[] | null
+          ai_summary_generated_at?: string | null
+          audio_duration_seconds?: number | null
+          audio_generated_at?: string | null
+          audio_status?: string | null
+          audio_type?: string | null
+          audio_url?: string | null
+          audio_voice_id?: string | null
           author_id?: string | null
           card_image_url?: string | null
           category_id?: string | null
           content?: string | null
           created_at?: string
           deleted_at?: string | null
+          distribute_audio?: boolean | null
           excerpt?: string | null
           featured_image_url?: string | null
           gallery_urls?: string[] | null
@@ -1700,6 +1791,8 @@ export type Database = {
           published_at?: string | null
           scheduled_at?: string | null
           share_count?: number
+          show_audio_player?: boolean | null
+          show_summary_button?: boolean | null
           slug?: string
           source?: string | null
           status?: Database["public"]["Enums"]["news_status"]
@@ -1721,6 +1814,131 @@ export type Database = {
             foreignKeyName: "news_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      news_audio_analytics: {
+        Row: {
+          city: string | null
+          completed: boolean | null
+          country: string | null
+          duration_listened_seconds: number | null
+          id: string
+          listened_at: string | null
+          news_id: string | null
+          platform: string | null
+          referrer: string | null
+          tenant_id: string | null
+          user_agent: string | null
+          user_fingerprint: string | null
+        }
+        Insert: {
+          city?: string | null
+          completed?: boolean | null
+          country?: string | null
+          duration_listened_seconds?: number | null
+          id?: string
+          listened_at?: string | null
+          news_id?: string | null
+          platform?: string | null
+          referrer?: string | null
+          tenant_id?: string | null
+          user_agent?: string | null
+          user_fingerprint?: string | null
+        }
+        Update: {
+          city?: string | null
+          completed?: boolean | null
+          country?: string | null
+          duration_listened_seconds?: number | null
+          id?: string
+          listened_at?: string | null
+          news_id?: string | null
+          platform?: string | null
+          referrer?: string | null
+          tenant_id?: string | null
+          user_agent?: string | null
+          user_fingerprint?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_audio_analytics_news_id_fkey"
+            columns: ["news_id"]
+            isOneToOne: false
+            referencedRelation: "news"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "news_audio_analytics_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      news_audio_settings: {
+        Row: {
+          auto_distribute: boolean | null
+          auto_generate_audio: boolean | null
+          auto_generate_summary: boolean | null
+          created_at: string | null
+          default_audio_type: string | null
+          default_voice_gender: string | null
+          default_voice_id: string | null
+          excluded_authors: string[] | null
+          excluded_categories: string[] | null
+          id: string
+          is_enabled: boolean | null
+          max_audio_duration_seconds: number | null
+          monthly_audio_limit: number | null
+          monthly_distribution_limit: number | null
+          tenant_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          auto_distribute?: boolean | null
+          auto_generate_audio?: boolean | null
+          auto_generate_summary?: boolean | null
+          created_at?: string | null
+          default_audio_type?: string | null
+          default_voice_gender?: string | null
+          default_voice_id?: string | null
+          excluded_authors?: string[] | null
+          excluded_categories?: string[] | null
+          id?: string
+          is_enabled?: boolean | null
+          max_audio_duration_seconds?: number | null
+          monthly_audio_limit?: number | null
+          monthly_distribution_limit?: number | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          auto_distribute?: boolean | null
+          auto_generate_audio?: boolean | null
+          auto_generate_summary?: boolean | null
+          created_at?: string | null
+          default_audio_type?: string | null
+          default_voice_gender?: string | null
+          default_voice_id?: string | null
+          excluded_authors?: string[] | null
+          excluded_categories?: string[] | null
+          id?: string
+          is_enabled?: boolean | null
+          max_audio_duration_seconds?: number | null
+          monthly_audio_limit?: number | null
+          monthly_distribution_limit?: number | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_audio_settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
             referencedRelation: "sites"
             referencedColumns: ["id"]
           },
@@ -2175,6 +2393,87 @@ export type Database = {
           {
             foreignKeyName: "pitch_requests_to_site_id_fkey"
             columns: ["to_site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      podcast_feeds: {
+        Row: {
+          amazon_url: string | null
+          apple_url: string | null
+          author_id: string | null
+          category_id: string | null
+          cover_image_url: string | null
+          created_at: string | null
+          deezer_url: string | null
+          description: string | null
+          explicit: boolean | null
+          feed_type: string
+          feed_url: string | null
+          google_url: string | null
+          id: string
+          is_active: boolean | null
+          language: string | null
+          spotify_url: string | null
+          tenant_id: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          amazon_url?: string | null
+          apple_url?: string | null
+          author_id?: string | null
+          category_id?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          deezer_url?: string | null
+          description?: string | null
+          explicit?: boolean | null
+          feed_type?: string
+          feed_url?: string | null
+          google_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          language?: string | null
+          spotify_url?: string | null
+          tenant_id?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          amazon_url?: string | null
+          apple_url?: string | null
+          author_id?: string | null
+          category_id?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          deezer_url?: string | null
+          description?: string | null
+          explicit?: boolean | null
+          feed_type?: string
+          feed_url?: string | null
+          google_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          language?: string | null
+          spotify_url?: string | null
+          tenant_id?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "podcast_feeds_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "podcast_feeds_tenant_id_fkey"
+            columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "sites"
             referencedColumns: ["id"]
