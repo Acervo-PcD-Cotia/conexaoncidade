@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Save, Loader2, Calendar, Cloud, CloudOff } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Calendar, Cloud, CloudOff, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { NewsAIPanel } from "@/components/admin/NewsAIPanel";
@@ -61,6 +62,7 @@ export default function NewsEditor() {
     meta_title: "",
     meta_description: "",
     scheduled_at: "",
+    is_indexable: true,
   });
 
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -120,6 +122,7 @@ export default function NewsEditor() {
         meta_title: news.meta_title || "",
         meta_description: news.meta_description || "",
         scheduled_at: news.scheduled_at || "",
+        is_indexable: news.is_indexable !== false,
       });
       setLastSaved(new Date(news.updated_at));
     }
@@ -367,6 +370,21 @@ export default function NewsEditor() {
               <div>
                 <Label>Meta Descrição <span className="text-xs text-muted-foreground">({formData.meta_description.length}/160)</span></Label>
                 <Input value={formData.meta_description} onChange={(e) => updateField("meta_description", e.target.value)} maxLength={170} />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/30">
+                <div className="flex items-center gap-2">
+                  <Search className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <Label className="cursor-pointer">Permitir indexação</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Permitir que buscadores indexem esta notícia
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  checked={formData.is_indexable}
+                  onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, is_indexable: checked }))}
+                />
               </div>
             </CardContent>
           </Card>

@@ -106,6 +106,19 @@ Deno.serve(async (req) => {
       .update({ full_name: fullName })
       .eq("id", newUserId);
 
+    // Registrar convite na tabela user_invites
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    
+    await supabaseAdmin
+      .from("user_invites")
+      .insert({
+        email,
+        role,
+        invited_by: user.id,
+        status: "pending",
+        expires_at: expiresAt,
+      });
+
     // Enviar email de convite se solicitado
     if (sendInvite) {
       try {
