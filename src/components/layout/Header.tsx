@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Search, Sun, Moon, MapPin, Calendar, LogOut, LayoutDashboard, Newspaper, FolderOpen, Megaphone, Settings } from "lucide-react";
+import { Menu, X, Search, Sun, Moon, LogOut, LayoutDashboard, Newspaper, FolderOpen, Megaphone, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTheme } from "@/hooks/useTheme";
@@ -27,12 +27,6 @@ export function Header() {
   
   const hasAdminAccess = isAdmin || isEditor || ['editor_chief', 'reporter', 'columnist', 'moderator'].includes(role || '');
   
-  const today = new Date().toLocaleDateString("pt-BR", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
 
   const userInitials = user?.user_metadata?.full_name
     ?.split(' ')
@@ -43,22 +37,6 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full">
-      {/* Top bar */}
-      <div className="bg-primary text-primary-foreground">
-        <div className="container flex items-center justify-between py-1.5 text-xs">
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1">
-              <MapPin className="h-3 w-3" />
-              Região Metropolitana
-            </span>
-            <span className="hidden items-center gap-1 sm:flex">
-              <Calendar className="h-3 w-3" />
-              <span className="capitalize">{today}</span>
-            </span>
-          </div>
-        </div>
-      </div>
-
       {/* Main header */}
       <div className="glass border-b">
         <div className="container flex items-center justify-between py-3">
