@@ -924,6 +924,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_duplicate_news: {
+        Args: { p_slug: string; p_source_url: string; p_title: string }
+        Returns: {
+          existing_id: string
+          is_duplicate: boolean
+          match_type: string
+        }[]
+      }
       has_permission: {
         Args: { _permission: string; _user_id: string }
         Returns: boolean
@@ -936,6 +944,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin_or_editor: { Args: { _user_id: string }; Returns: boolean }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
     }
