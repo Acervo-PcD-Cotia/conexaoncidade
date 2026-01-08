@@ -29,3 +29,15 @@ verify_jwt = false
 
 [functions.qr-generator]
 verify_jwt = false
+
+[functions.resolve-style]
+verify_jwt = false
+
+[functions.generate-style-guide]
+verify_jwt = false
+
+[functions.rewrite-article]
+verify_jwt = false
+
+[functions.ingest-style-ref]
+verify_jwt = false
