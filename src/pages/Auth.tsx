@@ -12,7 +12,20 @@ import { z } from 'zod';
 import { Loader2, Mail, Lock, User } from 'lucide-react';
 import logoFull from "@/assets/logo-full.png";
 
-const ADMIN_ROLES = ['admin', 'editor', 'editor_chief', 'reporter', 'columnist', 'moderator'];
+const ADMIN_ROLES = ['super_admin', 'admin', 'editor', 'editor_chief', 'reporter', 'columnist', 'moderator', 'commercial', 'financial'];
+
+// Redirecionamento específico por perfil
+const ROLE_ROUTES: Record<string, string> = {
+  super_admin: '/admin',
+  admin: '/admin',
+  editor_chief: '/admin',
+  editor: '/admin/news',
+  reporter: '/admin/news',
+  columnist: '/admin/news',
+  moderator: '/admin',
+  commercial: '/admin/ads',
+  financial: '/admin/financial',
+};
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -49,7 +62,7 @@ export default function Auth() {
 
   useEffect(() => {
     if (user) {
-      // Verificar se o usuário tem papel administrativo
+      // Verificar se o usuário tem papel administrativo e redirecionar
       supabase
         .from("user_roles")
         .select("role")
@@ -57,7 +70,9 @@ export default function Auth() {
         .single()
         .then(({ data }) => {
           if (data && ADMIN_ROLES.includes(data.role)) {
-            navigate('/admin');
+            // Redirecionar para rota específica do perfil
+            const route = ROLE_ROUTES[data.role] || '/admin';
+            navigate(route);
           } else {
             navigate('/');
           }

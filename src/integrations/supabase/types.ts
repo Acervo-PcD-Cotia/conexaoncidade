@@ -1700,6 +1700,7 @@ export type Database = {
           id: string
           image_alt: string | null
           image_credit: string | null
+          is_indexable: boolean | null
           meta_description: string | null
           meta_keywords: string[] | null
           meta_title: string | null
@@ -1742,6 +1743,7 @@ export type Database = {
           id?: string
           image_alt?: string | null
           image_credit?: string | null
+          is_indexable?: boolean | null
           meta_description?: string | null
           meta_keywords?: string[] | null
           meta_title?: string | null
@@ -1784,6 +1786,7 @@ export type Database = {
           id?: string
           image_alt?: string | null
           image_credit?: string | null
+          is_indexable?: boolean | null
           meta_description?: string | null
           meta_keywords?: string[] | null
           meta_title?: string | null
@@ -3292,6 +3295,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_invites: {
+        Row: {
+          accepted_at: string | null
+          created_at: string | null
+          email: string
+          expires_at: string | null
+          id: string
+          invited_by: string | null
+          role: string
+          status: string
+          token: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string | null
+          email: string
+          expires_at?: string | null
+          id?: string
+          invited_by?: string | null
+          role?: string
+          status?: string
+          token?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string | null
+          email?: string
+          expires_at?: string | null
+          id?: string
+          invited_by?: string | null
+          role?: string
+          status?: string
+          token?: string | null
+        }
+        Relationships: []
       }
       user_permissions: {
         Row: {
