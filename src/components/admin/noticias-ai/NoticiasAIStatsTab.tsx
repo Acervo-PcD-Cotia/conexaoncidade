@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, FileText, CheckCircle, Wand2, BarChart3 } from 'lucide-react';
+import { TrendingUp, TrendingDown, FileText, CheckCircle, Wand2, BarChart3, Download, FileSpreadsheet } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
 import { PieChart, Pie, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { subDays, startOfDay, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { exportStatsToPDF, exportStatsToExcel } from '@/lib/exportUtils';
 
 type Period = 'today' | 'week' | 'month';
 
@@ -132,10 +135,31 @@ export function NoticiasAIStatsTab() {
     );
   }
 
+  const periodLabel = period === 'today' ? 'Hoje' : period === 'week' ? 'Última Semana' : 'Último Mês';
+
   return (
     <div className="space-y-4" data-tour="stats-tab">
-      {/* Period Selector */}
-      <div className="flex justify-end">
+      {/* Period Selector & Export */}
+      <div className="flex justify-between items-center">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Download className="mr-1 h-4 w-4" />
+              Exportar
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={() => exportStatsToPDF(stats, periodLabel)}>
+              <FileText className="mr-2 h-4 w-4" />
+              Exportar PDF
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => exportStatsToExcel(stats, periodLabel)}>
+              <FileSpreadsheet className="mr-2 h-4 w-4" />
+              Exportar Excel
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        
         <Select value={period} onValueChange={(v) => setPeriod(v as Period)}>
           <SelectTrigger className="w-[180px]">
             <SelectValue />

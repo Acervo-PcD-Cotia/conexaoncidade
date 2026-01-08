@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
-import { RefreshCw, ExternalLink, Edit, CheckCircle, XCircle, Wand2 } from 'lucide-react';
+import { RefreshCw, ExternalLink, Edit, CheckCircle, XCircle, Wand2, FileText, FileSpreadsheet, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { exportHistoryToPDF, exportHistoryToExcel } from '@/lib/exportUtils';
 
 interface ImportRecord {
   id: string;
@@ -73,10 +75,30 @@ export function NoticiasAIHistoryTab() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <CardTitle className="text-lg">Histórico de Importações</CardTitle>
-          <Button variant="outline" size="sm" onClick={fetchImports} disabled={loading}>
-            <RefreshCw className={`mr-1 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            Atualizar
-          </Button>
+          <div className="flex gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" disabled={imports.length === 0}>
+                  <Download className="mr-1 h-4 w-4" />
+                  Exportar
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => exportHistoryToPDF(imports, 'Últimas 50 importações')}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  Exportar PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportHistoryToExcel(imports, 'Últimas 50 importações')}>
+                  <FileSpreadsheet className="mr-2 h-4 w-4" />
+                  Exportar Excel
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button variant="outline" size="sm" onClick={fetchImports} disabled={loading}>
+              <RefreshCw className={`mr-1 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              Atualizar
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {imports.length === 0 ? (
