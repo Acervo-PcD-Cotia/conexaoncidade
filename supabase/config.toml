@@ -41,3 +41,15 @@ verify_jwt = false
 
 [functions.ingest-style-ref]
 verify_jwt = false
+
+[functions.generate-news-audio]
+verify_jwt = false
+
+[functions.generate-news-summary]
+verify_jwt = false
+
+[functions.track-audio-analytics]
+verify_jwt = false
+
+[functions.generate-podcast-feed]
+verify_jwt = false
