@@ -20,3 +20,12 @@ verify_jwt = false
 
 [functions.social-publisher]
 verify_jwt = false
+
+[functions.share-resolver]
+verify_jwt = false
+
+[functions.click-tracker]
+verify_jwt = false
+
+[functions.qr-generator]
+verify_jwt = false

@@ -107,6 +107,173 @@ export type Database = {
         }
         Relationships: []
       }
+      bio_buttons: {
+        Row: {
+          bio_page_id: string
+          click_count: number
+          created_at: string
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          label: string
+          link_id: string | null
+          sort_order: number | null
+          url: string
+        }
+        Insert: {
+          bio_page_id: string
+          click_count?: number
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          label: string
+          link_id?: string | null
+          sort_order?: number | null
+          url: string
+        }
+        Update: {
+          bio_page_id?: string
+          click_count?: number
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          label?: string
+          link_id?: string | null
+          sort_order?: number | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bio_buttons_bio_page_id_fkey"
+            columns: ["bio_page_id"]
+            isOneToOne: false
+            referencedRelation: "bio_pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bio_buttons_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bio_pages: {
+        Row: {
+          background_color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          logo_url: string | null
+          owner_id: string | null
+          site_id: string | null
+          slug: string
+          text_color: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          background_color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          owner_id?: string | null
+          site_id?: string | null
+          slug: string
+          text_color?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          background_color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          owner_id?: string | null
+          site_id?: string | null
+          slug?: string
+          text_color?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bio_pages_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          end_date: string | null
+          id: string
+          name: string
+          objective: string | null
+          owner_id: string | null
+          site_id: string | null
+          start_date: string | null
+          status: string
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          name: string
+          objective?: string | null
+          owner_id?: string | null
+          site_id?: string | null
+          start_date?: string | null
+          status?: string
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          name?: string
+          objective?: string | null
+          owner_id?: string | null
+          site_id?: string | null
+          start_date?: string | null
+          status?: string
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaigns_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           color: string
@@ -150,6 +317,63 @@ export type Database = {
             columns: ["parent_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      click_events: {
+        Row: {
+          bio_button_id: string | null
+          browser: string | null
+          city: string | null
+          clicked_at: string
+          country: string | null
+          device_type: string | null
+          id: string
+          ip_hash: string | null
+          link_id: string | null
+          referer: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          bio_button_id?: string | null
+          browser?: string | null
+          city?: string | null
+          clicked_at?: string
+          country?: string | null
+          device_type?: string | null
+          id?: string
+          ip_hash?: string | null
+          link_id?: string | null
+          referer?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          bio_button_id?: string | null
+          browser?: string | null
+          city?: string | null
+          clicked_at?: string
+          country?: string | null
+          device_type?: string | null
+          id?: string
+          ip_hash?: string | null
+          link_id?: string | null
+          referer?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "click_events_bio_button_id_fkey"
+            columns: ["bio_button_id"]
+            isOneToOne: false
+            referencedRelation: "bio_buttons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "click_events_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "links"
             referencedColumns: ["id"]
           },
         ]
@@ -213,6 +437,99 @@ export type Database = {
             columns: ["tag_id"]
             isOneToOne: false
             referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      links: {
+        Row: {
+          campaign_id: string | null
+          canonical_url: string | null
+          channel: string | null
+          click_count: number
+          created_at: string
+          destination_url: string
+          entity_id: string | null
+          entity_type: string | null
+          expires_at: string | null
+          final_url: string | null
+          id: string
+          owner_id: string | null
+          short_url: string | null
+          site_id: string | null
+          slug: string | null
+          status: string
+          unique_key: string | null
+          updated_at: string
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          canonical_url?: string | null
+          channel?: string | null
+          click_count?: number
+          created_at?: string
+          destination_url: string
+          entity_id?: string | null
+          entity_type?: string | null
+          expires_at?: string | null
+          final_url?: string | null
+          id?: string
+          owner_id?: string | null
+          short_url?: string | null
+          site_id?: string | null
+          slug?: string | null
+          status?: string
+          unique_key?: string | null
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          canonical_url?: string | null
+          channel?: string | null
+          click_count?: number
+          created_at?: string
+          destination_url?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          expires_at?: string | null
+          final_url?: string | null
+          id?: string
+          owner_id?: string | null
+          short_url?: string | null
+          site_id?: string | null
+          slug?: string | null
+          status?: string
+          unique_key?: string | null
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "links_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "links_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
             referencedColumns: ["id"]
           },
         ]
@@ -692,6 +1009,44 @@ export type Database = {
         }
         Relationships: []
       }
+      qr_codes: {
+        Row: {
+          created_at: string
+          format: string | null
+          id: string
+          link_id: string
+          owner_id: string | null
+          size: number | null
+          storage_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          format?: string | null
+          id?: string
+          link_id: string
+          owner_id?: string | null
+          size?: number | null
+          storage_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          format?: string | null
+          id?: string
+          link_id?: string
+          owner_id?: string | null
+          size?: number | null
+          storage_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_codes_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quick_notes: {
         Row: {
           author_id: string | null
@@ -735,6 +1090,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sites: {
+        Row: {
+          base_url: string
+          created_at: string
+          default_utm_medium_map: Json | null
+          default_utm_source: string | null
+          id: string
+          name: string
+          news_path_prefix: string | null
+          owner_id: string | null
+          primary_domain: string
+          share_enabled: boolean | null
+          short_domain: string | null
+          updated_at: string
+        }
+        Insert: {
+          base_url: string
+          created_at?: string
+          default_utm_medium_map?: Json | null
+          default_utm_source?: string | null
+          id?: string
+          name: string
+          news_path_prefix?: string | null
+          owner_id?: string | null
+          primary_domain: string
+          share_enabled?: boolean | null
+          short_domain?: string | null
+          updated_at?: string
+        }
+        Update: {
+          base_url?: string
+          created_at?: string
+          default_utm_medium_map?: Json | null
+          default_utm_source?: string | null
+          id?: string
+          name?: string
+          news_path_prefix?: string | null
+          owner_id?: string | null
+          primary_domain?: string
+          share_enabled?: boolean | null
+          short_domain?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       social_accounts: {
         Row: {
@@ -1114,6 +1514,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_button_clicks: {
+        Args: { p_button_id: string }
+        Returns: undefined
+      }
+      increment_link_clicks: { Args: { p_link_id: string }; Returns: undefined }
       is_admin_or_editor: { Args: { _user_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       show_limit: { Args: never; Returns: number }
