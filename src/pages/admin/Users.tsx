@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Shield, UserPlus } from "lucide-react";
+import { Shield, UserPlus, Loader2, Power, Key } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -28,7 +29,10 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { PERMISSIONS, PERMISSION_LABELS, type Permission } from "@/hooks/useUserPermissions";
 
 type AppRole = "admin" | "editor_chief" | "editor" | "reporter" | "columnist" | "collaborator" | "moderator";
 
@@ -53,30 +57,35 @@ const roleColors: Record<AppRole, string> = {
 };
 
 export default function Users() {
-  const [open, setOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<{ id: string; email: string; role?: AppRole } | null>(null);
-  const [newRole, setNewRole] = useState<AppRole>("editor");
+  const [roleDialogOpen, setRoleDialogOpen] = useState(false);
+  const [newUserDialogOpen, setNewUserDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<{ id: string; email: string; role?: AppRole; isActive?: boolean } | null>(null);
+  const [newRole, setNewRole] = useState<AppRole>("collaborator");
+  const [selectedPermissions, setSelectedPermissions] = useState<Permission[]>([]);
+  const [newUserForm, setNewUserForm] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    role: "collaborator" as AppRole,
+  });
   const queryClient = useQueryClient();
 
   const { data: usersWithRoles, isLoading } = useQuery({
     queryKey: ["admin-users-roles"],
     queryFn: async () => {
-      // Buscar TODOS os profiles primeiro
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
-        .select("id, full_name, avatar_url")
+        .select("id, full_name, avatar_url, is_active")
         .order("created_at", { ascending: false });
 
       if (profilesError) throw profilesError;
 
-      // Buscar roles existentes
       const { data: roles, error: rolesError } = await supabase
         .from("user_roles")
         .select("user_id, role");
 
       if (rolesError) throw rolesError;
 
-      // Combinar dados - mostrar TODOS os usuários
       return profiles?.map((profile) => {
         const roleData = roles?.find((r) => r.user_id === profile.id);
         return {
@@ -84,14 +93,37 @@ export default function Users() {
           role: (roleData?.role as AppRole) || null,
           full_name: profile.full_name,
           avatar_url: profile.avatar_url,
+          is_active: profile.is_active !== false,
         };
       }) || [];
     },
   });
 
+  // Fetch user permissions when editing
+  const { data: userPermissions } = useQuery({
+    queryKey: ["user-permissions", selectedUser?.id],
+    queryFn: async () => {
+      if (!selectedUser?.id) return [];
+      const { data, error } = await supabase
+        .from("user_permissions")
+        .select("permission")
+        .eq("user_id", selectedUser.id);
+      if (error) throw error;
+      return data.map((p) => p.permission as Permission);
+    },
+    enabled: !!selectedUser?.id && roleDialogOpen,
+  });
+
+  // Load permissions when user is selected
+  useState(() => {
+    if (userPermissions) {
+      setSelectedPermissions(userPermissions);
+    }
+  });
+
   const updateRoleMutation = useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: AppRole }) => {
-      // Check if role exists
+    mutationFn: async ({ userId, role, permissions }: { userId: string; role: AppRole; permissions: Permission[] }) => {
+      // Update role
       const { data: existing } = await supabase
         .from("user_roles")
         .select("id")
@@ -110,22 +142,88 @@ export default function Users() {
           .insert({ user_id: userId, role });
         if (error) throw error;
       }
+
+      // Update permissions - delete all and insert new
+      await supabase.from("user_permissions").delete().eq("user_id", userId);
+      
+      if (permissions.length > 0) {
+        const { error } = await supabase.from("user_permissions").insert(
+          permissions.map((permission) => ({ user_id: userId, permission }))
+        );
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users-roles"] });
-      toast.success("Role atualizado!");
-      setOpen(false);
+      toast.success("Usuário atualizado!");
+      setRoleDialogOpen(false);
       setSelectedUser(null);
+      setSelectedPermissions([]);
     },
     onError: (error) => {
       toast.error("Erro: " + (error as Error).message);
     },
   });
 
-  const handleEditRole = (user: { id: string; full_name?: string | null; role: AppRole | null }) => {
-    setSelectedUser({ id: user.id, email: user.full_name || user.id, role: user.role || undefined });
+  const toggleUserActiveMutation = useMutation({
+    mutationFn: async ({ userId, isActive }: { userId: string; isActive: boolean }) => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ is_active: isActive })
+        .eq("id", userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users-roles"] });
+      toast.success("Status atualizado!");
+    },
+  });
+
+  const createUserMutation = useMutation({
+    mutationFn: async (data: typeof newUserForm) => {
+      const response = await supabase.functions.invoke("create-user", {
+        body: {
+          email: data.email,
+          password: data.password,
+          fullName: data.fullName,
+          role: data.role,
+        },
+      });
+
+      if (response.error) throw new Error(response.error.message);
+      if (!response.data.success) throw new Error(response.data.error);
+      
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users-roles"] });
+      toast.success("Usuário criado com sucesso!");
+      setNewUserDialogOpen(false);
+      setNewUserForm({ fullName: "", email: "", password: "", role: "collaborator" });
+    },
+    onError: (error) => {
+      toast.error("Erro ao criar usuário: " + (error as Error).message);
+    },
+  });
+
+  const handleEditRole = (user: { id: string; full_name?: string | null; role: AppRole | null; is_active?: boolean }) => {
+    setSelectedUser({ 
+      id: user.id, 
+      email: user.full_name || user.id, 
+      role: user.role || undefined,
+      isActive: user.is_active 
+    });
     setNewRole(user.role || "collaborator");
-    setOpen(true);
+    setSelectedPermissions([]);
+    setRoleDialogOpen(true);
+  };
+
+  const togglePermission = (permission: Permission) => {
+    setSelectedPermissions((prev) =>
+      prev.includes(permission)
+        ? prev.filter((p) => p !== permission)
+        : [...prev, permission]
+    );
   };
 
   return (
@@ -135,6 +233,10 @@ export default function Users() {
           <h1 className="font-heading text-3xl font-bold">Usuários</h1>
           <p className="text-muted-foreground">Gerencie os usuários e suas permissões</p>
         </div>
+        <Button onClick={() => setNewUserDialogOpen(true)}>
+          <UserPlus className="mr-2 h-4 w-4" />
+          Novo Usuário
+        </Button>
       </div>
 
       <div className="rounded-lg border bg-card">
@@ -143,25 +245,26 @@ export default function Users() {
             <TableRow>
               <TableHead>Usuário</TableHead>
               <TableHead>Role</TableHead>
-              <TableHead className="w-24"></TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="w-32"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={3} className="py-8 text-center">
+                <TableCell colSpan={4} className="py-8 text-center">
                   Carregando...
                 </TableCell>
               </TableRow>
             ) : usersWithRoles?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={3} className="py-8 text-center">
+                <TableCell colSpan={4} className="py-8 text-center">
                   Nenhum usuário encontrado
                 </TableCell>
               </TableRow>
             ) : (
               usersWithRoles?.map((user) => (
-                <TableRow key={user.id}>
+                <TableRow key={user.id} className={!user.is_active ? "opacity-50" : ""}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">
@@ -189,12 +292,26 @@ export default function Users() {
                     )}
                   </TableCell>
                   <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={user.is_active}
+                        onCheckedChange={(checked) =>
+                          toggleUserActiveMutation.mutate({ userId: user.id, isActive: checked })
+                        }
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        {user.is_active ? "Ativo" : "Inativo"}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleEditRole(user)}
                     >
-                      {user.role ? "Alterar Role" : "Atribuir Role"}
+                      <Key className="mr-1 h-3 w-3" />
+                      Permissões
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -204,10 +321,11 @@ export default function Users() {
         </Table>
       </div>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+      {/* Edit Role & Permissions Dialog */}
+      <Dialog open={roleDialogOpen} onOpenChange={setRoleDialogOpen}>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Alterar Role</DialogTitle>
+            <DialogTitle>Gerenciar Permissões</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -215,7 +333,7 @@ export default function Users() {
               <p className="text-sm text-muted-foreground">{selectedUser?.email}</p>
             </div>
             <div>
-              <Label>Novo Role</Label>
+              <Label>Role</Label>
               <Select value={newRole} onValueChange={(v) => setNewRole(v as AppRole)}>
                 <SelectTrigger>
                   <SelectValue />
@@ -230,19 +348,129 @@ export default function Users() {
                   <SelectItem value="moderator">Moderador</SelectItem>
                 </SelectContent>
               </Select>
+              {newRole === "admin" && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Administradores têm todas as permissões automaticamente.
+                </p>
+              )}
             </div>
+            
+            {newRole !== "admin" && (
+              <div className="space-y-2">
+                <Label>Permissões Específicas</Label>
+                <div className="grid grid-cols-2 gap-2 border rounded-lg p-3">
+                  {Object.entries(PERMISSION_LABELS).map(([key, label]) => (
+                    <label key={key} className="flex items-center gap-2 text-sm cursor-pointer">
+                      <Checkbox
+                        checked={selectedPermissions.includes(key as Permission)}
+                        onCheckedChange={() => togglePermission(key as Permission)}
+                      />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRoleDialogOpen(false)}>
+              Cancelar
+            </Button>
             <Button
-              className="w-full"
               onClick={() => {
                 if (selectedUser) {
-                  updateRoleMutation.mutate({ userId: selectedUser.id, role: newRole });
+                  updateRoleMutation.mutate({
+                    userId: selectedUser.id,
+                    role: newRole,
+                    permissions: newRole === "admin" ? [] : selectedPermissions,
+                  });
                 }
               }}
               disabled={updateRoleMutation.isPending}
             >
               {updateRoleMutation.isPending ? "Salvando..." : "Salvar"}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* New User Dialog */}
+      <Dialog open={newUserDialogOpen} onOpenChange={setNewUserDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Novo Usuário</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Nome Completo *</Label>
+              <Input
+                value={newUserForm.fullName}
+                onChange={(e) => setNewUserForm({ ...newUserForm, fullName: e.target.value })}
+                placeholder="Nome do usuário"
+              />
+            </div>
+            <div>
+              <Label>Email *</Label>
+              <Input
+                type="email"
+                value={newUserForm.email}
+                onChange={(e) => setNewUserForm({ ...newUserForm, email: e.target.value })}
+                placeholder="email@exemplo.com"
+              />
+            </div>
+            <div>
+              <Label>Senha Temporária *</Label>
+              <Input
+                type="password"
+                value={newUserForm.password}
+                onChange={(e) => setNewUserForm({ ...newUserForm, password: e.target.value })}
+                placeholder="Mínimo 6 caracteres"
+              />
+            </div>
+            <div>
+              <Label>Role Inicial</Label>
+              <Select
+                value={newUserForm.role}
+                onValueChange={(v) => setNewUserForm({ ...newUserForm, role: v as AppRole })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Administrador</SelectItem>
+                  <SelectItem value="editor_chief">Editor-Chefe</SelectItem>
+                  <SelectItem value="editor">Editor</SelectItem>
+                  <SelectItem value="reporter">Repórter</SelectItem>
+                  <SelectItem value="columnist">Colunista</SelectItem>
+                  <SelectItem value="collaborator">Colaborador</SelectItem>
+                  <SelectItem value="moderator">Moderador</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNewUserDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => createUserMutation.mutate(newUserForm)}
+              disabled={
+                createUserMutation.isPending ||
+                !newUserForm.fullName ||
+                !newUserForm.email ||
+                !newUserForm.password
+              }
+            >
+              {createUserMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Criando...
+                </>
+              ) : (
+                "Criar Usuário"
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

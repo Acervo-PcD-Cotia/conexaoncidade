@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Save, Loader2, Calendar } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Calendar, Cloud, CloudOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { NewsAIPanel } from "@/components/admin/NewsAIPanel";
@@ -63,6 +64,12 @@ export default function NewsEditor() {
   });
 
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  
+  // Auto-save state
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hasUnsavedChanges = useRef(false);
 
   const { data: news, isLoading: loadingNews } = useQuery({
     queryKey: ["admin-news", id],
@@ -114,6 +121,7 @@ export default function NewsEditor() {
         meta_description: news.meta_description || "",
         scheduled_at: news.scheduled_at || "",
       });
+      setLastSaved(new Date(news.updated_at));
     }
   }, [news]);
 
@@ -126,6 +134,64 @@ export default function NewsEditor() {
       setFormData((prev) => ({ ...prev, slug: generateSlug(prev.title) }));
     }
   }, [formData.title, isEditing]);
+
+  // Auto-save mutation
+  const autoSaveMutation = useMutation({
+    mutationFn: async (data: typeof formData) => {
+      if (!id) return null;
+      
+      const { error } = await supabase
+        .from("news")
+        .update({
+          ...data,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", id);
+      
+      if (error) throw error;
+      return new Date();
+    },
+    onSuccess: (savedAt) => {
+      if (savedAt) {
+        setLastSaved(savedAt);
+        hasUnsavedChanges.current = false;
+      }
+      setIsAutoSaving(false);
+    },
+    onError: () => {
+      setIsAutoSaving(false);
+    },
+  });
+
+  // Auto-save effect
+  const triggerAutoSave = useCallback(() => {
+    if (!isEditing || formData.status !== "draft" || !formData.title) return;
+    
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+    
+    hasUnsavedChanges.current = true;
+    
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      if (hasUnsavedChanges.current) {
+        setIsAutoSaving(true);
+        autoSaveMutation.mutate(formData);
+      }
+    }, 30000); // 30 segundos
+  }, [formData, isEditing, autoSaveMutation]);
+
+  useEffect(() => {
+    if (isEditing && formData.status === "draft") {
+      triggerAutoSave();
+    }
+    
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, [formData, isEditing, triggerAutoSave]);
 
   const saveMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
@@ -155,7 +221,9 @@ export default function NewsEditor() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["admin-news"] });
       toast.success(isEditing ? "Notícia atualizada!" : "Notícia criada!");
-      if (!isEditing) navigate(`/admin/news/${data.id}`);
+      setLastSaved(new Date());
+      hasUnsavedChanges.current = false;
+      if (!isEditing) navigate(`/admin/news/${data.id}/edit`);
     },
     onError: (error) => toast.error("Erro ao salvar: " + (error as Error).message),
   });
@@ -166,10 +234,17 @@ export default function NewsEditor() {
       toast.error("Título e slug são obrigatórios");
       return;
     }
+    // Cancelar auto-save pendente
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
     saveMutation.mutate(formData);
   };
 
-  const updateField = (field: string, value: string) => setFormData((prev) => ({ ...prev, [field]: value }));
+  const updateField = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    hasUnsavedChanges.current = true;
+  };
 
   const canPublish = userRole === "admin" || userRole === "editor" || userRole === "editor_chief";
 
@@ -190,7 +265,29 @@ export default function NewsEditor() {
           </Button>
           <h1 className="font-heading text-2xl font-bold">{isEditing ? "Editar Notícia" : "Nova Notícia"}</h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {/* Auto-save indicator */}
+          {isEditing && formData.status === "draft" && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              {isAutoSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Salvando...</span>
+                </>
+              ) : lastSaved ? (
+                <>
+                  <Cloud className="h-4 w-4 text-green-500" />
+                  <span>Salvo às {lastSaved.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
+                </>
+              ) : hasUnsavedChanges.current ? (
+                <>
+                  <CloudOff className="h-4 w-4 text-yellow-500" />
+                  <span>Alterações não salvas</span>
+                </>
+              ) : null}
+            </div>
+          )}
+          
           <NewsPreview
             title={formData.title}
             subtitle={formData.subtitle}
@@ -277,7 +374,16 @@ export default function NewsEditor() {
 
         <div className="space-y-6">
           <Card>
-            <CardHeader><CardTitle>Publicação</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                Publicação
+                {formData.status === "draft" && (
+                  <Badge variant="outline" className="font-normal">
+                    Auto-save ativo
+                  </Badge>
+                )}
+              </CardTitle>
+            </CardHeader>
             <CardContent className="space-y-4">
               <div>
                 <Label>Status</Label>
