@@ -14,6 +14,7 @@ import {
   Megaphone,
   Tag,
   Sparkles,
+  Share2,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useUserRole } from "@/hooks/useRequireRole";
@@ -46,6 +47,7 @@ const editorialItems = [
   { title: "Editor da Home", url: "/admin/home-editor", icon: PanelTop },
   { title: "Banners", url: "/admin/banners", icon: Image },
   { title: "Anúncios", url: "/admin/ads", icon: Megaphone },
+  { title: "Distribuição Social", url: "/admin/social", icon: Share2 },
   { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
 ];
 

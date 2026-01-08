@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.rss-parser]
 verify_jwt = false
+
+[functions.social-publisher]
+verify_jwt = false
