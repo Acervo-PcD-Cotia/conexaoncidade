@@ -35,6 +35,8 @@ import SocialQueue from "./pages/admin/SocialQueue";
 import SocialHistory from "./pages/admin/SocialHistory";
 import SocialLogs from "./pages/admin/SocialLogs";
 import SocialSettings from "./pages/admin/SocialSettings";
+import LinksDashboard from "./pages/admin/LinksDashboard";
+import LinksBuilder from "./pages/admin/LinksBuilder";
 
 const queryClient = new QueryClient();
 
@@ -79,6 +81,8 @@ const App = () => (
               <Route path="social/history" element={<SocialHistory />} />
               <Route path="social/logs" element={<SocialLogs />} />
               <Route path="social/settings" element={<SocialSettings />} />
+              <Route path="links" element={<LinksDashboard />} />
+              <Route path="links/create" element={<LinksBuilder />} />
               <Route path="logs" element={<AuditLogs />} />
               <Route path="settings" element={<Settings />} />
             </Route>
