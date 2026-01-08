@@ -38,6 +38,10 @@ import SocialSettings from "./pages/admin/SocialSettings";
 import LinksDashboard from "./pages/admin/LinksDashboard";
 import LinksBuilder from "./pages/admin/LinksBuilder";
 import Solutions from "./pages/admin/Solutions";
+import EventsList from "./pages/admin/EventsList";
+import EditionsList from "./pages/admin/EditionsList";
+import FinancialDashboard from "./pages/admin/FinancialDashboard";
+import TrainingHub from "./pages/admin/TrainingHub";
 
 const queryClient = new QueryClient();
 
@@ -87,6 +91,10 @@ const App = () => (
               <Route path="logs" element={<AuditLogs />} />
               <Route path="settings" element={<Settings />} />
               <Route path="solutions" element={<Solutions />} />
+              <Route path="events" element={<EventsList />} />
+              <Route path="editions" element={<EditionsList />} />
+              <Route path="financial" element={<FinancialDashboard />} />
+              <Route path="training" element={<TrainingHub />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
