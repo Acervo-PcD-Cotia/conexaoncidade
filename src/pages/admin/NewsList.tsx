@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
-import { Plus, Search, Eye, Edit, Trash2, MoreHorizontal } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Plus, Search, Eye, Edit, Trash2, MoreHorizontal, Copy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +26,7 @@ import { toast } from "sonner";
 export default function NewsList() {
   const [search, setSearch] = useState("");
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { data: news, isLoading } = useQuery({
     queryKey: ["admin-news", search],
@@ -58,11 +60,81 @@ export default function NewsList() {
     },
   });
 
+  const duplicateMutation = useMutation({
+    mutationFn: async (id: string) => {
+      // Buscar notícia original
+      const { data: original, error: fetchError } = await supabase
+        .from("news")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (fetchError || !original) throw new Error("Notícia não encontrada");
+
+      // Criar cópia
+      const timestamp = Date.now();
+      const newSlug = `${original.slug}-copia-${timestamp}`;
+      
+      const { data: duplicated, error: insertError } = await supabase
+        .from("news")
+        .insert({
+          title: `[CÓPIA] ${original.title}`,
+          subtitle: original.subtitle,
+          hat: original.hat,
+          slug: newSlug,
+          excerpt: original.excerpt,
+          content: original.content,
+          source: original.source,
+          featured_image_url: original.featured_image_url,
+          card_image_url: original.card_image_url,
+          image_alt: original.image_alt,
+          image_credit: original.image_credit,
+          category_id: original.category_id,
+          status: "draft",
+          highlight: "none",
+          meta_title: original.meta_title,
+          meta_description: original.meta_description,
+        })
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+
+      // Copiar tags também
+      const { data: originalTags } = await supabase
+        .from("news_tags")
+        .select("tag_id")
+        .eq("news_id", id);
+
+      if (originalTags && originalTags.length > 0) {
+        await supabase.from("news_tags").insert(
+          originalTags.map((t) => ({
+            news_id: duplicated.id,
+            tag_id: t.tag_id,
+          }))
+        );
+      }
+
+      return duplicated;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-news"] });
+      toast.success("Notícia duplicada! Redirecionando para edição...");
+      navigate(`/admin/news/${data.id}/edit`);
+    },
+    onError: (error) => {
+      toast.error("Erro ao duplicar: " + (error as Error).message);
+    },
+  });
+
   const statusColors: Record<string, string> = {
     published: "bg-green-100 text-green-700",
     draft: "bg-yellow-100 text-yellow-700",
     scheduled: "bg-blue-100 text-blue-700",
     archived: "bg-gray-100 text-gray-700",
+    review: "bg-orange-100 text-orange-700",
+    approved: "bg-emerald-100 text-emerald-700",
+    trash: "bg-red-100 text-red-700",
   };
 
   const statusLabels: Record<string, string> = {
@@ -70,6 +142,9 @@ export default function NewsList() {
     draft: "Rascunho",
     scheduled: "Agendado",
     archived: "Arquivado",
+    review: "Em Revisão",
+    approved: "Aprovado",
+    trash: "Lixeira",
   };
 
   return (
@@ -177,6 +252,14 @@ export default function NewsList() {
                             Editar
                           </Link>
                         </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => duplicateMutation.mutate(item.id)}
+                          disabled={duplicateMutation.isPending}
+                        >
+                          <Copy className="mr-2 h-4 w-4" />
+                          Duplicar
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-destructive"
                           onClick={() => {

@@ -18,6 +18,7 @@ import Dashboard from "./pages/admin/Dashboard";
 import NewsList from "./pages/admin/NewsList";
 import NewsEditor from "./pages/admin/NewsEditor";
 import Categories from "./pages/admin/Categories";
+import Tags from "./pages/admin/Tags";
 import Banners from "./pages/admin/Banners";
 import Ads from "./pages/admin/Ads";
 import StoriesList from "./pages/admin/StoriesList";
@@ -56,6 +57,7 @@ const App = () => (
               <Route path="news/new" element={<NewsEditor />} />
               <Route path="news/:id/edit" element={<NewsEditor />} />
               <Route path="categories" element={<Categories />} />
+              <Route path="tags" element={<Tags />} />
               <Route path="banners" element={<Banners />} />
               <Route path="ads" element={<Ads />} />
               <Route path="stories" element={<StoriesList />} />

@@ -12,6 +12,7 @@ import {
   History,
   PanelTop,
   Megaphone,
+  Tag,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useUserRole } from "@/hooks/useRequireRole";
@@ -35,6 +36,7 @@ const mainMenuItems = [
   { title: "Notícias", url: "/admin/news", icon: Newspaper },
   { title: "Notas Rápidas", url: "/admin/quick-notes", icon: Zap },
   { title: "Categorias", url: "/admin/categories", icon: FolderTree },
+  { title: "Tags", url: "/admin/tags", icon: Tag },
   { title: "Web Stories", url: "/admin/stories", icon: PlaySquare },
 ];
 

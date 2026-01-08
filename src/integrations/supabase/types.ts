@@ -157,29 +157,65 @@ export type Database = {
       home_config: {
         Row: {
           block_name: string
+          block_type: string | null
+          category_id: string | null
           id: string
+          is_active: boolean | null
+          item_count: number | null
           news_ids: string[] | null
           settings: Json | null
+          sort_order: number | null
+          tag_id: string | null
+          title: string | null
           updated_at: string
           updated_by: string | null
         }
         Insert: {
           block_name: string
+          block_type?: string | null
+          category_id?: string | null
           id?: string
+          is_active?: boolean | null
+          item_count?: number | null
           news_ids?: string[] | null
           settings?: Json | null
+          sort_order?: number | null
+          tag_id?: string | null
+          title?: string | null
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
           block_name?: string
+          block_type?: string | null
+          category_id?: string | null
           id?: string
+          is_active?: boolean | null
+          item_count?: number | null
           news_ids?: string[] | null
           settings?: Json | null
+          sort_order?: number | null
+          tag_id?: string | null
+          title?: string | null
           updated_at?: string
           updated_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "home_config_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "home_config_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       news: {
         Row: {
@@ -364,6 +400,8 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          is_active: boolean | null
+          last_activity_at: string | null
           updated_at: string
         }
         Insert: {
@@ -372,6 +410,8 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id: string
+          is_active?: boolean | null
+          last_activity_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -380,6 +420,8 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          is_active?: boolean | null
+          last_activity_at?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -521,6 +563,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_permissions: {
+        Row: {
+          created_at: string | null
+          id: string
+          permission: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          permission: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          permission?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -642,6 +705,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      has_permission: {
+        Args: { _permission: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
