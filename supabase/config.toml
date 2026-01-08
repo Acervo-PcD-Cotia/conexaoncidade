@@ -53,3 +53,6 @@ verify_jwt = false
 
 [functions.generate-podcast-feed]
 verify_jwt = false
+
+[functions.sitemap]
+verify_jwt = false

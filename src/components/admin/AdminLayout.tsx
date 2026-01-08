@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AdminSidebar } from "./AdminSidebar";
 import { AdminHeader } from "./AdminHeader";
+import { Breadcrumb } from "./Breadcrumb";
 import { useRequireRole } from "@/hooks/useRequireRole";
 
 export function AdminLayout() {
@@ -12,7 +13,7 @@ export function AdminLayout() {
     "editor_chief", 
     "reporter", 
     "columnist",
-    "moderator"
+    "moderator",
   ]);
 
   if (checkingRole) {
@@ -34,6 +35,7 @@ export function AdminLayout() {
         <div className="flex flex-1 flex-col">
           <AdminHeader />
           <main className="flex-1 overflow-auto bg-muted/30 p-6">
+            <Breadcrumb />
             <Outlet />
           </main>
         </div>

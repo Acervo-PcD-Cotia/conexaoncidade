@@ -61,6 +61,7 @@ const App = () => (
             </Route>
             <Route path="/story/:slug" element={<StoryViewer />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/login" element={<Navigate to="/auth" replace />} />
             <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
 
             {/* Admin Routes */}

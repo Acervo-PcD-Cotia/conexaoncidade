@@ -84,144 +84,179 @@ export default function NewsDetail() {
 
   const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
 
+  // Schema.org NewsArticle para SEO
+  const schemaOrg = {
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    "headline": news.title,
+    "description": news.subtitle || news.excerpt || "",
+    "image": news.featured_image_url || "",
+    "datePublished": news.published_at || "",
+    "dateModified": news.published_at || "",
+    "author": {
+      "@type": "Person",
+      "name": news.author?.full_name || "Redação"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Conexão na Cidade",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://conexaonacidade.com.br/favicon.png"
+      }
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": currentUrl
+    }
+  };
+
   return (
-    <article className="container max-w-4xl py-8">
-      {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-        <Link to="/" className="hover:text-primary transition-colors">
-          Início
-        </Link>
-        <span>/</span>
-        {news.category && (
-          <>
-            <Link
-              to={`/categoria/${news.category.slug}`}
-              className="hover:text-primary transition-colors"
-            >
-              {news.category.name}
-            </Link>
-            <span>/</span>
-          </>
-        )}
-        <span className="text-foreground line-clamp-1">{news.title}</span>
-      </nav>
-
-      {/* Category & Hat */}
-      <div className="flex items-center gap-3 mb-4">
-        {news.category && (
-          <Link to={`/categoria/${news.category.slug}`}>
-            <Badge
-              className="text-white hover:opacity-90 transition-opacity"
-              style={{ backgroundColor: news.category.color }}
-            >
-              {news.category.name}
-            </Badge>
+    <>
+      {/* Schema.org para SEO */}
+      <script 
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaOrg) }}
+      />
+      
+      <article className="container max-w-4xl py-8">
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+          <Link to="/" className="hover:text-primary transition-colors">
+            Início
           </Link>
-        )}
-        {news.hat && (
-          <span className="text-sm font-medium text-primary uppercase tracking-wide">
-            {news.hat}
-          </span>
-        )}
-      </div>
-
-      {/* Title */}
-      <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold font-heading leading-tight mb-4">
-        {news.title}
-      </h1>
-
-      {/* Subtitle */}
-      {news.subtitle && (
-        <p className="text-xl text-muted-foreground leading-relaxed mb-6">
-          {news.subtitle}
-        </p>
-      )}
-
-      {/* Meta Info */}
-      <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-8 pb-8 border-b">
-        {news.author && (
-          <div className="flex items-center gap-2">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={news.author.avatar_url || undefined} />
-              <AvatarFallback className="text-xs">{authorInitials}</AvatarFallback>
-            </Avatar>
-            <span className="font-medium text-foreground">
-              {news.author.full_name || 'Redação'}
-            </span>
-          </div>
-        )}
-        
-        {news.published_at && (
-          <div className="flex items-center gap-1">
-            <Calendar className="h-4 w-4" />
-            <time dateTime={news.published_at}>
-              {format(new Date(news.published_at), "d 'de' MMMM 'de' yyyy", {
-                locale: ptBR,
-              })}
-            </time>
-          </div>
-        )}
-
-        <div className="flex items-center gap-1">
-          <Clock className="h-4 w-4" />
-          <span>{readTime} min de leitura</span>
-        </div>
-
-        <div className="flex items-center gap-1">
-          <Eye className="h-4 w-4" />
-          <span>{news.view_count.toLocaleString()} visualizações</span>
-        </div>
-      </div>
-
-      {/* Featured Image */}
-      {news.featured_image_url && (
-        <figure className="mb-8">
-          <img
-            src={news.featured_image_url}
-            alt={news.image_alt || news.title}
-            className="w-full rounded-lg object-cover aspect-video"
-          />
-          {news.image_credit && (
-            <figcaption className="text-sm text-muted-foreground mt-2 text-center">
-              Foto: {news.image_credit}
-            </figcaption>
+          <span>/</span>
+          {news.category && (
+            <>
+              <Link
+                to={`/categoria/${news.category.slug}`}
+                className="hover:text-primary transition-colors"
+              >
+                {news.category.name}
+              </Link>
+              <span>/</span>
+            </>
           )}
-        </figure>
-      )}
+          <span className="text-foreground line-clamp-1">{news.title}</span>
+        </nav>
 
-      {/* Content */}
-      {news.content && (
-        <div
-          className="prose-news text-lg mb-8"
-          dangerouslySetInnerHTML={{ __html: news.content }}
-        />
-      )}
-
-      {/* Tags */}
-      {news.tags && news.tags.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-8">
-          {news.tags.map((tag) => (
-            <Link
-              key={tag.id}
-              to={`/busca?tag=${tag.slug}`}
-              className="bg-muted hover:bg-muted/80 px-3 py-1 rounded-full text-sm transition-colors"
-            >
-              #{tag.name}
+        {/* Category & Hat */}
+        <div className="flex items-center gap-3 mb-4">
+          {news.category && (
+            <Link to={`/categoria/${news.category.slug}`}>
+              <Badge
+                className="text-white hover:opacity-90 transition-opacity"
+                style={{ backgroundColor: news.category.color }}
+              >
+                {news.category.name}
+              </Badge>
             </Link>
-          ))}
+          )}
+          {news.hat && (
+            <span className="text-sm font-medium text-primary uppercase tracking-wide">
+              {news.hat}
+            </span>
+          )}
         </div>
-      )}
 
-      {/* Share Buttons */}
-      <div className="mb-8 pb-8 border-b">
-        <ShareButtons url={currentUrl} title={news.title} />
-      </div>
+        {/* Title */}
+        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold font-heading leading-tight mb-4">
+          {news.title}
+        </h1>
 
-      {/* Author Card */}
-      {news.author && <AuthorCard author={news.author} />}
+        {/* Subtitle */}
+        {news.subtitle && (
+          <p className="text-xl text-muted-foreground leading-relaxed mb-6">
+            {news.subtitle}
+          </p>
+        )}
 
-      {/* Related News */}
-      <RelatedNews news={relatedNews} />
-    </article>
+        {/* Meta Info */}
+        <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-8 pb-8 border-b">
+          {news.author && (
+            <div className="flex items-center gap-2">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={news.author.avatar_url || undefined} />
+                <AvatarFallback className="text-xs">{authorInitials}</AvatarFallback>
+              </Avatar>
+              <span className="font-medium text-foreground">
+                {news.author.full_name || 'Redação'}
+              </span>
+            </div>
+          )}
+          
+          {news.published_at && (
+            <div className="flex items-center gap-1">
+              <Calendar className="h-4 w-4" />
+              <time dateTime={news.published_at}>
+                {format(new Date(news.published_at), "d 'de' MMMM 'de' yyyy", {
+                  locale: ptBR,
+                })}
+              </time>
+            </div>
+          )}
+
+          <div className="flex items-center gap-1">
+            <Clock className="h-4 w-4" />
+            <span>{readTime} min de leitura</span>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <Eye className="h-4 w-4" />
+            <span>{news.view_count.toLocaleString()} visualizações</span>
+          </div>
+        </div>
+
+        {/* Featured Image */}
+        {news.featured_image_url && (
+          <figure className="mb-8">
+            <img
+              src={news.featured_image_url}
+              alt={news.image_alt || news.title}
+              className="w-full rounded-lg object-cover aspect-video"
+            />
+            {news.image_credit && (
+              <figcaption className="text-sm text-muted-foreground mt-2 text-center">
+                Foto: {news.image_credit}
+              </figcaption>
+            )}
+          </figure>
+        )}
+
+        {/* Content */}
+        {news.content && (
+          <div
+            className="prose-news text-lg mb-8"
+            dangerouslySetInnerHTML={{ __html: news.content }}
+          />
+        )}
+
+        {/* Tags */}
+        {news.tags && news.tags.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-8">
+            {news.tags.map((tag) => (
+              <Link
+                key={tag.id}
+                to={`/busca?tag=${tag.slug}`}
+                className="bg-muted hover:bg-muted/80 px-3 py-1 rounded-full text-sm transition-colors"
+              >
+                #{tag.name}
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {/* Share Buttons */}
+        <div className="mb-8 pb-8 border-b">
+          <ShareButtons url={currentUrl} title={news.title} />
+        </div>
+
+        {/* Author Card */}
+        {news.author && <AuthorCard author={news.author} />}
+
+        {/* Related News */}
+        <RelatedNews news={relatedNews} />
+      </article>
+    </>
   );
 }

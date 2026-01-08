@@ -27,6 +27,9 @@ export default function Dashboard() {
     queryFn: async () => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
+      
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
 
       const [
         totalNews,
@@ -36,6 +39,9 @@ export default function Dashboard() {
         scheduled,
         storiesCount,
         viewsSum,
+        totalUsers,
+        activeUsers,
+        socialAccounts,
       ] = await Promise.all([
         supabase.from("news").select("id", { count: "exact", head: true }),
         supabase
@@ -57,10 +63,22 @@ export default function Dashboard() {
           .eq("status", "scheduled"),
         supabase.from("web_stories").select("id", { count: "exact", head: true }),
         supabase.from("news").select("view_count"),
+        supabase.from("profiles").select("id", { count: "exact", head: true }),
+        supabase
+          .from("profiles")
+          .select("id", { count: "exact", head: true })
+          .eq("is_active", true),
+        supabase
+          .from("social_accounts")
+          .select("id, platform, enabled"),
       ]);
 
       const totalViews =
         viewsSum.data?.reduce((acc, n) => acc + (n.view_count || 0), 0) || 0;
+      
+      const inactiveIntegrations = (socialAccounts.data || []).filter(
+        (acc) => !acc.enabled
+      ).length;
 
       return {
         totalNews: totalNews.count || 0,
@@ -70,6 +88,9 @@ export default function Dashboard() {
         scheduled: scheduled.count || 0,
         totalStories: storiesCount.count || 0,
         totalViews,
+        totalUsers: totalUsers.count || 0,
+        activeUsers: activeUsers.count || 0,
+        inactiveIntegrations,
       };
     },
   });
@@ -163,8 +184,8 @@ export default function Dashboard() {
       bgColor: "bg-blue-500/10",
     },
     {
-      title: "Total Views",
-      value: stats?.totalViews || 0,
+      title: "Usuários Ativos",
+      value: stats?.activeUsers || 0,
       icon: Eye,
       color: "text-purple-500",
       bgColor: "bg-purple-500/10",
@@ -191,7 +212,7 @@ export default function Dashboard() {
     );
   };
 
-  const hasAlerts = (alerts?.oldDraftsCount || 0) > 0 || (alerts?.noImageCount || 0) > 0;
+  const hasAlerts = (alerts?.oldDraftsCount || 0) > 0 || (alerts?.noImageCount || 0) > 0 || (stats?.inactiveIntegrations || 0) > 0;
 
   return (
     <div className="space-y-6">
@@ -340,6 +361,16 @@ export default function Dashboard() {
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Rascunhos com mais de 7 dias
+                    </p>
+                  </div>
+                ) : null}
+                {stats?.inactiveIntegrations ? (
+                  <div className="text-sm">
+                    <p className="font-medium text-yellow-700 dark:text-yellow-400">
+                      {stats.inactiveIntegrations} integração(ões) inativa(s)
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Redes sociais desabilitadas
                     </p>
                   </div>
                 ) : null}

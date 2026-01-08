@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-type AppRole = "super_admin" | "admin" | "editor" | "columnist" | "moderator" | "editor_chief" | "reporter" | "collaborator";
+type AppRole = "super_admin" | "admin" | "editor" | "columnist" | "moderator" | "editor_chief" | "reporter" | "collaborator" | "commercial" | "financial";
 
 export function useRequireRole(allowedRoles: AppRole[]) {
   const { user, isLoading } = useAuth();
