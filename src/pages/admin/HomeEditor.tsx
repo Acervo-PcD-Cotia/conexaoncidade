@@ -24,6 +24,24 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { HomePreview } from "@/components/admin/HomePreview";
 
 interface NewsItem {
   id: string;
@@ -55,6 +73,147 @@ const BLOCK_TYPES = [
   { value: "latest", label: "Últimas Notícias", description: "Notícias mais recentes" },
 ];
 
+// Sortable Block Component
+interface SortableBlockProps {
+  block: HomeBlock;
+  selectedNews: NewsItem[];
+  onToggle: () => void;
+  onEdit: () => void;
+  onSave: () => void;
+  onDelete: () => void;
+  onRemoveNews: (newsId: string) => void;
+  isSaving: boolean;
+  getBlockTypeLabel: (type: string) => string;
+}
+
+function SortableBlock({
+  block,
+  selectedNews,
+  onToggle,
+  onEdit,
+  onSave,
+  onDelete,
+  onRemoveNews,
+  isSaving,
+  getBlockTypeLabel,
+}: SortableBlockProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: block.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <Card
+      ref={setNodeRef}
+      style={style}
+      className={`${!block.is_active ? "opacity-50" : ""} ${isDragging ? "shadow-lg ring-2 ring-primary" : ""}`}
+    >
+      <CardHeader className="flex flex-row items-center justify-between py-3">
+        <div className="flex items-center gap-3">
+          <button
+            className="cursor-grab active:cursor-grabbing touch-none"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="h-4 w-4 text-muted-foreground" />
+          </button>
+          <div>
+            <CardTitle className="text-base flex items-center gap-2">
+              {block.title || block.block_name}
+              <Badge variant="outline" className="text-xs">
+                {getBlockTypeLabel(block.block_type || "curated")}
+              </Badge>
+              {!block.is_active && (
+                <Badge variant="secondary" className="text-xs">
+                  Inativo
+                </Badge>
+              )}
+            </CardTitle>
+            <CardDescription>
+              {block.block_type === "curated"
+                ? `${selectedNews?.length || 0} itens selecionados`
+                : `${block.item_count} itens automáticos`}
+            </CardDescription>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggle}
+            title={block.is_active ? "Desativar" : "Ativar"}
+          >
+            {block.is_active ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+          </Button>
+          <Button variant="ghost" size="icon" onClick={onEdit}>
+            <Settings2 className="h-4 w-4" />
+          </Button>
+          {block.block_type === "curated" && (
+            <Button size="sm" onClick={onSave} disabled={isSaving}>
+              <Save className="h-4 w-4 mr-1" />
+              Salvar
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-destructive hover:text-destructive"
+            onClick={() => {
+              if (confirm("Remover este bloco?")) {
+                onDelete();
+              }
+            }}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </CardHeader>
+      {block.block_type === "curated" && (
+        <CardContent>
+          <div className="space-y-2">
+            {!selectedNews || selectedNews.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                Nenhuma notícia selecionada. Use a busca para adicionar.
+              </p>
+            ) : (
+              selectedNews.map((news, index) => (
+                <div
+                  key={news.id}
+                  className="flex items-center gap-2 rounded-lg border bg-card p-2"
+                >
+                  <GripVertical className="h-4 w-4 text-muted-foreground" />
+                  <Badge variant="outline" className="shrink-0">
+                    {index + 1}
+                  </Badge>
+                  <span className="flex-1 text-sm line-clamp-1">{news.title}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-destructive"
+                    onClick={() => onRemoveNews(news.id)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
+        </CardContent>
+      )}
+    </Card>
+  );
+}
+
 export default function HomeEditor() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
@@ -70,6 +229,14 @@ export default function HomeEditor() {
     item_count: 10,
     is_active: true,
   });
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Fetch home config
   const { data: homeBlocks, isLoading: loadingBlocks } = useQuery({
@@ -90,7 +257,7 @@ export default function HomeEditor() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("categories")
-        .select("id, name")
+        .select("id, name, color")
         .eq("is_active", true)
         .order("name");
       if (error) throw error;
@@ -146,7 +313,6 @@ export default function HomeEditor() {
               .in("id", block.news_ids);
             
             if (data) {
-              // Manter a ordem original
               newsMap[block.block_name] = block.news_ids
                 .map(id => data.find(n => n.id === id))
                 .filter(Boolean) as NewsItem[];
@@ -162,6 +328,44 @@ export default function HomeEditor() {
       loadNewsForBlocks();
     }
   }, [homeBlocks]);
+
+  // Reorder blocks mutation
+  const reorderBlocksMutation = useMutation({
+    mutationFn: async (orderedBlocks: { id: string; sort_order: number }[]) => {
+      for (const block of orderedBlocks) {
+        const { error } = await supabase
+          .from("home_config")
+          .update({ sort_order: block.sort_order })
+          .eq("id", block.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["home-config"] });
+      toast.success("Ordem atualizada!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao reordenar: " + (error as Error).message);
+    },
+  });
+
+  // Handle drag end
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id && homeBlocks) {
+      const oldIndex = homeBlocks.findIndex((b) => b.id === active.id);
+      const newIndex = homeBlocks.findIndex((b) => b.id === over.id);
+
+      const newOrder = arrayMove(homeBlocks, oldIndex, newIndex);
+      const updates = newOrder.map((block, index) => ({
+        id: block.id,
+        sort_order: index,
+      }));
+
+      reorderBlocksMutation.mutate(updates);
+    }
+  };
 
   // Save block mutation
   const saveBlockMutation = useMutation({
@@ -302,311 +506,252 @@ export default function HomeEditor() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-heading text-3xl font-bold flex items-center gap-2">
-            <Home className="h-8 w-8" />
-            Editor da Home
-          </h1>
-          <p className="text-muted-foreground">
-            Configure os blocos de conteúdo da página inicial
-          </p>
-        </div>
-        <Dialog open={dialogOpen} onOpenChange={(open) => {
-          setDialogOpen(open);
-          if (!open) resetBlockForm();
-        }}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Novo Bloco
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{editingBlock ? "Editar Bloco" : "Novo Bloco"}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label>Identificador (único)</Label>
-                <Input
-                  value={blockForm.block_name}
-                  onChange={(e) => setBlockForm({ ...blockForm, block_name: e.target.value.toLowerCase().replace(/\s/g, "_") })}
-                  placeholder="ex: destaques_esportes"
-                  disabled={!!editingBlock}
-                />
+    <div className="flex h-[calc(100vh-4rem)] gap-6">
+      {/* Left Panel - Editor */}
+      <div className="flex-1 overflow-auto space-y-6 pr-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="font-heading text-3xl font-bold flex items-center gap-2">
+              <Home className="h-8 w-8" />
+              Editor da Home
+            </h1>
+            <p className="text-muted-foreground">
+              Arraste os blocos para reordenar • Preview em tempo real à direita
+            </p>
+          </div>
+          <Dialog open={dialogOpen} onOpenChange={(open) => {
+            setDialogOpen(open);
+            if (!open) resetBlockForm();
+          }}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Novo Bloco
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{editingBlock ? "Editar Bloco" : "Novo Bloco"}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label>Identificador (único)</Label>
+                  <Input
+                    value={blockForm.block_name}
+                    onChange={(e) => setBlockForm({ ...blockForm, block_name: e.target.value.toLowerCase().replace(/\s/g, "_") })}
+                    placeholder="ex: destaques_esportes"
+                    disabled={!!editingBlock}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Título de Exibição</Label>
+                  <Input
+                    value={blockForm.title}
+                    onChange={(e) => setBlockForm({ ...blockForm, title: e.target.value })}
+                    placeholder="ex: Destaques de Esportes"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Tipo de Bloco</Label>
+                  <Select
+                    value={blockForm.block_type}
+                    onValueChange={(v) => setBlockForm({ ...blockForm, block_type: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {BLOCK_TYPES.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          <div>
+                            <div>{type.label}</div>
+                            <div className="text-xs text-muted-foreground">{type.description}</div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {blockForm.block_type === "category" && (
+                  <div className="space-y-2">
+                    <Label>Categoria</Label>
+                    <Select
+                      value={blockForm.category_id}
+                      onValueChange={(v) => setBlockForm({ ...blockForm, category_id: v })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories?.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {blockForm.block_type === "tag" && (
+                  <div className="space-y-2">
+                    <Label>Tag</Label>
+                    <Select
+                      value={blockForm.tag_id}
+                      onValueChange={(v) => setBlockForm({ ...blockForm, tag_id: v })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {tags?.map((tag) => (
+                          <SelectItem key={tag.id} value={tag.id}>
+                            {tag.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label>Quantidade de Itens</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={50}
+                    value={blockForm.item_count}
+                    onChange={(e) => setBlockForm({ ...blockForm, item_count: parseInt(e.target.value) || 10 })}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <Label>Bloco Ativo</Label>
+                  <Switch
+                    checked={blockForm.is_active}
+                    onCheckedChange={(checked) => setBlockForm({ ...blockForm, is_active: checked })}
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>Título de Exibição</Label>
-                <Input
-                  value={blockForm.title}
-                  onChange={(e) => setBlockForm({ ...blockForm, title: e.target.value })}
-                  placeholder="ex: Destaques de Esportes"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Tipo de Bloco</Label>
-                <Select
-                  value={blockForm.block_type}
-                  onValueChange={(v) => setBlockForm({ ...blockForm, block_type: v })}
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={() => upsertBlockMutation.mutate({ ...blockForm, id: editingBlock?.id })}
+                  disabled={upsertBlockMutation.isPending || !blockForm.block_name}
                 >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {BLOCK_TYPES.map((type) => (
-                      <SelectItem key={type.value} value={type.value}>
-                        <div>
-                          <div>{type.label}</div>
-                          <div className="text-xs text-muted-foreground">{type.description}</div>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              {blockForm.block_type === "category" && (
-                <div className="space-y-2">
-                  <Label>Categoria</Label>
-                  <Select
-                    value={blockForm.category_id}
-                    onValueChange={(v) => setBlockForm({ ...blockForm, category_id: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories?.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.id}>
-                          {cat.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              {blockForm.block_type === "tag" && (
-                <div className="space-y-2">
-                  <Label>Tag</Label>
-                  <Select
-                    value={blockForm.tag_id}
-                    onValueChange={(v) => setBlockForm({ ...blockForm, tag_id: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {tags?.map((tag) => (
-                        <SelectItem key={tag.id} value={tag.id}>
-                          {tag.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              <div className="space-y-2">
-                <Label>Quantidade de Itens</Label>
+                  {upsertBlockMutation.isPending ? "Salvando..." : "Salvar"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* News Search Panel */}
+          <Card className="lg:col-span-1">
+            <CardHeader>
+              <CardTitle className="text-base">Buscar Notícias</CardTitle>
+              <CardDescription>
+                Adicione notícias aos blocos de curadoria
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  type="number"
-                  min={1}
-                  max={50}
-                  value={blockForm.item_count}
-                  onChange={(e) => setBlockForm({ ...blockForm, item_count: parseInt(e.target.value) || 10 })}
+                  placeholder="Buscar por título..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
                 />
               </div>
-              <div className="flex items-center justify-between">
-                <Label>Bloco Ativo</Label>
-                <Switch
-                  checked={blockForm.is_active}
-                  onCheckedChange={(checked) => setBlockForm({ ...blockForm, is_active: checked })}
-                />
+              <div className="max-h-[400px] space-y-2 overflow-y-auto">
+                {availableNews?.map((news) => (
+                  <div
+                    key={news.id}
+                    className="flex items-center justify-between rounded-lg border p-2 text-sm hover:bg-accent/50"
+                  >
+                    <span className="line-clamp-2 flex-1">{news.title}</span>
+                    <div className="flex gap-1 ml-2">
+                      {homeBlocks
+                        ?.filter((b) => b.block_type === "curated")
+                        .map((block) => (
+                          <Button
+                            key={block.id}
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => addNewsToBlock(block.block_name, news)}
+                            title={`Adicionar a ${block.title || block.block_name}`}
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        ))}
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button
-                onClick={() => upsertBlockMutation.mutate({ ...blockForm, id: editingBlock?.id })}
-                disabled={upsertBlockMutation.isPending || !blockForm.block_name}
+            </CardContent>
+          </Card>
+
+          {/* Block Editors with DnD */}
+          <div className="lg:col-span-2 space-y-4">
+            {loadingBlocks ? (
+              <Card>
+                <CardContent className="py-8 text-center text-muted-foreground">
+                  Carregando blocos...
+                </CardContent>
+              </Card>
+            ) : homeBlocks?.length === 0 ? (
+              <Card>
+                <CardContent className="py-8 text-center text-muted-foreground">
+                  Nenhum bloco configurado. Clique em "Novo Bloco" para começar.
+                </CardContent>
+              </Card>
+            ) : (
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
               >
-                {upsertBlockMutation.isPending ? "Salvando..." : "Salvar"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+                <SortableContext
+                  items={homeBlocks?.map((b) => b.id) || []}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {homeBlocks?.map((block) => (
+                    <SortableBlock
+                      key={block.id}
+                      block={block}
+                      selectedNews={selectedNews[block.block_name] || []}
+                      onToggle={() =>
+                        toggleBlockMutation.mutate({ id: block.id, isActive: !block.is_active })
+                      }
+                      onEdit={() => openEditDialog(block)}
+                      onSave={() =>
+                        saveBlockMutation.mutate({
+                          blockName: block.block_name,
+                          newsIds: selectedNews[block.block_name]?.map((n) => n.id) || [],
+                        })
+                      }
+                      onDelete={() => deleteBlockMutation.mutate(block.id)}
+                      onRemoveNews={(newsId) => removeNewsFromBlock(block.block_name, newsId)}
+                      isSaving={saveBlockMutation.isPending}
+                      getBlockTypeLabel={getBlockTypeLabel}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
+            )}
+          </div>
+        </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* News Search Panel */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="text-base">Buscar Notícias</CardTitle>
-            <CardDescription>
-              Adicione notícias aos blocos de curadoria
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por título..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <div className="max-h-[500px] space-y-2 overflow-y-auto">
-              {availableNews?.map((news) => (
-                <div
-                  key={news.id}
-                  className="flex items-center justify-between rounded-lg border p-2 text-sm hover:bg-accent/50"
-                >
-                  <span className="line-clamp-2 flex-1">{news.title}</span>
-                  <div className="flex gap-1 ml-2">
-                    {homeBlocks
-                      ?.filter((b) => b.block_type === "curated")
-                      .map((block) => (
-                        <Button
-                          key={block.id}
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => addNewsToBlock(block.block_name, news)}
-                          title={`Adicionar a ${block.title || block.block_name}`}
-                        >
-                          <Plus className="h-3 w-3" />
-                        </Button>
-                      ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Block Editors */}
-        <div className="lg:col-span-2 space-y-4">
-          {loadingBlocks ? (
-            <Card>
-              <CardContent className="py-8 text-center text-muted-foreground">
-                Carregando blocos...
-              </CardContent>
-            </Card>
-          ) : homeBlocks?.length === 0 ? (
-            <Card>
-              <CardContent className="py-8 text-center text-muted-foreground">
-                Nenhum bloco configurado. Clique em "Novo Bloco" para começar.
-              </CardContent>
-            </Card>
-          ) : (
-            homeBlocks?.map((block) => (
-              <Card key={block.id} className={!block.is_active ? "opacity-50" : ""}>
-                <CardHeader className="flex flex-row items-center justify-between py-3">
-                  <div className="flex items-center gap-3">
-                    <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
-                    <div>
-                      <CardTitle className="text-base flex items-center gap-2">
-                        {block.title || block.block_name}
-                        <Badge variant="outline" className="text-xs">
-                          {getBlockTypeLabel(block.block_type || "curated")}
-                        </Badge>
-                        {!block.is_active && (
-                          <Badge variant="secondary" className="text-xs">
-                            Inativo
-                          </Badge>
-                        )}
-                      </CardTitle>
-                      <CardDescription>
-                        {block.block_type === "curated"
-                          ? `${selectedNews[block.block_name]?.length || 0} itens selecionados`
-                          : `${block.item_count} itens automáticos`}
-                      </CardDescription>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => toggleBlockMutation.mutate({ id: block.id, isActive: !block.is_active })}
-                      title={block.is_active ? "Desativar" : "Ativar"}
-                    >
-                      {block.is_active ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => openEditDialog(block)}
-                    >
-                      <Settings2 className="h-4 w-4" />
-                    </Button>
-                    {block.block_type === "curated" && (
-                      <Button
-                        size="sm"
-                        onClick={() =>
-                          saveBlockMutation.mutate({
-                            blockName: block.block_name,
-                            newsIds: selectedNews[block.block_name]?.map((n) => n.id) || [],
-                          })
-                        }
-                        disabled={saveBlockMutation.isPending}
-                      >
-                        <Save className="h-4 w-4 mr-1" />
-                        Salvar
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => {
-                        if (confirm("Remover este bloco?")) {
-                          deleteBlockMutation.mutate(block.id);
-                        }
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardHeader>
-                {block.block_type === "curated" && (
-                  <CardContent>
-                    <div className="space-y-2">
-                      {!selectedNews[block.block_name] || selectedNews[block.block_name].length === 0 ? (
-                        <p className="text-sm text-muted-foreground py-4 text-center">
-                          Nenhuma notícia selecionada. Use a busca para adicionar.
-                        </p>
-                      ) : (
-                        selectedNews[block.block_name]?.map((news, index) => (
-                          <div
-                            key={news.id}
-                            className="flex items-center gap-2 rounded-lg border bg-card p-2"
-                          >
-                            <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
-                            <Badge variant="outline" className="shrink-0">
-                              {index + 1}
-                            </Badge>
-                            <span className="flex-1 text-sm line-clamp-1">{news.title}</span>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 text-destructive"
-                              onClick={() => removeNewsFromBlock(block.block_name, news.id)}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </CardContent>
-                )}
-              </Card>
-            ))
-          )}
-        </div>
+      {/* Right Panel - Preview */}
+      <div className="w-[400px] border-l flex flex-col bg-muted/30">
+        <HomePreview
+          blocks={homeBlocks || []}
+          categories={categories}
+          tags={tags}
+        />
       </div>
     </div>
   );
