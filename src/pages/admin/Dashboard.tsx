@@ -11,6 +11,7 @@ import {
   Edit3,
   Zap,
   FileSearch,
+  Users,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,8 +29,8 @@ export default function Dashboard() {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
+      const twentyFourHoursAgo = new Date();
+      twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
 
       const [
         totalNews,
@@ -41,6 +42,7 @@ export default function Dashboard() {
         viewsSum,
         totalUsers,
         activeUsers,
+        onlineUsers,
         socialAccounts,
       ] = await Promise.all([
         supabase.from("news").select("id", { count: "exact", head: true }),
@@ -69,6 +71,10 @@ export default function Dashboard() {
           .select("id", { count: "exact", head: true })
           .eq("is_active", true),
         supabase
+          .from("profiles")
+          .select("id", { count: "exact", head: true })
+          .gte("last_activity_at", twentyFourHoursAgo.toISOString()),
+        supabase
           .from("social_accounts")
           .select("id, platform, enabled"),
       ]);
@@ -90,6 +96,7 @@ export default function Dashboard() {
         totalViews,
         totalUsers: totalUsers.count || 0,
         activeUsers: activeUsers.count || 0,
+        onlineUsers: onlineUsers.count || 0,
         inactiveIntegrations,
       };
     },
@@ -190,6 +197,13 @@ export default function Dashboard() {
       color: "text-purple-500",
       bgColor: "bg-purple-500/10",
     },
+    {
+      title: "Online (24h)",
+      value: stats?.onlineUsers || 0,
+      icon: Users,
+      color: "text-cyan-500",
+      bgColor: "bg-cyan-500/10",
+    },
   ];
 
   const getStatusBadge = (status: string) => {
@@ -239,7 +253,7 @@ export default function Dashboard() {
       </div>
 
       {/* Operational Stats */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
         {operationalCards.map((stat) => (
           <Card key={stat.title}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Shield, UserPlus, Loader2, Power, Key, Mail } from "lucide-react";
+import { Shield, UserPlus, Loader2, Power, Key, Mail, RefreshCw, Trash2, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,12 +27,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { PERMISSIONS, PERMISSION_LABELS, type Permission } from "@/hooks/useUserPermissions";
+import { useUserInvites } from "@/hooks/useUserInvites";
+import { formatDistanceToNow, isPast } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 type AppRole = "super_admin" | "admin" | "editor_chief" | "editor" | "reporter" | "columnist" | "collaborator" | "moderator";
 
@@ -234,6 +238,32 @@ export default function Users() {
     );
   };
 
+  const { invites, isLoading: loadingInvites, resendInvite, deleteInvite } = useUserInvites();
+
+  const getInviteStatus = (invite: { status: string; expires_at: string | null }) => {
+    if (invite.status === "accepted") return "accepted";
+    if (invite.expires_at && isPast(new Date(invite.expires_at))) return "expired";
+    return invite.status;
+  };
+
+  const inviteStatusBadge = (status: string) => {
+    const styles: Record<string, string> = {
+      pending: "bg-yellow-100 text-yellow-700",
+      accepted: "bg-green-100 text-green-700",
+      expired: "bg-gray-100 text-gray-700",
+    };
+    const labels: Record<string, string> = {
+      pending: "Pendente",
+      accepted: "Aceito",
+      expired: "Expirado",
+    };
+    return (
+      <Badge className={styles[status] || styles.pending}>
+        {labels[status] || status}
+      </Badge>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -247,87 +277,198 @@ export default function Users() {
         </Button>
       </div>
 
-      <div className="rounded-lg border bg-card">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Usuário</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="w-32"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={4} className="py-8 text-center">
-                  Carregando...
-                </TableCell>
-              </TableRow>
-            ) : usersWithRoles?.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4} className="py-8 text-center">
-                  Nenhum usuário encontrado
-                </TableCell>
-              </TableRow>
-            ) : (
-              usersWithRoles?.map((user) => (
-                <TableRow key={user.id} className={!user.is_active ? "opacity-50" : ""}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={user.avatar_url || ""} />
-                        <AvatarFallback>
-                          {user.full_name?.slice(0, 2).toUpperCase() || "US"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-medium">{user.full_name || "Sem nome"}</div>
-                        <div className="text-xs text-muted-foreground">{user.id.slice(0, 8)}...</div>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {user.role ? (
-                      <Badge className={roleColors[user.role]}>
-                        <Shield className="mr-1 h-3 w-3" />
-                        {roleLabels[user.role]}
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-muted-foreground">
-                        Sem permissão
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        checked={user.is_active}
-                        onCheckedChange={(checked) =>
-                          toggleUserActiveMutation.mutate({ userId: user.id, isActive: checked })
-                        }
-                      />
-                      <span className="text-sm text-muted-foreground">
-                        {user.is_active ? "Ativo" : "Inativo"}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEditRole(user)}
-                    >
-                      <Key className="mr-1 h-3 w-3" />
-                      Permissões
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
+      <Tabs defaultValue="users" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="users">Usuários</TabsTrigger>
+          <TabsTrigger value="invites">
+            Convites
+            {invites && invites.length > 0 && (
+              <Badge variant="secondary" className="ml-2">{invites.length}</Badge>
             )}
-          </TableBody>
-        </Table>
-      </div>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="users">
+          <div className="rounded-lg border bg-card">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Usuário</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="w-32"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="py-8 text-center">
+                      Carregando...
+                    </TableCell>
+                  </TableRow>
+                ) : usersWithRoles?.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="py-8 text-center">
+                      Nenhum usuário encontrado
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  usersWithRoles?.map((user) => (
+                    <TableRow key={user.id} className={!user.is_active ? "opacity-50" : ""}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={user.avatar_url || ""} />
+                            <AvatarFallback>
+                              {user.full_name?.slice(0, 2).toUpperCase() || "US"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium">{user.full_name || "Sem nome"}</div>
+                            <div className="text-xs text-muted-foreground">{user.id.slice(0, 8)}...</div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {user.role ? (
+                          <Badge className={roleColors[user.role]}>
+                            <Shield className="mr-1 h-3 w-3" />
+                            {roleLabels[user.role]}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-muted-foreground">
+                            Sem permissão
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={user.is_active}
+                            onCheckedChange={(checked) =>
+                              toggleUserActiveMutation.mutate({ userId: user.id, isActive: checked })
+                            }
+                          />
+                          <span className="text-sm text-muted-foreground">
+                            {user.is_active ? "Ativo" : "Inativo"}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditRole(user)}
+                        >
+                          <Key className="mr-1 h-3 w-3" />
+                          Permissões
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="invites">
+          <div className="rounded-lg border bg-card">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Enviado</TableHead>
+                  <TableHead>Expira</TableHead>
+                  <TableHead className="w-24"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loadingInvites ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="py-8 text-center">
+                      Carregando...
+                    </TableCell>
+                  </TableRow>
+                ) : !invites || invites.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="py-8 text-center">
+                      Nenhum convite encontrado
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  invites.map((invite) => {
+                    const status = getInviteStatus(invite);
+                    return (
+                      <TableRow key={invite.id} className={status === "expired" ? "opacity-50" : ""}>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Mail className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium">{invite.email}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {roleLabels[invite.role as AppRole] || invite.role}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{inviteStatusBadge(status)}</TableCell>
+                        <TableCell>
+                          <span className="text-sm text-muted-foreground">
+                            {formatDistanceToNow(new Date(invite.created_at), {
+                              addSuffix: true,
+                              locale: ptBR,
+                            })}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          {invite.expires_at ? (
+                            <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                              <Clock className="h-3 w-3" />
+                              {formatDistanceToNow(new Date(invite.expires_at), {
+                                addSuffix: true,
+                                locale: ptBR,
+                              })}
+                            </span>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            {status !== "accepted" && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => resendInvite.mutate(invite.id)}
+                                disabled={resendInvite.isPending}
+                                title="Reenviar convite"
+                              >
+                                <RefreshCw className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => deleteInvite.mutate(invite.id)}
+                              disabled={deleteInvite.isPending}
+                              title="Remover convite"
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Edit Role & Permissions Dialog */}
       <Dialog open={roleDialogOpen} onOpenChange={setRoleDialogOpen}>
