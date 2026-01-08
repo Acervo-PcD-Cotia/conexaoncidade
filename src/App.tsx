@@ -30,6 +30,11 @@ import Analytics from "./pages/admin/Analytics";
 import AuditLogs from "./pages/admin/AuditLogs";
 import Settings from "./pages/admin/Settings";
 import NoticiasAI from "./pages/admin/NoticiasAI";
+import SocialDashboard from "./pages/admin/SocialDashboard";
+import SocialQueue from "./pages/admin/SocialQueue";
+import SocialHistory from "./pages/admin/SocialHistory";
+import SocialLogs from "./pages/admin/SocialLogs";
+import SocialSettings from "./pages/admin/SocialSettings";
 
 const queryClient = new QueryClient();
 
@@ -69,6 +74,11 @@ const App = () => (
               <Route path="home-editor" element={<HomeEditor />} />
               <Route path="quick-notes" element={<QuickNotesAdmin />} />
               <Route path="analytics" element={<Analytics />} />
+              <Route path="social" element={<SocialDashboard />} />
+              <Route path="social/queue" element={<SocialQueue />} />
+              <Route path="social/history" element={<SocialHistory />} />
+              <Route path="social/logs" element={<SocialLogs />} />
+              <Route path="social/settings" element={<SocialSettings />} />
               <Route path="logs" element={<AuditLogs />} />
               <Route path="settings" element={<Settings />} />
             </Route>

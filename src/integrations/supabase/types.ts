@@ -318,6 +318,53 @@ export type Database = {
           },
         ]
       }
+      news_social_settings: {
+        Row: {
+          created_at: string
+          custom_captions: Json | null
+          custom_image_url: string | null
+          enabled: boolean
+          image_source: string | null
+          mode: string
+          news_id: string
+          platforms: string[] | null
+          scheduled_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          custom_captions?: Json | null
+          custom_image_url?: string | null
+          enabled?: boolean
+          image_source?: string | null
+          mode?: string
+          news_id: string
+          platforms?: string[] | null
+          scheduled_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          custom_captions?: Json | null
+          custom_image_url?: string | null
+          enabled?: boolean
+          image_source?: string | null
+          mode?: string
+          news_id?: string
+          platforms?: string[] | null
+          scheduled_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_social_settings_news_id_fkey"
+            columns: ["news_id"]
+            isOneToOne: true
+            referencedRelation: "news"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       news_tags: {
         Row: {
           news_id: string
@@ -685,6 +732,130 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_accounts: {
+        Row: {
+          created_at: string
+          credentials_encrypted: Json | null
+          enabled: boolean
+          id: string
+          platform: string
+          settings: Json | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          credentials_encrypted?: Json | null
+          enabled?: boolean
+          id?: string
+          platform: string
+          settings?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          credentials_encrypted?: Json | null
+          enabled?: boolean
+          id?: string
+          platform?: string
+          settings?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      social_logs: {
+        Row: {
+          created_at: string
+          details: Json | null
+          id: string
+          level: string
+          message: string
+          social_post_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          id?: string
+          level?: string
+          message: string
+          social_post_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          id?: string
+          level?: string
+          message?: string
+          social_post_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_logs_social_post_id_fkey"
+            columns: ["social_post_id"]
+            isOneToOne: false
+            referencedRelation: "social_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_posts: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          external_post_id: string | null
+          external_post_url: string | null
+          id: string
+          news_id: string | null
+          payload: Json | null
+          platform: string
+          posted_at: string | null
+          retries_count: number
+          scheduled_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          external_post_id?: string | null
+          external_post_url?: string | null
+          id?: string
+          news_id?: string | null
+          payload?: Json | null
+          platform: string
+          posted_at?: string | null
+          retries_count?: number
+          scheduled_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          external_post_id?: string | null
+          external_post_url?: string | null
+          id?: string
+          news_id?: string | null
+          payload?: Json | null
+          platform?: string
+          posted_at?: string | null
+          retries_count?: number
+          scheduled_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_posts_news_id_fkey"
+            columns: ["news_id"]
+            isOneToOne: false
+            referencedRelation: "news"
             referencedColumns: ["id"]
           },
         ]
