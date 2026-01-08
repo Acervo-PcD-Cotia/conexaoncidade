@@ -15,6 +15,7 @@ import {
   Tag,
   Sparkles,
   Share2,
+  Link2,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useUserRole } from "@/hooks/useRequireRole";
@@ -48,6 +49,7 @@ const editorialItems = [
   { title: "Banners", url: "/admin/banners", icon: Image },
   { title: "Anúncios", url: "/admin/ads", icon: Megaphone },
   { title: "Distribuição Social", url: "/admin/social", icon: Share2 },
+  { title: "Gerador de Links", url: "/admin/links", icon: Link2 },
   { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
 ];
 
