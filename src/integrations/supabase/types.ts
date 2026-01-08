@@ -32,6 +32,7 @@ export type Database = {
           slot_type: string
           sort_order: number | null
           starts_at: string | null
+          tenant_id: string | null
           updated_at: string
         }
         Insert: {
@@ -51,6 +52,7 @@ export type Database = {
           slot_type: string
           sort_order?: number | null
           starts_at?: string | null
+          tenant_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -70,9 +72,18 @@ export type Database = {
           slot_type?: string
           sort_order?: number | null
           starts_at?: string | null
+          tenant_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ads_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       article_versions: {
         Row: {
@@ -415,6 +426,7 @@ export type Database = {
           parent_id: string | null
           slug: string
           sort_order: number
+          tenant_id: string | null
         }
         Insert: {
           color?: string
@@ -427,6 +439,7 @@ export type Database = {
           parent_id?: string | null
           slug: string
           sort_order?: number
+          tenant_id?: string | null
         }
         Update: {
           color?: string
@@ -439,6 +452,7 @@ export type Database = {
           parent_id?: string | null
           slug?: string
           sort_order?: number
+          tenant_id?: string | null
         }
         Relationships: [
           {
@@ -446,6 +460,13 @@ export type Database = {
             columns: ["parent_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "categories_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
             referencedColumns: ["id"]
           },
         ]
@@ -1051,6 +1072,7 @@ export type Database = {
           source: string | null
           status: Database["public"]["Enums"]["news_status"]
           subtitle: string | null
+          tenant_id: string | null
           title: string
           updated_at: string
           view_count: number
@@ -1081,6 +1103,7 @@ export type Database = {
           source?: string | null
           status?: Database["public"]["Enums"]["news_status"]
           subtitle?: string | null
+          tenant_id?: string | null
           title: string
           updated_at?: string
           view_count?: number
@@ -1111,6 +1134,7 @@ export type Database = {
           source?: string | null
           status?: Database["public"]["Enums"]["news_status"]
           subtitle?: string | null
+          tenant_id?: string | null
           title?: string
           updated_at?: string
           view_count?: number
@@ -1121,6 +1145,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "news_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
             referencedColumns: ["id"]
           },
         ]
@@ -1660,6 +1691,7 @@ export type Database = {
           is_active: boolean
           scheduled_at: string | null
           status: string
+          tenant_id: string | null
           title: string
           updated_at: string
         }
@@ -1671,6 +1703,7 @@ export type Database = {
           is_active?: boolean
           scheduled_at?: string | null
           status?: string
+          tenant_id?: string | null
           title: string
           updated_at?: string
         }
@@ -1682,6 +1715,7 @@ export type Database = {
           is_active?: boolean
           scheduled_at?: string | null
           status?: string
+          tenant_id?: string | null
           title?: string
           updated_at?: string
         }
@@ -1691,6 +1725,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quick_notes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
             referencedColumns: ["id"]
           },
         ]
@@ -1789,6 +1830,7 @@ export type Database = {
           id: string
           platform: string
           settings: Json | null
+          tenant_id: string | null
           updated_at: string
         }
         Insert: {
@@ -1798,6 +1840,7 @@ export type Database = {
           id?: string
           platform: string
           settings?: Json | null
+          tenant_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -1807,9 +1850,18 @@ export type Database = {
           id?: string
           platform?: string
           settings?: Json | null
+          tenant_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "social_accounts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       social_logs: {
         Row: {
@@ -1861,6 +1913,7 @@ export type Database = {
           retries_count: number
           scheduled_at: string | null
           status: string
+          tenant_id: string | null
           updated_at: string
         }
         Insert: {
@@ -1877,6 +1930,7 @@ export type Database = {
           retries_count?: number
           scheduled_at?: string | null
           status?: string
+          tenant_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -1893,6 +1947,7 @@ export type Database = {
           retries_count?: number
           scheduled_at?: string | null
           status?: string
+          tenant_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1903,7 +1958,65 @@ export type Database = {
             referencedRelation: "news"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "social_posts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      solutions: {
+        Row: {
+          benefits: string[] | null
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean
+          key: string
+          name: string
+          price_monthly: number | null
+          price_yearly: number | null
+          requires_plan: string | null
+          sort_order: number | null
+          updated_at: string
+          who_should_use: string | null
+        }
+        Insert: {
+          benefits?: string[] | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          key: string
+          name: string
+          price_monthly?: number | null
+          price_yearly?: number | null
+          requires_plan?: string | null
+          sort_order?: number | null
+          updated_at?: string
+          who_should_use?: string | null
+        }
+        Update: {
+          benefits?: string[] | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          key?: string
+          name?: string
+          price_monthly?: number | null
+          price_yearly?: number | null
+          requires_plan?: string | null
+          sort_order?: number | null
+          updated_at?: string
+          who_should_use?: string | null
+        }
+        Relationships: []
       }
       super_banners: {
         Row: {
@@ -1918,6 +2031,7 @@ export type Database = {
           link_url: string | null
           sort_order: number
           starts_at: string | null
+          tenant_id: string | null
           title: string | null
           updated_at: string
         }
@@ -1933,6 +2047,7 @@ export type Database = {
           link_url?: string | null
           sort_order?: number
           starts_at?: string | null
+          tenant_id?: string | null
           title?: string | null
           updated_at?: string
         }
@@ -1948,10 +2063,19 @@ export type Database = {
           link_url?: string | null
           sort_order?: number
           starts_at?: string | null
+          tenant_id?: string | null
           title?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "super_banners_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       system_settings: {
         Row: {
@@ -1983,20 +2107,138 @@ export type Database = {
           id: string
           name: string
           slug: string
+          tenant_id: string | null
         }
         Insert: {
           created_at?: string
           id?: string
           name: string
           slug: string
+          tenant_id?: string | null
         }
         Update: {
           created_at?: string
           id?: string
           name?: string
           slug?: string
+          tenant_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tags_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_features: {
+        Row: {
+          created_at: string
+          enabled_at: string | null
+          expires_at: string | null
+          feature_key: string
+          id: string
+          is_enabled: boolean
+          plan_tier: string | null
+          settings: Json | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled_at?: string | null
+          expires_at?: string | null
+          feature_key: string
+          id?: string
+          is_enabled?: boolean
+          plan_tier?: string | null
+          settings?: Json | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled_at?: string | null
+          expires_at?: string | null
+          feature_key?: string
+          id?: string
+          is_enabled?: boolean
+          plan_tier?: string | null
+          settings?: Json | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_features_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_solutions: {
+        Row: {
+          activated_at: string | null
+          billing_cycle: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          next_billing_date: string | null
+          payment_status: string | null
+          settings: Json | null
+          solution_id: string
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          activated_at?: string | null
+          billing_cycle?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          next_billing_date?: string | null
+          payment_status?: string | null
+          settings?: Json | null
+          solution_id: string
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          activated_at?: string | null
+          billing_cycle?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          next_billing_date?: string | null
+          payment_status?: string | null
+          settings?: Json | null
+          solution_id?: string
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_solutions_solution_id_fkey"
+            columns: ["solution_id"]
+            isOneToOne: false
+            referencedRelation: "solutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_solutions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_permissions: {
         Row: {
@@ -2051,6 +2293,7 @@ export type Database = {
           published_at: string | null
           slug: string
           status: Database["public"]["Enums"]["story_status"]
+          tenant_id: string | null
           title: string
           updated_at: string
           view_count: number
@@ -2065,6 +2308,7 @@ export type Database = {
           published_at?: string | null
           slug: string
           status?: Database["public"]["Enums"]["story_status"]
+          tenant_id?: string | null
           title: string
           updated_at?: string
           view_count?: number
@@ -2079,11 +2323,20 @@ export type Database = {
           published_at?: string | null
           slug?: string
           status?: Database["public"]["Enums"]["story_status"]
+          tenant_id?: string | null
           title?: string
           updated_at?: string
           view_count?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "web_stories_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       web_story_slides: {
         Row: {
@@ -2180,6 +2433,14 @@ export type Database = {
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      tenant_has_feature: {
+        Args: { _feature_key: string; _tenant_id: string }
+        Returns: boolean
+      }
+      tenant_has_solution: {
+        Args: { _solution_key: string; _tenant_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role:
@@ -2191,6 +2452,9 @@ export type Database = {
         | "editor_chief"
         | "reporter"
         | "collaborator"
+        | "commercial"
+        | "financial"
+        | "support"
       article_kind: "original" | "imported" | "rewritten" | "edited"
       delivery_mode: "teaser" | "full" | "rewrite"
       distribution_status:
@@ -2355,6 +2619,9 @@ export const Constants = {
         "editor_chief",
         "reporter",
         "collaborator",
+        "commercial",
+        "financial",
+        "support",
       ],
       article_kind: ["original", "imported", "rewritten", "edited"],
       delivery_mode: ["teaser", "full", "rewrite"],

@@ -16,6 +16,11 @@ import {
   Sparkles,
   Share2,
   Link2,
+  Puzzle,
+  Handshake,
+  BookOpen,
+  GraduationCap,
+  Receipt,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useUserRole } from "@/hooks/useRequireRole";
@@ -48,9 +53,17 @@ const editorialItems = [
   { title: "Editor da Home", url: "/admin/home-editor", icon: PanelTop },
   { title: "Banners", url: "/admin/banners", icon: Image },
   { title: "Anúncios", url: "/admin/ads", icon: Megaphone },
+  { title: "Parceiros & Sindicação", url: "/admin/partners", icon: Handshake },
   { title: "Distribuição Social", url: "/admin/social", icon: Share2 },
   { title: "Gerador de Links", url: "/admin/links", icon: Link2 },
   { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
+  { title: "Edição Digital", url: "/admin/editions", icon: BookOpen },
+];
+
+const businessItems = [
+  { title: "Soluções", url: "/admin/solutions", icon: Puzzle },
+  { title: "Treinamento", url: "/admin/training", icon: GraduationCap },
+  { title: "Financeiro", url: "/admin/financial", icon: Receipt },
 ];
 
 const adminOnlyItems = [
@@ -111,6 +124,28 @@ export function AdminSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {editorialItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to={item.url}
+                      className="flex items-center gap-2"
+                      activeClassName="bg-primary/10 text-primary"
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {!collapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Negócios</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {businessItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink
