@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.reporter-batch]
 verify_jwt = false
+
+[functions.rss-parser]
+verify_jwt = false

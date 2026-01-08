@@ -17,6 +17,7 @@ import { NoticiasAISchedulesTab } from '@/components/admin/noticias-ai/NoticiasA
 import { NoticiasAIProgress } from '@/components/admin/noticias-ai/NoticiasAIProgress';
 import { NoticiasAITips } from '@/components/admin/noticias-ai/NoticiasAITips';
 import { NoticiasAITutorial } from '@/components/admin/noticias-ai/NoticiasAITutorial';
+import { DuplicateWarningDialog } from '@/components/admin/noticias-ai/DuplicateWarningDialog';
 
 type DetectedMode = 'exclusiva' | 'manual' | 'json' | 'url' | 'batch' | 'auto';
 
@@ -57,6 +58,18 @@ export default function NoticiasAI() {
   const [hasLideBold, setHasLideBold] = useState(true);
   const [autoFixEnabled, setAutoFixEnabled] = useState(true);
   const [tutorialOpen, setTutorialOpen] = useState(false);
+  
+  // Duplicate detection state
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
+  const [currentDuplicate, setCurrentDuplicate] = useState<{
+    articleTitle: string;
+    matchType: 'slug' | 'source_url' | 'title_similarity';
+    existingId: string;
+    existingTitle?: string;
+    articleIndex: number;
+  } | null>(null);
+  const [importQueue, setImportQueue] = useState<ManualData[]>([]);
+  const [currentImportIndex, setCurrentImportIndex] = useState(0);
 
   // Track first visit
   useEffect(() => {
@@ -107,133 +120,216 @@ export default function NoticiasAI() {
     }
   };
 
-  const handleImport = async () => {
-    if (!jsonData?.noticias?.length || !user) return;
-
-    setIsImporting(true);
+  // Check for duplicates before import
+  const checkDuplicate = async (article: ManualData): Promise<{ isDuplicate: boolean; existingId?: string; matchType?: string; existingTitle?: string }> => {
     try {
-      let successCount = 0;
+      const { data, error } = await supabase.rpc('check_duplicate_news', {
+        p_slug: article.slug,
+        p_source_url: article.fonte || '',
+        p_title: article.titulo,
+      });
       
-      for (const article of jsonData.noticias) {
-        // Get category ID
-        const { data: category } = await supabase
-          .from('categories')
-          .select('id')
-          .ilike('name', article.categoria)
-          .single();
-
-        // Insert news
-        const { data: news, error: newsError } = await supabase
+      if (error) {
+        console.error('Error checking duplicate:', error);
+        return { isDuplicate: false };
+      }
+      
+      if (data && data.length > 0 && data[0].is_duplicate) {
+        // Fetch existing article title
+        const { data: existingNews } = await supabase
           .from('news')
-          .insert({
-            title: article.titulo,
-            slug: article.slug,
-            excerpt: article.resumo,
-            content: article.conteudo,
-            category_id: category?.id || null,
-            featured_image_url: article.imagem?.hero,
-            image_alt: article.imagem?.alt,
-            image_credit: article.imagem?.credito,
-            meta_title: article.seo?.meta_titulo,
-            meta_description: article.seo?.meta_descricao,
-            source: article.fonte,
-            author_id: user.id,
-            status: 'published',
-            published_at: new Date().toISOString(),
-          })
-          .select()
+          .select('title')
+          .eq('id', data[0].existing_id)
           .single();
+        
+        return {
+          isDuplicate: true,
+          existingId: data[0].existing_id,
+          matchType: data[0].match_type,
+          existingTitle: existingNews?.title,
+        };
+      }
+      
+      return { isDuplicate: false };
+    } catch (err) {
+      console.error('Duplicate check error:', err);
+      return { isDuplicate: false };
+    }
+  };
 
-        if (newsError) {
-          console.error('Error importing article:', newsError);
-          
-          // Log error
-          await supabase.from('noticias_ai_imports').insert({
-            user_id: user.id,
-            title: article.titulo,
-            source_url: article.fonte,
-            source_name: article.fonte ? new URL(article.fonte).hostname.replace('www.', '') : null,
-            import_type: jsonData.noticias.length > 1 ? 'batch' : 'individual',
-            status: 'error',
-            error_message: newsError.message,
-          });
-          continue;
-        }
+  // Import single article
+  const importArticle = async (article: ManualData): Promise<boolean> => {
+    if (!user) return false;
+    
+    try {
+      // Get category ID
+      const { data: category } = await supabase
+        .from('categories')
+        .select('id')
+        .ilike('name', article.categoria)
+        .single();
 
-        // Log success
+      // Insert news
+      const { data: news, error: newsError } = await supabase
+        .from('news')
+        .insert({
+          title: article.titulo,
+          slug: article.slug,
+          excerpt: article.resumo,
+          content: article.conteudo,
+          category_id: category?.id || null,
+          featured_image_url: article.imagem?.hero,
+          image_alt: article.imagem?.alt,
+          image_credit: article.imagem?.credito,
+          meta_title: article.seo?.meta_titulo,
+          meta_description: article.seo?.meta_descricao,
+          source: article.fonte,
+          author_id: user.id,
+          status: 'published',
+          published_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (newsError) {
+        console.error('Error importing article:', newsError);
+        
+        // Log error
         await supabase.from('noticias_ai_imports').insert({
           user_id: user.id,
           title: article.titulo,
           source_url: article.fonte,
           source_name: article.fonte ? new URL(article.fonte).hostname.replace('www.', '') : null,
-          import_type: jsonData.noticias.length > 1 ? 'batch' : 'json',
-          status: 'success',
-          format_corrected: autoFixEnabled,
-          news_id: news.id,
+          import_type: 'individual',
+          status: 'error',
+          error_message: newsError.message,
         });
+        return false;
+      }
 
-        // Insert tags if any
-        if (article.tags?.length && news) {
-          for (const tagName of article.tags.slice(0, 12)) {
-            // Find or create tag
-            let { data: tag } = await supabase
+      // Log success
+      await supabase.from('noticias_ai_imports').insert({
+        user_id: user.id,
+        title: article.titulo,
+        source_url: article.fonte,
+        source_name: article.fonte ? new URL(article.fonte).hostname.replace('www.', '') : null,
+        import_type: importQueue.length > 1 ? 'batch' : 'json',
+        status: 'success',
+        format_corrected: autoFixEnabled,
+        news_id: news.id,
+      });
+
+      // Insert tags if any
+      if (article.tags?.length && news) {
+        for (const tagName of article.tags.slice(0, 12)) {
+          let { data: tag } = await supabase
+            .from('tags')
+            .select('id')
+            .ilike('name', tagName)
+            .single();
+
+          if (!tag) {
+            const slug = tagName.toLowerCase()
+              .normalize('NFD')
+              .replace(/[\u0300-\u036f]/g, '')
+              .replace(/[^a-z0-9\s-]/g, '')
+              .replace(/\s+/g, '-');
+
+            const { data: newTag } = await supabase
               .from('tags')
-              .select('id')
-              .ilike('name', tagName)
+              .insert({ name: tagName, slug })
+              .select()
               .single();
+            
+            tag = newTag;
+          }
 
-            if (!tag) {
-              const slug = tagName.toLowerCase()
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .replace(/[^a-z0-9\s-]/g, '')
-                .replace(/\s+/g, '-');
-
-              const { data: newTag } = await supabase
-                .from('tags')
-                .insert({ name: tagName, slug })
-                .select()
-                .single();
-              
-              tag = newTag;
-            }
-
-            if (tag) {
-              await supabase
-                .from('news_tags')
-                .insert({ news_id: news.id, tag_id: tag.id })
-                .maybeSingle();
-            }
+          if (tag) {
+            await supabase
+              .from('news_tags')
+              .insert({ news_id: news.id, tag_id: tag.id })
+              .maybeSingle();
           }
         }
-
-        successCount++;
       }
 
-      // Update progress
-      await incrementImports(successCount);
-      
-      if (!progress?.completed_milestones.includes('first_import')) {
-        await completeMilestone('first_import');
-      }
-
-      toast({
-        title: 'Importação concluída!',
-        description: `${successCount} de ${jsonData.noticias.length} artigos importados.`,
-      });
-
-      // Clear JSON data after successful import
-      setJsonData(null);
-    } catch (error) {
-      console.error('Error importing:', error);
-      toast({
-        title: 'Erro na importação',
-        description: 'Alguns artigos podem não ter sido importados.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsImporting(false);
+      return true;
+    } catch (err) {
+      console.error('Import error:', err);
+      return false;
     }
+  };
+
+  // Process import queue
+  const processImportQueue = async (startIndex: number = 0, skipDuplicateCheck: boolean = false) => {
+    setIsImporting(true);
+    let successCount = 0;
+    
+    for (let i = startIndex; i < importQueue.length; i++) {
+      const article = importQueue[i];
+      
+      // Check for duplicates unless skipping
+      if (!skipDuplicateCheck) {
+        const duplicateResult = await checkDuplicate(article);
+        
+        if (duplicateResult.isDuplicate) {
+          // Pause and show dialog
+          setCurrentImportIndex(i);
+          setCurrentDuplicate({
+            articleTitle: article.titulo,
+            matchType: duplicateResult.matchType as 'slug' | 'source_url' | 'title_similarity',
+            existingId: duplicateResult.existingId!,
+            existingTitle: duplicateResult.existingTitle,
+            articleIndex: i,
+          });
+          setDuplicateDialogOpen(true);
+          return; // Stop processing, will resume after user decision
+        }
+      }
+      
+      const success = await importArticle(article);
+      if (success) successCount++;
+    }
+    
+    // All done
+    await incrementImports(successCount);
+    
+    if (!progress?.completed_milestones.includes('first_import')) {
+      await completeMilestone('first_import');
+    }
+    
+    toast({
+      title: 'Importação concluída!',
+      description: `${successCount} de ${importQueue.length} artigos importados.`,
+    });
+    
+    setJsonData(null);
+    setImportQueue([]);
+    setCurrentImportIndex(0);
+    setIsImporting(false);
+  };
+
+  const handleImport = async () => {
+    if (!jsonData?.noticias?.length || !user) return;
+    
+    // Start the queue
+    setImportQueue(jsonData.noticias);
+    setCurrentImportIndex(0);
+    await processImportQueue(0);
+  };
+
+  const handleSkipDuplicate = () => {
+    setDuplicateDialogOpen(false);
+    // Continue with next item
+    processImportQueue(currentImportIndex + 1);
+  };
+
+  const handleImportAnyway = async () => {
+    setDuplicateDialogOpen(false);
+    // Import this one (skip duplicate check) then continue
+    const article = importQueue[currentImportIndex];
+    await importArticle(article);
+    processImportQueue(currentImportIndex + 1);
   };
 
   const handleImageUpload = () => {
@@ -372,6 +468,16 @@ export default function NoticiasAI() {
 
         {/* Tutorial Dialog */}
         <NoticiasAITutorial open={tutorialOpen} onOpenChange={setTutorialOpen} />
+        
+        {/* Duplicate Warning Dialog */}
+        <DuplicateWarningDialog
+          open={duplicateDialogOpen}
+          onOpenChange={setDuplicateDialogOpen}
+          duplicate={currentDuplicate}
+          onSkip={handleSkipDuplicate}
+          onImportAnyway={handleImportAnyway}
+          isLoading={isImporting}
+        />
       </div>
     </div>
   );

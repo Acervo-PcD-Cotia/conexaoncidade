@@ -34,9 +34,10 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { PERMISSIONS, PERMISSION_LABELS, type Permission } from "@/hooks/useUserPermissions";
 
-type AppRole = "admin" | "editor_chief" | "editor" | "reporter" | "columnist" | "collaborator" | "moderator";
+type AppRole = "super_admin" | "admin" | "editor_chief" | "editor" | "reporter" | "columnist" | "collaborator" | "moderator";
 
 const roleLabels: Record<AppRole, string> = {
+  super_admin: "Super Admin",
   admin: "Administrador",
   editor_chief: "Editor-Chefe",
   editor: "Editor",
@@ -47,6 +48,7 @@ const roleLabels: Record<AppRole, string> = {
 };
 
 const roleColors: Record<AppRole, string> = {
+  super_admin: "bg-gradient-to-r from-purple-600 to-pink-600 text-white",
   admin: "bg-red-100 text-red-700",
   editor_chief: "bg-orange-100 text-orange-700",
   editor: "bg-blue-100 text-blue-700",
@@ -345,6 +347,7 @@ export default function Users() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="super_admin">Super Admin</SelectItem>
                   <SelectItem value="admin">Administrador</SelectItem>
                   <SelectItem value="editor_chief">Editor-Chefe</SelectItem>
                   <SelectItem value="editor">Editor</SelectItem>
@@ -443,6 +446,7 @@ export default function Users() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="super_admin">Super Admin</SelectItem>
                   <SelectItem value="admin">Administrador</SelectItem>
                   <SelectItem value="editor_chief">Editor-Chefe</SelectItem>
                   <SelectItem value="editor">Editor</SelectItem>
