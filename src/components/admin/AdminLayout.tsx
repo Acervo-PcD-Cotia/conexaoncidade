@@ -6,6 +6,7 @@ import { useRequireRole } from "@/hooks/useRequireRole";
 
 export function AdminLayout() {
   const { hasAccess, checkingRole } = useRequireRole([
+    "super_admin",
     "admin", 
     "editor", 
     "editor_chief", 

@@ -64,13 +64,13 @@ export const useUserPermissions = (userId?: string) => {
   });
 
   const hasPermission = (permission: Permission): boolean => {
-    // Admins têm todas as permissões
-    if (userRole === "admin") return true;
+    // Super Admin e Admin têm todas as permissões
+    if (userRole === "super_admin" || userRole === "admin") return true;
     return permissions?.includes(permission) || false;
   };
 
   const hasAnyPermission = (perms: Permission[]): boolean => {
-    if (userRole === "admin") return true;
+    if (userRole === "super_admin" || userRole === "admin") return true;
     return perms.some((p) => permissions?.includes(p));
   };
 
@@ -79,6 +79,7 @@ export const useUserPermissions = (userId?: string) => {
     isLoading,
     hasPermission,
     hasAnyPermission,
-    isAdmin: userRole === "admin",
+    isSuperAdmin: userRole === "super_admin",
+    isAdmin: userRole === "super_admin" || userRole === "admin",
   };
 };
