@@ -116,6 +116,7 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
+          parent_id: string | null
           slug: string
           sort_order: number
         }
@@ -127,6 +128,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name: string
+          parent_id?: string | null
           slug: string
           sort_order?: number
         }
@@ -138,10 +140,19 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+          parent_id?: string | null
           slug?: string
           sort_order?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       home_config: {
         Row: {
@@ -301,6 +312,51 @@ export type Database = {
           },
         ]
       }
+      page_views: {
+        Row: {
+          created_at: string
+          id: string
+          news_id: string | null
+          referrer: string | null
+          session_id: string
+          story_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          news_id?: string | null
+          referrer?: string | null
+          session_id: string
+          story_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          news_id?: string | null
+          referrer?: string | null
+          session_id?: string
+          story_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_views_news_id_fkey"
+            columns: ["news_id"]
+            isOneToOne: false
+            referencedRelation: "news"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "page_views_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "web_stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -335,6 +391,8 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean
+          scheduled_at: string | null
+          status: string
           title: string
           updated_at: string
         }
@@ -344,6 +402,8 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          scheduled_at?: string | null
+          status?: string
           title: string
           updated_at?: string
         }
@@ -353,6 +413,8 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          scheduled_at?: string | null
+          status?: string
           title?: string
           updated_at?: string
         }
@@ -411,6 +473,30 @@ export type Database = {
           starts_at?: string | null
           title?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      system_settings: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
         }
         Relationships: []
       }
