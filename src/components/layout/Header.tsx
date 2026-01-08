@@ -38,8 +38,8 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full">
       {/* Main header */}
-      <div className="glass border-b">
-        <div className="container flex items-center justify-between py-3">
+      <div className="glass border-b shadow-sm">
+        <div className="container flex items-center justify-between py-4">
           {/* Mobile menu */}
           <Sheet>
             <SheetTrigger asChild className="lg:hidden">
