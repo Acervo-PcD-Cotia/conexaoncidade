@@ -74,6 +74,135 @@ export type Database = {
         }
         Relationships: []
       }
+      article_versions: {
+        Row: {
+          article_id: string
+          content_html: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: Database["public"]["Enums"]["article_kind"]
+          rewrite_engine: string | null
+          rewrite_prompt_hash: string | null
+          site_id: string
+          style_profile_id: string | null
+          style_version_id: string | null
+        }
+        Insert: {
+          article_id: string
+          content_html?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["article_kind"]
+          rewrite_engine?: string | null
+          rewrite_prompt_hash?: string | null
+          site_id: string
+          style_profile_id?: string | null
+          style_version_id?: string | null
+        }
+        Update: {
+          article_id?: string
+          content_html?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["article_kind"]
+          rewrite_engine?: string | null
+          rewrite_prompt_hash?: string | null
+          site_id?: string
+          style_profile_id?: string | null
+          style_version_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "article_versions_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "article_versions_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      articles: {
+        Row: {
+          author_name: string | null
+          canonical_url: string | null
+          category: string | null
+          content_html: string | null
+          created_at: string
+          hero_image_url: string | null
+          id: string
+          news_id: string | null
+          published_at: string | null
+          site_id: string
+          slug: string
+          status: string
+          summary: string | null
+          tags: Json | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_name?: string | null
+          canonical_url?: string | null
+          category?: string | null
+          content_html?: string | null
+          created_at?: string
+          hero_image_url?: string | null
+          id?: string
+          news_id?: string | null
+          published_at?: string | null
+          site_id: string
+          slug: string
+          status?: string
+          summary?: string | null
+          tags?: Json | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_name?: string | null
+          canonical_url?: string | null
+          category?: string | null
+          content_html?: string | null
+          created_at?: string
+          hero_image_url?: string | null
+          id?: string
+          news_id?: string | null
+          published_at?: string | null
+          site_id?: string
+          slug?: string
+          status?: string
+          summary?: string | null
+          tags?: Json | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "articles_news_id_fkey"
+            columns: ["news_id"]
+            isOneToOne: false
+            referencedRelation: "news"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "articles_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -378,6 +507,73 @@ export type Database = {
           },
         ]
       }
+      distribution_jobs: {
+        Row: {
+          article_id: string
+          attempts: number
+          created_at: string
+          effective_mode: Database["public"]["Enums"]["delivery_mode"] | null
+          error_message: string | null
+          id: string
+          processed_at: string | null
+          requested_mode: Database["public"]["Enums"]["delivery_mode"]
+          scheduled_for: string | null
+          source_site_id: string
+          status: Database["public"]["Enums"]["distribution_status"]
+          target_site_id: string
+        }
+        Insert: {
+          article_id: string
+          attempts?: number
+          created_at?: string
+          effective_mode?: Database["public"]["Enums"]["delivery_mode"] | null
+          error_message?: string | null
+          id?: string
+          processed_at?: string | null
+          requested_mode?: Database["public"]["Enums"]["delivery_mode"]
+          scheduled_for?: string | null
+          source_site_id: string
+          status?: Database["public"]["Enums"]["distribution_status"]
+          target_site_id: string
+        }
+        Update: {
+          article_id?: string
+          attempts?: number
+          created_at?: string
+          effective_mode?: Database["public"]["Enums"]["delivery_mode"] | null
+          error_message?: string | null
+          id?: string
+          processed_at?: string | null
+          requested_mode?: Database["public"]["Enums"]["delivery_mode"]
+          scheduled_for?: string | null
+          source_site_id?: string
+          status?: Database["public"]["Enums"]["distribution_status"]
+          target_site_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "distribution_jobs_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "distribution_jobs_source_site_id_fkey"
+            columns: ["source_site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "distribution_jobs_target_site_id_fkey"
+            columns: ["target_site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       home_config: {
         Row: {
           block_name: string
@@ -437,6 +633,300 @@ export type Database = {
             columns: ["tag_id"]
             isOneToOne: false
             referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      import_subscriptions: {
+        Row: {
+          allowed_hours: Json | null
+          category_map: Json | null
+          created_at: string
+          delivery_mode: Database["public"]["Enums"]["delivery_mode"]
+          enabled: boolean
+          exclude_categories: string[] | null
+          exclude_keywords: string[] | null
+          id: string
+          import_mode: Database["public"]["Enums"]["import_mode"]
+          include_categories: string[] | null
+          include_keywords: string[] | null
+          max_per_day: number | null
+          source_site_id: string
+          target_site_id: string
+          updated_at: string
+        }
+        Insert: {
+          allowed_hours?: Json | null
+          category_map?: Json | null
+          created_at?: string
+          delivery_mode?: Database["public"]["Enums"]["delivery_mode"]
+          enabled?: boolean
+          exclude_categories?: string[] | null
+          exclude_keywords?: string[] | null
+          id?: string
+          import_mode?: Database["public"]["Enums"]["import_mode"]
+          include_categories?: string[] | null
+          include_keywords?: string[] | null
+          max_per_day?: number | null
+          source_site_id: string
+          target_site_id: string
+          updated_at?: string
+        }
+        Update: {
+          allowed_hours?: Json | null
+          category_map?: Json | null
+          created_at?: string
+          delivery_mode?: Database["public"]["Enums"]["delivery_mode"]
+          enabled?: boolean
+          exclude_categories?: string[] | null
+          exclude_keywords?: string[] | null
+          id?: string
+          import_mode?: Database["public"]["Enums"]["import_mode"]
+          include_categories?: string[] | null
+          include_keywords?: string[] | null
+          max_per_day?: number | null
+          source_site_id?: string
+          target_site_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_subscriptions_source_site_id_fkey"
+            columns: ["source_site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "import_subscriptions_target_site_id_fkey"
+            columns: ["target_site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      imported_articles: {
+        Row: {
+          canonical_url: string | null
+          created_at: string
+          credited_text: string | null
+          distribution_job_id: string | null
+          id: string
+          published_at: string | null
+          source_article_id: string
+          source_site_id: string
+          status: Database["public"]["Enums"]["imported_article_status"]
+          target_article_id: string | null
+          target_site_id: string
+        }
+        Insert: {
+          canonical_url?: string | null
+          created_at?: string
+          credited_text?: string | null
+          distribution_job_id?: string | null
+          id?: string
+          published_at?: string | null
+          source_article_id: string
+          source_site_id: string
+          status?: Database["public"]["Enums"]["imported_article_status"]
+          target_article_id?: string | null
+          target_site_id: string
+        }
+        Update: {
+          canonical_url?: string | null
+          created_at?: string
+          credited_text?: string | null
+          distribution_job_id?: string | null
+          id?: string
+          published_at?: string | null
+          source_article_id?: string
+          source_site_id?: string
+          status?: Database["public"]["Enums"]["imported_article_status"]
+          target_article_id?: string | null
+          target_site_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "imported_articles_distribution_job_id_fkey"
+            columns: ["distribution_job_id"]
+            isOneToOne: false
+            referencedRelation: "distribution_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "imported_articles_source_article_id_fkey"
+            columns: ["source_article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "imported_articles_source_site_id_fkey"
+            columns: ["source_site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "imported_articles_target_article_id_fkey"
+            columns: ["target_article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "imported_articles_target_site_id_fkey"
+            columns: ["target_site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journalist_style_profiles: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          max_refs: number
+          max_total_size_mb: number
+          name: string
+          profile_type: Database["public"]["Enums"]["style_profile_type"]
+          site_id: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_refs?: number
+          max_total_size_mb?: number
+          name: string
+          profile_type?: Database["public"]["Enums"]["style_profile_type"]
+          site_id: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_refs?: number
+          max_total_size_mb?: number
+          name?: string
+          profile_type?: Database["public"]["Enums"]["style_profile_type"]
+          site_id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journalist_style_profiles_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journalist_style_refs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          extracted_text: string | null
+          file_name: string | null
+          file_size_bytes: number | null
+          id: string
+          kind: Database["public"]["Enums"]["style_ref_kind"]
+          mime_type: string | null
+          status: Database["public"]["Enums"]["style_ref_status"]
+          storage_path: string | null
+          style_profile_id: string
+          title: string
+          url: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          extracted_text?: string | null
+          file_name?: string | null
+          file_size_bytes?: number | null
+          id?: string
+          kind: Database["public"]["Enums"]["style_ref_kind"]
+          mime_type?: string | null
+          status?: Database["public"]["Enums"]["style_ref_status"]
+          storage_path?: string | null
+          style_profile_id: string
+          title: string
+          url?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          extracted_text?: string | null
+          file_name?: string | null
+          file_size_bytes?: number | null
+          id?: string
+          kind?: Database["public"]["Enums"]["style_ref_kind"]
+          mime_type?: string | null
+          status?: Database["public"]["Enums"]["style_ref_status"]
+          storage_path?: string | null
+          style_profile_id?: string
+          title?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journalist_style_refs_style_profile_id_fkey"
+            columns: ["style_profile_id"]
+            isOneToOne: false
+            referencedRelation: "journalist_style_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journalist_style_versions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          generated_at: string | null
+          generated_from_refs: boolean
+          id: string
+          is_current: boolean
+          style_guide_text: string
+          style_profile_id: string
+          version_number: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          generated_at?: string | null
+          generated_from_refs?: boolean
+          id?: string
+          is_current?: boolean
+          style_guide_text: string
+          style_profile_id: string
+          version_number?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          generated_at?: string | null
+          generated_from_refs?: boolean
+          id?: string
+          is_current?: boolean
+          style_guide_text?: string
+          style_profile_id?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journalist_style_versions_style_profile_id_fkey"
+            columns: ["style_profile_id"]
+            isOneToOne: false
+            referencedRelation: "journalist_style_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -976,6 +1466,120 @@ export type Database = {
           },
         ]
       }
+      partner_relationships: {
+        Row: {
+          allow_full_content: boolean
+          allow_rewrite: boolean
+          created_at: string
+          default_mode: Database["public"]["Enums"]["delivery_mode"]
+          id: string
+          rate_limit_day: number | null
+          require_approval: boolean
+          source_site_id: string
+          status: Database["public"]["Enums"]["partnership_status"]
+          target_site_id: string
+          updated_at: string
+        }
+        Insert: {
+          allow_full_content?: boolean
+          allow_rewrite?: boolean
+          created_at?: string
+          default_mode?: Database["public"]["Enums"]["delivery_mode"]
+          id?: string
+          rate_limit_day?: number | null
+          require_approval?: boolean
+          source_site_id: string
+          status?: Database["public"]["Enums"]["partnership_status"]
+          target_site_id: string
+          updated_at?: string
+        }
+        Update: {
+          allow_full_content?: boolean
+          allow_rewrite?: boolean
+          created_at?: string
+          default_mode?: Database["public"]["Enums"]["delivery_mode"]
+          id?: string
+          rate_limit_day?: number | null
+          require_approval?: boolean
+          source_site_id?: string
+          status?: Database["public"]["Enums"]["partnership_status"]
+          target_site_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_relationships_source_site_id_fkey"
+            columns: ["source_site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_relationships_target_site_id_fkey"
+            columns: ["target_site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pitch_requests: {
+        Row: {
+          created_at: string
+          description: string | null
+          from_site_id: string
+          id: string
+          responded_at: string | null
+          responded_by: string | null
+          response_message: string | null
+          status: Database["public"]["Enums"]["pitch_status"]
+          suggested_sources: Json | null
+          title: string
+          to_site_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          from_site_id: string
+          id?: string
+          responded_at?: string | null
+          responded_by?: string | null
+          response_message?: string | null
+          status?: Database["public"]["Enums"]["pitch_status"]
+          suggested_sources?: Json | null
+          title: string
+          to_site_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          from_site_id?: string
+          id?: string
+          responded_at?: string | null
+          responded_by?: string | null
+          response_message?: string | null
+          status?: Database["public"]["Enums"]["pitch_status"]
+          suggested_sources?: Json | null
+          title?: string
+          to_site_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pitch_requests_from_site_id_fkey"
+            columns: ["from_site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pitch_requests_to_site_id_fkey"
+            columns: ["to_site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1087,6 +1691,47 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_users: {
+        Row: {
+          created_at: string
+          id: string
+          invited_by: string | null
+          role: Database["public"]["Enums"]["site_user_role"]
+          site_id: string
+          status: Database["public"]["Enums"]["site_user_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["site_user_role"]
+          site_id: string
+          status?: Database["public"]["Enums"]["site_user_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["site_user_role"]
+          site_id?: string
+          status?: Database["public"]["Enums"]["site_user_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_users_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
             referencedColumns: ["id"]
           },
         ]
@@ -1520,6 +2165,18 @@ export type Database = {
       }
       increment_link_clicks: { Args: { p_link_id: string }; Returns: undefined }
       is_admin_or_editor: { Args: { _user_id: string }; Returns: boolean }
+      is_site_admin: {
+        Args: { _site_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_site_editor: {
+        Args: { _site_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_site_member: {
+        Args: { _site_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
@@ -1534,7 +2191,18 @@ export type Database = {
         | "editor_chief"
         | "reporter"
         | "collaborator"
+      article_kind: "original" | "imported" | "rewritten" | "edited"
+      delivery_mode: "teaser" | "full" | "rewrite"
+      distribution_status:
+        | "queued"
+        | "processing"
+        | "needs_approval"
+        | "published"
+        | "failed"
+        | "blocked"
       highlight_type: "none" | "home" | "urgent" | "featured"
+      import_mode: "manual" | "auto" | "auto_with_approval"
+      imported_article_status: "inbox" | "published" | "rejected"
       news_status:
         | "draft"
         | "scheduled"
@@ -1543,7 +2211,14 @@ export type Database = {
         | "trash"
         | "review"
         | "approved"
+      partnership_status: "pending" | "active" | "suspended" | "rejected"
+      pitch_status: "sent" | "approved" | "rejected" | "needs_info"
+      site_user_role: "admin" | "editor" | "journalist" | "reviewer"
+      site_user_status: "active" | "pending" | "suspended"
       story_status: "draft" | "published" | "archived"
+      style_profile_type: "journalist" | "site_default"
+      style_ref_kind: "link" | "txt" | "pdf"
+      style_ref_status: "uploaded" | "ingested" | "failed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1681,7 +2356,19 @@ export const Constants = {
         "reporter",
         "collaborator",
       ],
+      article_kind: ["original", "imported", "rewritten", "edited"],
+      delivery_mode: ["teaser", "full", "rewrite"],
+      distribution_status: [
+        "queued",
+        "processing",
+        "needs_approval",
+        "published",
+        "failed",
+        "blocked",
+      ],
       highlight_type: ["none", "home", "urgent", "featured"],
+      import_mode: ["manual", "auto", "auto_with_approval"],
+      imported_article_status: ["inbox", "published", "rejected"],
       news_status: [
         "draft",
         "scheduled",
@@ -1691,7 +2378,14 @@ export const Constants = {
         "review",
         "approved",
       ],
+      partnership_status: ["pending", "active", "suspended", "rejected"],
+      pitch_status: ["sent", "approved", "rejected", "needs_info"],
+      site_user_role: ["admin", "editor", "journalist", "reviewer"],
+      site_user_status: ["active", "pending", "suspended"],
       story_status: ["draft", "published", "archived"],
+      style_profile_type: ["journalist", "site_default"],
+      style_ref_kind: ["link", "txt", "pdf"],
+      style_ref_status: ["uploaded", "ingested", "failed"],
     },
   },
 } as const
