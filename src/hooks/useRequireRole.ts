@@ -38,7 +38,8 @@ export function useRequireRole(allowedRoles: AppRole[]) {
         const role = data.role as AppRole;
         setUserRole(role);
 
-        if (allowedRoles.includes(role)) {
+        // Super Admin tem acesso a TODAS as áreas
+        if (role === "super_admin" || allowedRoles.includes(role)) {
           setHasAccess(true);
         } else {
           toast.error("Seu perfil não tem acesso a esta funcionalidade.");
