@@ -15,6 +15,8 @@ import NewsDetail from "./pages/NewsDetail";
 import CategoryPage from "./pages/CategoryPage";
 import NotFound from "./pages/NotFound";
 import StoryViewer from "./pages/StoryViewer";
+import EventDetail from "./pages/EventDetail";
+import EditionViewer from "./pages/EditionViewer";
 
 // Admin Pages
 import Dashboard from "./pages/admin/Dashboard";
@@ -99,6 +101,8 @@ const App = () => (
                     <Route path="/comunidade/desbloquear" element={<CommunityUnlock />} />
                   </Route>
                   <Route path="/story/:slug" element={<StoryViewer />} />
+                  <Route path="/evento/:slug" element={<EventDetail />} />
+                  <Route path="/edicao/:slug" element={<EditionViewer />} />
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/login" element={<Navigate to="/auth" replace />} />
                   <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
