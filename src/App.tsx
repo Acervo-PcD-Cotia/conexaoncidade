@@ -58,61 +58,61 @@ const App = () => (
               <Toaster />
               <Sonner />
               <BrowserRouter>
-          <Routes>
-            {/* Public Routes */}
-            <Route element={<PublicLayout />}>
-              <Route path="/" element={<Index />} />
-              <Route path="/noticia/:slug" element={<NewsDetail />} />
-              <Route path="/categoria/:slug" element={<CategoryPage />} />
-            </Route>
-            <Route path="/story/:slug" element={<StoryViewer />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/login" element={<Navigate to="/auth" replace />} />
-            <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
+                <Routes>
+                  {/* Public Routes */}
+                  <Route element={<PublicLayout />}>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/noticia/:slug" element={<NewsDetail />} />
+                    <Route path="/categoria/:slug" element={<CategoryPage />} />
+                  </Route>
+                  <Route path="/story/:slug" element={<StoryViewer />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/login" element={<Navigate to="/auth" replace />} />
+                  <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
 
-            {/* Admin Routes */}
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<Dashboard />} />
-              <Route path="noticias-ai" element={<NoticiasAI />} />
-              <Route path="news" element={<NewsList />} />
-              <Route path="news/new" element={<NewsEditor />} />
-              <Route path="news/:id/edit" element={<NewsEditor />} />
-              <Route path="categories" element={<Categories />} />
-              <Route path="tags" element={<Tags />} />
-              <Route path="banners" element={<Banners />} />
-              <Route path="ads" element={<Ads />} />
-              <Route path="stories" element={<StoriesList />} />
-              <Route path="stories/new" element={<StoryEditor />} />
-              <Route path="stories/:id/edit" element={<StoryEditor />} />
-              <Route path="users" element={<Users />} />
-              <Route path="home-editor" element={<HomeEditor />} />
-              <Route path="quick-notes" element={<QuickNotesAdmin />} />
-              <Route path="analytics" element={<Analytics />} />
-              <Route path="social" element={<SocialDashboard />} />
-              <Route path="social/queue" element={<SocialQueue />} />
-              <Route path="social/history" element={<SocialHistory />} />
-              <Route path="social/logs" element={<SocialLogs />} />
-              <Route path="social/settings" element={<SocialSettings />} />
-              <Route path="links" element={<LinksDashboard />} />
-              <Route path="links/create" element={<LinksBuilder />} />
-              <Route path="logs" element={<AuditLogs />} />
-              <Route path="settings" element={<Settings />} />
-              <Route path="solutions" element={<Solutions />} />
-              <Route path="events" element={<EventsList />} />
-              <Route path="editions" element={<EditionsList />} />
-              <Route path="financial" element={<FinancialDashboard />} />
-              <Route path="training" element={<TrainingHub />} />
-            </Route>
+                  {/* Admin Routes */}
+                  <Route path="/admin" element={<AdminLayout />}>
+                    <Route index element={<Dashboard />} />
+                    <Route path="noticias-ai" element={<NoticiasAI />} />
+                    <Route path="news" element={<NewsList />} />
+                    <Route path="news/new" element={<NewsEditor />} />
+                    <Route path="news/:id/edit" element={<NewsEditor />} />
+                    <Route path="categories" element={<Categories />} />
+                    <Route path="tags" element={<Tags />} />
+                    <Route path="banners" element={<Banners />} />
+                    <Route path="ads" element={<Ads />} />
+                    <Route path="stories" element={<StoriesList />} />
+                    <Route path="stories/new" element={<StoryEditor />} />
+                    <Route path="stories/:id/edit" element={<StoryEditor />} />
+                    <Route path="users" element={<Users />} />
+                    <Route path="home-editor" element={<HomeEditor />} />
+                    <Route path="quick-notes" element={<QuickNotesAdmin />} />
+                    <Route path="analytics" element={<Analytics />} />
+                    <Route path="social" element={<SocialDashboard />} />
+                    <Route path="social/queue" element={<SocialQueue />} />
+                    <Route path="social/history" element={<SocialHistory />} />
+                    <Route path="social/logs" element={<SocialLogs />} />
+                    <Route path="social/settings" element={<SocialSettings />} />
+                    <Route path="links" element={<LinksDashboard />} />
+                    <Route path="links/create" element={<LinksBuilder />} />
+                    <Route path="logs" element={<AuditLogs />} />
+                    <Route path="settings" element={<Settings />} />
+                    <Route path="solutions" element={<Solutions />} />
+                    <Route path="events" element={<EventsList />} />
+                    <Route path="editions" element={<EditionsList />} />
+                    <Route path="financial" element={<FinancialDashboard />} />
+                    <Route path="training" element={<TrainingHub />} />
+                  </Route>
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </NewsCreationProvider>
-  </AccessibilityProvider>
-</AuthProvider>
-</QueryClientProvider>
-</HelmetProvider>
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </TooltipProvider>
+          </NewsCreationProvider>
+        </AccessibilityProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </HelmetProvider>
 );
 
 export default App;
