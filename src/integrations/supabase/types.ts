@@ -4011,6 +4011,101 @@ export type Database = {
         }
         Relationships: []
       }
+      push_notifications: {
+        Row: {
+          body: string
+          created_at: string | null
+          created_by: string | null
+          failed_count: number | null
+          icon_url: string | null
+          id: string
+          image_url: string | null
+          sent_at: string | null
+          sent_count: number | null
+          target_type: string
+          target_user_ids: string[] | null
+          tenant_id: string | null
+          title: string
+          url: string | null
+        }
+        Insert: {
+          body: string
+          created_at?: string | null
+          created_by?: string | null
+          failed_count?: number | null
+          icon_url?: string | null
+          id?: string
+          image_url?: string | null
+          sent_at?: string | null
+          sent_count?: number | null
+          target_type?: string
+          target_user_ids?: string[] | null
+          tenant_id?: string | null
+          title: string
+          url?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string | null
+          created_by?: string | null
+          failed_count?: number | null
+          icon_url?: string | null
+          id?: string
+          image_url?: string | null
+          sent_at?: string | null
+          sent_count?: number | null
+          target_type?: string
+          target_user_ids?: string[] | null
+          tenant_id?: string | null
+          title?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_notifications_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string | null
+          endpoint: string
+          id: string
+          is_active: boolean | null
+          p256dh: string
+          updated_at: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          auth: string
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          is_active?: boolean | null
+          p256dh: string
+          updated_at?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          auth?: string
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          is_active?: boolean | null
+          p256dh?: string
+          updated_at?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       qr_codes: {
         Row: {
           created_at: string
