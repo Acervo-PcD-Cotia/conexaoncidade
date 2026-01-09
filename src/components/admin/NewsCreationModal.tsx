@@ -131,8 +131,12 @@ export function NewsCreationModal({ open, onOpenChange }: NewsCreationModalProps
           <>
             <DialogHeader className="text-center pb-2">
               <DialogTitle className="text-2xl font-bold">Como deseja criar esta notícia?</DialogTitle>
-              <DialogDescription className="text-base">
-                Ambas as opções levam ao mesmo editor final com todas as validações
+              <DialogDescription className="text-base text-center">
+                Manual e IA são apenas <strong className="text-foreground">métodos de entrada</strong>.
+                <br />
+                <span className="text-muted-foreground">
+                  Toda notícia segue o mesmo padrão final Conexão/ITL.
+                </span>
               </DialogDescription>
             </DialogHeader>
 

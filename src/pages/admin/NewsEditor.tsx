@@ -374,14 +374,14 @@ export default function NewsEditor() {
             <h1 className="font-heading text-2xl font-bold">{isEditing ? "Editar Notícia" : "Nova Notícia"}</h1>
             {/* Origin Badge */}
             {origin === 'ai' ? (
-              <Badge className="bg-violet-600 hover:bg-violet-700">
+              <Badge className="bg-violet-600 hover:bg-violet-700" title="Método de entrada: IA">
                 <Bot className="mr-1 h-3 w-3" />
-                Gerada por IA
+                Entrada: IA
               </Badge>
             ) : (
-              <Badge variant="outline">
+              <Badge variant="outline" title="Método de entrada: Manual">
                 <FileEdit className="mr-1 h-3 w-3" />
-                Manual
+                Entrada: Manual
               </Badge>
             )}
           </div>
