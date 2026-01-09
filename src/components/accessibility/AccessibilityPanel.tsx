@@ -58,7 +58,7 @@ export function AccessibilityPanel() {
     },
     {
       id: "vlibras",
-      label: "VLibras",
+      label: settings.vlibrasActive ? "VLibras (ativo)" : "VLibras (oculto)",
       icon: Hand,
       action: () => updateSetting("vlibrasActive", !settings.vlibrasActive),
       active: settings.vlibrasActive,
