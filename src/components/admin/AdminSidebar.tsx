@@ -42,7 +42,7 @@ import logoFull from "@/assets/logo-full.png";
 const mainMenuItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
   { title: "Notícias", url: "/admin/news", icon: Newspaper },
-  { title: "Central IA", url: "/admin/noticias-ai", icon: Sparkles },
+  { title: "Notícias IA", url: "/admin/noticias-ai", icon: Sparkles },
   { title: "Notas Rápidas", url: "/admin/quick-notes", icon: Zap },
   { title: "Categorias", url: "/admin/categories", icon: FolderTree },
   { title: "Tags", url: "/admin/tags", icon: Tag },
