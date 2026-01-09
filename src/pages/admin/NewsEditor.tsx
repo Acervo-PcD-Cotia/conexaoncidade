@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Save, Loader2, Calendar, Cloud, CloudOff, Search } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Calendar, Cloud, CloudOff, Search, Bot, FileEdit } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNewsCreation, NewsOrigin } from "@/contexts/NewsCreationContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +25,7 @@ import { SeoValidator } from "@/components/admin/SeoValidator";
 import { ImageUploader } from "@/components/admin/ImageUploader";
 import { TagSelector } from "@/components/admin/TagSelector";
 import { NewsPreview } from "@/components/admin/NewsPreview";
+import { NewsValidationCard, validateNewsForm } from "@/components/admin/NewsValidationCard";
 import { useRequireRole } from "@/hooks/useRequireRole";
 
 function generateSlug(title: string) {
@@ -39,11 +41,17 @@ function generateSlug(title: string) {
 
 export default function NewsEditor() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { prefillData, clearPrefillData, origin: contextOrigin } = useNewsCreation();
   const { userRole } = useRequireRole(["admin", "editor", "editor_chief", "reporter", "columnist", "collaborator"]);
   const isEditing = !!id;
+
+  // Determine origin from URL or context
+  const urlOrigin = searchParams.get('origin') as NewsOrigin | null;
+  const origin: NewsOrigin = urlOrigin || contextOrigin || 'manual';
 
   const [formData, setFormData] = useState({
     title: "",
@@ -72,6 +80,7 @@ export default function NewsEditor() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasUnsavedChanges = useRef(false);
+  const hasPrefilled = useRef(false);
 
   const { data: news, isLoading: loadingNews } = useQuery({
     queryKey: ["admin-news", id],
@@ -102,6 +111,78 @@ export default function NewsEditor() {
     },
     enabled: isEditing,
   });
+
+  // Prefill from AI generation
+  useEffect(() => {
+    if (!isEditing && prefillData && !hasPrefilled.current) {
+      hasPrefilled.current = true;
+      
+      // Find category ID from name
+      const categoryMatch = categories?.find(
+        c => c.name.toLowerCase() === prefillData.category_name?.toLowerCase()
+      );
+
+      setFormData(prev => ({
+        ...prev,
+        title: prefillData.title || prev.title,
+        slug: prefillData.slug || generateSlug(prefillData.title || ''),
+        excerpt: prefillData.excerpt || prev.excerpt,
+        content: prefillData.content || prev.content,
+        featured_image_url: prefillData.featured_image_url || prev.featured_image_url,
+        image_alt: prefillData.image_alt || prev.image_alt,
+        image_credit: prefillData.image_credit || prev.image_credit,
+        meta_title: prefillData.meta_title || prev.meta_title,
+        meta_description: prefillData.meta_description || prev.meta_description,
+        source: prefillData.source || prev.source,
+        category_id: categoryMatch?.id || prev.category_id,
+      }));
+
+      // Handle tags - need to fetch or create them
+      if (prefillData.tags?.length) {
+        handlePrefillTags(prefillData.tags);
+      }
+
+      // Clear prefill data after using it
+      clearPrefillData();
+    }
+  }, [prefillData, isEditing, categories, clearPrefillData]);
+
+  const handlePrefillTags = async (tagNames: string[]) => {
+    const tagIds: string[] = [];
+    
+    for (const tagName of tagNames.slice(0, 12)) {
+      // Try to find existing tag
+      let { data: existingTag } = await supabase
+        .from('tags')
+        .select('id')
+        .ilike('name', tagName)
+        .single();
+
+      if (existingTag) {
+        tagIds.push(existingTag.id);
+      } else {
+        // Create new tag
+        const slug = tagName
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9\s-]/g, '')
+          .replace(/\s+/g, '-');
+
+        const { data: newTag } = await supabase
+          .from('tags')
+          .insert({ name: tagName, slug })
+          .select()
+          .single();
+
+        if (newTag) {
+          tagIds.push(newTag.id);
+        }
+      }
+    }
+
+    setSelectedTags(tagIds);
+  };
 
   useEffect(() => {
     if (news) {
@@ -137,6 +218,22 @@ export default function NewsEditor() {
       setFormData((prev) => ({ ...prev, slug: generateSlug(prev.title) }));
     }
   }, [formData.title, isEditing]);
+
+  // Validation
+  const validation = useMemo(() => {
+    return validateNewsForm({
+      title: formData.title,
+      excerpt: formData.excerpt,
+      meta_title: formData.meta_title,
+      meta_description: formData.meta_description,
+      selectedTags,
+      image_alt: formData.image_alt,
+      category_id: formData.category_id,
+      featured_image_url: formData.featured_image_url,
+    });
+  }, [formData, selectedTags]);
+
+  const canSave = validation.valid;
 
   // Auto-save mutation
   const autoSaveMutation = useMutation({
@@ -201,6 +298,7 @@ export default function NewsEditor() {
       const payload = {
         ...data,
         author_id: user?.id,
+        origin: origin,
         published_at: data.status === "published" ? new Date().toISOString() : null,
       };
 
@@ -233,6 +331,12 @@ export default function NewsEditor() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!canSave) {
+      toast.error("Complete todas as validações obrigatórias antes de salvar");
+      return;
+    }
+
     if (!formData.title || !formData.slug) {
       toast.error("Título e slug são obrigatórios");
       return;
@@ -266,7 +370,21 @@ export default function NewsEditor() {
           <Button type="button" variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <h1 className="font-heading text-2xl font-bold">{isEditing ? "Editar Notícia" : "Nova Notícia"}</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="font-heading text-2xl font-bold">{isEditing ? "Editar Notícia" : "Nova Notícia"}</h1>
+            {/* Origin Badge */}
+            {origin === 'ai' ? (
+              <Badge className="bg-violet-600 hover:bg-violet-700">
+                <Bot className="mr-1 h-3 w-3" />
+                Gerada por IA
+              </Badge>
+            ) : (
+              <Badge variant="outline">
+                <FileEdit className="mr-1 h-3 w-3" />
+                Manual
+              </Badge>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-3">
           {/* Auto-save indicator */}
@@ -303,7 +421,7 @@ export default function NewsEditor() {
             categoryName={categories?.find((c) => c.id === formData.category_id)?.name}
             categoryColor={categories?.find((c) => c.id === formData.category_id)?.color}
           />
-          <Button type="submit" disabled={saveMutation.isPending}>
+          <Button type="submit" disabled={saveMutation.isPending || !canSave}>
             {saveMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             Salvar
           </Button>
@@ -320,7 +438,12 @@ export default function NewsEditor() {
                 <Input value={formData.hat} onChange={(e) => updateField("hat", e.target.value.slice(0, 19))} placeholder="Ex: POLÍTICA" maxLength={19} />
               </div>
               <div>
-                <Label>Título *</Label>
+                <Label>
+                  Título * 
+                  <span className={`text-xs ml-2 ${formData.title.length >= 6 && formData.title.length <= 120 ? 'text-green-600' : 'text-destructive'}`}>
+                    ({formData.title.length}/120, mín. 6)
+                  </span>
+                </Label>
                 <Input value={formData.title} onChange={(e) => updateField("title", e.target.value)} placeholder="Título da notícia" required />
               </div>
               <div>
@@ -336,8 +459,18 @@ export default function NewsEditor() {
                 <RichTextEditor content={formData.content} onChange={(c) => updateField("content", c)} />
               </div>
               <div>
-                <Label>Resumo / Lead</Label>
-                <Input value={formData.excerpt} onChange={(e) => updateField("excerpt", e.target.value)} placeholder="Breve resumo" />
+                <Label>
+                  Resumo / Lead *
+                  <span className={`text-xs ml-2 ${formData.excerpt.length > 0 && formData.excerpt.length <= 160 ? 'text-green-600' : 'text-destructive'}`}>
+                    ({formData.excerpt.length}/160)
+                  </span>
+                </Label>
+                <Input 
+                  value={formData.excerpt} 
+                  onChange={(e) => updateField("excerpt", e.target.value.slice(0, 160))} 
+                  placeholder="Breve resumo (máx. 160 caracteres)"
+                  maxLength={160}
+                />
               </div>
               <div>
                 <Label>Fonte</Label>
@@ -347,7 +480,7 @@ export default function NewsEditor() {
           </Card>
 
           <Card>
-            <CardHeader><CardTitle>Imagem</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Imagem *</CardTitle></CardHeader>
             <CardContent>
               <ImageUploader
                 value={formData.featured_image_url}
@@ -357,19 +490,42 @@ export default function NewsEditor() {
                 credit={formData.image_credit}
                 onCreditChange={(c) => updateField("image_credit", c)}
               />
+              {!formData.image_alt && formData.featured_image_url && (
+                <p className="text-xs text-destructive mt-2">⚠️ Texto alternativo (ALT) é obrigatório</p>
+              )}
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader><CardTitle>SEO</CardTitle></CardHeader>
+            <CardHeader><CardTitle>SEO *</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label>Meta Título <span className="text-xs text-muted-foreground">({formData.meta_title.length}/60)</span></Label>
-                <Input value={formData.meta_title} onChange={(e) => updateField("meta_title", e.target.value)} maxLength={70} />
+                <Label>
+                  Meta Título *
+                  <span className={`text-xs ml-2 ${formData.meta_title.length > 0 && formData.meta_title.length <= 60 ? 'text-green-600' : 'text-destructive'}`}>
+                    ({formData.meta_title.length}/60)
+                  </span>
+                </Label>
+                <Input 
+                  value={formData.meta_title} 
+                  onChange={(e) => updateField("meta_title", e.target.value.slice(0, 60))} 
+                  maxLength={60}
+                  placeholder="Título para mecanismos de busca"
+                />
               </div>
               <div>
-                <Label>Meta Descrição <span className="text-xs text-muted-foreground">({formData.meta_description.length}/160)</span></Label>
-                <Input value={formData.meta_description} onChange={(e) => updateField("meta_description", e.target.value)} maxLength={170} />
+                <Label>
+                  Meta Descrição *
+                  <span className={`text-xs ml-2 ${formData.meta_description.length > 0 && formData.meta_description.length <= 160 ? 'text-green-600' : 'text-destructive'}`}>
+                    ({formData.meta_description.length}/160)
+                  </span>
+                </Label>
+                <Input 
+                  value={formData.meta_description} 
+                  onChange={(e) => updateField("meta_description", e.target.value.slice(0, 160))} 
+                  maxLength={160}
+                  placeholder="Descrição para resultados de busca"
+                />
               </div>
               <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/30">
                 <div className="flex items-center gap-2">
@@ -391,6 +547,18 @@ export default function NewsEditor() {
         </div>
 
         <div className="space-y-6">
+          {/* Validation Card - Most important */}
+          <NewsValidationCard
+            title={formData.title}
+            excerpt={formData.excerpt}
+            metaTitle={formData.meta_title}
+            metaDescription={formData.meta_description}
+            selectedTags={selectedTags}
+            imageAlt={formData.image_alt}
+            categoryId={formData.category_id}
+            featuredImageUrl={formData.featured_image_url}
+          />
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
@@ -436,19 +604,31 @@ export default function NewsEditor() {
                 </Select>
               </div>
               <div>
-                <Label>Categoria</Label>
+                <Label>Categoria *</Label>
                 <Select value={formData.category_id} onValueChange={(v) => updateField("category_id", v)}>
-                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                  <SelectTrigger className={!formData.category_id ? "border-destructive" : ""}>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
                   <SelectContent>
                     {categories?.map((cat) => <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
-              <TagSelector selectedTags={selectedTags} onChange={setSelectedTags} />
+              <TagSelector selectedTags={selectedTags} onChange={setSelectedTags} requiredCount={12} />
             </CardContent>
           </Card>
 
-          <SeoValidator title={formData.title} metaTitle={formData.meta_title} metaDescription={formData.meta_description} hat={formData.hat} featuredImageUrl={formData.featured_image_url} imageAlt={formData.image_alt} slug={formData.slug} />
+          <SeoValidator 
+            title={formData.title} 
+            metaTitle={formData.meta_title} 
+            metaDescription={formData.meta_description} 
+            hat={formData.hat} 
+            featuredImageUrl={formData.featured_image_url} 
+            imageAlt={formData.image_alt} 
+            slug={formData.slug}
+            selectedTags={selectedTags}
+            excerpt={formData.excerpt}
+          />
 
           <NewsAIPanel
             content={formData.content}

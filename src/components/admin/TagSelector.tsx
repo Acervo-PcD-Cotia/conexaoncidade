@@ -3,14 +3,16 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { X, Plus, Tag } from 'lucide-react';
+import { X, Plus, Tag, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 interface TagSelectorProps {
   selectedTags: string[];
   onChange: (tags: string[]) => void;
+  requiredCount?: number;
 }
 
 interface TagOption {
@@ -19,7 +21,9 @@ interface TagOption {
   slug: string;
 }
 
-export function TagSelector({ selectedTags, onChange }: TagSelectorProps) {
+const REQUIRED_TAG_COUNT = 12;
+
+export function TagSelector({ selectedTags, onChange, requiredCount = REQUIRED_TAG_COUNT }: TagSelectorProps) {
   const [tags, setTags] = useState<TagOption[]>([]);
   const [open, setOpen] = useState(false);
   const [newTagInput, setNewTagInput] = useState('');
@@ -49,7 +53,15 @@ export function TagSelector({ selectedTags, onChange }: TagSelectorProps) {
       .filter(Boolean) as TagOption[];
   }, [selectedTags, tags]);
 
+  const tagCount = selectedTags.length;
+  const isExact = tagCount === requiredCount;
+  const needsMore = tagCount < requiredCount;
+  const hasExcess = tagCount > requiredCount;
+
   const handleSelect = (tagId: string) => {
+    if (tagCount >= requiredCount) {
+      // Still allow if already at limit - will show warning
+    }
     onChange([...selectedTags, tagId]);
     setOpen(false);
   };
@@ -88,16 +100,49 @@ export function TagSelector({ selectedTags, onChange }: TagSelectorProps) {
 
   return (
     <div className="space-y-3">
-      <Label className="flex items-center gap-2">
-        <Tag className="h-4 w-4" />
-        Tags
-      </Label>
+      {/* Header with counter */}
+      <div className="flex items-center justify-between">
+        <Label className="flex items-center gap-2">
+          <Tag className="h-4 w-4" />
+          Tags
+        </Label>
+        <div className={cn(
+          "flex items-center gap-1.5 text-sm font-medium",
+          isExact && "text-green-600",
+          needsMore && "text-yellow-600",
+          hasExcess && "text-red-600"
+        )}>
+          {isExact ? (
+            <CheckCircle2 className="h-4 w-4" />
+          ) : (
+            <AlertCircle className="h-4 w-4" />
+          )}
+          <span>{tagCount}/{requiredCount}</span>
+        </div>
+      </div>
+
+      {/* Status message */}
+      <div className={cn(
+        "text-xs rounded-md px-2 py-1.5",
+        isExact && "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400",
+        needsMore && "bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400",
+        hasExcess && "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"
+      )}>
+        {isExact && "✓ Perfeito! 12 tags selecionadas"}
+        {needsMore && `Adicione mais ${requiredCount - tagCount} tag${requiredCount - tagCount > 1 ? 's' : ''}`}
+        {hasExcess && `Remova ${tagCount - requiredCount} tag${tagCount - requiredCount > 1 ? 's' : ''}`}
+      </div>
 
       {/* Selected tags */}
       {selectedTagDetails.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {selectedTagDetails.map((tag) => (
-            <Badge key={tag.id} variant="secondary" className="flex items-center gap-1">
+          {selectedTagDetails.map((tag, index) => (
+            <Badge 
+              key={tag.id} 
+              variant={index < requiredCount ? "secondary" : "destructive"}
+              className="flex items-center gap-1"
+            >
+              <span className="text-[10px] text-muted-foreground mr-1">{index + 1}</span>
               {tag.name}
               <button
                 type="button"
@@ -115,9 +160,18 @@ export function TagSelector({ selectedTags, onChange }: TagSelectorProps) {
       <div className="flex gap-2">
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
-            <Button type="button" variant="outline" size="sm" className="flex-1 justify-start">
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm" 
+              className={cn(
+                "flex-1 justify-start",
+                hasExcess && "border-red-300 text-red-600"
+              )}
+              disabled={hasExcess}
+            >
               <Plus className="h-4 w-4 mr-2" />
-              Adicionar tag
+              {hasExcess ? 'Limite atingido' : 'Adicionar tag'}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-[300px] p-0" align="start">
@@ -162,8 +216,8 @@ export function TagSelector({ selectedTags, onChange }: TagSelectorProps) {
         </Popover>
       </div>
 
-      {/* Quick create */}
-      {selectedTags.length === 0 && (
+      {/* Quick create - only show when we need more tags */}
+      {needsMore && (
         <div className="flex gap-2">
           <Input
             placeholder="Criar nova tag..."

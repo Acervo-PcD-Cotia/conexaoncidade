@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, Search, Eye, Edit, Trash2, MoreHorizontal, Copy } from "lucide-react";
+import { Plus, Search, Eye, Edit, Trash2, MoreHorizontal, Copy, Bot, FileEdit } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,9 +22,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { NewsCreationModal } from "@/components/admin/NewsCreationModal";
 
 export default function NewsList() {
   const [search, setSearch] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -62,7 +64,6 @@ export default function NewsList() {
 
   const duplicateMutation = useMutation({
     mutationFn: async (id: string) => {
-      // Buscar notícia original
       const { data: original, error: fetchError } = await supabase
         .from("news")
         .select("*")
@@ -71,7 +72,6 @@ export default function NewsList() {
 
       if (fetchError || !original) throw new Error("Notícia não encontrada");
 
-      // Criar cópia
       const timestamp = Date.now();
       const newSlug = `${original.slug}-copia-${timestamp}`;
       
@@ -94,13 +94,13 @@ export default function NewsList() {
           highlight: "none",
           meta_title: original.meta_title,
           meta_description: original.meta_description,
+          origin: original.origin,
         })
         .select()
         .single();
 
       if (insertError) throw insertError;
 
-      // Copiar tags também
       const { data: originalTags } = await supabase
         .from("news_tags")
         .select("tag_id")
@@ -154,12 +154,13 @@ export default function NewsList() {
           <h1 className="font-heading text-3xl font-bold">Notícias</h1>
           <p className="text-muted-foreground">Gerencie todas as notícias do portal</p>
         </div>
-        <Button asChild>
-          <Link to="/admin/news/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Nova Notícia
-          </Link>
+        <Button onClick={() => setModalOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Nova Notícia
         </Button>
+      </div>
+
+      <NewsCreationModal open={modalOpen} onOpenChange={setModalOpen} />
       </div>
 
       {/* Search */}
@@ -180,8 +181,9 @@ export default function NewsList() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[40%]">Título</TableHead>
+              <TableHead className="w-[35%]">Título</TableHead>
               <TableHead>Categoria</TableHead>
+              <TableHead>Origem</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Views</TableHead>
               <TableHead>Data</TableHead>
@@ -191,13 +193,13 @@ export default function NewsList() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
+                <TableCell colSpan={7} className="text-center py-8">
                   Carregando...
                 </TableCell>
               </TableRow>
             ) : news?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
+                <TableCell colSpan={7} className="text-center py-8">
                   Nenhuma notícia encontrada
                 </TableCell>
               </TableRow>
@@ -212,6 +214,19 @@ export default function NewsList() {
                   </TableCell>
                   <TableCell>
                     {item.categories?.name || "-"}
+                  </TableCell>
+                  <TableCell>
+                    {(item as any).origin === 'ai' ? (
+                      <Badge variant="secondary" className="bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
+                        <Bot className="mr-1 h-3 w-3" />
+                        AI
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline">
+                        <FileEdit className="mr-1 h-3 w-3" />
+                        Manual
+                      </Badge>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Badge
