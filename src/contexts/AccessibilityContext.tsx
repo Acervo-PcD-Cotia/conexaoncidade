@@ -6,6 +6,7 @@ export interface AccessibilitySettings {
   reducedMotion: boolean;
   readingMode: boolean;
   vlibrasActive: boolean;
+  lineHeight: "normal" | "large";
 }
 
 interface AccessibilityContextType {
@@ -22,6 +23,7 @@ const defaultSettings: AccessibilitySettings = {
   reducedMotion: false,
   readingMode: false,
   vlibrasActive: false,
+  lineHeight: "normal",
 };
 
 const STORAGE_KEY = "accessibility-settings";
@@ -80,6 +82,20 @@ export function AccessibilityProvider({ children }: { children: ReactNode }) {
       body.classList.add("reading-mode");
     } else {
       body.classList.remove("reading-mode");
+    }
+
+    // Line height
+    if (settings.lineHeight === "large") {
+      body.classList.add("line-height-large");
+    } else {
+      body.classList.remove("line-height-large");
+    }
+
+    // VLibras visibility
+    if (settings.vlibrasActive) {
+      body.classList.add("vlibras-enabled");
+    } else {
+      body.classList.remove("vlibras-enabled");
     }
 
     // Persist to localStorage

@@ -2,7 +2,6 @@ import { Outlet } from "react-router-dom";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { AccessibilityPanel } from "@/components/accessibility/AccessibilityPanel";
-import { VLibrasWidget } from "@/components/accessibility/VLibrasWidget";
 import { useKeyboardNavigation } from "@/hooks/useKeyboardNavigation";
 
 export function PublicLayout() {
@@ -26,9 +25,8 @@ export function PublicLayout() {
       
       <Footer />
 
-      {/* Accessibility tools */}
+      {/* Accessibility tools (VLibras is now loaded globally via index.html) */}
       <AccessibilityPanel />
-      <VLibrasWidget />
     </div>
   );
 }

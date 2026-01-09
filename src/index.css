@@ -375,3 +375,30 @@
   animation-iteration-count: 1 !important;
   transition-duration: 0.01ms !important;
 }
+
+/* Line height toggle */
+.line-height-large {
+  line-height: 1.8 !important;
+}
+
+.line-height-large p,
+.line-height-large li,
+.line-height-large span,
+.line-height-large div {
+  line-height: inherit;
+}
+
+/* VLibras positioning - ensure visibility */
+[vw] {
+  z-index: 9999 !important;
+}
+
+[vw-access-button] {
+  right: 20px !important;
+  bottom: 20px !important;
+}
+
+/* Hide VLibras when disabled via accessibility context */
+body:not(.vlibras-enabled) [vw] {
+  display: none !important;
+}

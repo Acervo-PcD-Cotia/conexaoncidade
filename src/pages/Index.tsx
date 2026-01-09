@@ -1,6 +1,6 @@
 import { MarketDataBar } from "@/components/home/MarketDataBar";
 import { SuperBanner } from "@/components/home/SuperBanner";
-import { StoriesBar } from "@/components/home/StoriesBar";
+import { TopWebStoriesBar } from "@/components/home/TopWebStoriesBar";
 import { HeroSection } from "@/components/home/HeroSection";
 import { AgoraNaCidade } from "@/components/home/AgoraNaCidade";
 import { LatestNewsList } from "@/components/home/LatestNewsList";
@@ -12,10 +12,13 @@ import { AdSlot } from "@/components/home/AdSlot";
 const Index = () => {
   return (
     <div className="space-y-0">
-      {/* 1. Market/Weather data bar */}
+      {/* 1. Market/Weather data bar with BTC/ETH */}
       <MarketDataBar />
       
-      {/* 3. Super Banner Slide */}
+      {/* 2. WebStories - Instagram-style carousel */}
+      <TopWebStoriesBar />
+      
+      {/* 3. Super Banner Slide (7 banners) */}
       <SuperBanner />
       
       {/* 4. Ad Slot: Home Top - 728x90 */}
@@ -42,9 +45,6 @@ const Index = () => {
       <CategorySection title="Política" slug="politica" />
       <CategorySection title="Esportes" slug="esportes" />
       <CategorySection title="Polícia" slug="policia" />
-      
-      {/* 11. Stories bar */}
-      <StoriesBar />
     </div>
   );
 };
