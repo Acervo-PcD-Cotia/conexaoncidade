@@ -307,6 +307,877 @@ export type Database = {
         }
         Relationships: []
       }
+      autopost_audit_logs: {
+        Row: {
+          action: string
+          action_category: string | null
+          actor_email: string | null
+          actor_user_id: string | null
+          created_at: string | null
+          entity_id: string
+          entity_name: string | null
+          entity_type: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          new_data: Json | null
+          old_data: Json | null
+          tenant_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          action_category?: string | null
+          actor_email?: string | null
+          actor_user_id?: string | null
+          created_at?: string | null
+          entity_id: string
+          entity_name?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          new_data?: Json | null
+          old_data?: Json | null
+          tenant_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          action_category?: string | null
+          actor_email?: string | null
+          actor_user_id?: string | null
+          created_at?: string | null
+          entity_id?: string
+          entity_name?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          new_data?: Json | null
+          old_data?: Json | null
+          tenant_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autopost_audit_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      autopost_ingest_items: {
+        Row: {
+          applied_rule_ids: string[] | null
+          canonical_url: string | null
+          content_hash: string
+          created_at: string | null
+          duplicate_of: string | null
+          duplicate_reason: string | null
+          id: string
+          job_id: string | null
+          original_author: string | null
+          original_content: string | null
+          original_content_clean: string | null
+          original_excerpt: string | null
+          original_image_url: string | null
+          original_images: string[] | null
+          original_published_at: string | null
+          original_title: string
+          original_url: string
+          processing_notes: string | null
+          similarity_group: string | null
+          similarity_score: number | null
+          source_id: string
+          status: Database["public"]["Enums"]["autopost_item_status"] | null
+          tenant_id: string | null
+          title_fingerprint: string
+          updated_at: string | null
+          word_count: number | null
+        }
+        Insert: {
+          applied_rule_ids?: string[] | null
+          canonical_url?: string | null
+          content_hash: string
+          created_at?: string | null
+          duplicate_of?: string | null
+          duplicate_reason?: string | null
+          id?: string
+          job_id?: string | null
+          original_author?: string | null
+          original_content?: string | null
+          original_content_clean?: string | null
+          original_excerpt?: string | null
+          original_image_url?: string | null
+          original_images?: string[] | null
+          original_published_at?: string | null
+          original_title: string
+          original_url: string
+          processing_notes?: string | null
+          similarity_group?: string | null
+          similarity_score?: number | null
+          source_id: string
+          status?: Database["public"]["Enums"]["autopost_item_status"] | null
+          tenant_id?: string | null
+          title_fingerprint: string
+          updated_at?: string | null
+          word_count?: number | null
+        }
+        Update: {
+          applied_rule_ids?: string[] | null
+          canonical_url?: string | null
+          content_hash?: string
+          created_at?: string | null
+          duplicate_of?: string | null
+          duplicate_reason?: string | null
+          id?: string
+          job_id?: string | null
+          original_author?: string | null
+          original_content?: string | null
+          original_content_clean?: string | null
+          original_excerpt?: string | null
+          original_image_url?: string | null
+          original_images?: string[] | null
+          original_published_at?: string | null
+          original_title?: string
+          original_url?: string
+          processing_notes?: string | null
+          similarity_group?: string | null
+          similarity_score?: number | null
+          source_id?: string
+          status?: Database["public"]["Enums"]["autopost_item_status"] | null
+          tenant_id?: string | null
+          title_fingerprint?: string
+          updated_at?: string | null
+          word_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autopost_ingest_items_duplicate_of_fkey"
+            columns: ["duplicate_of"]
+            isOneToOne: false
+            referencedRelation: "autopost_ingest_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autopost_ingest_items_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "autopost_ingest_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autopost_ingest_items_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "autopost_sources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autopost_ingest_items_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      autopost_ingest_jobs: {
+        Row: {
+          created_at: string | null
+          ended_at: string | null
+          error_message: string | null
+          id: string
+          items_duplicated: number | null
+          items_errored: number | null
+          items_found: number | null
+          items_new: number | null
+          items_processed: number | null
+          metadata: Json | null
+          source_id: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["autopost_job_status"] | null
+          tenant_id: string | null
+          trigger_type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          ended_at?: string | null
+          error_message?: string | null
+          id?: string
+          items_duplicated?: number | null
+          items_errored?: number | null
+          items_found?: number | null
+          items_new?: number | null
+          items_processed?: number | null
+          metadata?: Json | null
+          source_id: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["autopost_job_status"] | null
+          tenant_id?: string | null
+          trigger_type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          ended_at?: string | null
+          error_message?: string | null
+          id?: string
+          items_duplicated?: number | null
+          items_errored?: number | null
+          items_found?: number | null
+          items_new?: number | null
+          items_processed?: number | null
+          metadata?: Json | null
+          source_id?: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["autopost_job_status"] | null
+          tenant_id?: string | null
+          trigger_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autopost_ingest_jobs_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "autopost_sources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autopost_ingest_jobs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      autopost_media_assets: {
+        Row: {
+          alt_text: string | null
+          aspect_ratio: string | null
+          created_at: string | null
+          credit: string | null
+          file_name: string | null
+          file_size: number | null
+          height: number | null
+          id: string
+          ingest_item_id: string | null
+          is_hero: boolean | null
+          is_valid: boolean | null
+          local_path: string | null
+          local_url: string | null
+          mime_type: string | null
+          processing_status: string | null
+          rewritten_post_id: string | null
+          source_url: string
+          tenant_id: string | null
+          validation_error: string | null
+          width: number | null
+        }
+        Insert: {
+          alt_text?: string | null
+          aspect_ratio?: string | null
+          created_at?: string | null
+          credit?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          height?: number | null
+          id?: string
+          ingest_item_id?: string | null
+          is_hero?: boolean | null
+          is_valid?: boolean | null
+          local_path?: string | null
+          local_url?: string | null
+          mime_type?: string | null
+          processing_status?: string | null
+          rewritten_post_id?: string | null
+          source_url: string
+          tenant_id?: string | null
+          validation_error?: string | null
+          width?: number | null
+        }
+        Update: {
+          alt_text?: string | null
+          aspect_ratio?: string | null
+          created_at?: string | null
+          credit?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          height?: number | null
+          id?: string
+          ingest_item_id?: string | null
+          is_hero?: boolean | null
+          is_valid?: boolean | null
+          local_path?: string | null
+          local_url?: string | null
+          mime_type?: string | null
+          processing_status?: string | null
+          rewritten_post_id?: string | null
+          source_url?: string
+          tenant_id?: string | null
+          validation_error?: string | null
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autopost_media_assets_ingest_item_id_fkey"
+            columns: ["ingest_item_id"]
+            isOneToOne: false
+            referencedRelation: "autopost_ingest_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autopost_media_assets_rewritten_post_id_fkey"
+            columns: ["rewritten_post_id"]
+            isOneToOne: false
+            referencedRelation: "autopost_rewritten_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autopost_media_assets_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      autopost_rewritten_posts: {
+        Row: {
+          alt_text: string | null
+          approved_at: string | null
+          approved_by: string | null
+          author_name: string | null
+          card_image_url: string | null
+          category_id: string | null
+          content_html: string
+          created_at: string | null
+          final_title: string
+          gallery_urls: string[] | null
+          hero_image_url: string | null
+          id: string
+          image_credit: string | null
+          ingest_item_id: string
+          internal_links_added: number | null
+          og_image_url: string | null
+          publish_status:
+            | Database["public"]["Enums"]["autopost_publish_status"]
+            | null
+          published_at: string | null
+          published_news_id: string | null
+          quality_score: number | null
+          readability_score: number | null
+          rejected_at: string | null
+          rejected_by: string | null
+          rejection_reason: string | null
+          revision_count: number | null
+          scheduled_at: string | null
+          seo_meta_description: string
+          seo_meta_title: string
+          seo_score: number | null
+          slug: string
+          source_credit: string
+          source_url: string | null
+          summary: string
+          tags: string[] | null
+          tenant_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          alt_text?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          author_name?: string | null
+          card_image_url?: string | null
+          category_id?: string | null
+          content_html: string
+          created_at?: string | null
+          final_title: string
+          gallery_urls?: string[] | null
+          hero_image_url?: string | null
+          id?: string
+          image_credit?: string | null
+          ingest_item_id: string
+          internal_links_added?: number | null
+          og_image_url?: string | null
+          publish_status?:
+            | Database["public"]["Enums"]["autopost_publish_status"]
+            | null
+          published_at?: string | null
+          published_news_id?: string | null
+          quality_score?: number | null
+          readability_score?: number | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
+          revision_count?: number | null
+          scheduled_at?: string | null
+          seo_meta_description: string
+          seo_meta_title: string
+          seo_score?: number | null
+          slug: string
+          source_credit: string
+          source_url?: string | null
+          summary: string
+          tags?: string[] | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          alt_text?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          author_name?: string | null
+          card_image_url?: string | null
+          category_id?: string | null
+          content_html?: string
+          created_at?: string | null
+          final_title?: string
+          gallery_urls?: string[] | null
+          hero_image_url?: string | null
+          id?: string
+          image_credit?: string | null
+          ingest_item_id?: string
+          internal_links_added?: number | null
+          og_image_url?: string | null
+          publish_status?:
+            | Database["public"]["Enums"]["autopost_publish_status"]
+            | null
+          published_at?: string | null
+          published_news_id?: string | null
+          quality_score?: number | null
+          readability_score?: number | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
+          revision_count?: number | null
+          scheduled_at?: string | null
+          seo_meta_description?: string
+          seo_meta_title?: string
+          seo_score?: number | null
+          slug?: string
+          source_credit?: string
+          source_url?: string | null
+          summary?: string
+          tags?: string[] | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autopost_rewritten_posts_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autopost_rewritten_posts_ingest_item_id_fkey"
+            columns: ["ingest_item_id"]
+            isOneToOne: false
+            referencedRelation: "autopost_ingest_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autopost_rewritten_posts_published_news_id_fkey"
+            columns: ["published_news_id"]
+            isOneToOne: false
+            referencedRelation: "news"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autopost_rewritten_posts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      autopost_rules: {
+        Row: {
+          action_add_tags: string[] | null
+          action_block_publish: boolean | null
+          action_generate_seo: boolean | null
+          action_internal_links: boolean | null
+          action_require_review: boolean | null
+          action_rewrite_enabled: boolean | null
+          action_set_author: string | null
+          action_set_category_id: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          enabled: boolean | null
+          id: string
+          match_category_hint: string | null
+          match_exclude_keywords: string[] | null
+          match_group_ids: string[] | null
+          match_keywords: string[] | null
+          match_regex: string | null
+          match_source_ids: string[] | null
+          name: string
+          priority: number | null
+          tenant_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          action_add_tags?: string[] | null
+          action_block_publish?: boolean | null
+          action_generate_seo?: boolean | null
+          action_internal_links?: boolean | null
+          action_require_review?: boolean | null
+          action_rewrite_enabled?: boolean | null
+          action_set_author?: string | null
+          action_set_category_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          enabled?: boolean | null
+          id?: string
+          match_category_hint?: string | null
+          match_exclude_keywords?: string[] | null
+          match_group_ids?: string[] | null
+          match_keywords?: string[] | null
+          match_regex?: string | null
+          match_source_ids?: string[] | null
+          name: string
+          priority?: number | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          action_add_tags?: string[] | null
+          action_block_publish?: boolean | null
+          action_generate_seo?: boolean | null
+          action_internal_links?: boolean | null
+          action_require_review?: boolean | null
+          action_rewrite_enabled?: boolean | null
+          action_set_author?: string | null
+          action_set_category_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          enabled?: boolean | null
+          id?: string
+          match_category_hint?: string | null
+          match_exclude_keywords?: string[] | null
+          match_group_ids?: string[] | null
+          match_keywords?: string[] | null
+          match_regex?: string | null
+          match_source_ids?: string[] | null
+          name?: string
+          priority?: number | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autopost_rules_action_set_category_id_fkey"
+            columns: ["action_set_category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autopost_rules_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      autopost_scheduled_publishes: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          error_message: string | null
+          executed_at: string | null
+          id: string
+          rewritten_post_id: string
+          scheduled_for: string
+          status: string | null
+          tenant_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          error_message?: string | null
+          executed_at?: string | null
+          id?: string
+          rewritten_post_id: string
+          scheduled_for: string
+          status?: string | null
+          tenant_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          error_message?: string | null
+          executed_at?: string | null
+          id?: string
+          rewritten_post_id?: string
+          scheduled_for?: string
+          status?: string | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autopost_scheduled_publishes_rewritten_post_id_fkey"
+            columns: ["rewritten_post_id"]
+            isOneToOne: false
+            referencedRelation: "autopost_rewritten_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autopost_scheduled_publishes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      autopost_settings: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          key: string
+          tenant_id: string | null
+          updated_at: string | null
+          value: Json
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          key: string
+          tenant_id?: string | null
+          updated_at?: string | null
+          value: Json
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          key?: string
+          tenant_id?: string | null
+          updated_at?: string | null
+          value?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autopost_settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      autopost_source_groups: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          parent_id: string | null
+          sort_order: number | null
+          tenant_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          parent_id?: string | null
+          sort_order?: number | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          parent_id?: string | null
+          sort_order?: number | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autopost_source_groups_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "autopost_source_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autopost_source_groups_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      autopost_sources: {
+        Row: {
+          allowed_hours_end: number | null
+          allowed_hours_start: number | null
+          crawler_entry_url: string | null
+          crawler_selectors: Json | null
+          created_at: string | null
+          created_by: string | null
+          credit_template: string | null
+          daily_limit: number | null
+          default_author: string | null
+          default_category_id: string | null
+          default_tags: string[] | null
+          error_count: number | null
+          feed_url: string | null
+          group_id: string | null
+          health_score: number | null
+          id: string
+          import_mode:
+            | Database["public"]["Enums"]["autopost_import_mode"]
+            | null
+          language: string | null
+          last_run_at: string | null
+          name: string
+          next_run_at: string | null
+          per_run_limit: number | null
+          region: string | null
+          require_credit: boolean | null
+          require_review: boolean | null
+          schedule_frequency_minutes: number | null
+          site_url: string
+          source_type:
+            | Database["public"]["Enums"]["autopost_source_type"]
+            | null
+          status: Database["public"]["Enums"]["autopost_source_status"] | null
+          success_count: number | null
+          tenant_id: string | null
+          total_items_captured: number | null
+          total_items_published: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          allowed_hours_end?: number | null
+          allowed_hours_start?: number | null
+          crawler_entry_url?: string | null
+          crawler_selectors?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          credit_template?: string | null
+          daily_limit?: number | null
+          default_author?: string | null
+          default_category_id?: string | null
+          default_tags?: string[] | null
+          error_count?: number | null
+          feed_url?: string | null
+          group_id?: string | null
+          health_score?: number | null
+          id?: string
+          import_mode?:
+            | Database["public"]["Enums"]["autopost_import_mode"]
+            | null
+          language?: string | null
+          last_run_at?: string | null
+          name: string
+          next_run_at?: string | null
+          per_run_limit?: number | null
+          region?: string | null
+          require_credit?: boolean | null
+          require_review?: boolean | null
+          schedule_frequency_minutes?: number | null
+          site_url: string
+          source_type?:
+            | Database["public"]["Enums"]["autopost_source_type"]
+            | null
+          status?: Database["public"]["Enums"]["autopost_source_status"] | null
+          success_count?: number | null
+          tenant_id?: string | null
+          total_items_captured?: number | null
+          total_items_published?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          allowed_hours_end?: number | null
+          allowed_hours_start?: number | null
+          crawler_entry_url?: string | null
+          crawler_selectors?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          credit_template?: string | null
+          daily_limit?: number | null
+          default_author?: string | null
+          default_category_id?: string | null
+          default_tags?: string[] | null
+          error_count?: number | null
+          feed_url?: string | null
+          group_id?: string | null
+          health_score?: number | null
+          id?: string
+          import_mode?:
+            | Database["public"]["Enums"]["autopost_import_mode"]
+            | null
+          language?: string | null
+          last_run_at?: string | null
+          name?: string
+          next_run_at?: string | null
+          per_run_limit?: number | null
+          region?: string | null
+          require_credit?: boolean | null
+          require_review?: boolean | null
+          schedule_frequency_minutes?: number | null
+          site_url?: string
+          source_type?:
+            | Database["public"]["Enums"]["autopost_source_type"]
+            | null
+          status?: Database["public"]["Enums"]["autopost_source_status"] | null
+          success_count?: number | null
+          tenant_id?: string | null
+          total_items_captured?: number | null
+          total_items_published?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autopost_sources_default_category_id_fkey"
+            columns: ["default_category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autopost_sources_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "autopost_source_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autopost_sources_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bio_buttons: {
         Row: {
           bio_page_id: string
@@ -4113,13 +4984,48 @@ export type Database = {
         Args: { _points: number }
         Returns: Database["public"]["Enums"]["community_level"]
       }
+      calculate_next_run_time: {
+        Args: {
+          p_frequency_minutes: number
+          p_hours_end: number
+          p_hours_start: number
+        }
+        Returns: string
+      }
       can_invite_to_community: { Args: { _user_id: string }; Returns: boolean }
+      check_autopost_duplicate: {
+        Args: {
+          p_content_hash: string
+          p_original_url: string
+          p_tenant_id: string
+          p_title_fingerprint: string
+          p_window_days?: number
+        }
+        Returns: {
+          existing_id: string
+          is_duplicate: boolean
+          match_type: string
+          similarity_score: number
+        }[]
+      }
       check_duplicate_news: {
         Args: { p_slug: string; p_source_url: string; p_title: string }
         Returns: {
           existing_id: string
           is_duplicate: boolean
           match_type: string
+        }[]
+      }
+      generate_content_hash: { Args: { content: string }; Returns: string }
+      get_autopost_stats: {
+        Args: { p_days?: number; p_tenant_id: string }
+        Returns: {
+          avg_processing_time: unknown
+          captured_today: number
+          duplicates_blocked: number
+          in_queue: number
+          published_today: number
+          sources_with_errors: number
         }[]
       }
       has_community_access: { Args: { _user_id: string }; Returns: boolean }
@@ -4153,6 +5059,7 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      normalize_title_fingerprint: { Args: { title: string }; Returns: string }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       tenant_has_feature: {
@@ -4162,6 +5069,11 @@ export type Database = {
       tenant_has_solution: {
         Args: { _solution_key: string; _tenant_id: string }
         Returns: boolean
+      }
+      unaccent: { Args: { "": string }; Returns: string }
+      update_autopost_source_health: {
+        Args: { p_source_id: string }
+        Returns: number
       }
     }
     Enums: {
@@ -4178,6 +5090,30 @@ export type Database = {
         | "financial"
         | "support"
       article_kind: "original" | "imported" | "rewritten" | "edited"
+      autopost_import_mode: "auto_publish" | "queue_review" | "capture_only"
+      autopost_item_status:
+        | "captured"
+        | "processed"
+        | "queued"
+        | "approved"
+        | "scheduled"
+        | "published"
+        | "rejected"
+        | "duplicate"
+      autopost_job_status: "running" | "success" | "failed" | "partial"
+      autopost_publish_status:
+        | "draft"
+        | "ready"
+        | "scheduled"
+        | "published"
+        | "rejected"
+      autopost_source_status: "active" | "paused" | "error"
+      autopost_source_type:
+        | "rss"
+        | "sitemap"
+        | "html_crawler"
+        | "api"
+        | "manual_url"
       community_level: "supporter" | "collaborator" | "ambassador" | "leader"
       delivery_mode: "teaser" | "full" | "rewrite"
       distribution_status:
@@ -4348,6 +5284,33 @@ export const Constants = {
         "support",
       ],
       article_kind: ["original", "imported", "rewritten", "edited"],
+      autopost_import_mode: ["auto_publish", "queue_review", "capture_only"],
+      autopost_item_status: [
+        "captured",
+        "processed",
+        "queued",
+        "approved",
+        "scheduled",
+        "published",
+        "rejected",
+        "duplicate",
+      ],
+      autopost_job_status: ["running", "success", "failed", "partial"],
+      autopost_publish_status: [
+        "draft",
+        "ready",
+        "scheduled",
+        "published",
+        "rejected",
+      ],
+      autopost_source_status: ["active", "paused", "error"],
+      autopost_source_type: [
+        "rss",
+        "sitemap",
+        "html_crawler",
+        "api",
+        "manual_url",
+      ],
       community_level: ["supporter", "collaborator", "ambassador", "leader"],
       delivery_mode: ["teaser", "full", "rewrite"],
       distribution_status: [
