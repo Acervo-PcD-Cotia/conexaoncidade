@@ -1705,6 +1705,7 @@ export type Database = {
           meta_keywords: string[] | null
           meta_title: string | null
           og_image_url: string | null
+          origin: Database["public"]["Enums"]["news_origin"] | null
           podcast_enabled: boolean | null
           published_at: string | null
           scheduled_at: string | null
@@ -1753,6 +1754,7 @@ export type Database = {
           meta_keywords?: string[] | null
           meta_title?: string | null
           og_image_url?: string | null
+          origin?: Database["public"]["Enums"]["news_origin"] | null
           podcast_enabled?: boolean | null
           published_at?: string | null
           scheduled_at?: string | null
@@ -1801,6 +1803,7 @@ export type Database = {
           meta_keywords?: string[] | null
           meta_title?: string | null
           og_image_url?: string | null
+          origin?: Database["public"]["Enums"]["news_origin"] | null
           podcast_enabled?: boolean | null
           published_at?: string | null
           scheduled_at?: string | null
@@ -3574,6 +3577,7 @@ export type Database = {
       highlight_type: "none" | "home" | "urgent" | "featured"
       import_mode: "manual" | "auto" | "auto_with_approval"
       imported_article_status: "inbox" | "published" | "rejected"
+      news_origin: "manual" | "ai"
       news_status:
         | "draft"
         | "scheduled"
@@ -3743,6 +3747,7 @@ export const Constants = {
       highlight_type: ["none", "home", "urgent", "featured"],
       import_mode: ["manual", "auto", "auto_with_approval"],
       imported_article_status: ["inbox", "published", "rejected"],
+      news_origin: ["manual", "ai"],
       news_status: [
         "draft",
         "scheduled",

@@ -12,6 +12,8 @@ interface SeoValidatorProps {
   featuredImageUrl: string;
   imageAlt: string;
   slug: string;
+  selectedTags?: string[];
+  excerpt?: string;
 }
 
 interface SeoCheck {
@@ -29,6 +31,8 @@ export function SeoValidator({
   featuredImageUrl,
   imageAlt,
   slug,
+  selectedTags = [],
+  excerpt = '',
 }: SeoValidatorProps) {
   const checks = useMemo((): SeoCheck[] => {
     const items: SeoCheck[] = [];
@@ -46,60 +50,84 @@ export function SeoValidator({
           : `${hatLength}/19 caracteres`
     });
 
-    // Meta title check
+    // Meta title check (required, ≤60)
     const metaTitleLength = metaTitle?.length || 0;
     items.push({
       name: 'Meta Título',
-      valid: metaTitleLength >= 30 && metaTitleLength <= 60,
-      warning: metaTitleLength > 0 && (metaTitleLength < 30 || metaTitleLength > 60),
+      valid: metaTitleLength > 0 && metaTitleLength <= 60,
+      warning: metaTitleLength > 60,
       message: metaTitleLength === 0 
-        ? 'Adicione um meta título' 
+        ? 'Obrigatório (≤60)' 
         : metaTitleLength > 60 
-          ? `${metaTitleLength}/60 (muito longo)` 
-          : metaTitleLength < 30 
-            ? `${metaTitleLength}/60 (muito curto)` 
-            : `${metaTitleLength}/60 caracteres`
+          ? `${metaTitleLength}/60 (excedido!)` 
+          : `${metaTitleLength}/60 ✓`
     });
 
-    // Meta description check
+    // Meta description check (required, ≤160)
     const metaDescLength = metaDescription?.length || 0;
     items.push({
       name: 'Meta Descrição',
-      valid: metaDescLength >= 120 && metaDescLength <= 160,
-      warning: metaDescLength > 0 && (metaDescLength < 120 || metaDescLength > 160),
+      valid: metaDescLength > 0 && metaDescLength <= 160,
+      warning: metaDescLength > 160,
       message: metaDescLength === 0 
-        ? 'Adicione uma meta descrição' 
+        ? 'Obrigatório (≤160)' 
         : metaDescLength > 160 
-          ? `${metaDescLength}/160 (muito longa)` 
-          : metaDescLength < 120 
-            ? `${metaDescLength}/160 (muito curta)` 
-            : `${metaDescLength}/160 caracteres`
+          ? `${metaDescLength}/160 (excedido!)` 
+          : `${metaDescLength}/160 ✓`
+    });
+
+    // Excerpt/Summary check (required, ≤160)
+    const excerptLength = excerpt?.length || 0;
+    items.push({
+      name: 'Resumo',
+      valid: excerptLength > 0 && excerptLength <= 160,
+      warning: excerptLength > 160,
+      message: excerptLength === 0 
+        ? 'Obrigatório (≤160)' 
+        : excerptLength > 160 
+          ? `${excerptLength}/160 (excedido!)` 
+          : `${excerptLength}/160 ✓`
+    });
+
+    // Tags check (exactly 12)
+    const tagCount = selectedTags?.length || 0;
+    items.push({
+      name: 'Tags',
+      valid: tagCount === 12,
+      warning: tagCount > 0 && tagCount !== 12,
+      message: tagCount === 12 
+        ? '12/12 tags ✓' 
+        : tagCount === 0 
+          ? '0/12 tags (obrigatório)' 
+          : tagCount < 12 
+            ? `${tagCount}/12 (faltam ${12 - tagCount})` 
+            : `${tagCount}/12 (remova ${tagCount - 12})`
     });
 
     // Image check
     items.push({
       name: 'Imagem Principal',
       valid: !!featuredImageUrl,
-      message: featuredImageUrl ? 'Definida' : 'Adicione uma imagem'
+      message: featuredImageUrl ? 'Definida ✓' : 'Obrigatória'
     });
 
     // Image alt check
     items.push({
-      name: 'Alt da Imagem',
+      name: 'ALT da Imagem',
       valid: !!imageAlt,
       warning: !!featuredImageUrl && !imageAlt,
-      message: imageAlt ? 'Definido' : 'Adicione texto alternativo'
+      message: imageAlt ? 'Definido ✓' : 'Obrigatório'
     });
 
     // Slug check
     items.push({
       name: 'URL (Slug)',
       valid: !!slug && slug.length > 3,
-      message: slug ? 'Definida' : 'Defina o slug'
+      message: slug ? 'Definida ✓' : 'Obrigatório'
     });
 
     return items;
-  }, [hat, metaTitle, metaDescription, featuredImageUrl, imageAlt, slug]);
+  }, [hat, metaTitle, metaDescription, excerpt, selectedTags, featuredImageUrl, imageAlt, slug]);
 
   const score = useMemo(() => {
     const validCount = checks.filter(c => c.valid).length;
@@ -107,15 +135,9 @@ export function SeoValidator({
   }, [checks]);
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-600';
-    if (score >= 50) return 'text-yellow-600';
+    if (score >= 100) return 'text-green-600';
+    if (score >= 80) return 'text-yellow-600';
     return 'text-red-600';
-  };
-
-  const getProgressColor = (score: number) => {
-    if (score >= 80) return 'bg-green-500';
-    if (score >= 50) return 'bg-yellow-500';
-    return 'bg-red-500';
   };
 
   const displayTitle = metaTitle || title || 'Título da notícia aqui';
@@ -141,7 +163,7 @@ export function SeoValidator({
             value={score} 
             className="h-2"
             style={{ 
-              ['--progress-background' as string]: score >= 80 ? 'rgb(34 197 94)' : score >= 50 ? 'rgb(234 179 8)' : 'rgb(239 68 68)'
+              ['--progress-background' as string]: score >= 100 ? 'rgb(34 197 94)' : score >= 80 ? 'rgb(234 179 8)' : 'rgb(239 68 68)'
             }}
           />
         </div>
@@ -187,9 +209,9 @@ export function SeoValidator({
           </div>
         </div>
 
-        {score < 80 && (
+        {score < 100 && (
           <p className="text-[10px] text-muted-foreground text-center">
-            Complete os itens acima para melhorar o SEO
+            Complete todos os itens para publicar
           </p>
         )}
       </CardContent>
