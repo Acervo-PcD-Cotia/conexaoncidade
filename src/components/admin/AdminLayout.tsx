@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AdminSidebar } from "./AdminSidebar";
@@ -18,7 +19,21 @@ export function AdminLayout() {
     "moderator",
   ]);
 
-  const { isOpen, closeModal } = useNewsCreationModal();
+  const { isOpen, openModal, closeModal } = useNewsCreationModal();
+
+  // Keyboard shortcut: Ctrl+N or Cmd+N to open news creation modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check for Ctrl+N (Windows/Linux) or Cmd+N (Mac)
+      if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+        e.preventDefault();
+        openModal();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [openModal]);
 
   if (checkingRole) {
     return (
