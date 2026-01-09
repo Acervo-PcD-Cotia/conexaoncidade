@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import logoFull from "@/assets/logo-full.png";
 import { AccessibilityMenuButton } from "@/components/accessibility/AccessibilityMenuButton";
+import { CommunityButton } from "@/components/community/CommunityButton";
 
 export function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -98,6 +99,9 @@ export function Header() {
             
             {/* Accessibility Button */}
             <AccessibilityMenuButton />
+            
+            {/* Community Button */}
+            <CommunityButton />
 
             {user ? (
               <DropdownMenu>

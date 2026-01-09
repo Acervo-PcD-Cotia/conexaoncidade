@@ -588,6 +588,612 @@ export type Database = {
           },
         ]
       }
+      community_comments: {
+        Row: {
+          author_id: string
+          content: string
+          created_at: string | null
+          hidden_reason: string | null
+          id: string
+          is_approved: boolean | null
+          is_hidden: boolean | null
+          like_count: number | null
+          moderated_at: string | null
+          moderated_by: string | null
+          parent_id: string | null
+          post_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          author_id: string
+          content: string
+          created_at?: string | null
+          hidden_reason?: string | null
+          id?: string
+          is_approved?: boolean | null
+          is_hidden?: boolean | null
+          like_count?: number | null
+          moderated_at?: string | null
+          moderated_by?: string | null
+          parent_id?: string | null
+          post_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          author_id?: string
+          content?: string
+          created_at?: string | null
+          hidden_reason?: string | null
+          id?: string
+          is_approved?: boolean | null
+          is_hidden?: boolean | null
+          like_count?: number | null
+          moderated_at?: string | null
+          moderated_by?: string | null
+          parent_id?: string | null
+          post_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "community_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_group_members: {
+        Row: {
+          group_id: string
+          id: string
+          joined_at: string | null
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          group_id: string
+          id?: string
+          joined_at?: string | null
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          group_id?: string
+          id?: string
+          joined_at?: string | null
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "community_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_groups: {
+        Row: {
+          color: string | null
+          cover_image_url: string | null
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          member_count: number | null
+          name: string
+          post_count: number | null
+          slug: string
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          color?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          member_count?: number | null
+          name: string
+          post_count?: number | null
+          slug: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          color?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          member_count?: number | null
+          name?: string
+          post_count?: number | null
+          slug?: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      community_invites: {
+        Row: {
+          code: string
+          created_at: string | null
+          created_by: string
+          expires_at: string | null
+          id: string
+          max_uses: number | null
+          status: string | null
+          use_count: number | null
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          status?: string | null
+          use_count?: number | null
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          status?: string | null
+          use_count?: number | null
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: []
+      }
+      community_members: {
+        Row: {
+          access_granted_at: string | null
+          access_method: string | null
+          badges: string[] | null
+          bio: string | null
+          created_at: string | null
+          id: string
+          invited_by: string | null
+          is_suspended: boolean | null
+          level: Database["public"]["Enums"]["community_level"] | null
+          points: number | null
+          share_count: number | null
+          suspended_reason: string | null
+          suspended_until: string | null
+          terms_accepted_at: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_granted_at?: string | null
+          access_method?: string | null
+          badges?: string[] | null
+          bio?: string | null
+          created_at?: string | null
+          id?: string
+          invited_by?: string | null
+          is_suspended?: boolean | null
+          level?: Database["public"]["Enums"]["community_level"] | null
+          points?: number | null
+          share_count?: number | null
+          suspended_reason?: string | null
+          suspended_until?: string | null
+          terms_accepted_at?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_granted_at?: string | null
+          access_method?: string | null
+          badges?: string[] | null
+          bio?: string | null
+          created_at?: string | null
+          id?: string
+          invited_by?: string | null
+          is_suspended?: boolean | null
+          level?: Database["public"]["Enums"]["community_level"] | null
+          points?: number | null
+          share_count?: number | null
+          suspended_reason?: string | null
+          suspended_until?: string | null
+          terms_accepted_at?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      community_penalties: {
+        Row: {
+          applied_by: string
+          created_at: string | null
+          ends_at: string | null
+          id: string
+          is_active: boolean | null
+          lifted_at: string | null
+          lifted_by: string | null
+          penalty_type: string
+          reason: string
+          report_id: string | null
+          starts_at: string | null
+          user_id: string
+        }
+        Insert: {
+          applied_by: string
+          created_at?: string | null
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          lifted_at?: string | null
+          lifted_by?: string | null
+          penalty_type: string
+          reason: string
+          report_id?: string | null
+          starts_at?: string | null
+          user_id: string
+        }
+        Update: {
+          applied_by?: string
+          created_at?: string | null
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          lifted_at?: string | null
+          lifted_by?: string | null
+          penalty_type?: string
+          reason?: string
+          report_id?: string | null
+          starts_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_penalties_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "community_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_points_history: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          description: string | null
+          id: string
+          points: number
+          reference_id: string | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          points: number
+          reference_id?: string | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          points?: number
+          reference_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      community_poll_votes: {
+        Row: {
+          id: string
+          option_ids: string[]
+          poll_id: string
+          user_id: string
+          voted_at: string | null
+        }
+        Insert: {
+          id?: string
+          option_ids: string[]
+          poll_id: string
+          user_id: string
+          voted_at?: string | null
+        }
+        Update: {
+          id?: string
+          option_ids?: string[]
+          poll_id?: string
+          user_id?: string
+          voted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_poll_votes_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "community_polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_polls: {
+        Row: {
+          created_at: string | null
+          ends_at: string | null
+          id: string
+          is_multiple_choice: boolean | null
+          options: Json
+          post_id: string
+          question: string
+          show_results_before_vote: boolean | null
+          total_votes: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          ends_at?: string | null
+          id?: string
+          is_multiple_choice?: boolean | null
+          options?: Json
+          post_id: string
+          question: string
+          show_results_before_vote?: boolean | null
+          total_votes?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          ends_at?: string | null
+          id?: string
+          is_multiple_choice?: boolean | null
+          options?: Json
+          post_id?: string
+          question?: string
+          show_results_before_vote?: boolean | null
+          total_votes?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_polls_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_posts: {
+        Row: {
+          author_id: string
+          comment_count: number | null
+          content: string
+          created_at: string | null
+          group_id: string | null
+          hidden_reason: string | null
+          id: string
+          is_hidden: boolean | null
+          is_pinned: boolean | null
+          like_count: number | null
+          moderated_at: string | null
+          moderated_by: string | null
+          post_type: string | null
+          updated_at: string | null
+          view_count: number | null
+        }
+        Insert: {
+          author_id: string
+          comment_count?: number | null
+          content: string
+          created_at?: string | null
+          group_id?: string | null
+          hidden_reason?: string | null
+          id?: string
+          is_hidden?: boolean | null
+          is_pinned?: boolean | null
+          like_count?: number | null
+          moderated_at?: string | null
+          moderated_by?: string | null
+          post_type?: string | null
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          author_id?: string
+          comment_count?: number | null
+          content?: string
+          created_at?: string | null
+          group_id?: string | null
+          hidden_reason?: string | null
+          id?: string
+          is_hidden?: boolean | null
+          is_pinned?: boolean | null
+          like_count?: number | null
+          moderated_at?: string | null
+          moderated_by?: string | null
+          post_type?: string | null
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_posts_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "community_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_reactions: {
+        Row: {
+          comment_id: string | null
+          created_at: string | null
+          id: string
+          post_id: string | null
+          reaction_type: string | null
+          user_id: string
+        }
+        Insert: {
+          comment_id?: string | null
+          created_at?: string | null
+          id?: string
+          post_id?: string | null
+          reaction_type?: string | null
+          user_id: string
+        }
+        Update: {
+          comment_id?: string | null
+          created_at?: string | null
+          id?: string
+          post_id?: string | null
+          reaction_type?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_reactions_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "community_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_reactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_reports: {
+        Row: {
+          action_taken: string | null
+          comment_id: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          notes: string | null
+          post_id: string | null
+          reason: string
+          reported_user_id: string | null
+          reporter_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string | null
+        }
+        Insert: {
+          action_taken?: string | null
+          comment_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          notes?: string | null
+          post_id?: string | null
+          reason: string
+          reported_user_id?: string | null
+          reporter_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+        }
+        Update: {
+          action_taken?: string | null
+          comment_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          notes?: string | null
+          post_id?: string | null
+          reason?: string
+          reported_user_id?: string | null
+          reporter_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_reports_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "community_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_reports_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_shares: {
+        Row: {
+          content_id: string
+          content_type: string
+          id: string
+          link_id: string | null
+          platform: string
+          points_earned: number | null
+          shared_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          id?: string
+          link_id?: string | null
+          platform: string
+          points_earned?: number | null
+          shared_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          id?: string
+          link_id?: string | null
+          platform?: string
+          points_earned?: number | null
+          shared_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_shares_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       digital_edition_items: {
         Row: {
           created_at: string | null
@@ -3503,6 +4109,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_community_level: {
+        Args: { _points: number }
+        Returns: Database["public"]["Enums"]["community_level"]
+      }
+      can_invite_to_community: { Args: { _user_id: string }; Returns: boolean }
       check_duplicate_news: {
         Args: { p_slug: string; p_source_url: string; p_title: string }
         Returns: {
@@ -3511,6 +4122,7 @@ export type Database = {
           match_type: string
         }[]
       }
+      has_community_access: { Args: { _user_id: string }; Returns: boolean }
       has_permission: {
         Args: { _permission: string; _user_id: string }
         Returns: boolean
@@ -3566,6 +4178,7 @@ export type Database = {
         | "financial"
         | "support"
       article_kind: "original" | "imported" | "rewritten" | "edited"
+      community_level: "supporter" | "collaborator" | "ambassador" | "leader"
       delivery_mode: "teaser" | "full" | "rewrite"
       distribution_status:
         | "queued"
@@ -3735,6 +4348,7 @@ export const Constants = {
         "support",
       ],
       article_kind: ["original", "imported", "rewritten", "edited"],
+      community_level: ["supporter", "collaborator", "ambassador", "leader"],
       delivery_mode: ["teaser", "full", "rewrite"],
       distribution_status: [
         "queued",
