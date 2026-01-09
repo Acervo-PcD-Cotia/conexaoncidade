@@ -129,27 +129,27 @@ export function NewsCreationModal({ open, onOpenChange }: NewsCreationModalProps
       <DialogContent className="sm:max-w-[600px]">
         {step === 'choice' ? (
           <>
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-bold">Nova Notícia</DialogTitle>
-              <DialogDescription>
-                Escolha como deseja criar sua notícia
+            <DialogHeader className="text-center pb-2">
+              <DialogTitle className="text-2xl font-bold">Como deseja criar esta notícia?</DialogTitle>
+              <DialogDescription className="text-base">
+                Ambas as opções levam ao mesmo editor final com todas as validações
               </DialogDescription>
             </DialogHeader>
 
             <div className="grid gap-4 py-6 sm:grid-cols-2">
               {/* Manual Option */}
               <Card 
-                className="group cursor-pointer border-2 p-6 transition-all hover:border-primary hover:bg-primary/5"
+                className="group relative cursor-pointer border-2 p-6 transition-all hover:border-primary hover:bg-primary/5 hover:shadow-lg"
                 onClick={handleManualChoice}
               >
                 <div className="flex flex-col items-center gap-4 text-center">
-                  <div className="rounded-full bg-muted p-4 transition-colors group-hover:bg-primary/10">
-                    <FileEdit className="h-8 w-8 text-muted-foreground transition-colors group-hover:text-primary" />
+                  <div className="rounded-full bg-muted p-4 transition-all group-hover:bg-primary/10 group-hover:scale-110">
+                    <FileEdit className="h-10 w-10 text-muted-foreground transition-colors group-hover:text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg">Cadastro Manual</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Preencha todos os campos manualmente
+                    <h3 className="font-semibold text-lg">📝 Cadastro Manual</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Redija sua notícia do zero com controle total sobre todos os campos
                     </p>
                   </div>
                   <Badge variant="outline" className="mt-2">
@@ -160,26 +160,38 @@ export function NewsCreationModal({ open, onOpenChange }: NewsCreationModalProps
 
               {/* AI Option */}
               <Card 
-                className="group cursor-pointer border-2 p-6 transition-all hover:border-violet-500 hover:bg-violet-500/5"
+                className="group relative cursor-pointer border-2 border-violet-200 p-6 transition-all hover:border-violet-500 hover:bg-violet-500/5 hover:shadow-lg dark:border-violet-800"
                 onClick={handleAIChoice}
               >
+                {/* Recommended Badge */}
+                <div className="absolute -right-2 -top-2">
+                  <Badge className="bg-gradient-to-r from-violet-600 to-purple-600 text-xs shadow-lg">
+                    ⚡ Recomendado
+                  </Badge>
+                </div>
+                
                 <div className="flex flex-col items-center gap-4 text-center">
-                  <div className="rounded-full bg-violet-100 p-4 transition-colors group-hover:bg-violet-200 dark:bg-violet-900/30 dark:group-hover:bg-violet-900/50">
-                    <Bot className="h-8 w-8 text-violet-600 dark:text-violet-400" />
+                  <div className="rounded-full bg-gradient-to-br from-violet-100 to-purple-100 p-4 transition-all group-hover:scale-110 dark:from-violet-900/30 dark:to-purple-900/30">
+                    <Bot className="h-10 w-10 text-violet-600 dark:text-violet-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg">Notícias AI</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Gere automaticamente a partir de fontes
+                    <h3 className="font-semibold text-lg">🤖 Criar com IA</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Gere automaticamente a partir de URL, texto ou tópicos
                     </p>
                   </div>
                   <Badge className="mt-2 bg-violet-600 hover:bg-violet-700">
                     <Sparkles className="mr-1 h-3 w-3" />
-                    Inteligência Artificial
+                    Mais rápido
                   </Badge>
                 </div>
               </Card>
             </div>
+            
+            {/* Info text */}
+            <p className="text-center text-xs text-muted-foreground">
+              💡 A notícia gerada por IA ainda pode ser editada manualmente antes da publicação
+            </p>
           </>
         ) : (
           <>
