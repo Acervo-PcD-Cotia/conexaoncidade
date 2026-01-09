@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AccessibilityProvider } from "@/contexts/AccessibilityContext";
 import { PublicLayout } from "@/components/layout/PublicLayout";
@@ -47,9 +48,10 @@ import TrainingHub from "./pages/admin/TrainingHub";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <AccessibilityProvider>
+  <HelmetProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <AccessibilityProvider>
         <TooltipProvider>
           <Toaster />
           <Sonner />
@@ -104,9 +106,10 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
-    </AccessibilityProvider>
-  </AuthProvider>
-</QueryClientProvider>
+      </AccessibilityProvider>
+    </AuthProvider>
+  </QueryClientProvider>
+  </HelmetProvider>
 );
 
 export default App;
