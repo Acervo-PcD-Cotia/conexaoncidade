@@ -46,6 +46,16 @@ import EditionsList from "./pages/admin/EditionsList";
 import FinancialDashboard from "./pages/admin/FinancialDashboard";
 import TrainingHub from "./pages/admin/TrainingHub";
 
+// Auto Post PRO Pages
+import AutoPostDashboard from "./pages/admin/autopost/AutoPostDashboard";
+import AutoPostSources from "./pages/admin/autopost/AutoPostSources";
+import AutoPostQueue from "./pages/admin/autopost/AutoPostQueue";
+import AutoPostGroups from "./pages/admin/autopost/AutoPostGroups";
+
+// Community Pages
+import CommunityHub from "./pages/community/CommunityHub";
+import CommunityUnlock from "./pages/community/CommunityUnlock";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -64,6 +74,8 @@ const App = () => (
                     <Route path="/" element={<Index />} />
                     <Route path="/noticia/:slug" element={<NewsDetail />} />
                     <Route path="/categoria/:slug" element={<CategoryPage />} />
+                    <Route path="/comunidade" element={<CommunityHub />} />
+                    <Route path="/comunidade/desbloquear" element={<CommunityUnlock />} />
                   </Route>
                   <Route path="/story/:slug" element={<StoryViewer />} />
                   <Route path="/auth" element={<Auth />} />
@@ -102,6 +114,12 @@ const App = () => (
                     <Route path="editions" element={<EditionsList />} />
                     <Route path="financial" element={<FinancialDashboard />} />
                     <Route path="training" element={<TrainingHub />} />
+                    
+                    {/* Auto Post PRO Routes */}
+                    <Route path="autopost" element={<AutoPostDashboard />} />
+                    <Route path="autopost/sources" element={<AutoPostSources />} />
+                    <Route path="autopost/queue" element={<AutoPostQueue />} />
+                    <Route path="autopost/groups" element={<AutoPostGroups />} />
                   </Route>
 
                   <Route path="*" element={<NotFound />} />
