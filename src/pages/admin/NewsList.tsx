@@ -161,7 +161,6 @@ export default function NewsList() {
       </div>
 
       <NewsCreationModal open={modalOpen} onOpenChange={setModalOpen} />
-      </div>
 
       {/* Search */}
       <div className="flex items-center gap-4">

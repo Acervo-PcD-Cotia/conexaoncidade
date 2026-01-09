@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AccessibilityProvider } from "@/contexts/AccessibilityContext";
+import { NewsCreationProvider } from "@/contexts/NewsCreationContext";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import Index from "./pages/Index";
@@ -52,10 +53,11 @@ const App = () => (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <AccessibilityProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-        <BrowserRouter>
+          <NewsCreationProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
           <Routes>
             {/* Public Routes */}
             <Route element={<PublicLayout />}>
@@ -106,10 +108,11 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
-      </AccessibilityProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-  </HelmetProvider>
+    </NewsCreationProvider>
+  </AccessibilityProvider>
+</AuthProvider>
+</QueryClientProvider>
+</HelmetProvider>
 );
 
 export default App;
