@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
-import { Clock } from "lucide-react";
+import { Clock, Volume2, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { useFeaturedNews, useNews } from "@/hooks/useNews";
 
 function formatTimeAgo(date: string) {
@@ -15,9 +17,14 @@ function formatTimeAgo(date: string) {
   return past.toLocaleDateString("pt-BR");
 }
 
+function truncateText(text: string, maxChars: number): string {
+  if (text.length <= maxChars) return text;
+  return text.substring(0, maxChars).trim() + "...";
+}
+
 export function HeroSection() {
   const { data: featuredNews, isLoading: loadingFeatured } = useFeaturedNews(6);
-  const { data: latestNews, isLoading: loadingLatest } = useNews(14);
+  const { data: latestNews, isLoading: loadingLatest } = useNews(10);
 
   const isLoading = loadingFeatured || loadingLatest;
 
@@ -31,16 +38,24 @@ export function HeroSection() {
 
   const heroNews = allNews[0];
   const sideNews = allNews.slice(1, 3);
-  const textNews = allNews.slice(3, 11); // 8 text-only items
+
+  const handleTTS = (e: React.MouseEvent, text: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "pt-BR";
+    speechSynthesis.speak(utterance);
+  };
 
   if (isLoading) {
     return (
-      <section className="container py-3">
-        <div className="grid gap-2 lg:grid-cols-3">
-          <div className="lg:col-span-2 aspect-[16/9] bg-muted rounded-lg animate-pulse" />
-          <div className="space-y-2">
-            <div className="aspect-[16/10] bg-muted rounded-lg animate-pulse" />
-            <div className="aspect-[16/10] bg-muted rounded-lg animate-pulse" />
+      <section className="container py-4" aria-label="Carregando notícias">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="aspect-[16/9] bg-muted rounded-xl animate-pulse" />
+          <div className="flex flex-col gap-4">
+            <div className="h-8 bg-muted rounded animate-pulse" />
+            <div className="h-16 bg-muted rounded animate-pulse" />
+            <div className="h-20 bg-muted rounded animate-pulse" />
           </div>
         </div>
       </section>
@@ -50,79 +65,123 @@ export function HeroSection() {
   if (!heroNews) return null;
 
   return (
-    <section className="container py-3">
-      <div className="grid gap-2 lg:grid-cols-3">
-        {/* Main hero - Dominant */}
-        <div className="lg:col-span-2">
-          <Link to={`/noticia/${heroNews.slug}`} className="group block">
-            <article className="news-card relative overflow-hidden rounded-lg">
-              <div className="aspect-[16/9] overflow-hidden">
-                <img
-                  src={heroNews.featured_image_url || "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=1200&h=600&fit=crop"}
-                  alt={heroNews.title}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-              </div>
-              {/* Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-              {/* Content */}
-              <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5 text-white">
-                <div className="mb-2 flex flex-wrap items-center gap-2">
-                  {heroNews.hat && (
-                    <Badge className="bg-accent text-accent-foreground text-xs">
-                      {heroNews.hat}
-                    </Badge>
-                  )}
-                  {heroNews.highlight === "urgent" && (
-                    <Badge className="bg-destructive text-destructive-foreground text-xs animate-pulse">
-                      URGENTE
-                    </Badge>
-                  )}
-                  <Badge
-                    variant="secondary"
-                    className="text-xs"
-                    style={{
-                      backgroundColor: heroNews.category?.color || "hsl(var(--primary))",
-                      color: "white",
-                    }}
-                  >
-                    {heroNews.category?.name || "Notícia"}
-                  </Badge>
-                </div>
-                <h1 className="mb-2 font-heading text-xl font-bold leading-tight md:text-2xl lg:text-3xl xl:text-4xl">
-                  {heroNews.title}
-                </h1>
-                {heroNews.subtitle && (
-                  <p className="mb-2 line-clamp-2 text-sm text-white/80">
-                    {heroNews.subtitle}
-                  </p>
-                )}
-                <div className="flex items-center gap-1 text-xs text-white/70">
-                  <Clock className="h-3 w-3" />
-                  {heroNews.published_at && formatTimeAgo(heroNews.published_at)}
-                </div>
-              </div>
-            </article>
-          </Link>
-        </div>
+    <section className="container py-4" aria-labelledby="hero-title">
+      <h2 id="hero-title" className="sr-only">Destaque Principal</h2>
+      
+      {/* Main 2-column hero layout */}
+      <div className="grid gap-6 lg:grid-cols-2 items-center">
+        {/* Left: Large image */}
+        <Link 
+          to={`/noticia/${heroNews.slug}`} 
+          className="group block overflow-hidden rounded-xl focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+          <AspectRatio ratio={16 / 9}>
+            <img
+              src={heroNews.featured_image_url || "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=1200&h=675&fit=crop"}
+              alt={heroNews.image_alt || `Imagem: ${truncateText(heroNews.title, 50)}`}
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="eager"
+              fetchPriority="high"
+            />
+          </AspectRatio>
+        </Link>
 
-        {/* Side news - Medium, more compact */}
-        <div className="flex flex-col gap-2">
+        {/* Right: Content */}
+        <div className="flex flex-col gap-4">
+          {/* Category badges */}
+          <div className="flex flex-wrap items-center gap-2">
+            {heroNews.hat && (
+              <Badge className="bg-accent text-accent-foreground text-xs">
+                {heroNews.hat}
+              </Badge>
+            )}
+            {heroNews.highlight === "urgent" && (
+              <Badge className="bg-destructive text-destructive-foreground text-xs animate-pulse">
+                URGENTE
+              </Badge>
+            )}
+            <Badge
+              style={{
+                backgroundColor: heroNews.category?.color || "hsl(var(--primary))",
+                color: "white",
+              }}
+              className="text-xs font-semibold"
+            >
+              {heroNews.category?.name || "Notícia"}
+            </Badge>
+          </div>
+
+          {/* Title (max 60 chars visible, but shows full on hover/focus) */}
+          <Link to={`/noticia/${heroNews.slug}`} className="group">
+            <h3 className="font-heading text-2xl md:text-3xl lg:text-4xl font-bold leading-tight text-foreground group-hover:text-primary transition-colors">
+              {truncateText(heroNews.title, 80)}
+            </h3>
+          </Link>
+
+          {/* Subtitle (max 120 chars) */}
+          {heroNews.subtitle && (
+            <p className="text-muted-foreground text-base leading-relaxed">
+              {truncateText(heroNews.subtitle, 120)}
+            </p>
+          )}
+
+          {/* Time */}
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Clock className="h-4 w-4" aria-hidden="true" />
+            <time dateTime={heroNews.published_at || undefined}>
+              {heroNews.published_at && formatTimeAgo(heroNews.published_at)}
+            </time>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex flex-wrap gap-3 mt-2">
+            <Button asChild size="lg" className="gap-2">
+              <Link to={`/noticia/${heroNews.slug}`}>
+                Ler notícia
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              className="gap-2"
+              onClick={(e) => handleTTS(e, `${heroNews.title}. ${heroNews.subtitle || ""}`)}
+              aria-label={`Ouvir notícia: ${heroNews.title}`}
+            >
+              <Volume2 className="h-4 w-4" />
+              Ouvir notícia
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Side news cards - Visual cards instead of overlay text */}
+      {sideNews.length > 0 && (
+        <div className="grid gap-4 mt-6 sm:grid-cols-2">
           {sideNews.map((news) => (
-            <Link key={news.id} to={`/noticia/${news.slug}`} className="group block flex-1">
-              <article className="news-card relative h-full min-h-[120px] overflow-hidden rounded-lg">
-                <div className="absolute inset-0">
+            <article 
+              key={news.id} 
+              className="group relative overflow-hidden rounded-lg border border-border bg-card transition-all hover:shadow-lg hover:border-primary/30 focus-within:ring-2 focus-within:ring-ring"
+            >
+              <Link 
+                to={`/noticia/${news.slug}`} 
+                className="flex gap-4 p-4"
+              >
+                {/* Thumbnail */}
+                <div className="shrink-0 w-24 h-24 sm:w-32 sm:h-32 overflow-hidden rounded-lg">
                   <img
-                    src={news.featured_image_url || "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=400&h=300&fit=crop"}
-                    alt={news.title}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    src={news.featured_image_url || "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=300&h=300&fit=crop"}
+                    alt={news.image_alt || `Imagem: ${truncateText(news.title, 30)}`}
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    loading="lazy"
+                    decoding="async"
                   />
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-2.5 text-white">
+
+                {/* Content */}
+                <div className="flex flex-col flex-1 min-w-0">
                   <Badge
-                    variant="secondary"
-                    className="mb-1 text-[10px]"
+                    className="self-start text-[10px] font-semibold mb-2"
                     style={{
                       backgroundColor: news.category?.color || "hsl(var(--primary))",
                       color: "white",
@@ -130,49 +189,29 @@ export function HeroSection() {
                   >
                     {news.category?.name || "Notícia"}
                   </Badge>
-                  <h2 className="font-heading text-xs font-bold leading-tight line-clamp-2">
-                    {news.title}
-                  </h2>
-                  <div className="mt-1 flex items-center gap-1 text-[10px] text-white/70">
-                    <Clock className="h-2.5 w-2.5" />
-                    {news.published_at && formatTimeAgo(news.published_at)}
+                  <h4 className="font-heading text-sm font-bold leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+                    {truncateText(news.title, 70)}
+                  </h4>
+                  <div className="mt-auto pt-2 flex items-center gap-1 text-[11px] text-muted-foreground">
+                    <Clock className="h-3 w-3" aria-hidden="true" />
+                    <time dateTime={news.published_at || undefined}>
+                      {news.published_at && formatTimeAgo(news.published_at)}
+                    </time>
                   </div>
                 </div>
-              </article>
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      {/* Text-only headlines below hero - 8 items in 4 columns */}
-      {textNews.length > 0 && (
-        <div className="mt-2 grid gap-0 divide-y divide-border rounded-lg border border-border bg-card sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4">
-          {textNews.map((news, index) => (
-            <Link
-              key={news.id}
-              to={`/noticia/${news.slug}`}
-              className={`group flex items-start gap-1.5 p-2 transition-colors hover:bg-muted/50 ${
-                index % 4 !== 3 ? "lg:border-r lg:border-border" : ""
-              } ${index % 2 === 0 ? "sm:border-r sm:border-border lg:border-r-0" : "sm:border-r-0"} ${
-                index % 4 !== 3 ? "lg:border-r" : ""
-              }`}
-            >
-              <span
-                className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full"
-                style={{
-                  backgroundColor: news.category?.color || "hsl(var(--primary))",
-                }}
-              />
-              <div className="min-w-0 flex-1">
-                <h3 className="text-xs font-medium leading-snug line-clamp-2 group-hover:text-primary">
-                  {news.title}
-                </h3>
-                <span className="mt-0.5 inline-flex items-center gap-1 text-[10px] text-muted-foreground">
-                  <Clock className="h-2 w-2" />
-                  {news.published_at && formatTimeAgo(news.published_at)}
-                </span>
-              </div>
-            </Link>
+              </Link>
+              
+              {/* Quick TTS button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute top-2 right-2 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={(e) => handleTTS(e, news.title)}
+                aria-label={`Ouvir: ${news.title}`}
+              >
+                <Volume2 className="h-4 w-4" />
+              </Button>
+            </article>
           ))}
         </div>
       )}
