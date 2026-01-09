@@ -1705,6 +1705,7 @@ export type Database = {
           meta_keywords: string[] | null
           meta_title: string | null
           og_image_url: string | null
+          podcast_enabled: boolean | null
           published_at: string | null
           scheduled_at: string | null
           share_count: number
@@ -1714,9 +1715,13 @@ export type Database = {
           source: string | null
           status: Database["public"]["Enums"]["news_status"]
           subtitle: string | null
+          summary_medium: string | null
+          summary_short: string | null
           tenant_id: string | null
           title: string
+          transcript_text: string | null
           updated_at: string
+          updated_at_display: string | null
           view_count: number
         }
         Insert: {
@@ -1748,6 +1753,7 @@ export type Database = {
           meta_keywords?: string[] | null
           meta_title?: string | null
           og_image_url?: string | null
+          podcast_enabled?: boolean | null
           published_at?: string | null
           scheduled_at?: string | null
           share_count?: number
@@ -1757,9 +1763,13 @@ export type Database = {
           source?: string | null
           status?: Database["public"]["Enums"]["news_status"]
           subtitle?: string | null
+          summary_medium?: string | null
+          summary_short?: string | null
           tenant_id?: string | null
           title: string
+          transcript_text?: string | null
           updated_at?: string
+          updated_at_display?: string | null
           view_count?: number
         }
         Update: {
@@ -1791,6 +1801,7 @@ export type Database = {
           meta_keywords?: string[] | null
           meta_title?: string | null
           og_image_url?: string | null
+          podcast_enabled?: boolean | null
           published_at?: string | null
           scheduled_at?: string | null
           share_count?: number
@@ -1800,9 +1811,13 @@ export type Database = {
           source?: string | null
           status?: Database["public"]["Enums"]["news_status"]
           subtitle?: string | null
+          summary_medium?: string | null
+          summary_short?: string | null
           tenant_id?: string | null
           title?: string
+          transcript_text?: string | null
           updated_at?: string
+          updated_at_display?: string | null
           view_count?: number
         }
         Relationships: [

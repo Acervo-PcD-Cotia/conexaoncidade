@@ -17,8 +17,28 @@ export interface NewsItem {
   view_count: number;
   published_at: string | null;
   created_at: string;
+  updated_at: string | null;
   category_id: string | null;
   author_id: string | null;
+  source: string | null;
+  // Audio fields
+  audio_url: string | null;
+  audio_status: string | null;
+  audio_duration_seconds: number | null;
+  // Summary fields
+  summary_short: string | null;
+  summary_medium: string | null;
+  ai_summary_bullets: string[] | null;
+  ai_summary_generated_at: string | null;
+  transcript_text: string | null;
+  // Podcast fields
+  podcast_enabled: boolean | null;
+  // Display updated timestamp
+  updated_at_display: string | null;
+  // Meta fields
+  meta_title: string | null;
+  meta_description: string | null;
+  og_image_url: string | null;
   category?: {
     id: string;
     name: string;
@@ -208,29 +228,97 @@ export function useNewsByCategory(categorySlug: string, limit?: number) {
   });
 }
 
-export function useRelatedNews(newsId: string, categoryId: string | null, limit = 4) {
+export function useRelatedNews(
+  newsId: string, 
+  categoryId: string | null, 
+  limit = 4,
+  tagIds?: string[]
+) {
   return useQuery({
-    queryKey: ['news', 'related', newsId, categoryId, limit],
+    queryKey: ['news', 'related', newsId, categoryId, tagIds, limit],
     queryFn: async () => {
-      if (!categoryId) return [];
+      // Strategy: Try tags first, then category, then just latest news
+      let results: NewsItem[] = [];
 
-      const { data, error } = await supabase
-        .from('news')
-        .select(`
-          *,
-          category:categories(id, name, slug, color)
-        `)
-        .eq('category_id', categoryId)
-        .eq('status', 'published')
-        .is('deleted_at', null)
-        .neq('id', newsId)
-        .order('published_at', { ascending: false })
-        .limit(limit);
+      // 1. If we have tags, try to find news with matching tags
+      if (tagIds && tagIds.length > 0) {
+        const { data: taggedNewsIds } = await supabase
+          .from('news_tags')
+          .select('news_id')
+          .in('tag_id', tagIds)
+          .neq('news_id', newsId);
 
-      if (error) throw error;
-      return (data || []) as unknown as NewsItem[];
+        if (taggedNewsIds && taggedNewsIds.length > 0) {
+          const uniqueIds = [...new Set(taggedNewsIds.map(t => t.news_id))];
+          
+          const { data: taggedNews } = await supabase
+            .from('news')
+            .select(`
+              *,
+              category:categories(id, name, slug, color)
+            `)
+            .in('id', uniqueIds)
+            .eq('status', 'published')
+            .is('deleted_at', null)
+            .order('published_at', { ascending: false })
+            .limit(limit);
+
+          if (taggedNews) {
+            results = taggedNews as unknown as NewsItem[];
+          }
+        }
+      }
+
+      // 2. If not enough from tags, fill with category news
+      if (results.length < limit && categoryId) {
+        const existingIds = results.map(r => r.id);
+        const needed = limit - results.length;
+
+        const { data: categoryNews } = await supabase
+          .from('news')
+          .select(`
+            *,
+            category:categories(id, name, slug, color)
+          `)
+          .eq('category_id', categoryId)
+          .eq('status', 'published')
+          .is('deleted_at', null)
+          .neq('id', newsId)
+          .not('id', 'in', `(${existingIds.join(',') || 'null'})`)
+          .order('published_at', { ascending: false })
+          .limit(needed);
+
+        if (categoryNews) {
+          results = [...results, ...(categoryNews as unknown as NewsItem[])];
+        }
+      }
+
+      // 3. If still not enough, fill with latest news
+      if (results.length < limit) {
+        const existingIds = results.map(r => r.id);
+        const needed = limit - results.length;
+
+        const { data: latestNews } = await supabase
+          .from('news')
+          .select(`
+            *,
+            category:categories(id, name, slug, color)
+          `)
+          .eq('status', 'published')
+          .is('deleted_at', null)
+          .neq('id', newsId)
+          .not('id', 'in', `(${existingIds.join(',') || 'null'})`)
+          .order('published_at', { ascending: false })
+          .limit(needed);
+
+        if (latestNews) {
+          results = [...results, ...(latestNews as unknown as NewsItem[])];
+        }
+      }
+
+      return results.slice(0, limit);
     },
-    enabled: !!categoryId,
+    enabled: !!newsId,
   });
 }
 
