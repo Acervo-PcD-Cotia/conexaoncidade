@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Breadcrumb } from '@/components/admin/Breadcrumb';
-import { useAutoPostAuditLogs } from '@/hooks/useAutoPost';
+import { useAutoPostLogs } from '@/hooks/useAutoPost';
 
 const actionCategories = {
   source: 'Fontes',
@@ -46,7 +46,7 @@ export default function AutoPostLogs() {
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [actionFilter, setActionFilter] = useState<string>('');
   
-  const { data: logs, isLoading, refetch } = useAutoPostAuditLogs();
+  const { data: logs, isLoading, refetch } = useAutoPostLogs();
 
   const filteredLogs = logs?.filter(log => {
     if (search) {
@@ -100,11 +100,7 @@ export default function AutoPostLogs() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumb items={[
-        { label: 'Plugins', href: '/admin' },
-        { label: 'Auto Post PRO', href: '/admin/autopost' },
-        { label: 'Logs' }
-      ]} />
+      <Breadcrumb />
 
       <div className="flex items-center justify-between">
         <div>
