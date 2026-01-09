@@ -35,9 +35,11 @@ const sourceTypeIcons: Record<string, React.ReactNode> = {
   manual_url: <ExternalLink className="h-4 w-4" />
 };
 
+type SourceStatus = 'active' | 'paused' | 'error';
+
 export default function AutoPostSources() {
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<SourceStatus | ''>('');
   const [groupFilter, setGroupFilter] = useState<string>('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -103,7 +105,7 @@ export default function AutoPostSources() {
                 className="pl-10"
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as SourceStatus | '')}>
               <SelectTrigger className="w-full md:w-[180px]">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>

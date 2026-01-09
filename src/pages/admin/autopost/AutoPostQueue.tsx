@@ -49,7 +49,7 @@ export default function AutoPostQueue() {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
   const { data: queueItems, isLoading, refetch } = useAutoPostQueue(
-    activeTab === 'all' ? undefined : activeTab
+    activeTab === 'all' ? undefined : activeTab as QueueStatus
   );
   const { data: selectedItem } = useAutoPostItem(selectedItemId || undefined);
   const updateItem = useUpdateAutoPostItem();

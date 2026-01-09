@@ -98,7 +98,9 @@ export default function AutoPostGroups() {
       name: formData.name,
       description: formData.description || null,
       parent_id: formData.parent_id || null,
-      icon: formData.icon
+      icon: formData.icon,
+      sort_order: 0,
+      tenant_id: null
     };
 
     if (editingId) {
