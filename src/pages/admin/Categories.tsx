@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Table,
   TableBody,
@@ -99,6 +101,14 @@ export default function Categories() {
     category: null,
     targetCategoryId: "",
   });
+  const [visibilityFilter, setVisibilityFilter] = useState<"all" | "active" | "hidden">("all");
+  const [hideConfirmDialog, setHideConfirmDialog] = useState<{
+    open: boolean;
+    category: CategoryWithCount | null;
+  }>({
+    open: false,
+    category: null,
+  });
   const queryClient = useQueryClient();
 
   // Fetch categories with news count
@@ -141,6 +151,20 @@ export default function Categories() {
 
       return { flat: categoriesWithCount, tree: rootCategories };
     },
+  });
+
+  // Calculate counts for filter
+  const counts = {
+    all: categories?.flat.length || 0,
+    active: categories?.flat.filter(c => c.is_active).length || 0,
+    hidden: categories?.flat.filter(c => !c.is_active).length || 0,
+  };
+
+  // Filter categories based on visibility filter
+  const filteredCategories = categories?.flat.filter(cat => {
+    if (visibilityFilter === "active") return cat.is_active;
+    if (visibilityFilter === "hidden") return !cat.is_active;
+    return true;
   });
 
   const saveMutation = useMutation({
@@ -228,6 +252,15 @@ export default function Categories() {
       toast.success("Visibilidade atualizada!");
     },
   });
+
+  // Handle toggle visibility with confirmation for categories with news
+  const handleToggleVisibility = (cat: CategoryWithCount) => {
+    if (cat.is_active && cat.news_count > 0) {
+      setHideConfirmDialog({ open: true, category: cat });
+    } else {
+      toggleVisibility.mutate({ id: cat.id, is_active: !cat.is_active });
+    }
+  };
 
   const reorderMutation = useMutation({
     mutationFn: async ({ id, direction }: { id: string; direction: "up" | "down" }) => {
@@ -337,6 +370,11 @@ export default function Categories() {
             {cat.parent_id && (
               <FolderTree className="h-3 w-3 text-muted-foreground" />
             )}
+            {!cat.is_active && (
+              <Badge variant="outline" className="text-xs text-muted-foreground border-muted">
+                Oculta
+              </Badge>
+            )}
           </div>
         </TableCell>
         <TableCell className="text-muted-foreground">/{cat.slug}</TableCell>
@@ -359,7 +397,7 @@ export default function Categories() {
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={() => toggleVisibility.mutate({ id: cat.id, is_active: !cat.is_active })}
+            onClick={() => handleToggleVisibility(cat)}
             title={cat.is_active ? "Ocultar do menu" : "Mostrar no menu"}
           >
             {cat.is_active ? (
@@ -508,6 +546,31 @@ export default function Categories() {
         </Dialog>
       </div>
 
+      {/* Visibility Filter */}
+      <div className="flex items-center gap-4">
+        <span className="text-sm text-muted-foreground">Filtrar:</span>
+        <ToggleGroup 
+          type="single" 
+          value={visibilityFilter} 
+          onValueChange={(v) => v && setVisibilityFilter(v as typeof visibilityFilter)}
+        >
+          <ToggleGroupItem value="all" className="gap-2">
+            Todas
+            <Badge variant="secondary">{counts.all}</Badge>
+          </ToggleGroupItem>
+          <ToggleGroupItem value="active" className="gap-2">
+            <Eye className="h-4 w-4" />
+            Ativas
+            <Badge variant="secondary">{counts.active}</Badge>
+          </ToggleGroupItem>
+          <ToggleGroupItem value="hidden" className="gap-2">
+            <EyeOff className="h-4 w-4" />
+            Ocultas
+            <Badge variant="secondary">{counts.hidden}</Badge>
+          </ToggleGroupItem>
+        </ToggleGroup>
+      </div>
+
       <div className="rounded-lg border bg-card">
         <Table>
           <TableHeader>
@@ -528,8 +591,14 @@ export default function Categories() {
                   Carregando...
                 </TableCell>
               </TableRow>
+            ) : filteredCategories?.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
+                  Nenhuma categoria encontrada com este filtro
+                </TableCell>
+              </TableRow>
             ) : (
-              categories?.flat.map((cat, index) => renderCategoryRow(cat, index, cat.parent_id ? 1 : 0))
+              filteredCategories?.map((cat, index) => renderCategoryRow(cat, index, cat.parent_id ? 1 : 0))
             )}
           </TableBody>
         </Table>
@@ -593,6 +662,55 @@ export default function Categories() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleteMutation.isPending ? "Excluindo..." : "Excluir e mover conteúdo"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Hide confirmation dialog */}
+      <AlertDialog 
+        open={hideConfirmDialog.open} 
+        onOpenChange={(open) => setHideConfirmDialog({ open, category: null })}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Ocultar categoria com notícias?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                A categoria <strong>"{hideConfirmDialog.category?.name}"</strong> possui{" "}
+                <strong>{hideConfirmDialog.category?.news_count} notícias publicadas</strong>.
+              </p>
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm dark:border-amber-800 dark:bg-amber-950">
+                <p className="font-medium text-amber-800 dark:text-amber-200">
+                  ⚠️ Impacto ao ocultar:
+                </p>
+                <ul className="mt-2 list-disc list-inside text-amber-700 dark:text-amber-300">
+                  <li>A categoria não aparecerá no menu de navegação</li>
+                  <li>Notícias existentes continuarão acessíveis via URL direta</li>
+                  <li>Links de SEO e redes sociais podem perder relevância</li>
+                </ul>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (hideConfirmDialog.category) {
+                  toggleVisibility.mutate({ 
+                    id: hideConfirmDialog.category.id, 
+                    is_active: false 
+                  });
+                  setHideConfirmDialog({ open: false, category: null });
+                }
+              }}
+              className="bg-amber-600 hover:bg-amber-700"
+            >
+              <EyeOff className="mr-2 h-4 w-4" />
+              Ocultar mesmo assim
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
