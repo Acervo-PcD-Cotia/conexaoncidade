@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import logoFull from "@/assets/logo-full.png";
+import { AccessibilityMenuButton } from "@/components/accessibility/AccessibilityMenuButton";
 
 export function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -95,6 +96,9 @@ export function Header() {
               {isSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
             </Button>
             
+            {/* Accessibility Button */}
+            <AccessibilityMenuButton />
+
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
