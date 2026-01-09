@@ -86,10 +86,10 @@ export default function PartnersPitches() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <AdminHeader
-          title="Sugestões de Pauta"
-          description="Troque sugestões de pauta com seus parceiros"
-        />
+        <div>
+          <h1 className="text-2xl font-bold">Sugestões de Pauta</h1>
+          <p className="text-muted-foreground">Troque sugestões de pauta com seus parceiros</p>
+        </div>
         <Dialog open={isNewPitchOpen} onOpenChange={setIsNewPitchOpen}>
           <DialogTrigger asChild>
             <Button>

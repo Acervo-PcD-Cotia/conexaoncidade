@@ -46,10 +46,10 @@ export default function CommunityAdmin() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <AdminHeader
-          title="Comunidade"
-          description="Gerencie e monitore sua comunidade de leitores"
-        />
+        <div>
+          <h1 className="text-2xl font-bold">Comunidade</h1>
+          <p className="text-muted-foreground">Gerencie e monitore sua comunidade de leitores</p>
+        </div>
         <div className="flex gap-2">
           <NavLink to="/admin/community/members">
             <Button variant="outline">

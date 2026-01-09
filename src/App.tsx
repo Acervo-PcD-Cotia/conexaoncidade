@@ -63,6 +63,20 @@ import AutoPostSettings from "./pages/admin/autopost/AutoPostSettings";
 import CommunityHub from "./pages/community/CommunityHub";
 import CommunityUnlock from "./pages/community/CommunityUnlock";
 
+// Auto Post PRO Form
+import AutoPostSourceForm from "./pages/admin/autopost/AutoPostSourceForm";
+
+// Partners Pages
+import PartnersInbox from "./pages/admin/partners/PartnersInbox";
+import PartnersManage from "./pages/admin/partners/PartnersManage";
+import PartnersSources from "./pages/admin/partners/PartnersSources";
+import PartnersPitches from "./pages/admin/partners/PartnersPitches";
+
+// Community Admin Pages
+import CommunityAdmin from "./pages/admin/community/CommunityAdmin";
+import CommunityMembers from "./pages/admin/community/CommunityMembers";
+import CommunityModeration from "./pages/admin/community/CommunityModeration";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -134,6 +148,19 @@ const App = () => (
                     <Route path="autopost/logs" element={<AutoPostLogs />} />
                     <Route path="autopost/reports" element={<AutoPostReports />} />
                     <Route path="autopost/settings" element={<AutoPostSettings />} />
+                    <Route path="autopost/sources/new" element={<AutoPostSourceForm />} />
+                    <Route path="autopost/sources/:id/edit" element={<AutoPostSourceForm />} />
+                    
+                    {/* Partners Routes */}
+                    <Route path="partners" element={<PartnersInbox />} />
+                    <Route path="partners/manage" element={<PartnersManage />} />
+                    <Route path="partners/sources" element={<PartnersSources />} />
+                    <Route path="partners/pitches" element={<PartnersPitches />} />
+                    
+                    {/* Community Admin Routes */}
+                    <Route path="community" element={<CommunityAdmin />} />
+                    <Route path="community/members" element={<CommunityMembers />} />
+                    <Route path="community/moderation" element={<CommunityModeration />} />
                   </Route>
 
                   <Route path="*" element={<NotFound />} />

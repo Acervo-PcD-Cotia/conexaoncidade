@@ -56,3 +56,15 @@ verify_jwt = false
 
 [functions.sitemap]
 verify_jwt = false
+
+[functions.autopost-ingest]
+verify_jwt = false
+
+[functions.autopost-rewrite]
+verify_jwt = false
+
+[functions.autopost-publish]
+verify_jwt = false
+
+[functions.autopost-scheduler]
+verify_jwt = false
