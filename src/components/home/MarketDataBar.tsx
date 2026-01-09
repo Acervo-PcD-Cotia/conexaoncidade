@@ -63,9 +63,8 @@ export function MarketDataBar() {
       <div className="container flex items-center justify-between py-2 text-xs">
         {/* Left: Location + Date */}
         <div className="flex shrink-0 items-center gap-3">
-          <span className="flex items-center gap-1 text-muted-foreground">
+          <span className="flex items-center text-muted-foreground">
             <MapPin className="h-3 w-3" />
-            <span className="hidden sm:inline">Região Metropolitana</span>
           </span>
           <span className="hidden items-center gap-1 text-muted-foreground md:flex">
             <Calendar className="h-3 w-3" />
