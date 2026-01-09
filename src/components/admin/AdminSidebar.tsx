@@ -1,6 +1,7 @@
 import {
   LayoutDashboard,
   Newspaper,
+  FilePlus2,
   FolderTree,
   Users,
   Image,
@@ -23,9 +24,11 @@ import {
   Receipt,
   Bot,
   UsersRound,
+  LucideIcon,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useUserRole } from "@/hooks/useRequireRole";
+import { useNewsCreationModal } from "@/contexts/NewsCreationModalContext";
 import {
   Sidebar,
   SidebarContent,
@@ -41,9 +44,17 @@ import {
 } from "@/components/ui/sidebar";
 import logoFull from "@/assets/logo-full.png";
 
-const mainMenuItems = [
+interface MenuItem {
+  title: string;
+  url: string;
+  icon: LucideIcon;
+  action?: boolean;
+}
+
+const mainMenuItems: MenuItem[] = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
   { title: "Notícias", url: "/admin/news", icon: Newspaper },
+  { title: "Cadastrar Notícia", url: "#create-news", icon: FilePlus2, action: true },
   { title: "Notícias IA", url: "/admin/noticias-ai", icon: Sparkles },
   { title: "Notas Rápidas", url: "/admin/quick-notes", icon: Zap },
   { title: "Categorias", url: "/admin/categories", icon: FolderTree },
@@ -80,6 +91,14 @@ export function AdminSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { isAdmin } = useUserRole();
+  const { openModal } = useNewsCreationModal();
+
+  const handleMenuClick = (item: MenuItem, e: React.MouseEvent) => {
+    if (item.action) {
+      e.preventDefault();
+      openModal();
+    }
+  };
 
   return (
     <Sidebar collapsible="icon">
@@ -107,15 +126,25 @@ export function AdminSidebar() {
               {mainMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end={item.url === "/admin"}
-                      className="flex items-center gap-2"
-                      activeClassName="bg-primary/10 text-primary"
-                    >
-                      <item.icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
+                    {item.action ? (
+                      <button
+                        onClick={(e) => handleMenuClick(item, e)}
+                        className="flex w-full items-center gap-2 text-left"
+                      >
+                        <item.icon className="h-4 w-4" />
+                        {!collapsed && <span>{item.title}</span>}
+                      </button>
+                    ) : (
+                      <NavLink
+                        to={item.url}
+                        end={item.url === "/admin"}
+                        className="flex items-center gap-2"
+                        activeClassName="bg-primary/10 text-primary"
+                      >
+                        <item.icon className="h-4 w-4" />
+                        {!collapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    )}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

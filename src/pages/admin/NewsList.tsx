@@ -22,14 +22,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { NewsCreationModal } from "@/components/admin/NewsCreationModal";
+import { useNewsCreationModal } from "@/contexts/NewsCreationModalContext";
 
 export default function NewsList() {
   const [search, setSearch] = useState("");
-  const [modalOpen, setModalOpen] = useState(false);
+  const { openModal } = useNewsCreationModal();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-
   const { data: news, isLoading } = useQuery({
     queryKey: ["admin-news", search],
     queryFn: async () => {
@@ -154,13 +153,11 @@ export default function NewsList() {
           <h1 className="font-heading text-3xl font-bold">Notícias</h1>
           <p className="text-muted-foreground">Gerencie todas as notícias do portal</p>
         </div>
-        <Button onClick={() => setModalOpen(true)}>
+        <Button onClick={openModal}>
           <Plus className="mr-2 h-4 w-4" />
           Nova Notícia
         </Button>
       </div>
-
-      <NewsCreationModal open={modalOpen} onOpenChange={setModalOpen} />
 
       {/* Search */}
       <div className="flex items-center gap-4">
