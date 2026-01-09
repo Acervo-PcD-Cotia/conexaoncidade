@@ -12,6 +12,9 @@ import {
   Zap,
   FileSearch,
   Users,
+  PenLine,
+  Sparkles,
+  Image,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,8 +23,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useNewsCreationModal } from "@/contexts/NewsCreationModalContext";
 
 export default function Dashboard() {
+  const { openModal } = useNewsCreationModal();
   // Fetch operational stats
   const { data: stats } = useQuery({
     queryKey: ["admin-stats"],
@@ -243,11 +248,9 @@ export default function Dashboard() {
               Nota Rápida
             </Link>
           </Button>
-          <Button asChild>
-            <Link to="/admin/news/new">
-              <Newspaper className="mr-2 h-4 w-4" />
-              Nova Notícia
-            </Link>
+          <Button onClick={openModal}>
+            <Newspaper className="mr-2 h-4 w-4" />
+            Nova Notícia
           </Button>
         </div>
       </div>
@@ -401,6 +404,61 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           )}
+
+          {/* Quick Creation Widget */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Zap className="h-5 w-5" />
+                Criação Rápida
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <Button 
+                  variant="outline" 
+                  className="h-auto flex-col gap-1 py-3"
+                  onClick={openModal}
+                >
+                  <PenLine className="h-5 w-5" />
+                  <span className="text-xs">Notícia Manual</span>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="h-auto flex-col gap-1 py-3"
+                  onClick={openModal}
+                >
+                  <Sparkles className="h-5 w-5 text-purple-500" />
+                  <span className="text-xs">Com IA</span>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="h-auto flex-col gap-1 py-3"
+                  asChild
+                >
+                  <Link to="/admin/quick-notes">
+                    <FileText className="h-5 w-5" />
+                    <span className="text-xs">Nota Rápida</span>
+                  </Link>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="h-auto flex-col gap-1 py-3"
+                  asChild
+                >
+                  <Link to="/admin/stories/new">
+                    <Image className="h-5 w-5" />
+                    <span className="text-xs">Web Story</span>
+                  </Link>
+                </Button>
+              </div>
+              <div className="rounded-lg bg-muted/50 p-2 text-center">
+                <p className="text-xs text-muted-foreground">
+                  💡 Dica: <kbd className="rounded bg-muted px-1 font-mono">Ctrl+N</kbd> para nova notícia
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Quick Stats */}
           <Card>
