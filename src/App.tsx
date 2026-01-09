@@ -7,6 +7,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AccessibilityProvider } from "@/contexts/AccessibilityContext";
 import { NewsCreationProvider } from "@/contexts/NewsCreationContext";
+import { NewsCreationModalProvider } from "@/contexts/NewsCreationModalContext";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import Index from "./pages/Index";
@@ -87,10 +88,11 @@ const App = () => (
       <AuthProvider>
         <AccessibilityProvider>
           <NewsCreationProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
+            <NewsCreationModalProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
                 <Routes>
                   {/* Public Routes */}
                   <Route element={<PublicLayout />}>
@@ -171,11 +173,12 @@ const App = () => (
                 </Routes>
               </BrowserRouter>
             </TooltipProvider>
-          </NewsCreationProvider>
-        </AccessibilityProvider>
-      </AuthProvider>
-    </QueryClientProvider>
-  </HelmetProvider>
+          </NewsCreationModalProvider>
+        </NewsCreationProvider>
+      </AccessibilityProvider>
+    </AuthProvider>
+  </QueryClientProvider>
+</HelmetProvider>
 );
 
 export default App;

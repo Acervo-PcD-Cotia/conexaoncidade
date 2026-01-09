@@ -4,6 +4,8 @@ import { AdminSidebar } from "./AdminSidebar";
 import { AdminHeader } from "./AdminHeader";
 import { Breadcrumb } from "./Breadcrumb";
 import { useRequireRole } from "@/hooks/useRequireRole";
+import { NewsCreationModal } from "./NewsCreationModal";
+import { useNewsCreationModal } from "@/contexts/NewsCreationModalContext";
 
 export function AdminLayout() {
   const { hasAccess, checkingRole } = useRequireRole([
@@ -15,6 +17,8 @@ export function AdminLayout() {
     "columnist",
     "moderator",
   ]);
+
+  const { isOpen, closeModal } = useNewsCreationModal();
 
   if (checkingRole) {
     return (
@@ -40,6 +44,7 @@ export function AdminLayout() {
           </main>
         </div>
       </div>
+      <NewsCreationModal open={isOpen} onOpenChange={(open) => !open && closeModal()} />
     </SidebarProvider>
   );
 }
