@@ -3,8 +3,6 @@ import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWebStories } from "@/hooks/useWebStories";
-import { formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 export function TopWebStoriesBar() {
   const { data: stories, isLoading } = useWebStories(14);
@@ -55,19 +53,6 @@ export function TopWebStoriesBar() {
       aria-label="WebStories em destaque"
     >
       <div className="container">
-        {/* Header */}
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="flex items-center gap-2 text-sm font-semibold">
-            <Play className="h-4 w-4 fill-primary text-primary" />
-            WebStories
-          </h2>
-          <Link
-            to="/stories"
-            className="text-xs font-medium text-primary hover:underline"
-          >
-            Ver todos
-          </Link>
-        </div>
 
         {/* Carousel */}
         <div className="group relative">
@@ -123,15 +108,6 @@ export function TopWebStoriesBar() {
                   {story.title}
                 </span>
 
-                {/* Time */}
-                {story.published_at && (
-                  <span className="text-[9px] text-muted-foreground/70">
-                    {formatDistanceToNow(new Date(story.published_at), {
-                      addSuffix: false,
-                      locale: ptBR,
-                    })}
-                  </span>
-                )}
               </Link>
             ))}
           </div>
