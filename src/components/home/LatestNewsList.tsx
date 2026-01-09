@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
-import { Clock, RefreshCw } from "lucide-react";
+import { Clock, RefreshCw, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useNews } from "@/hooks/useNews";
+import { NewsCardVisual } from "./NewsCardVisual";
 
 function formatTimeAgo(date: string) {
   const now = new Date();
@@ -15,17 +17,22 @@ function formatTimeAgo(date: string) {
 }
 
 export function LatestNewsList() {
-  const { data: news, isLoading } = useNews(20);
+  const { data: news, isLoading } = useNews(12);
 
   if (isLoading) {
     return (
-      <section className="container py-2">
-        <div className="rounded-lg bg-card p-3">
-          <div className="animate-pulse space-y-2">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="h-4 bg-muted rounded w-full" />
-            ))}
-          </div>
+      <section className="container py-4" aria-label="Carregando últimas notícias">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="rounded-lg border border-border bg-card overflow-hidden">
+              <div className="aspect-[16/9] bg-muted animate-pulse" />
+              <div className="p-3 space-y-2">
+                <div className="h-4 bg-muted rounded animate-pulse w-16" />
+                <div className="h-8 bg-muted rounded animate-pulse" />
+                <div className="h-3 bg-muted rounded animate-pulse w-12" />
+              </div>
+            </div>
+          ))}
         </div>
       </section>
     );
@@ -33,92 +40,73 @@ export function LatestNewsList() {
 
   if (!news || news.length === 0) return null;
 
-  // Split: first 5 are "AGORA"
-  const recentNews = news.slice(0, 5);
-  const olderNews = news.slice(5);
+  // First 4 are featured with full cards, rest are compact list
+  const featuredNews = news.slice(0, 8);
+  const compactNews = news.slice(8);
 
   return (
-    <section className="container py-2">
-      <div className="rounded-lg bg-card border border-border overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-border px-3 py-2">
-          <div className="flex items-center gap-2">
-            <RefreshCw className="h-3.5 w-3.5 text-primary" />
-            <h2 className="font-heading text-xs font-bold uppercase tracking-wide">
-              Últimas Notícias
-            </h2>
-          </div>
-          <Link
-            to="/noticias"
-            className="text-[10px] font-medium text-primary hover:underline"
-          >
-            Ver todas
-          </Link>
+    <section className="container py-4" aria-labelledby="latest-news-title">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <RefreshCw className="h-5 w-5 text-primary" aria-hidden="true" />
+          <h2 id="latest-news-title" className="font-heading text-lg font-bold">
+            Últimas Notícias
+          </h2>
         </div>
+        <Button variant="ghost" size="sm" asChild className="gap-1 text-xs">
+          <Link to="/noticias">
+            Ver todas
+            <ArrowRight className="h-3 w-3" />
+          </Link>
+        </Button>
+      </div>
 
-        {/* AGORA section - most recent 5 */}
-        <div className="border-b border-primary/20 bg-primary/5">
-          <div className="px-3 py-1 border-b border-border/50">
-            <span className="text-[10px] font-bold uppercase text-primary tracking-wider">Agora</span>
-          </div>
-          <div className="grid gap-0 divide-y divide-border/50 md:grid-cols-2 md:divide-y-0">
-            {recentNews.map((item, index) => (
+      {/* Visual cards grid */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {featuredNews.map((item, index) => (
+          <NewsCardVisual 
+            key={item.id} 
+            news={item} 
+            priority={index < 4}
+            showActions={index < 4}
+          />
+        ))}
+      </div>
+
+      {/* Compact list for additional news */}
+      {compactNews.length > 0 && (
+        <div className="mt-4 rounded-lg border border-border bg-card overflow-hidden">
+          <div className="grid gap-0 divide-y divide-border md:grid-cols-2 md:divide-y-0">
+            {compactNews.map((item, index) => (
               <Link
                 key={item.id}
                 to={`/noticia/${item.slug}`}
-                className={`group flex items-start gap-2 px-3 py-1.5 transition-colors hover:bg-primary/10 ${
-                  index % 2 === 0 ? "md:border-r md:border-border/50" : ""
+                className={`group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50 ${
+                  index % 2 === 0 ? "md:border-r md:border-border" : ""
                 }`}
               >
                 <span
-                  className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full"
+                  className="h-2 w-2 shrink-0 rounded-full"
                   style={{
                     backgroundColor: item.category?.color || "hsl(var(--primary))",
                   }}
+                  aria-hidden="true"
                 />
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-xs font-medium leading-snug line-clamp-1 group-hover:text-primary">
-                    {item.title}
-                  </h3>
-                </div>
-                <div className="flex shrink-0 items-center gap-1 text-[10px] text-muted-foreground">
-                  <Clock className="h-2.5 w-2.5" />
-                  {item.published_at && formatTimeAgo(item.published_at)}
+                <h3 className="flex-1 text-sm font-medium leading-snug line-clamp-1 group-hover:text-primary transition-colors">
+                  {item.title}
+                </h3>
+                <div className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3" aria-hidden="true" />
+                  <time dateTime={item.published_at || undefined}>
+                    {item.published_at && formatTimeAgo(item.published_at)}
+                  </time>
                 </div>
               </Link>
             ))}
           </div>
         </div>
-
-        {/* Older news - Dense list */}
-        <div className="grid gap-0 divide-y divide-border md:grid-cols-2 md:divide-y-0">
-          {olderNews.map((item, index) => (
-            <Link
-              key={item.id}
-              to={`/noticia/${item.slug}`}
-              className={`group flex items-start gap-2 px-3 py-1.5 transition-colors hover:bg-muted/50 ${
-                index % 2 === 0 ? "md:border-r md:border-border" : ""
-              }`}
-            >
-              <span
-                className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full"
-                style={{
-                  backgroundColor: item.category?.color || "hsl(var(--primary))",
-                }}
-              />
-              <div className="min-w-0 flex-1">
-                <h3 className="text-xs font-medium leading-snug line-clamp-1 group-hover:text-primary">
-                  {item.title}
-                </h3>
-              </div>
-              <div className="flex shrink-0 items-center gap-1 text-[10px] text-muted-foreground">
-                <Clock className="h-2.5 w-2.5" />
-                {item.published_at && formatTimeAgo(item.published_at)}
-              </div>
-            </Link>
-          ))}
-        </div>
-      </div>
+      )}
     </section>
   );
 }

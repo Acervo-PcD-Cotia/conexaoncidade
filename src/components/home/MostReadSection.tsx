@@ -1,19 +1,36 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { TrendingUp, Eye } from "lucide-react";
+import { TrendingUp, Eye, Volume2 } from "lucide-react";
 import { useMostReadNews } from "@/hooks/useNews";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
 export function MostReadSection() {
+  const [period, setPeriod] = useState<"today" | "week">("today");
   const { data: mostRead, isLoading } = useMostReadNews(10);
+
+  const handleTTS = (e: React.MouseEvent, text: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "pt-BR";
+    speechSynthesis.speak(utterance);
+  };
 
   if (isLoading) {
     return (
-      <section className="container py-2">
-        <div className="rounded-lg bg-card border border-border p-3">
-          <div className="animate-pulse space-y-2">
+      <section className="container py-4" aria-label="Carregando mais lidas">
+        <div className="rounded-xl bg-card border border-border p-4">
+          <div className="animate-pulse space-y-4">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex gap-2">
-                <div className="h-6 w-6 bg-muted rounded" />
-                <div className="flex-1 h-4 bg-muted rounded" />
+              <div key={i} className="flex gap-4">
+                <div className="h-10 w-10 bg-muted rounded-lg" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-muted rounded w-full" />
+                  <div className="h-2 bg-muted rounded w-1/3" />
+                </div>
               </div>
             ))}
           </div>
@@ -24,70 +41,120 @@ export function MostReadSection() {
 
   if (!mostRead || mostRead.length === 0) return null;
 
+  // Calculate max views for proportional progress bars
+  const maxViews = Math.max(...mostRead.map((n) => n.view_count || 1));
+
+  const formatViews = (views: number): string => {
+    if (views >= 1000) {
+      return `${(views / 1000).toFixed(1)}k`;
+    }
+    return views.toLocaleString("pt-BR");
+  };
+
   return (
-    <section className="container py-2">
-      <div className="rounded-lg bg-card border border-border overflow-hidden">
+    <section className="container py-4" aria-labelledby="most-read-title">
+      <div className="rounded-xl bg-card border border-border overflow-hidden">
         {/* Header with tabs */}
-        <div className="flex items-center justify-between border-b border-border px-3 py-2">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <div className="flex items-center gap-2">
-            <TrendingUp className="h-3.5 w-3.5 text-primary" />
-            <h2 className="font-heading text-xs font-bold uppercase tracking-wide">
+            <TrendingUp className="h-5 w-5 text-primary" aria-hidden="true" />
+            <h2 id="most-read-title" className="font-heading text-lg font-bold">
               Mais Lidas
             </h2>
           </div>
-          <div className="flex gap-3 text-[10px]">
-            <span className="font-bold text-primary border-b border-primary pb-0.5">Hoje</span>
-            <span className="text-muted-foreground hover:text-foreground cursor-pointer">Semana</span>
-          </div>
+          <Tabs value={period} onValueChange={(v) => setPeriod(v as typeof period)}>
+            <TabsList className="h-8">
+              <TabsTrigger value="today" className="text-xs px-3 h-6">
+                Hoje
+              </TabsTrigger>
+              <TabsTrigger value="week" className="text-xs px-3 h-6">
+                Semana
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
-        {/* Rankings grid */}
-        <div className="grid gap-0 lg:grid-cols-2">
-          {/* Column 1 - Top 5 */}
-          <div className="divide-y divide-border lg:border-r lg:border-border">
-            {mostRead.slice(0, 5).map((item, index) => (
-              <Link
+        {/* Rankings */}
+        <div className="divide-y divide-border">
+          {mostRead.slice(0, 10).map((item, index) => {
+            const progressValue = ((item.view_count || 0) / maxViews) * 100;
+            const isTop3 = index < 3;
+
+            return (
+              <article
                 key={item.id}
-                to={`/noticia/${item.slug}`}
-                className="group flex items-start gap-2 px-3 py-2 transition-colors hover:bg-muted/50"
+                className={cn(
+                  "group relative flex items-start gap-4 p-4 transition-colors hover:bg-muted/50",
+                  isTop3 && "bg-primary/5"
+                )}
               >
                 {/* Ranking number */}
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-primary/10 font-heading text-sm font-bold text-primary">
+                <div
+                  className={cn(
+                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg font-heading text-lg font-bold",
+                    isTop3 
+                      ? "bg-primary text-primary-foreground" 
+                      : "bg-muted text-muted-foreground"
+                  )}
+                  aria-label={`Posição ${index + 1}`}
+                >
                   {index + 1}
-                </span>
+                </div>
+
                 {/* Content */}
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-xs font-medium leading-snug line-clamp-2 group-hover:text-primary">
-                    {item.title}
-                  </h3>
-                  <div className="mt-0.5 flex items-center gap-1 text-[10px] text-muted-foreground">
-                    <Eye className="h-2.5 w-2.5" />
-                    {item.view_count.toLocaleString("pt-BR")} views
+                <div className="flex-1 min-w-0">
+                  <Link
+                    to={`/noticia/${item.slug}`}
+                    className="focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+                  >
+                    <h3 className="font-medium text-sm leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+                      {item.title}
+                    </h3>
+                  </Link>
+
+                  {/* Popularity bar + views */}
+                  <div className="mt-2 flex items-center gap-3">
+                    <div className="flex-1 max-w-32">
+                      <Progress 
+                        value={progressValue} 
+                        className="h-1.5"
+                        aria-label={`${formatViews(item.view_count)} visualizações`}
+                      />
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Eye className="h-3 w-3" aria-hidden="true" />
+                      <span>{formatViews(item.view_count)}</span>
+                    </div>
                   </div>
                 </div>
-              </Link>
-            ))}
-          </div>
 
-          {/* Column 2 - 6-10 (more compact) */}
-          <div className="divide-y divide-border bg-muted/20">
-            {mostRead.slice(5, 10).map((item, index) => (
-              <Link
-                key={item.id}
-                to={`/noticia/${item.slug}`}
-                className="group flex items-center gap-2 px-3 py-1.5 transition-colors hover:bg-muted/50"
-              >
-                {/* Ranking number */}
-                <span className="font-heading text-sm font-bold text-muted-foreground w-4">
-                  {index + 6}
-                </span>
-                {/* Title only */}
-                <h3 className="text-[11px] font-medium leading-snug line-clamp-1 group-hover:text-primary flex-1">
-                  {item.title}
-                </h3>
-              </Link>
-            ))}
-          </div>
+                {/* Thumbnail for top 5 */}
+                {index < 5 && item.featured_image_url && (
+                  <div className="hidden sm:block shrink-0 w-16 h-16 overflow-hidden rounded-lg">
+                    <img
+                      src={item.featured_image_url}
+                      alt=""
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                      decoding="async"
+                      aria-hidden="true"
+                    />
+                  </div>
+                )}
+
+                {/* Quick TTS button */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute top-2 right-2 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => handleTTS(e, item.title)}
+                  aria-label={`Ouvir: ${item.title}`}
+                >
+                  <Volume2 className="h-4 w-4" />
+                </Button>
+              </article>
+            );
+          })}
         </div>
       </div>
     </section>
