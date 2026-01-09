@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, Code, History, BarChart3, Globe, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { FileText, Code, History, BarChart3, Globe, Clock, PlusCircle, ArrowRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNoticiasAIProgress } from '@/hooks/useNoticiasAIProgress';
+import { Card } from '@/components/ui/card';
 
 import { NoticiasAIHeader } from '@/components/admin/noticias-ai/NoticiasAIHeader';
 import { NoticiasAIInput } from '@/components/admin/noticias-ai/NoticiasAIInput';
@@ -38,6 +41,7 @@ interface JsonData {
 }
 
 export default function NoticiasAI() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
   const {
@@ -377,6 +381,28 @@ export default function NoticiasAI() {
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Main Content */}
           <div className="space-y-6 lg:col-span-2">
+            {/* Quick Create Card */}
+            <Card className="border-dashed border-2 border-violet-200 bg-gradient-to-r from-violet-50/50 to-purple-50/50 p-4 dark:border-violet-800 dark:from-violet-900/10 dark:to-purple-900/10">
+              <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+                <div className="flex items-center gap-3">
+                  <PlusCircle className="h-5 w-5 text-violet-600" />
+                  <div>
+                    <p className="font-medium text-sm">Criar notícia individual?</p>
+                    <p className="text-xs text-muted-foreground">Use o fluxo unificado com todas as validações</p>
+                  </div>
+                </div>
+                <Button 
+                  onClick={() => navigate('/admin/news')}
+                  variant="outline" 
+                  size="sm"
+                  className="border-violet-300 text-violet-600 hover:bg-violet-50 dark:border-violet-700 dark:hover:bg-violet-900/20"
+                >
+                  Ir para Notícias
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </Card>
+            
             {/* Input Card */}
             <NoticiasAIInput
               onGenerate={handleGenerate}
