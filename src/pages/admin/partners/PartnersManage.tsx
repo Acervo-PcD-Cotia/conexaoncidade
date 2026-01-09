@@ -117,10 +117,10 @@ export default function PartnersManage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <AdminHeader
-          title="Gerenciar Parcerias"
-          description="Configure e monitore suas parcerias de sindicação"
-        />
+        <div>
+          <h1 className="text-2xl font-bold">Gerenciar Parcerias</h1>
+          <p className="text-muted-foreground">Configure e monitore suas parcerias de sindicação</p>
+        </div>
         <Button>
           <Plus className="h-4 w-4 mr-2" />
           Convidar Parceiro

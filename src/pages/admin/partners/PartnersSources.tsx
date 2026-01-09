@@ -94,10 +94,10 @@ export default function PartnersSources() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <AdminHeader
-          title="Fontes de Importação"
-          description="Configure quais conteúdos importar de cada parceiro"
-        />
+        <div>
+          <h1 className="text-2xl font-bold">Fontes de Importação</h1>
+          <p className="text-muted-foreground">Configure quais conteúdos importar de cada parceiro</p>
+        </div>
         <Button>
           <Plus className="h-4 w-4 mr-2" />
           Nova Assinatura

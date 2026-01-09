@@ -22,6 +22,7 @@ import {
   GraduationCap,
   Receipt,
   Bot,
+  UsersRound,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useUserRole } from "@/hooks/useRequireRole";
@@ -69,6 +70,7 @@ const businessItems = [
 ];
 
 const adminOnlyItems = [
+  { title: "Comunidade", url: "/admin/community", icon: UsersRound },
   { title: "Usuários", url: "/admin/users", icon: Users },
   { title: "Logs", url: "/admin/logs", icon: History },
   { title: "Configurações", url: "/admin/settings", icon: Settings },

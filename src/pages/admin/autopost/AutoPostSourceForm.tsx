@@ -28,7 +28,8 @@ const sourceSchema = z.object({
   name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
   site_url: z.string().url("URL inválida"),
   feed_url: z.string().url("URL do feed inválida").optional().or(z.literal("")),
-  source_type: z.enum(["rss", "sitemap", "crawler", "api"]),
+  source_type: z.enum(["rss", "sitemap", "html_crawler", "api", "manual_url"]),
+  
   group_id: z.string().optional().nullable(),
   default_category_id: z.string().optional().nullable(),
   default_author: z.string().optional(),
@@ -175,10 +176,10 @@ export default function AutoPostSourceForm() {
         <Button variant="ghost" size="icon" onClick={() => navigate("/admin/autopost/sources")}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <AdminHeader
-          title={isEditing ? "Editar Fonte" : "Nova Fonte"}
-          description={isEditing ? "Atualize as configurações da fonte" : "Configure uma nova fonte de conteúdo"}
-        />
+        <div>
+          <h1 className="text-2xl font-bold">{isEditing ? "Editar Fonte" : "Nova Fonte"}</h1>
+          <p className="text-muted-foreground">{isEditing ? "Atualize as configurações da fonte" : "Configure uma nova fonte de conteúdo"}</p>
+        </div>
       </div>
       
       <Form {...form}>
@@ -234,8 +235,9 @@ export default function AutoPostSourceForm() {
                         <SelectContent>
                           <SelectItem value="rss">RSS Feed</SelectItem>
                           <SelectItem value="sitemap">Sitemap XML</SelectItem>
-                          <SelectItem value="crawler">HTML Crawler</SelectItem>
+                          <SelectItem value="html_crawler">HTML Crawler</SelectItem>
                           <SelectItem value="api">API REST</SelectItem>
+                          <SelectItem value="manual_url">URL Manual</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

@@ -136,10 +136,10 @@ export default function CommunityModeration() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <AdminHeader
-          title="Moderação"
-          description="Revise denúncias e gerencie penalidades"
-        />
+        <div>
+          <h1 className="text-2xl font-bold">Moderação</h1>
+          <p className="text-muted-foreground">Revise denúncias e gerencie penalidades</p>
+        </div>
         {pendingCount > 0 && (
           <Badge variant="destructive" className="text-lg px-3 py-1">
             {pendingCount} pendente(s)

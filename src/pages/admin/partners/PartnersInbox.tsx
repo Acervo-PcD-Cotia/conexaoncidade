@@ -94,10 +94,10 @@ export default function PartnersInbox() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <AdminHeader
-          title="Inbox de Parceiros"
-          description="Artigos recebidos via sindicação para revisão"
-        />
+        <div>
+          <h1 className="text-2xl font-bold">Inbox de Parceiros</h1>
+          <p className="text-muted-foreground">Artigos recebidos via sindicação para revisão</p>
+        </div>
         <Button variant="outline" size="sm">
           <RefreshCw className="h-4 w-4 mr-2" />
           Atualizar

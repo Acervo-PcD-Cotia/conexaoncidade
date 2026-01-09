@@ -105,10 +105,10 @@ export default function CommunityMembers() {
 
   return (
     <div className="space-y-6">
-      <AdminHeader
-        title="Membros da Comunidade"
-        description="Gerencie os membros e seus níveis"
-      />
+      <div>
+        <h1 className="text-2xl font-bold">Membros da Comunidade</h1>
+        <p className="text-muted-foreground">Gerencie os membros e seus níveis</p>
+      </div>
 
       {/* Filters */}
       <Card>
