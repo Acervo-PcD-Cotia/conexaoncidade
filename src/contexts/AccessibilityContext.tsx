@@ -22,7 +22,7 @@ const defaultSettings: AccessibilitySettings = {
   highContrast: false,
   reducedMotion: false,
   readingMode: false,
-  vlibrasActive: false,
+  vlibrasActive: true, // VLibras active by default for accessibility
   lineHeight: "normal",
 };
 
@@ -91,11 +91,11 @@ export function AccessibilityProvider({ children }: { children: ReactNode }) {
       body.classList.remove("line-height-large");
     }
 
-    // VLibras visibility
-    if (settings.vlibrasActive) {
-      body.classList.add("vlibras-enabled");
+    // VLibras visibility - active by default, toggle hides it
+    if (!settings.vlibrasActive) {
+      body.classList.add("vlibras-hidden");
     } else {
-      body.classList.remove("vlibras-enabled");
+      body.classList.remove("vlibras-hidden");
     }
 
     // Persist to localStorage

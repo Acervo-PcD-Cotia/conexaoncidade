@@ -398,7 +398,7 @@
   bottom: 20px !important;
 }
 
-/* Hide VLibras when disabled via accessibility context */
-body:not(.vlibras-enabled) [vw] {
+/* VLibras visibility - active by default, user can toggle off */
+body.vlibras-hidden [vw] {
   display: none !important;
 }
