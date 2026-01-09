@@ -68,3 +68,6 @@ verify_jwt = false
 
 [functions.autopost-scheduler]
 verify_jwt = false
+
+[functions.send-push]
+verify_jwt = false

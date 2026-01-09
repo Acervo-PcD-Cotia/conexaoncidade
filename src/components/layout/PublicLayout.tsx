@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { AccessibilityPanel } from "@/components/accessibility/AccessibilityPanel";
+import { PushPermissionBanner } from "@/components/PushPermissionBanner";
 import { useKeyboardNavigation } from "@/hooks/useKeyboardNavigation";
 
 export function PublicLayout() {
@@ -27,6 +28,9 @@ export function PublicLayout() {
 
       {/* Accessibility tools (VLibras is now loaded globally via index.html) */}
       <AccessibilityPanel />
+      
+      {/* Push notification permission banner */}
+      <PushPermissionBanner />
     </div>
   );
 }
