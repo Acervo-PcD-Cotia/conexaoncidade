@@ -110,11 +110,7 @@ export default function AutoPostRules() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumb items={[
-        { label: 'Plugins', href: '/admin' },
-        { label: 'Auto Post PRO', href: '/admin/autopost' },
-        { label: 'Regras' }
-      ]} />
+      <Breadcrumb />
 
       <div className="flex items-center justify-between">
         <div>

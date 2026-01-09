@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Breadcrumb } from '@/components/admin/Breadcrumb';
-import { useAutoPostSettings, useUpdateAutoPostSettings } from '@/hooks/useAutoPost';
+import { useAutoPostSettings, useUpdateAutoPostSetting } from '@/hooks/useAutoPost';
 import { useToast } from '@/hooks/use-toast';
 
 const defaultSettings = {
@@ -49,7 +49,7 @@ const defaultSettings = {
 export default function AutoPostSettings() {
   const { toast } = useToast();
   const { data: settings, isLoading } = useAutoPostSettings();
-  const updateSettings = useUpdateAutoPostSettings();
+  const updateSettings = useUpdateAutoPostSetting();
   
   const [formData, setFormData] = useState(defaultSettings);
   const [hasChanges, setHasChanges] = useState(false);
@@ -96,11 +96,7 @@ export default function AutoPostSettings() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumb items={[
-        { label: 'Plugins', href: '/admin' },
-        { label: 'Auto Post PRO', href: '/admin/autopost' },
-        { label: 'Configurações' }
-      ]} />
+      <Breadcrumb />
 
       <div className="flex items-center justify-between">
         <div>

@@ -51,6 +51,13 @@ import AutoPostDashboard from "./pages/admin/autopost/AutoPostDashboard";
 import AutoPostSources from "./pages/admin/autopost/AutoPostSources";
 import AutoPostQueue from "./pages/admin/autopost/AutoPostQueue";
 import AutoPostGroups from "./pages/admin/autopost/AutoPostGroups";
+import AutoPostRules from "./pages/admin/autopost/AutoPostRules";
+import AutoPostSchedules from "./pages/admin/autopost/AutoPostSchedules";
+import AutoPostMedia from "./pages/admin/autopost/AutoPostMedia";
+import AutoPostDuplicates from "./pages/admin/autopost/AutoPostDuplicates";
+import AutoPostLogs from "./pages/admin/autopost/AutoPostLogs";
+import AutoPostReports from "./pages/admin/autopost/AutoPostReports";
+import AutoPostSettings from "./pages/admin/autopost/AutoPostSettings";
 
 // Community Pages
 import CommunityHub from "./pages/community/CommunityHub";
@@ -120,6 +127,13 @@ const App = () => (
                     <Route path="autopost/sources" element={<AutoPostSources />} />
                     <Route path="autopost/queue" element={<AutoPostQueue />} />
                     <Route path="autopost/groups" element={<AutoPostGroups />} />
+                    <Route path="autopost/rules" element={<AutoPostRules />} />
+                    <Route path="autopost/schedules" element={<AutoPostSchedules />} />
+                    <Route path="autopost/media" element={<AutoPostMedia />} />
+                    <Route path="autopost/duplicates" element={<AutoPostDuplicates />} />
+                    <Route path="autopost/logs" element={<AutoPostLogs />} />
+                    <Route path="autopost/reports" element={<AutoPostReports />} />
+                    <Route path="autopost/settings" element={<AutoPostSettings />} />
                   </Route>
 
                   <Route path="*" element={<NotFound />} />
