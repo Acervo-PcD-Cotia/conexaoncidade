@@ -1,9 +1,50 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Settings as SettingsIcon, Shield, Bell, Database } from "lucide-react";
+import { Settings as SettingsIcon, Shield, Bell, Database, Wrench, AlertTriangle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useMaintenanceMode, useAdminNotificationPreferences } from "@/hooks/useMaintenanceMode";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function Settings() {
+  const { 
+    isMaintenanceMode, 
+    message, 
+    estimatedEnd, 
+    isLoading: maintenanceLoading,
+    toggleMaintenance,
+    updateSettings,
+    isUpdating
+  } = useMaintenanceMode();
+
+  const {
+    preferences,
+    isLoading: preferencesLoading,
+    updatePreferences,
+    isUpdating: preferencesUpdating
+  } = useAdminNotificationPreferences();
+
+  const [localMessage, setLocalMessage] = useState(message);
+  const [localEstimatedEnd, setLocalEstimatedEnd] = useState(estimatedEnd || '');
+
+  useEffect(() => {
+    setLocalMessage(message);
+    setLocalEstimatedEnd(estimatedEnd || '');
+  }, [message, estimatedEnd]);
+
+  const handleSaveMaintenanceSettings = () => {
+    updateSettings({
+      enabled: isMaintenanceMode,
+      message: localMessage,
+      estimated_end: localEstimatedEnd || null
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -17,6 +58,152 @@ export default function Settings() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
+        {/* Maintenance Mode Card */}
+        <Card className="md:col-span-2 border-2 border-dashed">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Wrench className="h-5 w-5" />
+              Modo Manutenção
+              {isMaintenanceMode && (
+                <Badge variant="destructive" className="ml-2">
+                  ATIVO
+                </Badge>
+              )}
+            </CardTitle>
+            <CardDescription>
+              Bloqueia o acesso ao site para visitantes (admins podem continuar acessando)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {maintenanceLoading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-20 w-full" />
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Ativar modo manutenção</Label>
+                    <p className="text-xs text-muted-foreground">
+                      O site ficará inacessível para visitantes
+                    </p>
+                  </div>
+                  <Switch 
+                    checked={isMaintenanceMode} 
+                    onCheckedChange={toggleMaintenance}
+                    disabled={isUpdating}
+                  />
+                </div>
+
+                {isMaintenanceMode && (
+                  <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      O modo manutenção está ativo. Visitantes não podem acessar o site.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <div className="space-y-2">
+                  <Label>Mensagem personalizada</Label>
+                  <Textarea 
+                    placeholder="Mensagem exibida durante a manutenção..." 
+                    value={localMessage}
+                    onChange={(e) => setLocalMessage(e.target.value)}
+                    className="min-h-[80px]"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Previsão de retorno</Label>
+                  <Input 
+                    type="datetime-local" 
+                    value={localEstimatedEnd}
+                    onChange={(e) => setLocalEstimatedEnd(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Deixe vazio se não houver previsão
+                  </p>
+                </div>
+
+                <Button 
+                  onClick={handleSaveMaintenanceSettings}
+                  disabled={isUpdating}
+                  className="w-full sm:w-auto"
+                >
+                  Salvar configurações
+                </Button>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Push Notifications Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Bell className="h-5 w-5" />
+              Notificações Push
+            </CardTitle>
+            <CardDescription>
+              Receba alertas sobre conteúdo pendente
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {preferencesLoading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Notícias pendentes</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Alertar quando há notícias para revisão
+                    </p>
+                  </div>
+                  <Switch 
+                    checked={preferences?.notify_pending_news ?? true}
+                    onCheckedChange={(checked) => updatePreferences({ notify_pending_news: checked })}
+                    disabled={preferencesUpdating}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Verificações Anti Fake</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Alertar sobre novas verificações
+                    </p>
+                  </div>
+                  <Switch 
+                    checked={preferences?.notify_pending_factcheck ?? true}
+                    onCheckedChange={(checked) => updatePreferences({ notify_pending_factcheck: checked })}
+                    disabled={preferencesUpdating}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Denúncias na comunidade</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Alertar sobre conteúdo denunciado
+                    </p>
+                  </div>
+                  <Switch 
+                    checked={preferences?.notify_community_reports ?? true}
+                    onCheckedChange={(checked) => updatePreferences({ notify_community_reports: checked })}
+                    disabled={preferencesUpdating}
+                  />
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Security Card */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
@@ -49,38 +236,7 @@ export default function Settings() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Bell className="h-5 w-5" />
-              Notificações
-            </CardTitle>
-            <CardDescription>
-              Preferências de alertas e notificações
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Alertas editoriais</Label>
-                <p className="text-xs text-muted-foreground">
-                  Notificar sobre rascunhos antigos
-                </p>
-              </div>
-              <Switch defaultChecked />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Resumo diário</Label>
-                <p className="text-xs text-muted-foreground">
-                  Enviar resumo de métricas por email
-                </p>
-              </div>
-              <Switch />
-            </div>
-          </CardContent>
-        </Card>
-
+        {/* System Info Card */}
         <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">

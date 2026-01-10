@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { AccessibilityProvider } from "@/contexts/AccessibilityContext";
 import { NewsCreationProvider } from "@/contexts/NewsCreationContext";
 import { NewsCreationModalProvider } from "@/contexts/NewsCreationModalContext";
+import { MaintenanceGuard } from "@/components/maintenance/MaintenanceGuard";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import Index from "./pages/Index";
@@ -72,6 +73,7 @@ import CommunityUnlock from "./pages/community/CommunityUnlock";
 import CommunityAuth from "./pages/community/CommunityAuth";
 import ChallengesPage from "./pages/community/ChallengesPage";
 import HowToEarnPoints from "./pages/community/HowToEarnPoints";
+import MemberProfile from "./pages/community/MemberProfile";
 
 // Auto Post PRO Form
 import AutoPostSourceForm from "./pages/admin/autopost/AutoPostSourceForm";
@@ -100,100 +102,103 @@ const App = () => (
                 <Toaster />
                 <Sonner />
                 <BrowserRouter>
-                <Routes>
-                  {/* Public Routes */}
-                  <Route element={<PublicLayout />}>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/noticia/:slug" element={<NewsDetail />} />
-                    <Route path="/categoria/:slug" element={<CategoryPage />} />
-                    <Route path="/comunidade" element={<CommunityHub />} />
-                    <Route path="/comunidade/desbloquear" element={<CommunityUnlock />} />
-                    <Route path="/comunidade/desafios" element={<ChallengesPage />} />
-                    <Route path="/comunidade/como-ganhar-pontos" element={<HowToEarnPoints />} />
-                    <Route path="/anti-fake-news" element={<AntiFakeNews />} />
-                  </Route>
-                  <Route path="/story/:slug" element={<StoryViewer />} />
-                  <Route path="/evento/:slug" element={<EventDetail />} />
-                  <Route path="/edicao/:slug" element={<EditionViewer />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/auth-comunidade" element={<CommunityAuth />} />
-                  <Route path="/login" element={<Navigate to="/auth" replace />} />
-                  <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
+                  <MaintenanceGuard>
+                    <Routes>
+                      {/* Public Routes */}
+                      <Route element={<PublicLayout />}>
+                        <Route path="/" element={<Index />} />
+                        <Route path="/noticia/:slug" element={<NewsDetail />} />
+                        <Route path="/categoria/:slug" element={<CategoryPage />} />
+                        <Route path="/comunidade" element={<CommunityHub />} />
+                        <Route path="/comunidade/desbloquear" element={<CommunityUnlock />} />
+                        <Route path="/comunidade/desafios" element={<ChallengesPage />} />
+                        <Route path="/comunidade/como-ganhar-pontos" element={<HowToEarnPoints />} />
+                        <Route path="/comunidade/membro/:userId" element={<MemberProfile />} />
+                        <Route path="/anti-fake-news" element={<AntiFakeNews />} />
+                      </Route>
+                      <Route path="/story/:slug" element={<StoryViewer />} />
+                      <Route path="/evento/:slug" element={<EventDetail />} />
+                      <Route path="/edicao/:slug" element={<EditionViewer />} />
+                      <Route path="/auth" element={<Auth />} />
+                      <Route path="/auth-comunidade" element={<CommunityAuth />} />
+                      <Route path="/login" element={<Navigate to="/auth" replace />} />
+                      <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
 
-                  {/* Admin Routes */}
-                  <Route path="/admin" element={<AdminLayout />}>
-                    <Route index element={<Dashboard />} />
-                    <Route path="noticias-ai" element={<NoticiasAI />} />
-                    <Route path="news" element={<NewsList />} />
-                    <Route path="news/new" element={<NewsEditor />} />
-                    <Route path="news/:id/edit" element={<NewsEditor />} />
-                    <Route path="categories" element={<Categories />} />
-                    <Route path="tags" element={<Tags />} />
-                    <Route path="banners" element={<Banners />} />
-                    <Route path="ads" element={<Ads />} />
-                    <Route path="stories" element={<StoriesList />} />
-                    <Route path="stories/new" element={<StoryEditor />} />
-                    <Route path="stories/:id/edit" element={<StoryEditor />} />
-                    <Route path="users" element={<Users />} />
-                    <Route path="home-editor" element={<HomeEditor />} />
-                    <Route path="quick-notes" element={<QuickNotesAdmin />} />
-                    <Route path="analytics" element={<Analytics />} />
-                    <Route path="social" element={<SocialDashboard />} />
-                    <Route path="social/queue" element={<SocialQueue />} />
-                    <Route path="social/history" element={<SocialHistory />} />
-                    <Route path="social/logs" element={<SocialLogs />} />
-                    <Route path="social/settings" element={<SocialSettings />} />
-                    <Route path="links" element={<LinksDashboard />} />
-                    <Route path="links/create" element={<LinksBuilder />} />
-                    <Route path="logs" element={<AuditLogs />} />
-                    <Route path="settings" element={<Settings />} />
-                    <Route path="solutions" element={<Solutions />} />
-                    <Route path="events" element={<EventsList />} />
-                    <Route path="editions" element={<EditionsList />} />
-                    <Route path="editions/new" element={<EditionEditor />} />
-                    <Route path="editions/:id/edit" element={<EditionEditor />} />
-                    <Route path="financial" element={<FinancialDashboard />} />
-                    <Route path="training" element={<TrainingHub />} />
-                    <Route path="podcasts" element={<PodcastsList />} />
-                    <Route path="anti-fake-news" element={<AntiFakeNewsAdmin />} />
-                    
-                    {/* Auto Post PRO Routes */}
-                    <Route path="autopost" element={<AutoPostDashboard />} />
-                    <Route path="autopost/sources" element={<AutoPostSources />} />
-                    <Route path="autopost/queue" element={<AutoPostQueue />} />
-                    <Route path="autopost/groups" element={<AutoPostGroups />} />
-                    <Route path="autopost/rules" element={<AutoPostRules />} />
-                    <Route path="autopost/schedules" element={<AutoPostSchedules />} />
-                    <Route path="autopost/media" element={<AutoPostMedia />} />
-                    <Route path="autopost/duplicates" element={<AutoPostDuplicates />} />
-                    <Route path="autopost/logs" element={<AutoPostLogs />} />
-                    <Route path="autopost/reports" element={<AutoPostReports />} />
-                    <Route path="autopost/settings" element={<AutoPostSettings />} />
-                    <Route path="autopost/sources/new" element={<AutoPostSourceForm />} />
-                    <Route path="autopost/sources/:id/edit" element={<AutoPostSourceForm />} />
-                    
-                    {/* Partners Routes */}
-                    <Route path="partners" element={<PartnersInbox />} />
-                    <Route path="partners/manage" element={<PartnersManage />} />
-                    <Route path="partners/sources" element={<PartnersSources />} />
-                    <Route path="partners/pitches" element={<PartnersPitches />} />
-                    
-                    {/* Community Admin Routes */}
-                    <Route path="community" element={<CommunityAdmin />} />
-                    <Route path="community/members" element={<CommunityMembers />} />
-                    <Route path="community/moderation" element={<CommunityModeration />} />
-                  </Route>
+                      {/* Admin Routes */}
+                      <Route path="/admin" element={<AdminLayout />}>
+                        <Route index element={<Dashboard />} />
+                        <Route path="noticias-ai" element={<NoticiasAI />} />
+                        <Route path="news" element={<NewsList />} />
+                        <Route path="news/new" element={<NewsEditor />} />
+                        <Route path="news/:id/edit" element={<NewsEditor />} />
+                        <Route path="categories" element={<Categories />} />
+                        <Route path="tags" element={<Tags />} />
+                        <Route path="banners" element={<Banners />} />
+                        <Route path="ads" element={<Ads />} />
+                        <Route path="stories" element={<StoriesList />} />
+                        <Route path="stories/new" element={<StoryEditor />} />
+                        <Route path="stories/:id/edit" element={<StoryEditor />} />
+                        <Route path="users" element={<Users />} />
+                        <Route path="home-editor" element={<HomeEditor />} />
+                        <Route path="quick-notes" element={<QuickNotesAdmin />} />
+                        <Route path="analytics" element={<Analytics />} />
+                        <Route path="social" element={<SocialDashboard />} />
+                        <Route path="social/queue" element={<SocialQueue />} />
+                        <Route path="social/history" element={<SocialHistory />} />
+                        <Route path="social/logs" element={<SocialLogs />} />
+                        <Route path="social/settings" element={<SocialSettings />} />
+                        <Route path="links" element={<LinksDashboard />} />
+                        <Route path="links/create" element={<LinksBuilder />} />
+                        <Route path="logs" element={<AuditLogs />} />
+                        <Route path="settings" element={<Settings />} />
+                        <Route path="solutions" element={<Solutions />} />
+                        <Route path="events" element={<EventsList />} />
+                        <Route path="editions" element={<EditionsList />} />
+                        <Route path="editions/new" element={<EditionEditor />} />
+                        <Route path="editions/:id/edit" element={<EditionEditor />} />
+                        <Route path="financial" element={<FinancialDashboard />} />
+                        <Route path="training" element={<TrainingHub />} />
+                        <Route path="podcasts" element={<PodcastsList />} />
+                        <Route path="anti-fake-news" element={<AntiFakeNewsAdmin />} />
+                        
+                        {/* Auto Post PRO Routes */}
+                        <Route path="autopost" element={<AutoPostDashboard />} />
+                        <Route path="autopost/sources" element={<AutoPostSources />} />
+                        <Route path="autopost/queue" element={<AutoPostQueue />} />
+                        <Route path="autopost/groups" element={<AutoPostGroups />} />
+                        <Route path="autopost/rules" element={<AutoPostRules />} />
+                        <Route path="autopost/schedules" element={<AutoPostSchedules />} />
+                        <Route path="autopost/media" element={<AutoPostMedia />} />
+                        <Route path="autopost/duplicates" element={<AutoPostDuplicates />} />
+                        <Route path="autopost/logs" element={<AutoPostLogs />} />
+                        <Route path="autopost/reports" element={<AutoPostReports />} />
+                        <Route path="autopost/settings" element={<AutoPostSettings />} />
+                        <Route path="autopost/sources/new" element={<AutoPostSourceForm />} />
+                        <Route path="autopost/sources/:id/edit" element={<AutoPostSourceForm />} />
+                        
+                        {/* Partners Routes */}
+                        <Route path="partners" element={<PartnersInbox />} />
+                        <Route path="partners/manage" element={<PartnersManage />} />
+                        <Route path="partners/sources" element={<PartnersSources />} />
+                        <Route path="partners/pitches" element={<PartnersPitches />} />
+                        
+                        {/* Community Admin Routes */}
+                        <Route path="community" element={<CommunityAdmin />} />
+                        <Route path="community/members" element={<CommunityMembers />} />
+                        <Route path="community/moderation" element={<CommunityModeration />} />
+                      </Route>
 
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </BrowserRouter>
-            </TooltipProvider>
-          </NewsCreationModalProvider>
-        </NewsCreationProvider>
-      </AccessibilityProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-</HelmetProvider>
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </MaintenanceGuard>
+                </BrowserRouter>
+              </TooltipProvider>
+            </NewsCreationModalProvider>
+          </NewsCreationProvider>
+        </AccessibilityProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </HelmetProvider>
 );
 
 export default App;
