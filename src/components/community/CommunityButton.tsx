@@ -22,30 +22,39 @@ export function CommunityButton() {
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   
   const handleClick = () => {
-    if (!user) {
-      // User needs to login first, then we'll show the modal
-      navigate("/auth?redirect=/comunidade/desbloquear");
-      return;
-    }
-    
     if (hasAccess) {
+      // User has access - go directly to community
       navigate("/comunidade");
     } else {
-      // Open the welcome modal for users without access
+      // User doesn't have access - show welcome modal (works for both logged in and not logged in)
       setShowWelcomeModal(true);
     }
   };
 
   const handleInviteValidate = async (code: string) => {
-    await validateInviteCode(code);
-    setShowWelcomeModal(false);
-    navigate("/auth-comunidade");
+    if (user) {
+      // User is logged in - validate and grant access directly
+      await validateInviteCode(code);
+      setShowWelcomeModal(false);
+      navigate("/comunidade");
+    } else {
+      // User is NOT logged in - redirect to auth with invite code param
+      setShowWelcomeModal(false);
+      navigate(`/auth-comunidade?invite=${encodeURIComponent(code)}`);
+    }
   };
 
   const handleQuizComplete = async () => {
-    await completeQuiz();
-    setShowWelcomeModal(false);
-    navigate("/auth-comunidade");
+    if (user) {
+      // User is logged in - complete quiz and grant access directly
+      await completeQuiz();
+      setShowWelcomeModal(false);
+      navigate("/comunidade");
+    } else {
+      // User is NOT logged in - redirect to auth with quiz completed param
+      setShowWelcomeModal(false);
+      navigate("/auth-comunidade?quiz_completed=true");
+    }
   };
   
   return (

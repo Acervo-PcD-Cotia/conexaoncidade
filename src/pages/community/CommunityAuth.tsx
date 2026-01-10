@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Users, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,13 +13,24 @@ import logoFull from "@/assets/logo-full.png";
 
 export default function CommunityAuth() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, signIn, signUp } = useAuth();
-  const { hasAccess, isLoading: communityLoading } = useCommunity();
+  const { 
+    hasAccess, 
+    isLoading: communityLoading,
+    processInviteAfterLogin,
+    processQuizAfterLogin
+  } = useCommunity();
   const { toast } = useToast();
 
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isProcessingAccess, setIsProcessingAccess] = useState(false);
+
+  // Get onboarding params from URL
+  const inviteCode = searchParams.get("invite");
+  const quizCompleted = searchParams.get("quiz_completed") === "true";
 
   // Login form
   const [loginEmail, setLoginEmail] = useState("");
@@ -30,12 +41,44 @@ export default function CommunityAuth() {
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
 
-  // Redirect if already logged in and has access
+  // Process community access after user logs in
   useEffect(() => {
-    if (user && hasAccess) {
-      navigate("/comunidade");
+    const processCommunityAccess = async () => {
+      if (!user || isProcessingAccess) return;
+      
+      // If user already has access, redirect
+      if (hasAccess) {
+        navigate("/comunidade");
+        return;
+      }
+      
+      // Check if there's onboarding to process
+      if (inviteCode || quizCompleted) {
+        setIsProcessingAccess(true);
+        try {
+          if (inviteCode) {
+            await processInviteAfterLogin(inviteCode);
+          } else if (quizCompleted) {
+            await processQuizAfterLogin();
+          }
+          navigate("/comunidade");
+        } catch (error) {
+          console.error("Error processing community access:", error);
+          toast({
+            variant: "destructive",
+            title: "Erro",
+            description: error instanceof Error ? error.message : "Erro ao processar acesso",
+          });
+        } finally {
+          setIsProcessingAccess(false);
+        }
+      }
+    };
+    
+    if (user && !communityLoading) {
+      processCommunityAccess();
     }
-  }, [user, hasAccess, navigate]);
+  }, [user, hasAccess, communityLoading, inviteCode, quizCompleted]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +91,7 @@ export default function CommunityAuth() {
         title: "Bem-vindo de volta!",
         description: "Entrando na comunidade...",
       });
-      navigate("/comunidade");
+      // Navigation handled by useEffect after user state updates
     } catch (error) {
       toast({
         variant: "destructive",
@@ -71,7 +114,7 @@ export default function CommunityAuth() {
         title: "Conta criada com sucesso!",
         description: "Bem-vindo à Comunidade Conexão na Cidade!",
       });
-      navigate("/comunidade");
+      // Navigation handled by useEffect after user state updates
     } catch (error) {
       toast({
         variant: "destructive",
@@ -82,6 +125,24 @@ export default function CommunityAuth() {
       setIsSubmitting(false);
     }
   };
+
+  // Show loading if processing access
+  if (isProcessingAccess) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted/30 p-4">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center space-y-4"
+        >
+          <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center animate-pulse">
+            <Users className="h-8 w-8 text-primary" />
+          </div>
+          <p className="text-muted-foreground">Liberando seu acesso...</p>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted/30 p-4">
@@ -107,6 +168,16 @@ export default function CommunityAuth() {
             Entre ou crie sua conta para participar dos debates, grupos e
             benefícios exclusivos.
           </p>
+          
+          {/* Show indicator if user completed quiz or has invite */}
+          {(inviteCode || quizCompleted) && (
+            <div className="mt-4 inline-flex items-center gap-2 bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-300 px-4 py-2 rounded-lg text-sm">
+              <span>✓</span>
+              <span>
+                {inviteCode ? "Código de convite validado!" : "Quiz completado!"}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Auth Card */}

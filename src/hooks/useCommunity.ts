@@ -225,11 +225,10 @@ export function useCommunity() {
     },
   });
 
-  // Use invite code (returns promise for modal handling)
+  // Validate invite code (works for both logged in and not logged in users)
+  // For unauthenticated users, this only validates the code exists - granting happens after login
   const validateInviteCode = async (code: string) => {
-    if (!user) throw new Error('Usuário não autenticado');
-    
-    // Find invite
+    // Find invite (can be done without auth)
     const { data: invite, error: findError } = await supabase
       .from('community_invites')
       .select('*')
@@ -244,16 +243,73 @@ export function useCommunity() {
       throw new Error('Este convite expirou');
     }
     
-    // Mark invite as used
-    await supabase
+    // If user is logged in, process immediately
+    if (user) {
+      // Mark invite as used
+      await supabase
+        .from('community_invites')
+        .update({ 
+          used_by: user.id, 
+          used_at: new Date().toISOString(),
+          status: 'used',
+          use_count: (invite.use_count || 0) + 1
+        })
+        .eq('id', invite.id);
+      
+      // Ensure membership exists
+      await ensureMembershipMutation.mutateAsync();
+      
+      // Grant access
+      const { error: updateError } = await supabase
+        .from('community_members')
+        .update({ 
+          access_granted_at: new Date().toISOString(),
+          access_method: 'invite',
+          invited_by: invite.created_by,
+          badges: ['invited_member']
+        })
+        .eq('user_id', user.id);
+      
+      if (updateError) throw updateError;
+      
+      queryClient.invalidateQueries({ queryKey: ['community-membership'] });
+      
+      toast({
+        title: 'Bem-vindo à Comunidade!',
+        description: 'Seu acesso foi liberado com sucesso.',
+      });
+    }
+    
+    // For unauthenticated users, just return - the code is valid
+    // The actual processing will happen in CommunityAuth after login
+    return invite;
+  };
+
+  // Process invite after login (for users who validated invite before logging in)
+  const processInviteAfterLogin = async (code: string) => {
+    if (!user) throw new Error('Usuário não autenticado');
+    
+    const { data: invite, error: findError } = await supabase
       .from('community_invites')
-      .update({ 
-        used_by: user.id, 
-        used_at: new Date().toISOString(),
-        status: 'used',
-        use_count: (invite.use_count || 0) + 1
-      })
-      .eq('id', invite.id);
+      .select('*')
+      .eq('code', code.toUpperCase())
+      .maybeSingle();
+    
+    if (findError) throw findError;
+    if (!invite) throw new Error('Código de convite inválido');
+    
+    // Mark invite as used if still pending
+    if (invite.status === 'pending') {
+      await supabase
+        .from('community_invites')
+        .update({ 
+          used_by: user.id, 
+          used_at: new Date().toISOString(),
+          status: 'used',
+          use_count: (invite.use_count || 0) + 1
+        })
+        .eq('id', invite.id);
+    }
     
     // Ensure membership exists
     await ensureMembershipMutation.mutateAsync();
@@ -279,6 +335,35 @@ export function useCommunity() {
     });
   };
 
+  // Process quiz completion after login (for users who completed quiz before logging in)
+  const processQuizAfterLogin = async () => {
+    if (!user) throw new Error('Usuário não autenticado');
+    
+    // Ensure membership exists first
+    await ensureMembershipMutation.mutateAsync();
+    
+    // Update with quiz completion and grant access
+    const { error } = await supabase
+      .from('community_members')
+      .update({ 
+        quiz_completed: true,
+        quiz_completed_at: new Date().toISOString(),
+        access_granted_at: new Date().toISOString(),
+        access_method: 'quiz',
+        badges: ['founding_member']
+      })
+      .eq('user_id', user.id);
+    
+    if (error) throw error;
+    
+    queryClient.invalidateQueries({ queryKey: ['community-membership'] });
+    
+    toast({
+      title: 'Bem-vindo à Comunidade!',
+      description: 'Você agora é um Membro Fundador 🎉',
+    });
+  };
+
   return {
     membership,
     hasAccess,
@@ -289,6 +374,8 @@ export function useCommunity() {
     ensureMembership: ensureMembershipMutation.mutate,
     useInvite: useInviteMutation.mutate,
     validateInviteCode,
+    processInviteAfterLogin,
+    processQuizAfterLogin,
     isUsingInvite: useInviteMutation.isPending,
     acceptTerms: acceptTermsMutation.mutate,
     completeQuiz: completeQuizMutation.mutateAsync,
