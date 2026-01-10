@@ -77,3 +77,6 @@ verify_jwt = false
 
 [functions.factcheck-verify]
 verify_jwt = false
+
+[functions.notify-admin-content]
+verify_jwt = false
