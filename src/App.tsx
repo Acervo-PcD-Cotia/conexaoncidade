@@ -67,6 +67,7 @@ import AutoPostSettings from "./pages/admin/autopost/AutoPostSettings";
 // Community Pages
 import CommunityHub from "./pages/community/CommunityHub";
 import CommunityUnlock from "./pages/community/CommunityUnlock";
+import CommunityAuth from "./pages/community/CommunityAuth";
 import ChallengesPage from "./pages/community/ChallengesPage";
 import HowToEarnPoints from "./pages/community/HowToEarnPoints";
 
@@ -112,6 +113,7 @@ const App = () => (
                   <Route path="/evento/:slug" element={<EventDetail />} />
                   <Route path="/edicao/:slug" element={<EditionViewer />} />
                   <Route path="/auth" element={<Auth />} />
+                  <Route path="/auth-comunidade" element={<CommunityAuth />} />
                   <Route path="/login" element={<Navigate to="/auth" replace />} />
                   <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
 

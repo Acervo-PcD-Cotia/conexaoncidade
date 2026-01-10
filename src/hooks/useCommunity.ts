@@ -10,11 +10,13 @@ export interface CommunityMember {
   points: number;
   share_count: number;
   access_granted_at: string | null;
-  access_method: 'invite' | 'challenge' | null;
+  access_method: 'invite' | 'challenge' | 'quiz' | null;
   badges: string[];
   bio: string | null;
   terms_accepted_at: string | null;
   is_suspended: boolean;
+  quiz_completed: boolean;
+  quiz_completed_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -185,6 +187,98 @@ export function useCommunity() {
     },
   });
 
+  // Complete quiz and grant access
+  const completeQuizMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error('Usuário não autenticado');
+      
+      // Ensure membership exists first
+      await ensureMembershipMutation.mutateAsync();
+      
+      // Update with quiz completion and grant access
+      const { error } = await supabase
+        .from('community_members')
+        .update({ 
+          quiz_completed: true,
+          quiz_completed_at: new Date().toISOString(),
+          access_granted_at: new Date().toISOString(),
+          access_method: 'quiz',
+          badges: ['founding_member']
+        })
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['community-membership'] });
+      toast({
+        title: 'Bem-vindo à Comunidade!',
+        description: 'Você agora é um Membro Fundador 🎉',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: error.message,
+      });
+    },
+  });
+
+  // Use invite code (returns promise for modal handling)
+  const validateInviteCode = async (code: string) => {
+    if (!user) throw new Error('Usuário não autenticado');
+    
+    // Find invite
+    const { data: invite, error: findError } = await supabase
+      .from('community_invites')
+      .select('*')
+      .eq('code', code.toUpperCase())
+      .eq('status', 'pending')
+      .maybeSingle();
+    
+    if (findError) throw findError;
+    if (!invite) throw new Error('Código de convite inválido ou expirado');
+    
+    if (invite.expires_at && new Date(invite.expires_at) < new Date()) {
+      throw new Error('Este convite expirou');
+    }
+    
+    // Mark invite as used
+    await supabase
+      .from('community_invites')
+      .update({ 
+        used_by: user.id, 
+        used_at: new Date().toISOString(),
+        status: 'used',
+        use_count: (invite.use_count || 0) + 1
+      })
+      .eq('id', invite.id);
+    
+    // Ensure membership exists
+    await ensureMembershipMutation.mutateAsync();
+    
+    // Grant access
+    const { error: updateError } = await supabase
+      .from('community_members')
+      .update({ 
+        access_granted_at: new Date().toISOString(),
+        access_method: 'invite',
+        invited_by: invite.created_by,
+        badges: ['invited_member']
+      })
+      .eq('user_id', user.id);
+    
+    if (updateError) throw updateError;
+    
+    queryClient.invalidateQueries({ queryKey: ['community-membership'] });
+    
+    toast({
+      title: 'Bem-vindo à Comunidade!',
+      description: 'Seu acesso foi liberado com sucesso.',
+    });
+  };
+
   return {
     membership,
     hasAccess,
@@ -194,8 +288,11 @@ export function useCommunity() {
     isLoading: membershipLoading,
     ensureMembership: ensureMembershipMutation.mutate,
     useInvite: useInviteMutation.mutate,
+    validateInviteCode,
     isUsingInvite: useInviteMutation.isPending,
     acceptTerms: acceptTermsMutation.mutate,
+    completeQuiz: completeQuizMutation.mutateAsync,
+    isCompletingQuiz: completeQuizMutation.isPending,
   };
 }
 
