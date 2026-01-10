@@ -1751,6 +1751,8 @@ export type Database = {
           is_suspended: boolean | null
           level: Database["public"]["Enums"]["community_level"] | null
           points: number | null
+          quiz_completed: boolean | null
+          quiz_completed_at: string | null
           share_count: number | null
           suspended_reason: string | null
           suspended_until: string | null
@@ -1769,6 +1771,8 @@ export type Database = {
           is_suspended?: boolean | null
           level?: Database["public"]["Enums"]["community_level"] | null
           points?: number | null
+          quiz_completed?: boolean | null
+          quiz_completed_at?: string | null
           share_count?: number | null
           suspended_reason?: string | null
           suspended_until?: string | null
@@ -1787,6 +1791,8 @@ export type Database = {
           is_suspended?: boolean | null
           level?: Database["public"]["Enums"]["community_level"] | null
           points?: number | null
+          quiz_completed?: boolean | null
+          quiz_completed_at?: string | null
           share_count?: number | null
           suspended_reason?: string | null
           suspended_until?: string | null
