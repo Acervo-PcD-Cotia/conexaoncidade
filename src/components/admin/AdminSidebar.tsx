@@ -24,6 +24,7 @@ import {
   Receipt,
   Bot,
   UsersRound,
+  Mic,
   LucideIcon,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -71,6 +72,7 @@ const editorialItems = [
   { title: "Gerador de Links", url: "/admin/links", icon: Link2 },
   { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
   { title: "Edição Digital", url: "/admin/editions", icon: BookOpen },
+  { title: "Podcasts", url: "/admin/podcasts", icon: Mic },
 ];
 
 const businessItems = [

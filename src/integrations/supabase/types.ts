@@ -3309,6 +3309,8 @@ export type Database = {
           audio_url: string | null
           audio_voice_id: string | null
           author_id: string | null
+          auto_generate_podcast: boolean | null
+          auto_publish_podcast: boolean | null
           card_image_url: string | null
           category_id: string | null
           content: string | null
@@ -3329,7 +3331,10 @@ export type Database = {
           meta_title: string | null
           og_image_url: string | null
           origin: Database["public"]["Enums"]["news_origin"] | null
+          podcast_audio_url: string | null
           podcast_enabled: boolean | null
+          podcast_generated_at: string | null
+          podcast_status: string | null
           published_at: string | null
           scheduled_at: string | null
           share_count: number
@@ -3358,6 +3363,8 @@ export type Database = {
           audio_url?: string | null
           audio_voice_id?: string | null
           author_id?: string | null
+          auto_generate_podcast?: boolean | null
+          auto_publish_podcast?: boolean | null
           card_image_url?: string | null
           category_id?: string | null
           content?: string | null
@@ -3378,7 +3385,10 @@ export type Database = {
           meta_title?: string | null
           og_image_url?: string | null
           origin?: Database["public"]["Enums"]["news_origin"] | null
+          podcast_audio_url?: string | null
           podcast_enabled?: boolean | null
+          podcast_generated_at?: string | null
+          podcast_status?: string | null
           published_at?: string | null
           scheduled_at?: string | null
           share_count?: number
@@ -3407,6 +3417,8 @@ export type Database = {
           audio_url?: string | null
           audio_voice_id?: string | null
           author_id?: string | null
+          auto_generate_podcast?: boolean | null
+          auto_publish_podcast?: boolean | null
           card_image_url?: string | null
           category_id?: string | null
           content?: string | null
@@ -3427,7 +3439,10 @@ export type Database = {
           meta_title?: string | null
           og_image_url?: string | null
           origin?: Database["public"]["Enums"]["news_origin"] | null
+          podcast_audio_url?: string | null
           podcast_enabled?: boolean | null
+          podcast_generated_at?: string | null
+          podcast_status?: string | null
           published_at?: string | null
           scheduled_at?: string | null
           share_count?: number
@@ -4117,6 +4132,51 @@ export type Database = {
           },
           {
             foreignKeyName: "podcast_feeds_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      podcast_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          created_by: string | null
+          details: string | null
+          id: string
+          news_id: string | null
+          tenant_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          created_by?: string | null
+          details?: string | null
+          id?: string
+          news_id?: string | null
+          tenant_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          created_by?: string | null
+          details?: string | null
+          id?: string
+          news_id?: string | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "podcast_logs_news_id_fkey"
+            columns: ["news_id"]
+            isOneToOne: false
+            referencedRelation: "news"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "podcast_logs_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "sites"

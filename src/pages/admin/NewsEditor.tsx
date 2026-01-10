@@ -71,6 +71,8 @@ export default function NewsEditor() {
     meta_description: "",
     scheduled_at: "",
     is_indexable: true,
+    auto_generate_podcast: false,
+    auto_publish_podcast: false,
   });
 
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -204,6 +206,8 @@ export default function NewsEditor() {
         meta_description: news.meta_description || "",
         scheduled_at: news.scheduled_at || "",
         is_indexable: news.is_indexable !== false,
+        auto_generate_podcast: news.auto_generate_podcast || false,
+        auto_publish_podcast: news.auto_publish_podcast || false,
       });
       setLastSaved(new Date(news.updated_at));
     }
@@ -615,6 +619,33 @@ export default function NewsEditor() {
                 </Select>
               </div>
               <TagSelector selectedTags={selectedTags} onChange={setSelectedTags} requiredCount={12} />
+
+              {/* Podcast Automation */}
+              <div className="pt-4 border-t space-y-3">
+                <p className="text-sm font-medium flex items-center gap-2">
+                  🎙️ Podcast
+                </p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-sm">Gerar podcast ao publicar</Label>
+                    <p className="text-xs text-muted-foreground">Cria episódio automaticamente</p>
+                  </div>
+                  <Switch
+                    checked={formData.auto_generate_podcast || false}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, auto_generate_podcast: checked }))}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-sm">Publicar no RSS</Label>
+                    <p className="text-xs text-muted-foreground">Disponibiliza nas plataformas</p>
+                  </div>
+                  <Switch
+                    checked={formData.auto_publish_podcast || false}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, auto_publish_podcast: checked }))}
+                  />
+                </div>
+              </div>
             </CardContent>
           </Card>
 

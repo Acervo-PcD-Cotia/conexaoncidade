@@ -49,6 +49,7 @@ import EditionsList from "./pages/admin/EditionsList";
 import EditionEditor from "./pages/admin/EditionEditor";
 import FinancialDashboard from "./pages/admin/FinancialDashboard";
 import TrainingHub from "./pages/admin/TrainingHub";
+import PodcastsList from "./pages/admin/PodcastsList";
 
 // Auto Post PRO Pages
 import AutoPostDashboard from "./pages/admin/autopost/AutoPostDashboard";
@@ -148,6 +149,7 @@ const App = () => (
                     <Route path="editions/:id/edit" element={<EditionEditor />} />
                     <Route path="financial" element={<FinancialDashboard />} />
                     <Route path="training" element={<TrainingHub />} />
+                    <Route path="podcasts" element={<PodcastsList />} />
                     
                     {/* Auto Post PRO Routes */}
                     <Route path="autopost" element={<AutoPostDashboard />} />
