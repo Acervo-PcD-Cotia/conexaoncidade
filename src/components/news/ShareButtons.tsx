@@ -8,7 +8,7 @@ interface ShareButtonsProps {
   url: string;
   title: string;
   contentId?: string;
-  contentType?: 'news' | 'project' | 'campaign' | 'story';
+  contentType?: 'news' | 'project' | 'campaign' | 'story' | 'edition';
 }
 
 export function ShareButtons({ url, title, contentId, contentType = 'news' }: ShareButtonsProps) {

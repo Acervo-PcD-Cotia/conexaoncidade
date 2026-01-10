@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, Navigate, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -8,7 +8,7 @@ import {
   Calendar, 
   Eye, 
   BookOpen,
-  ChevronRight 
+  ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,24 +20,38 @@ import {
   useDigitalEditionItems,
   useRecordEditionView
 } from "@/hooks/useDigitalEditions";
+import { useEditionAccess } from "@/hooks/useEditionAccess";
+import { useAuth } from "@/contexts/AuthContext";
+import { useCommunity } from "@/hooks/useCommunity";
+import { EditionLockedScreen } from "@/components/edition/EditionLockedScreen";
+import { ShareButtons } from "@/components/news/ShareButtons";
 
 const EditionViewer = () => {
   const { slug } = useParams<{ slug: string }>();
+  const location = useLocation();
+  const { user, isLoading: authLoading } = useAuth();
+  const { membership, isLoading: membershipLoading, hasAccess: hasCommunityAccess } = useCommunity();
   
   const { data: edition, isLoading: loadingEdition } = useDigitalEditionBySlug(slug);
   const { data: items } = useDigitalEditionItems(edition?.id);
   const recordView = useRecordEditionView();
+  
+  // Check access using the new hook
+  const { data: accessCheck, isLoading: checkingAccess } = useEditionAccess(
+    user?.id, 
+    edition?.id
+  );
 
-  // Record view on mount
+  // Record view on mount (only if access granted)
   useEffect(() => {
-    if (edition?.id) {
+    if (edition?.id && accessCheck?.has_access) {
       const sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
       recordView.mutate({
         editionId: edition.id,
         sessionId
       });
     }
-  }, [edition?.id]);
+  }, [edition?.id, accessCheck?.has_access]);
 
   // Group items by section
   const groupedItems = useMemo(() => {
@@ -62,7 +76,8 @@ const EditionViewer = () => {
     }
   };
 
-  if (loadingEdition) {
+  // Loading states
+  if (authLoading || loadingEdition) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-pulse text-muted-foreground">Carregando edição...</div>
@@ -70,6 +85,12 @@ const EditionViewer = () => {
     );
   }
 
+  // Redirect to login if not authenticated
+  if (!user) {
+    return <Navigate to={`/auth?redirect=${encodeURIComponent(location.pathname)}`} replace />;
+  }
+
+  // Edition not found
   if (!edition) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
@@ -84,7 +105,43 @@ const EditionViewer = () => {
     );
   }
 
+  // Loading access check
+  if (membershipLoading || checkingAccess) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-pulse text-muted-foreground">Verificando acesso...</div>
+      </div>
+    );
+  }
+
+  // Not a community member - redirect to unlock
+  if (!hasCommunityAccess && accessCheck?.reason === 'not_community_member') {
+    return <Navigate to="/comunidade/desbloquear" replace />;
+  }
+
+  // Access denied due to insufficient points - show locked screen
+  if (accessCheck && !accessCheck.has_access && accessCheck.reason === 'insufficient_points') {
+    return <EditionLockedScreen edition={edition} accessCheck={accessCheck} />;
+  }
+
+  // Member suspended
+  if (accessCheck?.reason === 'member_suspended') {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+        <h1 className="text-2xl font-bold">Acesso Suspenso</h1>
+        <p className="text-muted-foreground">Sua conta está temporariamente suspensa.</p>
+        <Link to="/">
+          <Button variant="outline">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Voltar ao início
+          </Button>
+        </Link>
+      </div>
+    );
+  }
+
   const publishedDate = edition.published_at ? new Date(edition.published_at) : null;
+  const shareUrl = `${window.location.origin}/edicao/${edition.slug}`;
 
   return (
     <div className="min-h-screen bg-background">
@@ -160,6 +217,16 @@ const EditionViewer = () => {
                     <span>{items.length} matérias</span>
                   </div>
                 )}
+              </div>
+
+              {/* Share Buttons */}
+              <div className="pt-4">
+                <ShareButtons 
+                  url={shareUrl} 
+                  title={edition.title}
+                  contentId={edition.id}
+                  contentType="edition"
+                />
               </div>
             </div>
           </div>

@@ -15,6 +15,10 @@ export interface DigitalEdition {
   created_by: string | null;
   created_at: string | null;
   updated_at: string | null;
+  // Campos de acesso gamificado
+  acesso_livre_ate: string | null;
+  pontuacao_minima: number | null;
+  tipo_acesso: 'comunidade' | 'pontuacao' | null;
 }
 
 export interface DigitalEditionItem {
