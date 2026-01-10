@@ -24,10 +24,10 @@ export function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const { user, signOut } = useAuth();
-  const { role, isAdmin, isEditor } = useUserRole();
+  const { role, loading: roleLoading, isAdmin, isEditor } = useUserRole();
   const { data: categories } = useCategories();
   
-  const hasAdminAccess = isAdmin || isEditor || ['editor_chief', 'reporter', 'columnist', 'moderator'].includes(role || '');
+  const hasAdminAccess = !roleLoading && (isAdmin || isEditor || ['editor_chief', 'reporter', 'columnist', 'moderator'].includes(role || ''));
   
 
   const userInitials = user?.user_metadata?.full_name
@@ -63,11 +63,44 @@ export function Header() {
                     {cat.name}
                   </Link>
                 ))}
-                <div className="mt-4 border-t pt-4">
-                  <Link to="/auth" className="text-primary hover:underline">
-                    Entrar / Cadastrar
-                  </Link>
-                </div>
+                
+                {/* Admin Links for Mobile */}
+                {hasAdminAccess && (
+                  <div className="mt-4 border-t pt-4 space-y-3">
+                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                      Administração
+                    </p>
+                    <Link
+                      to="/admin"
+                      className="flex items-center gap-2 text-primary hover:underline"
+                    >
+                      <LayoutDashboard className="h-4 w-4" />
+                      Dashboard
+                    </Link>
+                    <Link
+                      to="/admin/news"
+                      className="flex items-center gap-2 text-muted-foreground hover:text-primary"
+                    >
+                      <Newspaper className="h-4 w-4" />
+                      Gerenciar Notícias
+                    </Link>
+                    <Link
+                      to="/admin/categories"
+                      className="flex items-center gap-2 text-muted-foreground hover:text-primary"
+                    >
+                      <FolderOpen className="h-4 w-4" />
+                      Categorias
+                    </Link>
+                  </div>
+                )}
+                
+                {!user && (
+                  <div className="mt-4 border-t pt-4">
+                    <Link to="/auth" className="text-primary hover:underline">
+                      Entrar / Cadastrar
+                    </Link>
+                  </div>
+                )}
               </nav>
             </SheetContent>
           </Sheet>

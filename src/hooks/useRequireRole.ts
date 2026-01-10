@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 type AppRole = "super_admin" | "admin" | "editor" | "columnist" | "moderator" | "editor_chief" | "reporter" | "collaborator" | "commercial" | "financial";
+
+type DeniedReason = 'not_authenticated' | 'not_authorized' | null;
 
 export function useRequireRole(allowedRoles: AppRole[]) {
   const { user, isLoading } = useAuth();
@@ -12,13 +13,32 @@ export function useRequireRole(allowedRoles: AppRole[]) {
   const [hasAccess, setHasAccess] = useState(false);
   const [checkingRole, setCheckingRole] = useState(true);
   const [userRole, setUserRole] = useState<AppRole | null>(null);
+  const [showDenied, setShowDenied] = useState<DeniedReason>(null);
+  const [redirectCountdown, setRedirectCountdown] = useState(3);
+  const redirectTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     async function checkRole() {
       if (isLoading) return;
 
       if (!user) {
-        navigate("/auth");
+        setShowDenied('not_authenticated');
+        setCheckingRole(false);
+        
+        // Start countdown
+        let countdown = 3;
+        setRedirectCountdown(countdown);
+        
+        redirectTimerRef.current = setInterval(() => {
+          countdown -= 1;
+          setRedirectCountdown(countdown);
+          
+          if (countdown <= 0) {
+            if (redirectTimerRef.current) clearInterval(redirectTimerRef.current);
+            navigate("/auth");
+          }
+        }, 1000);
+        
         return;
       }
 
@@ -30,8 +50,23 @@ export function useRequireRole(allowedRoles: AppRole[]) {
           .single();
 
         if (error || !data) {
-          toast.error("Acesso negado. Você não possui permissão para acessar esta área.");
-          navigate("/");
+          setShowDenied('not_authorized');
+          setCheckingRole(false);
+          
+          // Start countdown
+          let countdown = 3;
+          setRedirectCountdown(countdown);
+          
+          redirectTimerRef.current = setInterval(() => {
+            countdown -= 1;
+            setRedirectCountdown(countdown);
+            
+            if (countdown <= 0) {
+              if (redirectTimerRef.current) clearInterval(redirectTimerRef.current);
+              navigate("/");
+            }
+          }, 1000);
+          
           return;
         }
 
@@ -41,21 +76,53 @@ export function useRequireRole(allowedRoles: AppRole[]) {
         // Super Admin tem acesso a TODAS as áreas
         if (role === "super_admin" || allowedRoles.includes(role)) {
           setHasAccess(true);
+          setCheckingRole(false);
         } else {
-          toast.error("Seu perfil não tem acesso a esta funcionalidade.");
-          navigate("/");
+          setShowDenied('not_authorized');
+          setCheckingRole(false);
+          
+          // Start countdown
+          let countdown = 3;
+          setRedirectCountdown(countdown);
+          
+          redirectTimerRef.current = setInterval(() => {
+            countdown -= 1;
+            setRedirectCountdown(countdown);
+            
+            if (countdown <= 0) {
+              if (redirectTimerRef.current) clearInterval(redirectTimerRef.current);
+              navigate("/");
+            }
+          }, 1000);
         }
       } catch {
-        navigate("/");
-      } finally {
+        setShowDenied('not_authorized');
         setCheckingRole(false);
+        
+        // Start countdown
+        let countdown = 3;
+        setRedirectCountdown(countdown);
+        
+        redirectTimerRef.current = setInterval(() => {
+          countdown -= 1;
+          setRedirectCountdown(countdown);
+          
+          if (countdown <= 0) {
+            if (redirectTimerRef.current) clearInterval(redirectTimerRef.current);
+            navigate("/");
+          }
+        }, 1000);
       }
     }
 
     checkRole();
+    
+    return () => {
+      if (redirectTimerRef.current) clearInterval(redirectTimerRef.current);
+    };
   }, [user, isLoading, navigate, allowedRoles]);
 
-  return { hasAccess, checkingRole, userRole };
+  return { hasAccess, checkingRole, userRole, showDenied, redirectCountdown };
 }
 
 export function useUserRole() {
