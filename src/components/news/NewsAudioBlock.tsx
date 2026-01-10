@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Download, Headphones, Loader2, ExternalLink } from 'lucide-react';
+import { Download, Headphones, Loader2, ExternalLink, Mic } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NewsAudioPlayer } from './NewsAudioPlayer';
 import { WebSpeechPlayer } from './WebSpeechPlayer';
 import { NewsTranscriptAccordion } from './NewsTranscriptAccordion';
+import { PodcastPlatformsModal } from './PodcastPlatformsModal';
 import { cn } from '@/lib/utils';
 
 interface NewsAudioBlockProps {
@@ -14,6 +15,8 @@ interface NewsAudioBlockProps {
   transcriptText?: string | null;
   contentHtml?: string | null;
   spotifyUrl?: string | null;
+  podcastStatus?: string | null;
+  podcastAudioUrl?: string | null;
   className?: string;
 }
 
@@ -25,15 +28,21 @@ export function NewsAudioBlock({
   transcriptText,
   contentHtml,
   spotifyUrl,
+  podcastStatus,
+  podcastAudioUrl,
   className,
 }: NewsAudioBlockProps) {
   const [showTranscript, setShowTranscript] = useState(false);
+  const [showPodcastModal, setShowPodcastModal] = useState(false);
 
   // Determine audio state
   const isReady = audioStatus === 'ready' && audioUrl;
   const isGenerating = audioStatus === 'generating';
   const hasFailed = audioStatus === 'failed';
   const notGenerated = !audioStatus || audioStatus === 'not_generated';
+
+  // Podcast state
+  const isPodcastReady = podcastStatus === 'ready' || podcastStatus === 'published';
 
   // Use transcript if available, otherwise clean content
   const transcript = transcriptText || contentHtml;
@@ -47,7 +56,7 @@ export function NewsAudioBlock({
         "bg-gradient-to-br from-primary/5 via-primary/10 to-accent/5 rounded-xl p-5 border border-primary/20",
         className
       )}
-      aria-label="Versão em áudio"
+      aria-label="Áudio e Podcast"
     >
       {/* Header */}
       <div className="flex items-center gap-2 mb-4">
@@ -55,8 +64,8 @@ export function NewsAudioBlock({
           <Headphones className="h-5 w-5 text-primary" />
         </div>
         <div>
-          <h3 className="font-semibold text-foreground">Versão em Áudio</h3>
-          <p className="text-xs text-muted-foreground">Ouça esta notícia</p>
+          <h3 className="font-semibold text-foreground">Áudio & Podcast</h3>
+          <p className="text-xs text-muted-foreground">Ouça esta notícia no site ou como podcast</p>
         </div>
       </div>
 
@@ -146,6 +155,32 @@ export function NewsAudioBlock({
           )}
         </div>
       )}
+
+      {/* Podcast Section */}
+      <div className="mt-4 pt-4 border-t border-primary/10">
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full gap-2"
+          onClick={() => isPodcastReady ? setShowPodcastModal(true) : null}
+          disabled={!isPodcastReady}
+        >
+          <Mic className="h-4 w-4" />
+          🎙️ Ouvir como podcast
+        </Button>
+        
+        {!isPodcastReady && (
+          <p className="text-xs text-muted-foreground text-center mt-2">
+            Podcast em preparação. Em breve disponível nas plataformas de áudio.
+          </p>
+        )}
+      </div>
+
+      {/* Podcast Platforms Modal */}
+      <PodcastPlatformsModal 
+        open={showPodcastModal} 
+        onOpenChange={setShowPodcastModal} 
+      />
     </section>
   );
 }

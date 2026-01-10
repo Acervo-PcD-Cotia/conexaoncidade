@@ -60,7 +60,7 @@ serve(async (req) => {
       console.log('No feed found, generating default feed');
     }
 
-    // Fetch news with audio
+    // Fetch news with podcast ready
     let newsQuery = supabase
       .from('news')
       .select(`
@@ -69,7 +69,7 @@ serve(async (req) => {
         subtitle,
         excerpt,
         slug,
-        audio_url,
+        podcast_audio_url,
         audio_duration_seconds,
         published_at,
         featured_image_url,
@@ -77,8 +77,8 @@ serve(async (req) => {
         profiles:author_id(full_name)
       `)
       .eq('status', 'published')
-      .eq('audio_status', 'ready')
-      .not('audio_url', 'is', null)
+      .eq('podcast_status', 'published')
+      .not('podcast_audio_url', 'is', null)
       .order('published_at', { ascending: false })
       .limit(100);
 
@@ -121,7 +121,7 @@ serve(async (req) => {
       <link>${baseUrl}/noticia/${item.slug}</link>
       <guid isPermaLink="false">${item.id}</guid>
       <pubDate>${pubDate}</pubDate>
-      <enclosure url="${escapeXml(item.audio_url)}" type="audio/mpeg" length="0"/>
+      <enclosure url="${escapeXml(item.podcast_audio_url)}" type="audio/mpeg" length="0"/>
       <itunes:duration>${duration}</itunes:duration>
       <itunes:author>${escapeXml(authorName)}</itunes:author>
       <itunes:summary>${escapeXml(item.excerpt || item.subtitle || '')}</itunes:summary>
