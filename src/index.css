@@ -271,21 +271,19 @@
     @apply mb-3;
   }
 
+  /* Blockquote - Padrão Agência Brasil: simples, discreto */
   .prose-news blockquote {
-    @apply border-l-4 border-primary pl-6 py-5 my-10 bg-primary/5 rounded-r-xl italic relative;
-  }
-
-  .prose-news blockquote::before {
-    content: '"';
-    @apply text-4xl text-primary/30 font-serif leading-none block mb-2;
+    @apply border-l-4 border-muted-foreground/30 pl-6 py-3 my-8 italic;
+    /* Sem background, sem aspas decorativas */
   }
 
   .prose-news blockquote p {
-    @apply mb-0 text-foreground/90 text-lg;
+    @apply mb-0 text-foreground/80;
   }
 
   .prose-news img {
-    @apply rounded-xl my-8;
+    @apply my-6 w-full;
+    /* Sem arredondamento - estilo fotojornalismo */
   }
 
   .prose-news a {
@@ -293,11 +291,11 @@
   }
 
   .prose-news figure {
-    @apply my-8;
+    @apply my-6;
   }
 
   .prose-news figcaption {
-    @apply text-sm text-muted-foreground mt-2 text-center;
+    @apply text-xs text-muted-foreground mt-2;
   }
 
   .prose-news strong {

@@ -249,135 +249,97 @@ export default function NewsDetail() {
           <span className="text-foreground line-clamp-1">{news.title}</span>
         </nav>
 
-        {/* Article Header */}
-        <header className="mb-8">
-          {/* Category Badge & Hat */}
-          <div className="flex flex-wrap items-center gap-3 mb-4">
-            {news.category && (
-              <Link to={`/categoria/${news.category.slug}`}>
-                <Badge
-                  className="text-white hover:opacity-90 transition-opacity text-xs uppercase tracking-wider"
-                  style={{ backgroundColor: news.category.color }}
-                >
-                  {news.category.name}
-                </Badge>
+        {/* Article Header - Padrão Agência Brasil */}
+        <header className="mb-8 text-center">
+          {/* Chapéu (Categoria) - Centralizado, discreto */}
+          <div className="mb-6">
+            {news.category ? (
+              <Link 
+                to={`/categoria/${news.category.slug}`}
+                className="inline-block text-xs text-muted-foreground uppercase tracking-widest bg-muted/50 px-4 py-1.5 rounded hover:bg-muted transition-colors"
+              >
+                {news.category.name}
               </Link>
-            )}
-            {news.hat && (
-              <span className="text-sm font-bold text-primary uppercase tracking-widest">
-                {news.hat.slice(0, 19).toUpperCase()}
+            ) : news.hat && (
+              <span className="inline-block text-xs text-muted-foreground uppercase tracking-widest bg-muted/50 px-4 py-1.5 rounded">
+                {news.hat.slice(0, 19)}
               </span>
             )}
           </div>
 
-          {/* Title (H1) */}
+          {/* Título (H1) - Grande, limpo */}
           <h1 
             id="news-title"
-            className="text-3xl md:text-4xl lg:text-[2.75rem] font-bold font-heading leading-tight mb-4"
+            className="text-3xl md:text-4xl lg:text-[2.75rem] font-bold font-heading leading-tight mb-5"
           >
             {news.title}
           </h1>
 
-          {/* Subtitle / Linha Fina */}
+          {/* Subtítulo / Linha Fina - Cinza, explicativo */}
           {news.subtitle && (
-            <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed mb-6 font-light">
+            <p className="text-lg md:text-xl text-muted-foreground leading-relaxed mb-6 max-w-3xl mx-auto">
               {news.subtitle}
             </p>
           )}
 
-          {/* Meta Information */}
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-3 text-sm text-muted-foreground pb-6 border-b">
-            {/* Author */}
-            {news.author && (
-              <div className="flex items-center gap-2">
-                <Avatar className="h-9 w-9 border">
-                  <AvatarImage src={news.author.avatar_url || undefined} alt={news.author.full_name || 'Autor'} />
-                  <AvatarFallback className="text-xs bg-primary/10 text-primary">{authorInitials}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <span className="font-medium text-foreground block">
-                    {news.author.full_name || 'Redação'}
-                  </span>
-                </div>
-              </div>
-            )}
+          {/* Metadados - Linha única, sem ícones grandes */}
+          <div className="text-sm text-muted-foreground border-t border-b border-border py-4 mb-6">
+            <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+              <span className="font-medium text-foreground">
+                Por {news.author?.full_name || 'Redação'}
+              </span>
+              <span className="text-muted-foreground/50">—</span>
+              <span>Repórter do Conexão na Cidade</span>
+              
+              {news.published_at && (
+                <>
+                  <span className="text-muted-foreground/50">|</span>
+                  <time dateTime={news.published_at}>
+                    {format(new Date(news.published_at), "d 'de' MMMM 'de' yyyy, HH:mm", { locale: ptBR })}
+                  </time>
+                </>
+              )}
+              
+              {news.source && (
+                <>
+                  <span className="text-muted-foreground/50">|</span>
+                  <span>{news.source}</span>
+                </>
+              )}
+            </p>
             
-            {/* Published Date */}
-            {news.published_at && (
-              <div className="flex items-center gap-1.5">
-                <Calendar className="h-4 w-4" />
-                <time dateTime={news.published_at}>
-                  {format(new Date(news.published_at), "d 'de' MMMM 'de' yyyy, HH:mm", {
-                    locale: ptBR,
-                  })}
-                </time>
-              </div>
-            )}
-
-            {/* Source - moved here per Agência Brasil standard */}
-            {news.source && (
-              <div className="flex items-center gap-1.5">
-                <MapPin className="h-4 w-4" />
-                <span>Fonte: {news.source}</span>
-              </div>
-            )}
-
-            {/* Updated At */}
-            {news.updated_at_display && (
-              <div className="flex items-center gap-1.5 text-primary">
-                <RefreshCw className="h-3.5 w-3.5" />
-                <span className="text-xs">
-                  Atualizado {formatDistanceToNow(new Date(news.updated_at_display), { addSuffix: true, locale: ptBR })}
-                </span>
-              </div>
-            )}
-
-            {/* Read Time */}
-            <div className="flex items-center gap-1.5">
-              <Clock className="h-4 w-4" />
+            {/* Linha secundária: tempo de leitura e visualizações */}
+            <p className="flex items-center justify-center gap-3 mt-2 text-xs text-muted-foreground/70">
               <span>{readTime} min de leitura</span>
-            </div>
-
-            {/* View Count */}
-            <div className="flex items-center gap-1.5">
-              <Eye className="h-4 w-4" />
+              <span className="text-muted-foreground/30">•</span>
               <span>{news.view_count.toLocaleString('pt-BR')} visualizações</span>
-            </div>
-          </div>
-
-          {/* Share Actions */}
-          <div className="flex items-center justify-between pt-4">
-            <ShareButtons url={currentUrl} title={news.title} />
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-muted-foreground gap-1.5"
-              onClick={handlePrint}
-            >
-              <Printer className="h-4 w-4" />
-              <span className="hidden sm:inline">Imprimir</span>
-            </Button>
+              {news.updated_at_display && (
+                <>
+                  <span className="text-muted-foreground/30">•</span>
+                  <span>
+                    Atualizado {formatDistanceToNow(new Date(news.updated_at_display), { addSuffix: true, locale: ptBR })}
+                  </span>
+                </>
+              )}
+            </p>
           </div>
         </header>
 
-        {/* Hero Image */}
+        {/* Hero Image - Sem arredondamento, estilo Agência Brasil */}
         {news.featured_image_url && (
-          <figure className="mb-8">
+          <figure className="mb-6">
             <img
               src={news.featured_image_url}
               alt={news.image_alt || `Imagem da notícia: ${news.title}`}
-              className="w-full rounded-xl object-cover aspect-video shadow-lg"
+              className="w-full object-cover aspect-video"
               loading="eager"
               fetchPriority="high"
             />
             {(news.image_alt || news.image_credit) && (
-              <figcaption className="text-sm text-muted-foreground mt-3 px-1 space-y-1">
-                {news.image_alt && (
-                  <p className="text-foreground/80">{news.image_alt}</p>
-                )}
-                {news.image_credit && (
-                  <p className="text-xs italic">Foto: {news.image_credit}</p>
-                )}
+              <figcaption className="text-xs text-muted-foreground mt-2 px-1">
+                {news.image_alt && <span>{news.image_alt}</span>}
+                {news.image_alt && news.image_credit && <span> — </span>}
+                {news.image_credit && <span className="italic">Foto: {news.image_credit}</span>}
               </figcaption>
             )}
           </figure>
@@ -403,11 +365,11 @@ export default function NewsDetail() {
           className="mb-6"
         />
 
-        {/* Table of Contents */}
+        {/* Table of Contents - Oculto visualmente, mantido para acessibilidade */}
         {news.content && (
           <NewsTableOfContents 
             contentHtml={news.content} 
-            className="mb-8"
+            className="sr-only"
           />
         )}
 
@@ -424,28 +386,28 @@ export default function NewsDetail() {
           )}
         </section>
 
-        {/* Article Footer */}
-        <footer className="border-t pt-8 space-y-6" aria-label="Informações adicionais">
-          {/* Tags */}
+        {/* Article Footer - Estilo institucional */}
+        <footer className="border-t pt-6 mt-10 space-y-4" aria-label="Informações adicionais">
+          {/* Tags - discretas */}
           {news.tags && news.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              <span className="text-sm text-muted-foreground mr-2">Tags:</span>
-              {news.tags.map((tag) => (
-                <Link
-                  key={tag.id}
-                  to={`/busca?tag=${tag.slug}`}
-                  className="bg-muted hover:bg-primary/10 hover:text-primary px-3 py-1.5 rounded-full text-sm transition-colors"
-                >
-                  #{tag.name}
-                </Link>
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <span className="text-muted-foreground">Tags:</span>
+              {news.tags.map((tag, index) => (
+                <span key={tag.id}>
+                  <Link
+                    to={`/busca?tag=${tag.slug}`}
+                    className="text-primary hover:underline"
+                  >
+                    {tag.name}
+                  </Link>
+                  {index < news.tags.length - 1 && <span className="text-muted-foreground">, </span>}
+                </span>
               ))}
             </div>
           )}
 
-
-          {/* Share Again */}
-          <div className="pt-4">
-            <p className="text-sm text-muted-foreground mb-3">Compartilhe esta notícia:</p>
+          {/* Share - linha simples */}
+          <div className="flex items-center gap-3 pt-2">
             <ShareButtons url={currentUrl} title={news.title} />
           </div>
         </footer>
