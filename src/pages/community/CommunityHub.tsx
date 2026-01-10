@@ -9,7 +9,8 @@ import {
   Search,
   Bell,
   Settings,
-  Hash
+  Hash,
+  ShieldCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -203,6 +204,24 @@ export default function CommunityHub() {
                 <p className="text-sm text-muted-foreground">
                   Em breve: ranking de contribuidores
                 </p>
+              </CardContent>
+            </Card>
+
+            {/* Anti Fake News Card */}
+            <Card className="border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/30">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-green-600" />
+                  Anti Fake News
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Verifique links, textos e imagens antes de compartilhar.
+                </p>
+                <Button asChild size="sm" className="w-full bg-green-600 hover:bg-green-700">
+                  <Link to="/anti-fake-news">Verificar agora</Link>
+                </Button>
               </CardContent>
             </Card>
           </div>
