@@ -14,6 +14,8 @@ export type FactCheckVerdict =
 
 export type FactCheckInputType = 'link' | 'text' | 'title' | 'image';
 
+export type FactCheckStatus = 'NEW' | 'UNDER_REVIEW' | 'EDITORIAL_QUEUE' | 'REVIEWED' | 'PUBLISHED';
+
 export interface FactCheckSource {
   id: string;
   name: string;
@@ -52,7 +54,7 @@ export interface FactCheck {
   methodology: string | null;
   limitations: string | null;
   is_public: boolean;
-  status: string;
+  status: FactCheckStatus;
   editor_notes: string | null;
   opt_in_editorial: boolean;
   share_url: string | null;
@@ -200,8 +202,8 @@ export function useFactCheckById(id: string | null) {
 
 // Admin hook for managing fact checks
 export function useAdminFactChecks(filters?: {
-  status?: string;
-  verdict?: string;
+  status?: FactCheckStatus;
+  verdict?: FactCheckVerdict;
   limit?: number;
 }) {
   return useQuery({
@@ -213,7 +215,7 @@ export function useAdminFactChecks(filters?: {
         .order('created_at', { ascending: false });
 
       if (filters?.status) {
-        query = query.eq('status', filters.status as FactCheck['status']);
+        query = query.eq('status', filters.status);
       }
       if (filters?.verdict) {
         query = query.eq('verdict', filters.verdict as FactCheckVerdict);
