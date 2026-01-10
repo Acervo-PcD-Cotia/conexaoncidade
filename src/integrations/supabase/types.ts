@@ -1459,6 +1459,104 @@ export type Database = {
           },
         ]
       }
+      community_challenge_progress: {
+        Row: {
+          challenge_id: string | null
+          completed_at: string | null
+          created_at: string | null
+          current_value: number | null
+          id: string
+          reward_claimed_at: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          challenge_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          current_value?: number | null
+          id?: string
+          reward_claimed_at?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          current_value?: number | null
+          id?: string
+          reward_claimed_at?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_challenge_progress_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "community_challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_challenges: {
+        Row: {
+          challenge_type: string
+          created_at: string | null
+          description: string | null
+          end_date: string
+          goal_type: string
+          goal_value: number
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          max_participants: number | null
+          reward_description: string | null
+          reward_type: string
+          reward_value: string | null
+          start_date: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          challenge_type: string
+          created_at?: string | null
+          description?: string | null
+          end_date: string
+          goal_type: string
+          goal_value?: number
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_participants?: number | null
+          reward_description?: string | null
+          reward_type: string
+          reward_value?: string | null
+          start_date: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          challenge_type?: string
+          created_at?: string | null
+          description?: string | null
+          end_date?: string
+          goal_type?: string
+          goal_value?: number
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_participants?: number | null
+          reward_description?: string | null
+          reward_type?: string
+          reward_value?: string | null
+          start_date?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       community_comments: {
         Row: {
           author_id: string
@@ -1960,6 +2058,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      community_reading_progress: {
+        Row: {
+          completed_at: string | null
+          content_id: string
+          content_type: string
+          created_at: string | null
+          id: string
+          points_awarded: number | null
+          scroll_percentage: number | null
+          time_spent_seconds: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          content_id: string
+          content_type: string
+          created_at?: string | null
+          id?: string
+          points_awarded?: number | null
+          scroll_percentage?: number | null
+          time_spent_seconds?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          content_id?: string
+          content_type?: string
+          created_at?: string | null
+          id?: string
+          points_awarded?: number | null
+          scroll_percentage?: number | null
+          time_spent_seconds?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       community_reports: {
         Row: {
@@ -4025,6 +4162,7 @@ export type Database = {
           body: string
           created_at: string | null
           created_by: string | null
+          edition_id: string | null
           failed_count: number | null
           icon_url: string | null
           id: string
@@ -4041,6 +4179,7 @@ export type Database = {
           body: string
           created_at?: string | null
           created_by?: string | null
+          edition_id?: string | null
           failed_count?: number | null
           icon_url?: string | null
           id?: string
@@ -4057,6 +4196,7 @@ export type Database = {
           body?: string
           created_at?: string | null
           created_by?: string | null
+          edition_id?: string | null
           failed_count?: number | null
           icon_url?: string | null
           id?: string
@@ -4070,6 +4210,13 @@ export type Database = {
           url?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "push_notifications_edition_id_fkey"
+            columns: ["edition_id"]
+            isOneToOne: false
+            referencedRelation: "digital_editions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "push_notifications_tenant_id_fkey"
             columns: ["tenant_id"]

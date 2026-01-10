@@ -66,6 +66,8 @@ import AutoPostSettings from "./pages/admin/autopost/AutoPostSettings";
 // Community Pages
 import CommunityHub from "./pages/community/CommunityHub";
 import CommunityUnlock from "./pages/community/CommunityUnlock";
+import ChallengesPage from "./pages/community/ChallengesPage";
+import HowToEarnPoints from "./pages/community/HowToEarnPoints";
 
 // Auto Post PRO Form
 import AutoPostSourceForm from "./pages/admin/autopost/AutoPostSourceForm";
@@ -102,6 +104,8 @@ const App = () => (
                     <Route path="/categoria/:slug" element={<CategoryPage />} />
                     <Route path="/comunidade" element={<CommunityHub />} />
                     <Route path="/comunidade/desbloquear" element={<CommunityUnlock />} />
+                    <Route path="/comunidade/desafios" element={<ChallengesPage />} />
+                    <Route path="/comunidade/como-ganhar-pontos" element={<HowToEarnPoints />} />
                   </Route>
                   <Route path="/story/:slug" element={<StoryViewer />} />
                   <Route path="/evento/:slug" element={<EventDetail />} />
