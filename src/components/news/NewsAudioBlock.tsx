@@ -34,7 +34,6 @@ export function NewsAudioBlock({
 }: NewsAudioBlockProps) {
   const [showTranscript, setShowTranscript] = useState(false);
   const [showPodcastModal, setShowPodcastModal] = useState(false);
-  const [showPlayer, setShowPlayer] = useState(false);
 
   // Determine audio state
   const isReady = audioStatus === 'ready' && audioUrl;
@@ -53,105 +52,131 @@ export function NewsAudioBlock({
 
   return (
     <section 
-      className={cn("py-4 border-b border-border", className)}
-      aria-label="Versão em áudio"
+      className={cn(
+        "bg-gradient-to-br from-primary/5 via-primary/10 to-accent/5 rounded-xl p-5 border border-primary/20",
+        className
+      )}
+      aria-label="Áudio e Podcast"
     >
-      {/* Estilo Agência Brasil: botões simples inline */}
-      <div className="flex flex-wrap items-center gap-4">
-        {/* Botão principal de áudio */}
-        {isReady && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-sm gap-2 text-primary hover:text-primary/80 hover:bg-primary/5 px-0"
-            onClick={() => setShowPlayer(!showPlayer)}
-          >
-            <Headphones className="h-4 w-4" />
-            {showPlayer ? 'Ocultar player' : 'Versão em áudio'}
-          </Button>
-        )}
-
-        {/* Estado gerando */}
-        {isGenerating && (
-          <span className="text-sm text-muted-foreground flex items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Gerando áudio...
-          </span>
-        )}
-
-        {showFallback && contentHtml && (
-          <WebSpeechPlayer text={contentHtml} className="!p-2 !bg-transparent !border-0" />
-        )}
-
-        {/* Download */}
-        {isReady && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-sm gap-2 text-muted-foreground hover:text-foreground px-0"
-            asChild
-          >
-            <a href={audioUrl} download target="_blank" rel="noopener noreferrer">
-              <Download className="h-4 w-4" />
-              Baixar MP3
-            </a>
-          </Button>
-        )}
-
-        {/* Spotify */}
-        {spotifyUrl && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-sm gap-2 text-muted-foreground hover:text-foreground px-0"
-            asChild
-          >
-            <a href={spotifyUrl} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="h-4 w-4" />
-              Spotify
-            </a>
-          </Button>
-        )}
-
-        {/* Podcast */}
-        {isPodcastReady && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-sm gap-2 text-muted-foreground hover:text-foreground px-0"
-            onClick={() => setShowPodcastModal(true)}
-          >
-            <Mic className="h-4 w-4" />
-            Podcast
-          </Button>
-        )}
+      {/* Header */}
+      <div className="flex items-center gap-2 mb-4">
+        <div className="p-2 bg-primary/10 rounded-lg">
+          <Headphones className="h-5 w-5 text-primary" />
+        </div>
+        <div>
+          <h3 className="font-semibold text-foreground">Áudio & Podcast</h3>
+          <p className="text-xs text-muted-foreground">Ouça esta notícia no site ou como podcast</p>
+        </div>
       </div>
 
-      {/* Player expandido - minimalista */}
-      {isReady && showPlayer && (
-        <div className="mt-4 p-4 bg-muted/30 rounded-lg">
+      {/* Audio Player - Ready State */}
+      {isReady && (
+        <div className="space-y-3">
           <NewsAudioPlayer
             audioUrl={audioUrl}
             duration={audioDuration || 0}
             newsId={newsId}
             spotifyUrl={spotifyUrl}
           />
-          
-          {/* Transcrição */}
+
+          {/* Actions */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Download Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs gap-1.5"
+              asChild
+            >
+              <a href={audioUrl} download target="_blank" rel="noopener noreferrer">
+                <Download className="h-3.5 w-3.5" />
+                Baixar MP3
+              </a>
+            </Button>
+
+            {/* Spotify Link */}
+            {spotifyUrl && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs gap-1.5 text-green-600 hover:text-green-700"
+                asChild
+              >
+                <a href={spotifyUrl} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  Ouvir no Spotify
+                </a>
+              </Button>
+            )}
+          </div>
+
+          {/* Transcript */}
           {transcript && (
-            <NewsTranscriptAccordion transcript={transcript} className="mt-4" />
+            <NewsTranscriptAccordion transcript={transcript} />
           )}
         </div>
       )}
 
-      {/* Mensagem de erro discreta */}
-      {hasFailed && (
-        <p className="text-xs text-muted-foreground mt-2">
-          Áudio não disponível. Use o leitor do navegador.
-        </p>
+      {/* Generating State */}
+      {isGenerating && (
+        <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg">
+          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          <div>
+            <p className="font-medium text-sm">Gerando áudio...</p>
+            <p className="text-xs text-muted-foreground">
+              O áudio desta notícia está sendo processado. Enquanto isso, você pode usar o leitor do navegador.
+            </p>
+          </div>
+        </div>
       )}
 
-      {/* Modal de plataformas */}
+      {/* Failed State */}
+      {hasFailed && (
+        <div className="p-4 bg-destructive/10 rounded-lg border border-destructive/20 mb-3">
+          <p className="text-sm text-destructive">
+            Não foi possível gerar o áudio desta notícia. Use o leitor do navegador como alternativa.
+          </p>
+        </div>
+      )}
+
+      {/* Fallback: Web Speech API */}
+      {showFallback && contentHtml && (
+        <div className="space-y-3">
+          {notGenerated && (
+            <p className="text-xs text-muted-foreground mb-2">
+              Áudio profissional não disponível. Use o leitor do navegador:
+            </p>
+          )}
+          <WebSpeechPlayer text={contentHtml} />
+          
+          {/* Transcript */}
+          {transcript && (
+            <NewsTranscriptAccordion transcript={transcript} className="mt-3" />
+          )}
+        </div>
+      )}
+
+      {/* Podcast Section */}
+      <div className="mt-4 pt-4 border-t border-primary/10">
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full gap-2"
+          onClick={() => isPodcastReady ? setShowPodcastModal(true) : null}
+          disabled={!isPodcastReady}
+        >
+          <Mic className="h-4 w-4" />
+          🎙️ Ouvir como podcast
+        </Button>
+        
+        {!isPodcastReady && (
+          <p className="text-xs text-muted-foreground text-center mt-2">
+            Podcast em preparação. Em breve disponível nas plataformas de áudio.
+          </p>
+        )}
+      </div>
+
+      {/* Podcast Platforms Modal */}
       <PodcastPlatformsModal 
         open={showPodcastModal} 
         onOpenChange={setShowPodcastModal} 
