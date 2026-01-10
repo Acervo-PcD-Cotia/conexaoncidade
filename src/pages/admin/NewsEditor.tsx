@@ -438,8 +438,20 @@ export default function NewsEditor() {
             <CardHeader><CardTitle>Conteúdo</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label>Chapéu <span className="text-xs text-muted-foreground">({formData.hat.length}/19)</span></Label>
-                <Input value={formData.hat} onChange={(e) => updateField("hat", e.target.value.slice(0, 19))} placeholder="Ex: POLÍTICA" maxLength={19} />
+                <Label>
+                  Chapéu 
+                  <span className={`text-xs ml-2 ${formData.hat.length <= 19 ? 'text-muted-foreground' : 'text-destructive'}`}>
+                    ({formData.hat.length}/19)
+                  </span>
+                </Label>
+                <Input 
+                  value={formData.hat} 
+                  onChange={(e) => updateField("hat", e.target.value.slice(0, 19).toUpperCase())} 
+                  placeholder="Ex: POLÍTICA" 
+                  maxLength={19}
+                  className="uppercase"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Categoria editorial em maiúsculas</p>
               </div>
               <div>
                 <Label>

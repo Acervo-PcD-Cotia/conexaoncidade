@@ -272,11 +272,16 @@
   }
 
   .prose-news blockquote {
-    @apply border-l-4 border-primary pl-6 py-4 my-8 bg-muted/30 rounded-r-lg italic;
+    @apply border-l-4 border-primary pl-6 py-5 my-10 bg-primary/5 rounded-r-xl italic relative;
+  }
+
+  .prose-news blockquote::before {
+    content: '"';
+    @apply text-4xl text-primary/30 font-serif leading-none block mb-2;
   }
 
   .prose-news blockquote p {
-    @apply mb-0 text-foreground/90;
+    @apply mb-0 text-foreground/90 text-lg;
   }
 
   .prose-news img {
