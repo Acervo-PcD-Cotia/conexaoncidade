@@ -264,8 +264,8 @@ export default function NewsDetail() {
               </Link>
             )}
             {news.hat && (
-              <span className="text-sm font-medium text-primary uppercase tracking-wide">
-                {news.hat}
+              <span className="text-sm font-bold text-primary uppercase tracking-widest">
+                {news.hat.slice(0, 19).toUpperCase()}
               </span>
             )}
           </div>
@@ -311,6 +311,14 @@ export default function NewsDetail() {
                     locale: ptBR,
                   })}
                 </time>
+              </div>
+            )}
+
+            {/* Source - moved here per Agência Brasil standard */}
+            {news.source && (
+              <div className="flex items-center gap-1.5">
+                <MapPin className="h-4 w-4" />
+                <span>Fonte: {news.source}</span>
               </div>
             )}
 
@@ -363,10 +371,12 @@ export default function NewsDetail() {
               fetchPriority="high"
             />
             {(news.image_alt || news.image_credit) && (
-              <figcaption className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-sm text-muted-foreground mt-3 px-1">
-                {news.image_alt && <span>{news.image_alt}</span>}
+              <figcaption className="text-sm text-muted-foreground mt-3 px-1 space-y-1">
+                {news.image_alt && (
+                  <p className="text-foreground/80">{news.image_alt}</p>
+                )}
                 {news.image_credit && (
-                  <span className="text-xs">Foto: {news.image_credit}</span>
+                  <p className="text-xs italic">Foto: {news.image_credit}</p>
                 )}
               </figcaption>
             )}
@@ -432,13 +442,6 @@ export default function NewsDetail() {
             </div>
           )}
 
-          {/* Source */}
-          {news.source && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <MapPin className="h-4 w-4" />
-              <span>Fonte: {news.source}</span>
-            </div>
-          )}
 
           {/* Share Again */}
           <div className="pt-4">
