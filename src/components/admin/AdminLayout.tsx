@@ -7,9 +7,10 @@ import { Breadcrumb } from "./Breadcrumb";
 import { useRequireRole } from "@/hooks/useRequireRole";
 import { NewsCreationModal } from "./NewsCreationModal";
 import { useNewsCreationModal } from "@/contexts/NewsCreationModalContext";
+import { AccessDeniedScreen } from "@/components/auth/AccessDeniedScreen";
 
 export function AdminLayout() {
-  const { hasAccess, checkingRole } = useRequireRole([
+  const { hasAccess, checkingRole, showDenied, redirectCountdown } = useRequireRole([
     "super_admin",
     "admin", 
     "editor", 
@@ -41,6 +42,11 @@ export function AdminLayout() {
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     );
+  }
+
+  // Show access denied screen with countdown
+  if (showDenied) {
+    return <AccessDeniedScreen type={showDenied} redirectCountdown={redirectCountdown} />;
   }
 
   if (!hasAccess) {

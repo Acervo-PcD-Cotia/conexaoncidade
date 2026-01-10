@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-
+import { useUserRole } from '@/hooks/useRequireRole';
 export interface CommunityMember {
   id: string;
   user_id: string;
@@ -37,7 +37,7 @@ export function useCommunity() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
+  const { isSuperAdmin, isAdmin } = useUserRole();
   // Fetch current user's membership
   const { data: membership, isLoading: membershipLoading } = useQuery({
     queryKey: ['community-membership', user?.id],
@@ -56,9 +56,8 @@ export function useCommunity() {
     enabled: !!user,
   });
 
-  // Check if user has community access
-  const hasAccess = !!(membership?.access_granted_at && !membership?.is_suspended);
-
+  // Check if user has community access - admins get automatic access
+  const hasAccess = isSuperAdmin || isAdmin || !!(membership?.access_granted_at && !membership?.is_suspended);
   // Get share progress (X/12)
   const shareProgress = membership?.share_count || 0;
   const sharesRemaining = Math.max(0, 12 - shareProgress);
