@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useCallback } from "react";
 import { useParams, Link, Navigate, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { format } from "date-fns";
@@ -25,6 +25,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCommunity } from "@/hooks/useCommunity";
 import { EditionLockedScreen } from "@/components/edition/EditionLockedScreen";
 import { ShareButtons } from "@/components/news/ShareButtons";
+import { ReadingProgressBar } from "@/components/news/ReadingProgressBar";
+import { useReadingTracker } from "@/hooks/useReadingTracker";
 
 const EditionViewer = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -41,6 +43,30 @@ const EditionViewer = () => {
     user?.id, 
     edition?.id
   );
+
+  // Reading tracker for gamification (5 pts for edition)
+  const { trackScroll, isCompleted } = useReadingTracker({
+    contentType: 'edition',
+    contentId: edition?.id || '',
+    minimumTimeSeconds: 60,
+    completionThreshold: 80
+  });
+
+  // Track scroll progress
+  const handleScroll = useCallback(() => {
+    if (!edition?.id || !accessCheck?.has_access) return;
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    if (docHeight > 0) {
+      const scrollPercent = (scrollTop / docHeight) * 100;
+      trackScroll(scrollPercent);
+    }
+  }, [edition?.id, accessCheck?.has_access, trackScroll]);
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
 
   // Record view on mount (only if access granted)
   useEffect(() => {
@@ -145,6 +171,9 @@ const EditionViewer = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Reading Progress Bar */}
+      <ReadingProgressBar isCompleted={isCompleted} showCompletionBadge={true} />
+      
       <Helmet>
         <title>{edition.title} - Edição Digital</title>
         <meta name="description" content={edition.description || ""} />

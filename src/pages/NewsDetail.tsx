@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useNewsBySlug, useRelatedNews } from '@/hooks/useNews';
@@ -17,6 +17,8 @@ import { ptBR } from 'date-fns/locale';
 import { Clock, Eye, Calendar, ArrowLeft, MapPin, RefreshCw, Printer } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { useReadingTracker } from '@/hooks/useReadingTracker';
+import { useAuth } from '@/contexts/AuthContext';
 
 function calculateReadTime(content: string | null): number {
   if (!content) return 1;
@@ -32,6 +34,7 @@ function countWords(content: string | null): number {
 
 export default function NewsDetail() {
   const { slug } = useParams<{ slug: string }>();
+  const { user } = useAuth();
   const { data: news, isLoading, error } = useNewsBySlug(slug || '');
   
   // Get tag IDs for better related news selection
@@ -43,6 +46,30 @@ export default function NewsDetail() {
     6,
     tagIds
   );
+
+  // Reading tracker for gamification
+  const { trackScroll, progress, isCompleted } = useReadingTracker({
+    contentType: 'news',
+    contentId: news?.id || '',
+    minimumTimeSeconds: 45,
+    completionThreshold: 85
+  });
+
+  // Track scroll progress
+  const handleScroll = useCallback(() => {
+    if (!news?.id) return;
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    if (docHeight > 0) {
+      const scrollPercent = (scrollTop / docHeight) * 100;
+      trackScroll(scrollPercent);
+    }
+  }, [news?.id, trackScroll]);
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
 
   // Increment view count on mount
   useEffect(() => {
@@ -154,7 +181,7 @@ export default function NewsDetail() {
   return (
     <>
       {/* Reading Progress Bar */}
-      <ReadingProgressBar />
+      <ReadingProgressBar isCompleted={isCompleted} showCompletionBadge={!!user} />
 
       {/* SEO Meta Tags */}
       <Helmet>
