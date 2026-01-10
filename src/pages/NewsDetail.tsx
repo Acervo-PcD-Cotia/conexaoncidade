@@ -9,6 +9,7 @@ import { NewsAudioBlock } from '@/components/news/NewsAudioBlock';
 import { NewsSummaryBlock } from '@/components/news/NewsSummaryBlock';
 import { NewsTableOfContents } from '@/components/news/NewsTableOfContents';
 import { ReadingProgressBar } from '@/components/news/ReadingProgressBar';
+import { FactCheckCTA } from '@/components/news/FactCheckCTA';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -456,6 +457,11 @@ export default function NewsDetail() {
             <AuthorCard author={news.author} />
           </div>
         )}
+
+        {/* Fact Check CTA */}
+        <div className="mt-10">
+          <FactCheckCTA newsSlug={news.slug} newsTitle={news.title} />
+        </div>
 
         {/* Related News */}
         <nav aria-label="Notícias relacionadas" className="mt-12">
