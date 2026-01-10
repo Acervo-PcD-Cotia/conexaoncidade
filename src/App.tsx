@@ -17,6 +17,7 @@ import CategoryPage from "./pages/CategoryPage";
 import NotFound from "./pages/NotFound";
 import StoryViewer from "./pages/StoryViewer";
 import EventDetail from "./pages/EventDetail";
+import AntiFakeNews from "./pages/AntiFakeNews";
 import EditionViewer from "./pages/EditionViewer";
 
 // Admin Pages
@@ -50,6 +51,7 @@ import EditionEditor from "./pages/admin/EditionEditor";
 import FinancialDashboard from "./pages/admin/FinancialDashboard";
 import TrainingHub from "./pages/admin/TrainingHub";
 import PodcastsList from "./pages/admin/PodcastsList";
+import AntiFakeNewsAdmin from "./pages/admin/AntiFakeNewsAdmin";
 
 // Auto Post PRO Pages
 import AutoPostDashboard from "./pages/admin/autopost/AutoPostDashboard";
@@ -108,6 +110,7 @@ const App = () => (
                     <Route path="/comunidade/desbloquear" element={<CommunityUnlock />} />
                     <Route path="/comunidade/desafios" element={<ChallengesPage />} />
                     <Route path="/comunidade/como-ganhar-pontos" element={<HowToEarnPoints />} />
+                    <Route path="/anti-fake-news" element={<AntiFakeNews />} />
                   </Route>
                   <Route path="/story/:slug" element={<StoryViewer />} />
                   <Route path="/evento/:slug" element={<EventDetail />} />
@@ -152,6 +155,7 @@ const App = () => (
                     <Route path="financial" element={<FinancialDashboard />} />
                     <Route path="training" element={<TrainingHub />} />
                     <Route path="podcasts" element={<PodcastsList />} />
+                    <Route path="anti-fake-news" element={<AntiFakeNewsAdmin />} />
                     
                     {/* Auto Post PRO Routes */}
                     <Route path="autopost" element={<AutoPostDashboard />} />

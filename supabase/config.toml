@@ -74,3 +74,6 @@ verify_jwt = false
 
 [functions.generate-podcast]
 verify_jwt = false
+
+[functions.factcheck-verify]
+verify_jwt = false

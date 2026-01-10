@@ -2735,6 +2735,247 @@ export type Database = {
           },
         ]
       }
+      fact_check_claims: {
+        Row: {
+          claim_text: string
+          created_at: string
+          fact_check_id: string
+          id: string
+        }
+        Insert: {
+          claim_text: string
+          created_at?: string
+          fact_check_id: string
+          id?: string
+        }
+        Update: {
+          claim_text?: string
+          created_at?: string
+          fact_check_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fact_check_claims_fact_check_id_fkey"
+            columns: ["fact_check_id"]
+            isOneToOne: false
+            referencedRelation: "fact_checks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fact_check_reports: {
+        Row: {
+          created_at: string
+          fact_check_id: string
+          id: string
+          reason: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          fact_check_id: string
+          id?: string
+          reason: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          fact_check_id?: string
+          id?: string
+          reason?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fact_check_reports_fact_check_id_fkey"
+            columns: ["fact_check_id"]
+            isOneToOne: false
+            referencedRelation: "fact_checks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fact_check_sources: {
+        Row: {
+          created_at: string
+          domain: string
+          fact_check_id: string
+          id: string
+          is_corroborating: boolean | null
+          name: string
+          published_at: string | null
+          reliability_score: number | null
+          snippet: string | null
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          domain: string
+          fact_check_id: string
+          id?: string
+          is_corroborating?: boolean | null
+          name: string
+          published_at?: string | null
+          reliability_score?: number | null
+          snippet?: string | null
+          url: string
+        }
+        Update: {
+          created_at?: string
+          domain?: string
+          fact_check_id?: string
+          id?: string
+          is_corroborating?: boolean | null
+          name?: string
+          published_at?: string | null
+          reliability_score?: number | null
+          snippet?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fact_check_sources_fact_check_id_fkey"
+            columns: ["fact_check_id"]
+            isOneToOne: false
+            referencedRelation: "fact_checks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fact_checks: {
+        Row: {
+          created_at: string
+          editor_notes: string | null
+          id: string
+          image_url: string | null
+          input_content: string
+          input_type: Database["public"]["Enums"]["fact_check_input_type"]
+          is_public: boolean
+          limitations: string | null
+          methodology: string | null
+          opt_in_editorial: boolean
+          ref_slug: string | null
+          score: number
+          share_url: string | null
+          status: Database["public"]["Enums"]["fact_check_status"]
+          summary: string | null
+          tenant_id: string | null
+          user_id: string | null
+          verdict: Database["public"]["Enums"]["fact_check_verdict"]
+        }
+        Insert: {
+          created_at?: string
+          editor_notes?: string | null
+          id?: string
+          image_url?: string | null
+          input_content: string
+          input_type: Database["public"]["Enums"]["fact_check_input_type"]
+          is_public?: boolean
+          limitations?: string | null
+          methodology?: string | null
+          opt_in_editorial?: boolean
+          ref_slug?: string | null
+          score?: number
+          share_url?: string | null
+          status?: Database["public"]["Enums"]["fact_check_status"]
+          summary?: string | null
+          tenant_id?: string | null
+          user_id?: string | null
+          verdict?: Database["public"]["Enums"]["fact_check_verdict"]
+        }
+        Update: {
+          created_at?: string
+          editor_notes?: string | null
+          id?: string
+          image_url?: string | null
+          input_content?: string
+          input_type?: Database["public"]["Enums"]["fact_check_input_type"]
+          is_public?: boolean
+          limitations?: string | null
+          methodology?: string | null
+          opt_in_editorial?: boolean
+          ref_slug?: string | null
+          score?: number
+          share_url?: string | null
+          status?: Database["public"]["Enums"]["fact_check_status"]
+          summary?: string | null
+          tenant_id?: string | null
+          user_id?: string | null
+          verdict?: Database["public"]["Enums"]["fact_check_verdict"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fact_checks_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      factcheck_settings: {
+        Row: {
+          clickbait_penalty: number
+          consistency_bonus: number
+          contradiction_penalty: number
+          created_at: string
+          default_limitations_text: string | null
+          default_methodology_text: string | null
+          id: string
+          min_sources_to_confirm: number
+          multi_source_bonus: number
+          no_evidence_penalty: number
+          primary_weight: number
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          clickbait_penalty?: number
+          consistency_bonus?: number
+          contradiction_penalty?: number
+          created_at?: string
+          default_limitations_text?: string | null
+          default_methodology_text?: string | null
+          id?: string
+          min_sources_to_confirm?: number
+          multi_source_bonus?: number
+          no_evidence_penalty?: number
+          primary_weight?: number
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          clickbait_penalty?: number
+          consistency_bonus?: number
+          contradiction_penalty?: number
+          created_at?: string
+          default_limitations_text?: string | null
+          default_methodology_text?: string | null
+          id?: string
+          min_sources_to_confirm?: number
+          multi_source_bonus?: number
+          no_evidence_penalty?: number
+          primary_weight?: number
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "factcheck_settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fiscal_profiles: {
         Row: {
           address_json: Json | null
@@ -5108,6 +5349,50 @@ export type Database = {
           },
         ]
       }
+      trusted_sources: {
+        Row: {
+          created_at: string
+          domain: string
+          id: string
+          is_allowed: boolean
+          name: string
+          tenant_id: string | null
+          type: Database["public"]["Enums"]["trusted_source_type"]
+          updated_at: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          domain: string
+          id?: string
+          is_allowed?: boolean
+          name: string
+          tenant_id?: string | null
+          type?: Database["public"]["Enums"]["trusted_source_type"]
+          updated_at?: string
+          weight?: number
+        }
+        Update: {
+          created_at?: string
+          domain?: string
+          id?: string
+          is_allowed?: boolean
+          name?: string
+          tenant_id?: string | null
+          type?: Database["public"]["Enums"]["trusted_source_type"]
+          updated_at?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trusted_sources_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_invites: {
         Row: {
           accepted_at: string | null
@@ -5450,6 +5735,20 @@ export type Database = {
         | "published"
         | "failed"
         | "blocked"
+      fact_check_input_type: "link" | "text" | "title" | "image"
+      fact_check_status:
+        | "NEW"
+        | "UNDER_REVIEW"
+        | "EDITORIAL_QUEUE"
+        | "REVIEWED"
+        | "PUBLISHED"
+      fact_check_verdict:
+        | "CONFIRMADO"
+        | "PROVAVELMENTE_VERDADEIRO"
+        | "ENGANOSO"
+        | "PROVAVELMENTE_FALSO"
+        | "FALSO"
+        | "NAO_VERIFICAVEL_AINDA"
       highlight_type: "none" | "home" | "urgent" | "featured"
       import_mode: "manual" | "auto" | "auto_with_approval"
       imported_article_status: "inbox" | "published" | "rejected"
@@ -5470,6 +5769,7 @@ export type Database = {
       style_profile_type: "journalist" | "site_default"
       style_ref_kind: "link" | "txt" | "pdf"
       style_ref_status: "uploaded" | "ingested" | "failed"
+      trusted_source_type: "PRIMARY" | "JOURNALISM" | "CHECKER" | "OTHER"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -5648,6 +5948,22 @@ export const Constants = {
         "failed",
         "blocked",
       ],
+      fact_check_input_type: ["link", "text", "title", "image"],
+      fact_check_status: [
+        "NEW",
+        "UNDER_REVIEW",
+        "EDITORIAL_QUEUE",
+        "REVIEWED",
+        "PUBLISHED",
+      ],
+      fact_check_verdict: [
+        "CONFIRMADO",
+        "PROVAVELMENTE_VERDADEIRO",
+        "ENGANOSO",
+        "PROVAVELMENTE_FALSO",
+        "FALSO",
+        "NAO_VERIFICAVEL_AINDA",
+      ],
       highlight_type: ["none", "home", "urgent", "featured"],
       import_mode: ["manual", "auto", "auto_with_approval"],
       imported_article_status: ["inbox", "published", "rejected"],
@@ -5669,6 +5985,7 @@ export const Constants = {
       style_profile_type: ["journalist", "site_default"],
       style_ref_kind: ["link", "txt", "pdf"],
       style_ref_status: ["uploaded", "ingested", "failed"],
+      trusted_source_type: ["PRIMARY", "JOURNALISM", "CHECKER", "OTHER"],
     },
   },
 } as const
