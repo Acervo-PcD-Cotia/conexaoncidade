@@ -46,6 +46,7 @@ import LinksBuilder from "./pages/admin/LinksBuilder";
 import Solutions from "./pages/admin/Solutions";
 import EventsList from "./pages/admin/EventsList";
 import EditionsList from "./pages/admin/EditionsList";
+import EditionEditor from "./pages/admin/EditionEditor";
 import FinancialDashboard from "./pages/admin/FinancialDashboard";
 import TrainingHub from "./pages/admin/TrainingHub";
 
@@ -139,6 +140,8 @@ const App = () => (
                     <Route path="solutions" element={<Solutions />} />
                     <Route path="events" element={<EventsList />} />
                     <Route path="editions" element={<EditionsList />} />
+                    <Route path="editions/new" element={<EditionEditor />} />
+                    <Route path="editions/:id/edit" element={<EditionEditor />} />
                     <Route path="financial" element={<FinancialDashboard />} />
                     <Route path="training" element={<TrainingHub />} />
                     

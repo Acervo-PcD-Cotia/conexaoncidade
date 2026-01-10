@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useCommunity } from './useCommunity';
 
-type ContentType = 'news' | 'project' | 'campaign' | 'story';
+type ContentType = 'news' | 'project' | 'campaign' | 'story' | 'edition';
 type Platform = 'whatsapp' | 'facebook' | 'instagram' | 'x' | 'linkedin' | 'copy';
 
 interface RegisterShareParams {
@@ -47,6 +47,7 @@ export function useCommunityShares() {
         project: 15,
         campaign: 15,
         story: 10,
+        edition: 15, // Bonus for sharing digital editions
       };
       const pointsEarned = pointsMap[contentType];
 
@@ -85,14 +86,29 @@ export function useCommunityShares() {
           .eq('user_id', user.id);
 
         // Record points history
+        const actionTypeMap: Record<ContentType, string> = {
+          news: 'share_news',
+          edition: 'share_edition',
+          project: 'share_project',
+          campaign: 'share_campaign',
+          story: 'share_story',
+        };
+        const descriptionMap: Record<ContentType, string> = {
+          news: 'notícia',
+          edition: 'edição digital',
+          project: 'projeto',
+          campaign: 'campanha',
+          story: 'web story',
+        };
+        
         await supabase
           .from('community_points_history')
           .insert({
             user_id: user.id,
             points: pointsEarned,
-            action_type: contentType === 'news' ? 'share_news' : 'share_project',
+            action_type: actionTypeMap[contentType],
             reference_id: contentId,
-            description: `Compartilhou ${contentType === 'news' ? 'notícia' : 'conteúdo'} no ${platform}`,
+            description: `Compartilhou ${descriptionMap[contentType]} no ${platform}`,
           });
 
         // Check if user just unlocked access

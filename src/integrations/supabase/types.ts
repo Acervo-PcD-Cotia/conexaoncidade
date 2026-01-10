@@ -2150,46 +2150,55 @@ export type Database = {
       }
       digital_editions: {
         Row: {
+          acesso_livre_ate: string | null
           cover_image_url: string | null
           created_at: string | null
           created_by: string | null
           description: string | null
           id: string
           is_public: boolean | null
+          pontuacao_minima: number | null
           published_at: string | null
           slug: string
           status: string | null
           tenant_id: string | null
+          tipo_acesso: string | null
           title: string
           updated_at: string | null
           view_count: number | null
         }
         Insert: {
+          acesso_livre_ate?: string | null
           cover_image_url?: string | null
           created_at?: string | null
           created_by?: string | null
           description?: string | null
           id?: string
           is_public?: boolean | null
+          pontuacao_minima?: number | null
           published_at?: string | null
           slug: string
           status?: string | null
           tenant_id?: string | null
+          tipo_acesso?: string | null
           title: string
           updated_at?: string | null
           view_count?: number | null
         }
         Update: {
+          acesso_livre_ate?: string | null
           cover_image_url?: string | null
           created_at?: string | null
           created_by?: string | null
           description?: string | null
           id?: string
           is_public?: boolean | null
+          pontuacao_minima?: number | null
           published_at?: string | null
           slug?: string
           status?: string | null
           tenant_id?: string | null
+          tipo_acesso?: string | null
           title?: string
           updated_at?: string | null
           view_count?: number | null
@@ -5109,6 +5118,16 @@ export type Database = {
           existing_id: string
           is_duplicate: boolean
           match_type: string
+        }[]
+      }
+      check_edition_access: {
+        Args: { _edition_id: string; _user_id: string }
+        Returns: {
+          free_until: string
+          has_access: boolean
+          reason: string
+          required_points: number
+          user_points: number
         }[]
       }
       generate_content_hash: { Args: { content: string }; Returns: string }
