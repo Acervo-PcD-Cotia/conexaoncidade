@@ -11,15 +11,15 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { VerdictBadge } from '@/components/factcheck/VerdictBadge';
-import { useAdminFactChecks, useUpdateFactCheck, type FactCheck } from '@/hooks/useFactCheck';
+import { useAdminFactChecks, useUpdateFactCheck, type FactCheck, type FactCheckStatus, type FactCheckVerdict } from '@/hooks/useFactCheck';
 import { useTrustedSources, useCreateTrustedSource, useUpdateTrustedSource, useDeleteTrustedSource, type TrustedSource, type TrustedSourceType } from '@/hooks/useTrustedSources';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 
 export default function AntiFakeNewsAdmin() {
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [verdictFilter, setVerdictFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<FactCheckStatus | ''>('');
+  const [verdictFilter, setVerdictFilter] = useState<FactCheckVerdict | ''>('');
 
   const { data: factChecks, isLoading } = useAdminFactChecks({
     status: statusFilter || undefined,
@@ -132,7 +132,7 @@ export default function AntiFakeNewsAdmin() {
           <TabsContent value="verifications" className="space-y-4">
             {/* Filters */}
             <div className="flex gap-4">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as FactCheckStatus | '')}>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="Filtrar por status" />
                 </SelectTrigger>
@@ -146,7 +146,7 @@ export default function AntiFakeNewsAdmin() {
                 </SelectContent>
               </Select>
 
-              <Select value={verdictFilter} onValueChange={setVerdictFilter}>
+              <Select value={verdictFilter} onValueChange={(v) => setVerdictFilter(v as FactCheckVerdict | '')}>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="Filtrar por veredito" />
                 </SelectTrigger>
