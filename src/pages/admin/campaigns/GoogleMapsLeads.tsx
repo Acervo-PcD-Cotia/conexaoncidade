@@ -16,7 +16,6 @@ import {
   ChevronDown,
   Image
 } from 'lucide-react';
-import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -260,8 +259,7 @@ export default function GoogleMapsLeads() {
   };
 
   return (
-    <AdminLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
@@ -419,7 +417,6 @@ export default function GoogleMapsLeads() {
                                   <Eye className="h-4 w-4" />
                                 </Button>
                               </DialogTrigger>
-                              </DialogTrigger>
                               <LeadDetailsDialog lead={lead} />
                             </Dialog>
                           </td>
@@ -432,7 +429,6 @@ export default function GoogleMapsLeads() {
             </div>
           </CardContent>
         </Card>
-      </div>
-    </AdminLayout>
+    </div>
   );
 }
