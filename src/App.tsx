@@ -89,6 +89,10 @@ import CommunityAdmin from "./pages/admin/community/CommunityAdmin";
 import CommunityMembers from "./pages/admin/community/CommunityMembers";
 import CommunityModeration from "./pages/admin/community/CommunityModeration";
 
+// Campaign Pages
+import GoogleMapsCampaign from "./pages/campaigns/GoogleMapsCampaign";
+import GoogleMapsLeads from "./pages/admin/campaigns/GoogleMapsLeads";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -115,6 +119,7 @@ const App = () => (
                         <Route path="/comunidade/como-ganhar-pontos" element={<HowToEarnPoints />} />
                         <Route path="/comunidade/membro/:userId" element={<MemberProfile />} />
                         <Route path="/anti-fake-news" element={<AntiFakeNews />} />
+                        <Route path="/campanha/google-maps" element={<GoogleMapsCampaign />} />
                       </Route>
                       <Route path="/story/:slug" element={<StoryViewer />} />
                       <Route path="/evento/:slug" element={<EventDetail />} />
@@ -186,6 +191,9 @@ const App = () => (
                         <Route path="community" element={<CommunityAdmin />} />
                         <Route path="community/members" element={<CommunityMembers />} />
                         <Route path="community/moderation" element={<CommunityModeration />} />
+                        
+                        {/* Campaign Admin Routes */}
+                        <Route path="campaigns/google-maps" element={<GoogleMapsLeads />} />
                       </Route>
 
                       <Route path="*" element={<NotFound />} />
