@@ -1315,6 +1315,160 @@ export type Database = {
           },
         ]
       }
+      campaign_lead_photos: {
+        Row: {
+          file_name: string | null
+          file_size: number | null
+          id: string
+          lead_id: string
+          photo_type: string | null
+          photo_url: string
+          uploaded_at: string | null
+        }
+        Insert: {
+          file_name?: string | null
+          file_size?: number | null
+          id?: string
+          lead_id: string
+          photo_type?: string | null
+          photo_url: string
+          uploaded_at?: string | null
+        }
+        Update: {
+          file_name?: string | null
+          file_size?: number | null
+          id?: string
+          lead_id?: string
+          photo_type?: string | null
+          photo_url?: string
+          uploaded_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_lead_photos_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_leads: {
+        Row: {
+          address: string
+          authorized_corrections: boolean | null
+          authorized_local_guide: boolean | null
+          authorized_photos: boolean | null
+          authorized_review: boolean | null
+          business_category: string
+          business_description: string | null
+          business_name: string
+          city: string | null
+          consent_community: boolean | null
+          consent_google_maps: boolean | null
+          consent_portal: boolean | null
+          correct_hours: string | null
+          created_at: string | null
+          email: string
+          estimated_points: number | null
+          google_maps_link: string | null
+          has_google_maps: string | null
+          has_photos: string | null
+          id: string
+          notes: string | null
+          priority: string | null
+          processed_at: string | null
+          processed_by: string | null
+          quiz_responses: Json | null
+          quiz_score: number | null
+          responds_reviews: string | null
+          state: string | null
+          status: string | null
+          tenant_id: string | null
+          updated_at: string | null
+          wants_community: string | null
+          whatsapp: string
+        }
+        Insert: {
+          address: string
+          authorized_corrections?: boolean | null
+          authorized_local_guide?: boolean | null
+          authorized_photos?: boolean | null
+          authorized_review?: boolean | null
+          business_category: string
+          business_description?: string | null
+          business_name: string
+          city?: string | null
+          consent_community?: boolean | null
+          consent_google_maps?: boolean | null
+          consent_portal?: boolean | null
+          correct_hours?: string | null
+          created_at?: string | null
+          email: string
+          estimated_points?: number | null
+          google_maps_link?: string | null
+          has_google_maps?: string | null
+          has_photos?: string | null
+          id?: string
+          notes?: string | null
+          priority?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          quiz_responses?: Json | null
+          quiz_score?: number | null
+          responds_reviews?: string | null
+          state?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+          wants_community?: string | null
+          whatsapp: string
+        }
+        Update: {
+          address?: string
+          authorized_corrections?: boolean | null
+          authorized_local_guide?: boolean | null
+          authorized_photos?: boolean | null
+          authorized_review?: boolean | null
+          business_category?: string
+          business_description?: string | null
+          business_name?: string
+          city?: string | null
+          consent_community?: boolean | null
+          consent_google_maps?: boolean | null
+          consent_portal?: boolean | null
+          correct_hours?: string | null
+          created_at?: string | null
+          email?: string
+          estimated_points?: number | null
+          google_maps_link?: string | null
+          has_google_maps?: string | null
+          has_photos?: string | null
+          id?: string
+          notes?: string | null
+          priority?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          quiz_responses?: Json | null
+          quiz_score?: number | null
+          responds_reviews?: string | null
+          state?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+          wants_community?: string | null
+          whatsapp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_leads_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaigns: {
         Row: {
           category_id: string | null
