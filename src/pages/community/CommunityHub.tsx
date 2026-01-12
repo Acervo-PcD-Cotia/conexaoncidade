@@ -1,30 +1,17 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { 
   Users, 
-  MessageSquare, 
   TrendingUp,
-  Plus,
-  Search,
-  Bell,
-  Settings,
   Hash,
   ShieldCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCommunity, levelLabels } from "@/hooks/useCommunity";
+import { useCommunity } from "@/hooks/useCommunity";
 import { MemberBadge, AchievementBadge } from "@/components/community/MemberBadge";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
-import { AccessibilityPanel } from "@/components/accessibility/AccessibilityPanel";
 import { CommunityFeed } from "@/components/community/CommunityFeed";
 import { CommunityTermsModal } from "@/components/community/CommunityTermsModal";
 
@@ -60,13 +47,8 @@ export default function CommunityHub() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen flex-col">
-        <Header />
-        <main className="flex-1 container py-12 flex items-center justify-center min-h-[60vh]">
-          <div className="animate-pulse text-muted-foreground">Carregando...</div>
-        </main>
-        <Footer />
-        <AccessibilityPanel />
+      <div className="container py-12 flex items-center justify-center min-h-[60vh]">
+        <div className="animate-pulse text-muted-foreground">Carregando...</div>
       </div>
     );
   }
@@ -83,17 +65,13 @@ export default function CommunityHub() {
     .toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U';
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <Header />
-      <main className="flex-1">
-        <div className="container py-6">
-          {/* Terms Modal */}
-          <CommunityTermsModal 
-            open={showTerms} 
-            onAccept={handleAcceptTerms} 
-          />
+    <div className="container py-6">
+      <CommunityTermsModal 
+        open={showTerms} 
+        onAccept={handleAcceptTerms} 
+      />
 
-        <div className="grid lg:grid-cols-4 gap-6">
+      <div className="grid lg:grid-cols-4 gap-6">
           {/* Left Sidebar - User Profile */}
           <div className="lg:col-span-1 space-y-4">
             <Card>
@@ -225,12 +203,8 @@ export default function CommunityHub() {
                 </Button>
               </CardContent>
             </Card>
-          </div>
         </div>
       </div>
-      </main>
-      <Footer />
-      <AccessibilityPanel />
     </div>
   );
 }
