@@ -1,4 +1,5 @@
 import { MarketDataBar } from "@/components/home/MarketDataBar";
+import { SuperBanner } from "@/components/home/SuperBanner";
 import { TopWebStoriesBar } from "@/components/home/TopWebStoriesBar";
 import { HeroSection } from "@/components/home/HeroSection";
 import { AgoraNaCidade } from "@/components/home/AgoraNaCidade";
@@ -12,8 +13,11 @@ const Index = () => {
   return (
     <div className="space-y-0">
       
-      {/* 2. Market/Weather data bar with BTC/ETH */}
+      {/* 1. Market/Weather data bar with BTC/ETH */}
       <MarketDataBar />
+      
+      {/* 2. SuperBanner - após cotações, antes do hero */}
+      <SuperBanner />
       
       {/* 3. WebStories - Instagram-style carousel */}
       <TopWebStoriesBar />
