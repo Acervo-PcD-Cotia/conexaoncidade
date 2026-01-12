@@ -92,3 +92,9 @@ verify_jwt = false
 
 [functions.delete-user-account]
 verify_jwt = false
+
+[functions.generate-recovery-codes]
+verify_jwt = false
+
+[functions.verify-recovery-code]
+verify_jwt = false
