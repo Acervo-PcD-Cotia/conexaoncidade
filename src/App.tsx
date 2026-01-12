@@ -76,6 +76,7 @@ import CommunityAuth from "./pages/community/CommunityAuth";
 import ChallengesPage from "./pages/community/ChallengesPage";
 import HowToEarnPoints from "./pages/community/HowToEarnPoints";
 import MemberProfile from "./pages/community/MemberProfile";
+import ProfileSettings from "./pages/community/ProfileSettings";
 
 // Auto Post PRO Form
 import AutoPostSourceForm from "./pages/admin/autopost/AutoPostSourceForm";
@@ -120,6 +121,7 @@ const App = () => (
                         <Route path="/comunidade/desafios" element={<ChallengesPage />} />
                         <Route path="/comunidade/como-ganhar-pontos" element={<HowToEarnPoints />} />
                         <Route path="/comunidade/membro/:userId" element={<MemberProfile />} />
+                        <Route path="/comunidade/configuracoes" element={<ProfileSettings />} />
                         <Route path="/anti-fake-news" element={<AntiFakeNews />} />
                         <Route path="/campanha/google-maps" element={<GoogleMapsCampaign />} />
                         <Route path="/stories" element={<StoriesPage />} />
