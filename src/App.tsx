@@ -21,6 +21,7 @@ import EventDetail from "./pages/EventDetail";
 import AntiFakeNews from "./pages/AntiFakeNews";
 import EditionViewer from "./pages/EditionViewer";
 import StoriesPage from "./pages/StoriesPage";
+import ResetPassword from "./pages/ResetPassword";
 
 // Admin Pages
 import Dashboard from "./pages/admin/Dashboard";
@@ -128,6 +129,7 @@ const App = () => (
                       <Route path="/edicao/:slug" element={<EditionViewer />} />
                       <Route path="/auth" element={<Auth />} />
                       <Route path="/auth-comunidade" element={<CommunityAuth />} />
+                      <Route path="/reset-password" element={<ResetPassword />} />
                       <Route path="/login" element={<Navigate to="/auth" replace />} />
                       <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
 
