@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, Headphones, Loader2, ExternalLink, Mic } from 'lucide-react';
+import { Download, Headphones, Loader2, ExternalLink, Mic, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NewsAudioPlayer } from './NewsAudioPlayer';
 import { WebSpeechPlayer } from './WebSpeechPlayer';
@@ -32,7 +32,6 @@ export function NewsAudioBlock({
   podcastAudioUrl,
   className,
 }: NewsAudioBlockProps) {
-  const [showTranscript, setShowTranscript] = useState(false);
   const [showPodcastModal, setShowPodcastModal] = useState(false);
 
   // Determine audio state
@@ -53,39 +52,38 @@ export function NewsAudioBlock({
   return (
     <section 
       className={cn(
-        "bg-gradient-to-br from-primary/5 via-primary/10 to-accent/5 rounded-xl p-5 border border-primary/20",
+        "bg-[hsl(217,91%,15%)] rounded-none p-6",
         className
       )}
-      aria-label="Áudio e Podcast"
+      aria-label="Versão em áudio"
     >
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-4">
-        <div className="p-2 bg-primary/10 rounded-lg">
-          <Headphones className="h-5 w-5 text-primary" />
-        </div>
-        <div>
-          <h3 className="font-semibold text-foreground">Áudio & Podcast</h3>
-          <p className="text-xs text-muted-foreground">Ouça esta notícia no site ou como podcast</p>
-        </div>
+      {/* Header - Centered label */}
+      <div className="text-center mb-4">
+        <p className="text-white/90 text-sm font-medium tracking-wide uppercase flex items-center justify-center gap-2">
+          <Volume2 className="h-4 w-4" />
+          Versão em áudio
+        </p>
       </div>
 
       {/* Audio Player - Ready State */}
       {isReady && (
-        <div className="space-y-3">
-          <NewsAudioPlayer
-            audioUrl={audioUrl}
-            duration={audioDuration || 0}
-            newsId={newsId}
-            spotifyUrl={spotifyUrl}
-          />
+        <div className="space-y-4">
+          <div className="audio-player-dark">
+            <NewsAudioPlayer
+              audioUrl={audioUrl}
+              duration={audioDuration || 0}
+              newsId={newsId}
+              spotifyUrl={spotifyUrl}
+            />
+          </div>
 
           {/* Actions */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center justify-center gap-3">
             {/* Download Button */}
             <Button
               variant="ghost"
               size="sm"
-              className="text-xs gap-1.5"
+              className="text-xs text-white/70 hover:text-white hover:bg-white/10 gap-1.5"
               asChild
             >
               <a href={audioUrl} download target="_blank" rel="noopener noreferrer">
@@ -99,7 +97,7 @@ export function NewsAudioBlock({
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-xs gap-1.5 text-green-600 hover:text-green-700"
+                className="text-xs text-green-400 hover:text-green-300 hover:bg-white/10 gap-1.5"
                 asChild
               >
                 <a href={spotifyUrl} target="_blank" rel="noopener noreferrer">
@@ -108,33 +106,43 @@ export function NewsAudioBlock({
                 </a>
               </Button>
             )}
+
+            {/* Podcast Button */}
+            {isPodcastReady && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs text-white/70 hover:text-white hover:bg-white/10 gap-1.5"
+                onClick={() => setShowPodcastModal(true)}
+              >
+                <Mic className="h-3.5 w-3.5" />
+                Podcast
+              </Button>
+            )}
           </div>
 
           {/* Transcript */}
           {transcript && (
-            <NewsTranscriptAccordion transcript={transcript} />
+            <div className="transcript-dark">
+              <NewsTranscriptAccordion transcript={transcript} />
+            </div>
           )}
         </div>
       )}
 
       {/* Generating State */}
       {isGenerating && (
-        <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg">
-          <Loader2 className="h-5 w-5 animate-spin text-primary" />
-          <div>
-            <p className="font-medium text-sm">Gerando áudio...</p>
-            <p className="text-xs text-muted-foreground">
-              O áudio desta notícia está sendo processado. Enquanto isso, você pode usar o leitor do navegador.
-            </p>
-          </div>
+        <div className="flex items-center justify-center gap-3 py-4">
+          <Loader2 className="h-5 w-5 animate-spin text-white/70" />
+          <p className="text-white/70 text-sm">Gerando áudio...</p>
         </div>
       )}
 
       {/* Failed State */}
       {hasFailed && (
-        <div className="p-4 bg-destructive/10 rounded-lg border border-destructive/20 mb-3">
-          <p className="text-sm text-destructive">
-            Não foi possível gerar o áudio desta notícia. Use o leitor do navegador como alternativa.
+        <div className="text-center py-2 mb-3">
+          <p className="text-sm text-red-300/80">
+            Não foi possível gerar o áudio. Use o leitor do navegador.
           </p>
         </div>
       )}
@@ -143,38 +151,22 @@ export function NewsAudioBlock({
       {showFallback && contentHtml && (
         <div className="space-y-3">
           {notGenerated && (
-            <p className="text-xs text-muted-foreground mb-2">
-              Áudio profissional não disponível. Use o leitor do navegador:
+            <p className="text-xs text-white/50 text-center mb-2">
+              Áudio profissional em preparação. Use o leitor do navegador:
             </p>
           )}
-          <WebSpeechPlayer text={contentHtml} />
+          <div className="webspeech-dark">
+            <WebSpeechPlayer text={contentHtml} />
+          </div>
           
           {/* Transcript */}
           {transcript && (
-            <NewsTranscriptAccordion transcript={transcript} className="mt-3" />
+            <div className="transcript-dark">
+              <NewsTranscriptAccordion transcript={transcript} className="mt-3" />
+            </div>
           )}
         </div>
       )}
-
-      {/* Podcast Section */}
-      <div className="mt-4 pt-4 border-t border-primary/10">
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full gap-2"
-          onClick={() => isPodcastReady ? setShowPodcastModal(true) : null}
-          disabled={!isPodcastReady}
-        >
-          <Mic className="h-4 w-4" />
-          🎙️ Ouvir como podcast
-        </Button>
-        
-        {!isPodcastReady && (
-          <p className="text-xs text-muted-foreground text-center mt-2">
-            Podcast em preparação. Em breve disponível nas plataformas de áudio.
-          </p>
-        )}
-      </div>
 
       {/* Podcast Platforms Modal */}
       <PodcastPlatformsModal 

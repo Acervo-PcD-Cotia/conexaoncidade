@@ -12,36 +12,48 @@ export function RelatedNews({ news }: RelatedNewsProps) {
 
   return (
     <section className="mt-12">
-      <h3 className="text-2xl font-bold mb-6">Notícias Relacionadas</h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Centered Title with Decorative Lines */}
+      <div className="flex items-center gap-4 mb-8">
+        <div className="flex-1 h-px bg-border" />
+        <h3 className="text-lg font-bold uppercase tracking-wider text-muted-foreground">
+          Relacionadas
+        </h3>
+        <div className="flex-1 h-px bg-border" />
+      </div>
+
+      {/* Grid Layout */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
         {news.map((item) => (
           <Link
             key={item.id}
             to={`/noticia/${item.slug}`}
             className="group"
           >
-            <article className="news-card bg-card rounded-lg overflow-hidden border border-border/50">
-              <div className="aspect-video overflow-hidden">
+            <article className="space-y-3">
+              {/* Compact Square Image */}
+              <div className="aspect-[4/3] overflow-hidden bg-muted">
                 <img
                   src={item.featured_image_url || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400'}
                   alt={item.image_alt || item.title}
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
               </div>
-              <div className="p-4">
+              
+              {/* Content */}
+              <div className="space-y-1.5">
                 {item.category && (
                   <span
-                    className="category-badge text-white mb-2"
+                    className="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 text-white"
                     style={{ backgroundColor: item.category.color }}
                   >
                     {item.category.name}
                   </span>
                 )}
-                <h4 className="font-semibold line-clamp-2 group-hover:text-primary transition-colors">
+                <h4 className="text-sm font-semibold line-clamp-3 group-hover:text-primary transition-colors leading-snug">
                   {item.title}
                 </h4>
                 {item.published_at && (
-                  <time className="text-xs text-muted-foreground mt-2 block">
+                  <time className="text-[11px] text-muted-foreground block">
                     {formatDistanceToNow(new Date(item.published_at), {
                       addSuffix: true,
                       locale: ptBR,
