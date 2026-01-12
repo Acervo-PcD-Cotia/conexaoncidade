@@ -20,6 +20,7 @@ import StoryViewer from "./pages/StoryViewer";
 import EventDetail from "./pages/EventDetail";
 import AntiFakeNews from "./pages/AntiFakeNews";
 import EditionViewer from "./pages/EditionViewer";
+import StoriesPage from "./pages/StoriesPage";
 
 // Admin Pages
 import Dashboard from "./pages/admin/Dashboard";
@@ -120,6 +121,7 @@ const App = () => (
                         <Route path="/comunidade/membro/:userId" element={<MemberProfile />} />
                         <Route path="/anti-fake-news" element={<AntiFakeNews />} />
                         <Route path="/campanha/google-maps" element={<GoogleMapsCampaign />} />
+                        <Route path="/stories" element={<StoriesPage />} />
                       </Route>
                       <Route path="/story/:slug" element={<StoryViewer />} />
                       <Route path="/evento/:slug" element={<EventDetail />} />

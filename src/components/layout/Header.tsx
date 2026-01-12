@@ -19,6 +19,7 @@ import {
 import logoFull from "@/assets/logo-full.png";
 import { AccessibilityMenuButton } from "@/components/accessibility/AccessibilityMenuButton";
 import { CommunityButton } from "@/components/community/CommunityButton";
+import { NotificationBell } from "@/components/community/NotificationBell";
 
 export function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -135,6 +136,9 @@ export function Header() {
             
             {/* Community Button */}
             <CommunityButton />
+            
+            {/* Notifications */}
+            {user && <NotificationBell />}
 
             {user ? (
               <DropdownMenu>
