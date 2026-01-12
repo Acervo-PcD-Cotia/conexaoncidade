@@ -41,10 +41,11 @@ export default function CommunityHub() {
   }, [user, navigate]);
 
   useEffect(() => {
-    if (!isLoading && !hasAccess) {
+    // Only redirect when fully loaded AND user is authenticated AND no access
+    if (!isLoading && user && !hasAccess) {
       navigate("/comunidade/desbloquear");
     }
-  }, [hasAccess, isLoading, navigate]);
+  }, [hasAccess, isLoading, user, navigate]);
 
   useEffect(() => {
     if (hasAccess && membership && !membership.terms_accepted_at) {
