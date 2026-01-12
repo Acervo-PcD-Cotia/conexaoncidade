@@ -1,5 +1,4 @@
 import { MarketDataBar } from "@/components/home/MarketDataBar";
-import { SuperBanner } from "@/components/home/SuperBanner";
 import { TopWebStoriesBar } from "@/components/home/TopWebStoriesBar";
 import { HeroSection } from "@/components/home/HeroSection";
 import { AgoraNaCidade } from "@/components/home/AgoraNaCidade";
@@ -12,8 +11,6 @@ import { AdSlot } from "@/components/home/AdSlot";
 const Index = () => {
   return (
     <div className="space-y-0">
-      {/* 1. Super Banner - TOPO ABSOLUTO (fullwidth 21:9) */}
-      <SuperBanner />
       
       {/* 2. Market/Weather data bar with BTC/ETH */}
       <MarketDataBar />

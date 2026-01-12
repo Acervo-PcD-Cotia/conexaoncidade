@@ -4,12 +4,16 @@ import { Footer } from "./Footer";
 import { AccessibilityPanel } from "@/components/accessibility/AccessibilityPanel";
 import { PushPermissionBanner } from "@/components/PushPermissionBanner";
 import { useKeyboardNavigation } from "@/hooks/useKeyboardNavigation";
+import { SuperBanner } from "@/components/home/SuperBanner";
 
 export function PublicLayout() {
   useKeyboardNavigation();
 
   return (
     <div className="flex min-h-screen flex-col">
+      {/* Super Banner - TOPO ABSOLUTO (antes do Header) */}
+      <SuperBanner />
+
       {/* Skip link for keyboard navigation */}
       <a
         href="#main-content"
