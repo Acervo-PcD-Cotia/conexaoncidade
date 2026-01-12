@@ -1396,6 +1396,75 @@ export type Database = {
           },
         ]
       }
+      banner_campaign_invoices: {
+        Row: {
+          amount_clicks: number | null
+          amount_impressions: number | null
+          campaign_id: string
+          clicks_count: number | null
+          created_at: string | null
+          due_date: string | null
+          id: string
+          impressions_count: number | null
+          invoice_period_end: string
+          invoice_period_start: string
+          paid_at: string | null
+          receivable_id: string | null
+          sent_at: string | null
+          status: string | null
+          total_amount: number
+        }
+        Insert: {
+          amount_clicks?: number | null
+          amount_impressions?: number | null
+          campaign_id: string
+          clicks_count?: number | null
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          impressions_count?: number | null
+          invoice_period_end: string
+          invoice_period_start: string
+          paid_at?: string | null
+          receivable_id?: string | null
+          sent_at?: string | null
+          status?: string | null
+          total_amount?: number
+        }
+        Update: {
+          amount_clicks?: number | null
+          amount_impressions?: number | null
+          campaign_id?: string
+          clicks_count?: number | null
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          impressions_count?: number | null
+          invoice_period_end?: string
+          invoice_period_start?: string
+          paid_at?: string | null
+          receivable_id?: string | null
+          sent_at?: string | null
+          status?: string | null
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "banner_campaign_invoices_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "banner_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "banner_campaign_invoices_receivable_id_fkey"
+            columns: ["receivable_id"]
+            isOneToOne: false
+            referencedRelation: "receivables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       banner_campaign_spend_log: {
         Row: {
           amount: number
@@ -1533,11 +1602,15 @@ export type Database = {
           banner_height: number | null
           banner_id: string | null
           banner_width: number | null
+          city: string | null
           click_x: number | null
           click_y: number | null
           clicked_at: string | null
+          country_code: string | null
           id: string
+          ip_hash: string | null
           referer: string | null
+          region_code: string | null
           session_id: string | null
           user_agent: string | null
         }
@@ -1545,11 +1618,15 @@ export type Database = {
           banner_height?: number | null
           banner_id?: string | null
           banner_width?: number | null
+          city?: string | null
           click_x?: number | null
           click_y?: number | null
           clicked_at?: string | null
+          country_code?: string | null
           id?: string
+          ip_hash?: string | null
           referer?: string | null
+          region_code?: string | null
           session_id?: string | null
           user_agent?: string | null
         }
@@ -1557,11 +1634,15 @@ export type Database = {
           banner_height?: number | null
           banner_id?: string | null
           banner_width?: number | null
+          city?: string | null
           click_x?: number | null
           click_y?: number | null
           clicked_at?: string | null
+          country_code?: string | null
           id?: string
+          ip_hash?: string | null
           referer?: string | null
+          region_code?: string | null
           session_id?: string | null
           user_agent?: string | null
         }
@@ -1575,22 +1656,78 @@ export type Database = {
           },
         ]
       }
+      banner_geo_rules: {
+        Row: {
+          banner_id: string
+          cities: string[] | null
+          country_codes: string[] | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          priority: number | null
+          region_codes: string[] | null
+          rule_type: string
+        }
+        Insert: {
+          banner_id: string
+          cities?: string[] | null
+          country_codes?: string[] | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          priority?: number | null
+          region_codes?: string[] | null
+          rule_type: string
+        }
+        Update: {
+          banner_id?: string
+          cities?: string[] | null
+          country_codes?: string[] | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          priority?: number | null
+          region_codes?: string[] | null
+          rule_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "banner_geo_rules_banner_id_fkey"
+            columns: ["banner_id"]
+            isOneToOne: false
+            referencedRelation: "super_banners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       banner_impressions: {
         Row: {
           banner_id: string | null
+          city: string | null
+          country_code: string | null
           id: string
+          ip_hash: string | null
+          region_code: string | null
           session_id: string | null
           viewed_at: string | null
         }
         Insert: {
           banner_id?: string | null
+          city?: string | null
+          country_code?: string | null
           id?: string
+          ip_hash?: string | null
+          region_code?: string | null
           session_id?: string | null
           viewed_at?: string | null
         }
         Update: {
           banner_id?: string | null
+          city?: string | null
+          country_code?: string | null
           id?: string
+          ip_hash?: string | null
+          region_code?: string | null
           session_id?: string | null
           viewed_at?: string | null
         }
