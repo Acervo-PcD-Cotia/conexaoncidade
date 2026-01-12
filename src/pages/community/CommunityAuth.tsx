@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Users, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +11,33 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCommunity } from "@/hooks/useCommunity";
 import { useToast } from "@/hooks/use-toast";
 import logoFull from "@/assets/logo-full.png";
+
+// Validation schemas
+const emailSchema = z.string()
+  .min(1, "E-mail é obrigatório")
+  .email("Digite um e-mail válido")
+  .max(255, "E-mail muito longo");
+
+const passwordSchema = z.string()
+  .min(6, "A senha deve ter no mínimo 6 caracteres")
+  .max(72, "Senha muito longa");
+
+const registerSchema = z.object({
+  name: z.string().max(100, "Nome muito longo").optional(),
+  email: emailSchema,
+  password: passwordSchema,
+});
+
+const loginSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1, "Senha é obrigatória"),
+});
+
+type FieldErrors = {
+  email?: string;
+  password?: string;
+  name?: string;
+};
 
 export default function CommunityAuth() {
   const navigate = useNavigate();
@@ -27,6 +55,7 @@ export default function CommunityAuth() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isProcessingAccess, setIsProcessingAccess] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   // Get onboarding params from URL
   const inviteCode = searchParams.get("invite");
@@ -40,6 +69,11 @@ export default function CommunityAuth() {
   const [registerName, setRegisterName] = useState("");
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
+
+  // Clear errors when switching tabs
+  useEffect(() => {
+    setFieldErrors({});
+  }, [activeTab]);
 
   // Process community access after user logs in
   useEffect(() => {
@@ -82,22 +116,50 @@ export default function CommunityAuth() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!loginEmail || !loginPassword) return;
+    setFieldErrors({});
+
+    // Validate with Zod
+    const validation = loginSchema.safeParse({
+      email: loginEmail.trim(),
+      password: loginPassword,
+    });
+
+    if (!validation.success) {
+      const errors: FieldErrors = {};
+      validation.error.errors.forEach((err) => {
+        const field = err.path[0] as keyof FieldErrors;
+        if (field) {
+          errors[field] = err.message;
+        }
+      });
+      setFieldErrors(errors);
+      return;
+    }
 
     setIsSubmitting(true);
     try {
-      await signIn(loginEmail, loginPassword);
+      await signIn(loginEmail.trim(), loginPassword);
       toast({
         title: "Bem-vindo de volta!",
         description: "Entrando na comunidade...",
       });
       // Navigation handled by useEffect after user state updates
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Erro ao entrar",
-        description: error instanceof Error ? error.message : "Verifique suas credenciais",
-      });
+      const errorMessage = error instanceof Error ? error.message : "";
+      
+      if (errorMessage.includes("Invalid login credentials")) {
+        toast({
+          variant: "destructive",
+          title: "Credenciais inválidas",
+          description: "E-mail ou senha incorretos. Verifique e tente novamente.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Erro ao entrar",
+          description: "Ocorreu um erro. Tente novamente.",
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -105,22 +167,65 @@ export default function CommunityAuth() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!registerEmail || !registerPassword) return;
+    setFieldErrors({});
+
+    // Validate with Zod
+    const validation = registerSchema.safeParse({
+      name: registerName.trim() || undefined,
+      email: registerEmail.trim(),
+      password: registerPassword,
+    });
+
+    if (!validation.success) {
+      const errors: FieldErrors = {};
+      validation.error.errors.forEach((err) => {
+        const field = err.path[0] as keyof FieldErrors;
+        if (field) {
+          errors[field] = err.message;
+        }
+      });
+      setFieldErrors(errors);
+      return;
+    }
 
     setIsSubmitting(true);
     try {
-      await signUp(registerEmail, registerPassword, registerName || "");
+      await signUp(registerEmail.trim(), registerPassword, registerName.trim() || "");
       toast({
         title: "Conta criada com sucesso!",
         description: "Bem-vindo à Comunidade Conexão na Cidade!",
       });
       // Navigation handled by useEffect after user state updates
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Erro ao criar conta",
-        description: error instanceof Error ? error.message : "Tente novamente",
-      });
+      const errorMessage = error instanceof Error ? error.message : "";
+      
+      // Handle email already registered
+      if (
+        errorMessage.includes("User already registered") ||
+        errorMessage.includes("already been registered") ||
+        errorMessage.includes("already exists") ||
+        errorMessage.includes("already registered")
+      ) {
+        setFieldErrors({ email: "Este e-mail já está cadastrado. Tente fazer login." });
+        toast({
+          variant: "destructive",
+          title: "E-mail já cadastrado",
+          description: "Já existe uma conta com este e-mail. Use a aba 'Entrar' para fazer login.",
+        });
+      } else if (errorMessage.includes("Password should be at least")) {
+        setFieldErrors({ password: "A senha deve ter no mínimo 6 caracteres." });
+        toast({
+          variant: "destructive",
+          title: "Senha muito curta",
+          description: "A senha deve ter no mínimo 6 caracteres.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Erro ao criar conta",
+          description: "Ocorreu um erro. Verifique os dados e tente novamente.",
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -199,11 +304,17 @@ export default function CommunityAuth() {
                       type="email"
                       placeholder="seu@email.com"
                       value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
-                      className="pl-10"
+                      onChange={(e) => {
+                        setLoginEmail(e.target.value);
+                        if (fieldErrors.email) setFieldErrors(prev => ({ ...prev, email: undefined }));
+                      }}
+                      className={`pl-10 ${fieldErrors.email ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                       required
                     />
                   </div>
+                  {fieldErrors.email && (
+                    <p className="text-sm text-destructive">{fieldErrors.email}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -215,8 +326,11 @@ export default function CommunityAuth() {
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
                       value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
-                      className="pl-10 pr-10"
+                      onChange={(e) => {
+                        setLoginPassword(e.target.value);
+                        if (fieldErrors.password) setFieldErrors(prev => ({ ...prev, password: undefined }));
+                      }}
+                      className={`pl-10 pr-10 ${fieldErrors.password ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                       required
                     />
                     <button
@@ -231,6 +345,9 @@ export default function CommunityAuth() {
                       )}
                     </button>
                   </div>
+                  {fieldErrors.password && (
+                    <p className="text-sm text-destructive">{fieldErrors.password}</p>
+                  )}
                 </div>
 
                 <Button
@@ -253,8 +370,15 @@ export default function CommunityAuth() {
                     type="text"
                     placeholder="Seu nome"
                     value={registerName}
-                    onChange={(e) => setRegisterName(e.target.value)}
+                    onChange={(e) => {
+                      setRegisterName(e.target.value);
+                      if (fieldErrors.name) setFieldErrors(prev => ({ ...prev, name: undefined }));
+                    }}
+                    className={fieldErrors.name ? 'border-destructive focus-visible:ring-destructive' : ''}
                   />
+                  {fieldErrors.name && (
+                    <p className="text-sm text-destructive">{fieldErrors.name}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -266,11 +390,17 @@ export default function CommunityAuth() {
                       type="email"
                       placeholder="seu@email.com"
                       value={registerEmail}
-                      onChange={(e) => setRegisterEmail(e.target.value)}
-                      className="pl-10"
+                      onChange={(e) => {
+                        setRegisterEmail(e.target.value);
+                        if (fieldErrors.email) setFieldErrors(prev => ({ ...prev, email: undefined }));
+                      }}
+                      className={`pl-10 ${fieldErrors.email ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                       required
                     />
                   </div>
+                  {fieldErrors.email && (
+                    <p className="text-sm text-destructive">{fieldErrors.email}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -282,9 +412,11 @@ export default function CommunityAuth() {
                       type={showPassword ? "text" : "password"}
                       placeholder="Mínimo 6 caracteres"
                       value={registerPassword}
-                      onChange={(e) => setRegisterPassword(e.target.value)}
-                      className="pl-10 pr-10"
-                      minLength={6}
+                      onChange={(e) => {
+                        setRegisterPassword(e.target.value);
+                        if (fieldErrors.password) setFieldErrors(prev => ({ ...prev, password: undefined }));
+                      }}
+                      className={`pl-10 pr-10 ${fieldErrors.password ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                       required
                     />
                     <button
@@ -299,6 +431,9 @@ export default function CommunityAuth() {
                       )}
                     </button>
                   </div>
+                  {fieldErrors.password && (
+                    <p className="text-sm text-destructive">{fieldErrors.password}</p>
+                  )}
                 </div>
 
                 <Button
