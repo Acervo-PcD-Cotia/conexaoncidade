@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { useFeaturedNews, useNews } from "@/hooks/useNews";
+import { WebStoriesSidebar } from "@/components/home/WebStoriesSidebar";
 
 function formatTimeAgo(date: string) {
   const now = new Date();
@@ -68,8 +69,8 @@ export function HeroSection() {
     <section className="container py-4" aria-labelledby="hero-title">
       <h2 id="hero-title" className="sr-only">Destaque Principal</h2>
       
-      {/* Main 2-column hero layout */}
-      <div className="grid gap-6 lg:grid-cols-2 items-center">
+      {/* Main 3-column hero layout with WebStories sidebar */}
+      <div className="grid gap-6 lg:grid-cols-[1fr_1fr_280px] items-start">
         {/* Left: Large image */}
         <Link 
           to={`/noticia/${heroNews.slug}`} 
@@ -143,7 +144,7 @@ export function HeroSection() {
             </Button>
             <Button
               variant="outline"
-              size="lg"
+              size="default"
               className="gap-2"
               onClick={(e) => handleTTS(e, `${heroNews.title}. ${heroNews.subtitle || ""}`)}
               aria-label={`Ouvir notícia: ${heroNews.title}`}
@@ -153,11 +154,16 @@ export function HeroSection() {
             </Button>
           </div>
         </div>
+
+        {/* WebStories Sidebar - hidden on mobile */}
+        <div className="hidden lg:block">
+          <WebStoriesSidebar />
+        </div>
       </div>
 
       {/* Side news cards - Visual cards instead of overlay text */}
       {sideNews.length > 0 && (
-        <div className="grid gap-4 mt-6 sm:grid-cols-2">
+        <div className="grid gap-4 mt-6 sm:grid-cols-2 lg:grid-cols-3">
           {sideNews.map((news) => (
             <article 
               key={news.id} 
