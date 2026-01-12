@@ -16,6 +16,8 @@ interface ImageUploaderProps {
   alt?: string;
   credit?: string;
   label?: string;
+  bucket?: string;
+  path?: string;
 }
 
 export function ImageUploader({
@@ -26,6 +28,8 @@ export function ImageUploader({
   alt = '',
   credit = '',
   label = 'Imagem Principal',
+  bucket = 'news-images',
+  path = 'news',
 }: ImageUploaderProps) {
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
@@ -47,16 +51,16 @@ export function ImageUploader({
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const filePath = `news/${fileName}`;
+      const filePath = `${path}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('news-images')
+        .from(bucket)
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
-        .from('news-images')
+        .from(bucket)
         .getPublicUrl(filePath);
 
       onChange(publicUrl);
