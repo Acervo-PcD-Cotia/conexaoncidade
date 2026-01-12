@@ -73,6 +73,7 @@ export default function NewsEditor() {
     is_indexable: true,
     auto_generate_podcast: false,
     auto_publish_podcast: false,
+    editor_name: "",
   });
 
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -208,6 +209,7 @@ export default function NewsEditor() {
         is_indexable: news.is_indexable !== false,
         auto_generate_podcast: news.auto_generate_podcast || false,
         auto_publish_podcast: news.auto_publish_podcast || false,
+        editor_name: news.editor_name || "",
       });
       setLastSaved(new Date(news.updated_at));
     }
@@ -491,6 +493,15 @@ export default function NewsEditor() {
               <div>
                 <Label>Fonte</Label>
                 <Input value={formData.source} onChange={(e) => updateField("source", e.target.value)} placeholder="Origem da informação" />
+              </div>
+              <div>
+                <Label>Editor / Revisão</Label>
+                <Input 
+                  value={formData.editor_name} 
+                  onChange={(e) => updateField("editor_name", e.target.value)} 
+                  placeholder="Nome do editor responsável pela revisão" 
+                />
+                <p className="text-xs text-muted-foreground mt-1">Será exibido no rodapé da notícia como "Edição:"</p>
               </div>
             </CardContent>
           </Card>

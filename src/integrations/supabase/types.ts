@@ -3787,6 +3787,8 @@ export type Database = {
           created_at: string
           deleted_at: string | null
           distribute_audio: boolean | null
+          editor_id: string | null
+          editor_name: string | null
           excerpt: string | null
           featured_image_url: string | null
           gallery_urls: string[] | null
@@ -3841,6 +3843,8 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           distribute_audio?: boolean | null
+          editor_id?: string | null
+          editor_name?: string | null
           excerpt?: string | null
           featured_image_url?: string | null
           gallery_urls?: string[] | null
@@ -3895,6 +3899,8 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           distribute_audio?: boolean | null
+          editor_id?: string | null
+          editor_name?: string | null
           excerpt?: string | null
           featured_image_url?: string | null
           gallery_urls?: string[] | null
