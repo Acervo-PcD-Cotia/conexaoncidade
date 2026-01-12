@@ -241,55 +241,61 @@
     @apply h-full bg-white transition-all duration-100 ease-linear;
   }
 
-  /* Prose styling for news content - Editorial template */
+  /* Prose styling for news content - Agência Brasil Editorial Style */
   .prose-news {
     @apply text-foreground leading-relaxed;
     max-width: 780px;
     font-size: 1.125rem;
-    line-height: 1.85;
+    line-height: 1.9;
   }
 
   .prose-news p {
-    @apply mb-6;
+    @apply mb-5;
   }
 
   .prose-news h2 {
-    @apply text-2xl font-bold mt-10 mb-5;
+    @apply text-xl font-bold mt-10 mb-4 text-foreground;
+    border: none;
     scroll-margin-top: 100px;
   }
 
   .prose-news h3 {
-    @apply text-xl font-bold mt-8 mb-4;
+    @apply text-lg font-bold mt-8 mb-3;
     scroll-margin-top: 100px;
   }
 
   .prose-news ul, .prose-news ol {
-    @apply mb-6 pl-6;
+    @apply mb-5 pl-6;
   }
 
   .prose-news li {
-    @apply mb-3;
+    @apply mb-2;
   }
 
+  /* Blockquote - Clean style with subtle left border */
   .prose-news blockquote {
-    @apply border-l-4 border-primary pl-6 py-5 my-10 bg-primary/5 rounded-r-xl italic relative;
+    @apply border-l-4 border-muted-foreground/30 pl-6 py-4 my-8 
+           italic text-lg text-muted-foreground bg-transparent;
   }
 
   .prose-news blockquote::before {
-    content: '"';
-    @apply text-4xl text-primary/30 font-serif leading-none block mb-2;
+    content: none;
   }
 
   .prose-news blockquote p {
-    @apply mb-0 text-foreground/90 text-lg;
+    @apply mb-0 text-muted-foreground;
   }
 
+  /* Images - No rounded corners for editorial feel */
   .prose-news img {
-    @apply rounded-xl my-8;
+    @apply my-8;
+    border-radius: 0;
   }
 
+  /* Links - Bold and underlined */
   .prose-news a {
-    @apply text-primary underline underline-offset-2 hover:no-underline transition-colors;
+    @apply font-semibold text-foreground underline 
+           hover:text-primary transition-colors;
   }
 
   .prose-news figure {
@@ -297,7 +303,7 @@
   }
 
   .prose-news figcaption {
-    @apply text-sm text-muted-foreground mt-2 text-center;
+    @apply text-sm text-muted-foreground mt-2 italic;
   }
 
   .prose-news strong {
@@ -306,6 +312,19 @@
 
   .prose-news hr {
     @apply my-10 border-border;
+  }
+
+  /* Dark audio player wrapper for Agência Brasil style */
+  .audio-player-dark,
+  .webspeech-dark,
+  .transcript-dark {
+    @apply [&_button]:text-white/80 [&_button:hover]:text-white 
+           [&_button]:border-white/20 [&_button:hover]:border-white/40
+           [&_.text-muted-foreground]:text-white/60 
+           [&_.text-foreground]:text-white
+           [&_.bg-muted]:bg-white/10
+           [&_.bg-background]:bg-transparent
+           [&_.border]:border-white/20;
   }
 }
 

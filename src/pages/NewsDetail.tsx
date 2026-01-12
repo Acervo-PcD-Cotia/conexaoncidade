@@ -10,14 +10,12 @@ import { NewsSummaryBlock } from '@/components/news/NewsSummaryBlock';
 import { NewsTableOfContents } from '@/components/news/NewsTableOfContents';
 import { ReadingProgressBar } from '@/components/news/ReadingProgressBar';
 import { FactCheckCTA } from '@/components/news/FactCheckCTA';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatDistanceToNow, format } from 'date-fns';
+import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Clock, Eye, Calendar, ArrowLeft, MapPin, RefreshCw, Printer } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
 import { useReadingTracker } from '@/hooks/useReadingTracker';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -49,7 +47,7 @@ export default function NewsDetail() {
   );
 
   // Reading tracker for gamification
-  const { trackScroll, progress, isCompleted } = useReadingTracker({
+  const { trackScroll, isCompleted } = useReadingTracker({
     contentType: 'news',
     contentId: news?.id || '',
     minimumTimeSeconds: 45,
@@ -85,16 +83,22 @@ export default function NewsDetail() {
 
   if (isLoading) {
     return (
-      <div className="container max-w-4xl py-8">
-        <Skeleton className="h-8 w-24 mb-4" />
-        <Skeleton className="h-12 w-full mb-2" />
-        <Skeleton className="h-12 w-3/4 mb-6" />
-        <Skeleton className="h-6 w-1/2 mb-8" />
-        <Skeleton className="aspect-video w-full mb-8" />
-        <div className="space-y-4">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-3/4" />
+      <div className="min-h-screen">
+        <div className="bg-[hsl(217,91%,20%)] py-12">
+          <div className="container max-w-4xl text-center">
+            <Skeleton className="h-6 w-24 mx-auto mb-4 bg-white/20" />
+            <Skeleton className="h-12 w-full mb-2 bg-white/20" />
+            <Skeleton className="h-12 w-3/4 mx-auto mb-6 bg-white/20" />
+            <Skeleton className="h-6 w-1/2 mx-auto bg-white/20" />
+          </div>
+        </div>
+        <div className="container max-w-4xl py-8">
+          <Skeleton className="aspect-video w-full mb-8" />
+          <div className="space-y-4">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+          </div>
         </div>
       </div>
     );
@@ -120,12 +124,6 @@ export default function NewsDetail() {
 
   const readTime = calculateReadTime(news.content);
   const wordCount = countWords(news.content);
-  const authorInitials = news.author?.full_name
-    ?.split(' ')
-    .map((n) => n[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase() || 'RD';
 
   const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
   const metaDescription = news.meta_description || news.summary_short || news.excerpt || news.subtitle || '';
@@ -175,10 +173,6 @@ export default function NewsDetail() {
     schemaOrg["@type"] = ["NewsArticle", "PodcastEpisode"];
   }
 
-  const handlePrint = () => {
-    window.print();
-  };
-
   return (
     <>
       {/* Reading Progress Bar */}
@@ -222,251 +216,194 @@ export default function NewsDetail() {
         Pular para o conteúdo
       </a>
 
-      <article 
-        className="container max-w-4xl py-8"
-        role="article"
-        aria-labelledby="news-title"
-      >
-        {/* Breadcrumb Navigation */}
-        <nav 
-          className="flex items-center gap-2 text-sm text-muted-foreground mb-6"
-          aria-label="Navegação estrutural"
-        >
-          <Link to="/" className="hover:text-primary transition-colors">
-            Início
-          </Link>
-          <span aria-hidden="true">/</span>
-          {news.category && (
-            <>
-              <Link
-                to={`/categoria/${news.category.slug}`}
-                className="hover:text-primary transition-colors"
-              >
-                {news.category.name}
-              </Link>
-              <span aria-hidden="true">/</span>
-            </>
-          )}
-          <span className="text-foreground line-clamp-1">{news.title}</span>
-        </nav>
-
-        {/* Article Header */}
-        <header className="mb-8">
-          {/* Category Badge & Hat */}
-          <div className="flex flex-wrap items-center gap-3 mb-4">
+      <article role="article" aria-labelledby="news-title">
+        {/* Dark Header - Agência Brasil Style */}
+        <header className="bg-[hsl(217,91%,20%)] text-white py-8 md:py-12">
+          <div className="container max-w-4xl text-center">
+            {/* Category Badge */}
             {news.category && (
               <Link to={`/categoria/${news.category.slug}`}>
                 <Badge
-                  className="text-white hover:opacity-90 transition-opacity text-xs uppercase tracking-wider"
-                  style={{ backgroundColor: news.category.color }}
+                  className="mb-4 bg-white/20 hover:bg-white/30 text-white border-white/30 text-xs uppercase tracking-widest"
+                  variant="outline"
                 >
                   {news.category.name}
                 </Badge>
               </Link>
             )}
-            {news.hat && (
-              <span className="text-sm font-bold text-primary uppercase tracking-widest">
-                {news.hat.slice(0, 19).toUpperCase()}
-              </span>
-            )}
-          </div>
 
-          {/* Title (H1) */}
-          <h1 
-            id="news-title"
-            className="text-3xl md:text-4xl lg:text-[2.75rem] font-bold font-heading leading-tight mb-4"
-          >
-            {news.title}
-          </h1>
-
-          {/* Subtitle / Linha Fina */}
-          {news.subtitle && (
-            <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed mb-6 font-light">
-              {news.subtitle}
-            </p>
-          )}
-
-          {/* Meta Information */}
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-3 text-sm text-muted-foreground pb-6 border-b">
-            {/* Author */}
-            {news.author && (
-              <div className="flex items-center gap-2">
-                <Avatar className="h-9 w-9 border">
-                  <AvatarImage src={news.author.avatar_url || undefined} alt={news.author.full_name || 'Autor'} />
-                  <AvatarFallback className="text-xs bg-primary/10 text-primary">{authorInitials}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <span className="font-medium text-foreground block">
-                    {news.author.full_name || 'Redação'}
-                  </span>
-                </div>
-              </div>
-            )}
-            
-            {/* Published Date */}
-            {news.published_at && (
-              <div className="flex items-center gap-1.5">
-                <Calendar className="h-4 w-4" />
-                <time dateTime={news.published_at}>
-                  {format(new Date(news.published_at), "d 'de' MMMM 'de' yyyy, HH:mm", {
-                    locale: ptBR,
-                  })}
-                </time>
-              </div>
-            )}
-
-            {/* Source - moved here per Agência Brasil standard */}
-            {news.source && (
-              <div className="flex items-center gap-1.5">
-                <MapPin className="h-4 w-4" />
-                <span>Fonte: {news.source}</span>
-              </div>
-            )}
-
-            {/* Updated At */}
-            {news.updated_at_display && (
-              <div className="flex items-center gap-1.5 text-primary">
-                <RefreshCw className="h-3.5 w-3.5" />
-                <span className="text-xs">
-                  Atualizado {formatDistanceToNow(new Date(news.updated_at_display), { addSuffix: true, locale: ptBR })}
-                </span>
-              </div>
-            )}
-
-            {/* Read Time */}
-            <div className="flex items-center gap-1.5">
-              <Clock className="h-4 w-4" />
-              <span>{readTime} min de leitura</span>
-            </div>
-
-            {/* View Count */}
-            <div className="flex items-center gap-1.5">
-              <Eye className="h-4 w-4" />
-              <span>{news.view_count.toLocaleString('pt-BR')} visualizações</span>
-            </div>
-          </div>
-
-          {/* Share Actions */}
-          <div className="flex items-center justify-between pt-4">
-            <ShareButtons url={currentUrl} title={news.title} />
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-muted-foreground gap-1.5"
-              onClick={handlePrint}
+            {/* Title (H1) */}
+            <h1 
+              id="news-title"
+              className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight mb-4 px-4"
             >
-              <Printer className="h-4 w-4" />
-              <span className="hidden sm:inline">Imprimir</span>
-            </Button>
+              {news.title}
+            </h1>
+
+            {/* Subtitle / Linha Fina */}
+            {news.subtitle && (
+              <p className="text-lg md:text-xl text-white/80 leading-relaxed px-4 max-w-3xl mx-auto">
+                {news.subtitle}
+              </p>
+            )}
           </div>
         </header>
 
-        {/* Hero Image */}
-        {news.featured_image_url && (
-          <figure className="mb-8">
-            <img
-              src={news.featured_image_url}
-              alt={news.image_alt || `Imagem da notícia: ${news.title}`}
-              className="w-full rounded-xl object-cover aspect-video shadow-lg"
-              loading="eager"
-              fetchPriority="high"
-            />
-            {(news.image_alt || news.image_credit) && (
-              <figcaption className="text-sm text-muted-foreground mt-3 px-1 space-y-1">
-                {news.image_alt && (
-                  <p className="text-foreground/80">{news.image_alt}</p>
+        {/* Author & Metadata Bar */}
+        <div className="border-b bg-card">
+          <div className="container max-w-4xl py-4">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              {/* Author Info */}
+              <div className="space-y-1">
+                <p className="font-bold text-foreground uppercase tracking-wide text-sm">
+                  {news.author?.full_name || 'Redação'}
+                </p>
+                {news.published_at && (
+                  <p className="text-sm text-muted-foreground">
+                    Publicado em {format(new Date(news.published_at), "dd/MM/yyyy '-' HH:mm", { locale: ptBR })}
+                  </p>
                 )}
-                {news.image_credit && (
-                  <p className="text-xs italic">Foto: {news.image_credit}</p>
+                {news.source && (
+                  <p className="text-sm text-muted-foreground">
+                    {news.source}
+                  </p>
                 )}
-              </figcaption>
-            )}
-          </figure>
-        )}
+              </div>
 
-        {/* Audio Block */}
-        <NewsAudioBlock
-          newsId={news.id}
-          audioUrl={news.audio_url}
-          audioStatus={news.audio_status}
-          audioDuration={news.audio_duration_seconds}
-          transcriptText={news.transcript_text}
-          contentHtml={news.content}
-          className="mb-6"
-        />
+              {/* Share Buttons */}
+              <ShareButtons 
+                url={currentUrl} 
+                title={news.title} 
+                contentId={news.id}
+                contentType="news"
+                variant="circular"
+              />
+            </div>
+          </div>
+        </div>
 
-        {/* Summary Block */}
-        <NewsSummaryBlock
-          summaryShort={news.summary_short}
-          summaryMedium={news.summary_medium}
-          keyPoints={news.ai_summary_bullets}
-          generatedAt={news.ai_summary_generated_at}
-          className="mb-6"
-        />
+        {/* Main Content Area */}
+        <div className="container max-w-4xl py-8">
+          {/* Hero Image - No Rounded Corners */}
+          {news.featured_image_url && (
+            <figure className="mb-8 relative">
+              <img
+                src={news.featured_image_url}
+                alt={news.image_alt || `Imagem da notícia: ${news.title}`}
+                className="w-full object-cover aspect-video"
+                loading="eager"
+                fetchPriority="high"
+              />
+              {/* Credit overlay on image */}
+              {news.image_credit && (
+                <span className="absolute bottom-0 right-0 bg-black/70 text-white text-xs px-3 py-1.5">
+                  {news.image_credit}
+                </span>
+              )}
+              {/* Caption below image */}
+              {news.image_alt && (
+                <figcaption className="text-sm text-muted-foreground mt-3 italic">
+                  {news.image_alt}
+                </figcaption>
+              )}
+            </figure>
+          )}
 
-        {/* Table of Contents */}
-        {news.content && (
-          <NewsTableOfContents 
-            contentHtml={news.content} 
+          {/* Audio Block - Dark Style */}
+          <NewsAudioBlock
+            newsId={news.id}
+            audioUrl={news.audio_url}
+            audioStatus={news.audio_status}
+            audioDuration={news.audio_duration_seconds}
+            transcriptText={news.transcript_text}
+            contentHtml={news.content}
             className="mb-8"
           />
-        )}
 
-        {/* Main Content */}
-        <section 
-          id="main-content"
-          aria-label="Conteúdo da matéria"
-        >
+          {/* Summary Block */}
+          <NewsSummaryBlock
+            summaryShort={news.summary_short}
+            summaryMedium={news.summary_medium}
+            keyPoints={news.ai_summary_bullets}
+            generatedAt={news.ai_summary_generated_at}
+            className="mb-8"
+          />
+
+          {/* Table of Contents */}
           {news.content && (
-            <div
-              className="prose-news text-lg mb-10"
-              dangerouslySetInnerHTML={{ __html: news.content }}
+            <NewsTableOfContents 
+              contentHtml={news.content} 
+              className="mb-8"
             />
           )}
-        </section>
 
-        {/* Article Footer */}
-        <footer className="border-t pt-8 space-y-6" aria-label="Informações adicionais">
-          {/* Tags */}
-          {news.tags && news.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              <span className="text-sm text-muted-foreground mr-2">Tags:</span>
-              {news.tags.map((tag) => (
-                <Link
-                  key={tag.id}
-                  to={`/busca?tag=${tag.slug}`}
-                  className="bg-muted hover:bg-primary/10 hover:text-primary px-3 py-1.5 rounded-full text-sm transition-colors"
-                >
-                  #{tag.name}
-                </Link>
-              ))}
+          {/* Main Content */}
+          <section 
+            id="main-content"
+            aria-label="Conteúdo da matéria"
+          >
+            {news.content && (
+              <div
+                className="prose-news text-lg mb-10"
+                dangerouslySetInnerHTML={{ __html: news.content }}
+              />
+            )}
+          </section>
+
+          {/* Article Footer */}
+          <footer className="border-t pt-8 space-y-8" aria-label="Informações adicionais">
+            {/* Editor Info */}
+            <div className="text-sm text-muted-foreground">
+              <span className="font-medium">Edição:</span> {news.author?.full_name || 'Redação Conexão na Cidade'}
+            </div>
+
+            {/* Tags */}
+            {news.tags && news.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {news.tags.map((tag) => (
+                  <Link
+                    key={tag.id}
+                    to={`/busca?tag=${tag.slug}`}
+                    className="bg-muted hover:bg-primary/10 hover:text-primary px-4 py-2 rounded-full text-sm transition-colors"
+                  >
+                    {tag.name}
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            {/* Share Section - Centered */}
+            <div className="text-center py-6 border-t">
+              <p className="text-sm font-medium text-foreground mb-4">Compartilhe essa notícia</p>
+              <div className="flex justify-center">
+                <ShareButtons 
+                  url={currentUrl} 
+                  title={news.title} 
+                  contentId={news.id}
+                  contentType="news"
+                  variant="circular"
+                />
+              </div>
+            </div>
+          </footer>
+
+          {/* Author Card */}
+          {news.author && (
+            <div className="mt-10">
+              <AuthorCard author={news.author} />
             </div>
           )}
 
-
-          {/* Share Again */}
-          <div className="pt-4">
-            <p className="text-sm text-muted-foreground mb-3">Compartilhe esta notícia:</p>
-            <ShareButtons url={currentUrl} title={news.title} />
-          </div>
-        </footer>
-
-        {/* Author Card */}
-        {news.author && (
+          {/* Fact Check CTA */}
           <div className="mt-10">
-            <AuthorCard author={news.author} />
+            <FactCheckCTA newsSlug={news.slug} newsTitle={news.title} />
           </div>
-        )}
 
-        {/* Fact Check CTA */}
-        <div className="mt-10">
-          <FactCheckCTA newsSlug={news.slug} newsTitle={news.title} />
+          {/* Related News */}
+          <nav aria-label="Notícias relacionadas" className="mt-12">
+            <RelatedNews news={relatedNews} />
+          </nav>
         </div>
-
-        {/* Related News */}
-        <nav aria-label="Notícias relacionadas" className="mt-12">
-          <RelatedNews news={relatedNews} />
-        </nav>
       </article>
     </>
   );
