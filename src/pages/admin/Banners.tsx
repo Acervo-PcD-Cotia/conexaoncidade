@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Edit, Trash2, ExternalLink, GripVertical, AlertTriangle } from "lucide-react";
+import { Plus, Edit, Trash2, ExternalLink, GripVertical, AlertTriangle, Calendar, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   DndContext,
@@ -48,6 +49,8 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ImageUploader } from "@/components/admin/ImageUploader";
+import { BannerMetrics } from "@/components/admin/BannerMetrics";
+import { format } from "date-fns";
 
 const MAX_BANNERS = 7;
 
@@ -59,6 +62,8 @@ interface BannerForm {
   link_target: string;
   alt_text: string;
   is_active: boolean;
+  starts_at: string;
+  ends_at: string;
 }
 
 const defaultForm: BannerForm = {
@@ -68,6 +73,8 @@ const defaultForm: BannerForm = {
   link_target: "_blank",
   alt_text: "",
   is_active: true,
+  starts_at: "",
+  ends_at: "",
 };
 
 interface SortableRowProps {
@@ -81,9 +88,26 @@ interface SortableRowProps {
     is_active: boolean;
     click_count: number | null;
     sort_order: number | null;
+    starts_at: string | null;
+    ends_at: string | null;
   };
   onEdit: () => void;
   onDelete: () => void;
+}
+
+function getBannerStatus(banner: SortableRowProps["banner"]) {
+  const now = new Date();
+
+  if (banner.starts_at && new Date(banner.starts_at) > now) {
+    return { label: "Agendado", className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" };
+  }
+  if (banner.ends_at && new Date(banner.ends_at) < now) {
+    return { label: "Expirado", className: "bg-gray-100 text-gray-500 dark:bg-gray-800/50 dark:text-gray-400" };
+  }
+  if (banner.is_active) {
+    return { label: "Ativo", className: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" };
+  }
+  return { label: "Inativo", className: "bg-muted text-muted-foreground" };
 }
 
 function SortableRow({ banner, onEdit, onDelete }: SortableRowProps) {
@@ -101,6 +125,8 @@ function SortableRow({ banner, onEdit, onDelete }: SortableRowProps) {
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
+
+  const status = getBannerStatus(banner);
 
   return (
     <TableRow ref={setNodeRef} style={style}>
@@ -147,15 +173,29 @@ function SortableRow({ banner, onEdit, onDelete }: SortableRowProps) {
         )}
       </TableCell>
       <TableCell>
-        <span
-          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-            banner.is_active
-              ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-              : "bg-muted text-muted-foreground"
-          }`}
-        >
-          {banner.is_active ? "Ativo" : "Inativo"}
+        <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${status.className}`}>
+          {status.label}
         </span>
+      </TableCell>
+      <TableCell>
+        <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
+          {banner.starts_at ? (
+            <span className="flex items-center gap-1">
+              <Calendar className="h-3 w-3" />
+              {format(new Date(banner.starts_at), "dd/MM/yyyy HH:mm")}
+            </span>
+          ) : (
+            <span>Início: Imediato</span>
+          )}
+          {banner.ends_at ? (
+            <span className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {format(new Date(banner.ends_at), "dd/MM/yyyy HH:mm")}
+            </span>
+          ) : (
+            <span>Fim: Indefinido</span>
+          )}
+        </div>
       </TableCell>
       <TableCell>{banner.click_count || 0}</TableCell>
       <TableCell>
@@ -206,29 +246,27 @@ export default function Banners() {
 
   const saveMutation = useMutation({
     mutationFn: async (data: BannerForm) => {
+      const payload = {
+        title: data.title,
+        image_url: data.image_url,
+        link_url: data.link_url,
+        link_target: data.link_target,
+        alt_text: data.alt_text,
+        is_active: data.is_active,
+        starts_at: data.starts_at || null,
+        ends_at: data.ends_at || null,
+      };
+
       if (data.id) {
         const { error } = await supabase
           .from("super_banners")
-          .update({
-            title: data.title,
-            image_url: data.image_url,
-            link_url: data.link_url,
-            link_target: data.link_target,
-            alt_text: data.alt_text,
-            is_active: data.is_active,
-          })
+          .update(payload)
           .eq("id", data.id);
         if (error) throw error;
       } else {
-        // Get the next sort_order
         const maxOrder = banners?.reduce((max, b) => Math.max(max, b.sort_order || 0), 0) || 0;
         const { error } = await supabase.from("super_banners").insert({
-          title: data.title,
-          image_url: data.image_url,
-          link_url: data.link_url,
-          link_target: data.link_target,
-          alt_text: data.alt_text,
-          is_active: data.is_active,
+          ...payload,
           sort_order: maxOrder + 1,
         });
         if (error) throw error;
@@ -286,6 +324,8 @@ export default function Banners() {
       link_target: banner.link_target || "_blank",
       alt_text: banner.alt_text || "",
       is_active: banner.is_active,
+      starts_at: banner.starts_at ? format(new Date(banner.starts_at), "yyyy-MM-dd'T'HH:mm") : "",
+      ends_at: banner.ends_at ? format(new Date(banner.ends_at), "yyyy-MM-dd'T'HH:mm") : "",
     });
     setOpen(true);
   };
@@ -296,7 +336,6 @@ export default function Banners() {
       toast.error("URL da imagem é obrigatória");
       return;
     }
-    // Check limit when activating a new banner
     if (!form.id && form.is_active && isAtLimit) {
       toast.error(`Limite de ${MAX_BANNERS} banners ativos atingido`);
       return;
@@ -317,7 +356,6 @@ export default function Banners() {
       sort_order: index + 1,
     }));
 
-    // Optimistically update the UI
     queryClient.setQueryData(
       ["admin-banners"],
       newOrder.map((b, i) => ({ ...b, sort_order: i + 1 }))
@@ -335,183 +373,231 @@ export default function Banners() {
             Gerencie os banners promocionais do topo da home
           </p>
         </div>
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-muted-foreground">
-            {activeBannerCount} de {MAX_BANNERS} banners ativos
-          </span>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button
-                onClick={() => setForm(defaultForm)}
-                disabled={isAtLimit}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Novo Banner
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>{form.id ? "Editar" : "Novo"} Banner</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="title">Título (identificador interno)</Label>
-                  <Input
-                    id="title"
-                    value={form.title}
-                    onChange={(e) => setForm({ ...form, title: e.target.value })}
-                    placeholder="Ex: Promoção Janeiro"
-                  />
-                </div>
+      </div>
 
-                <div>
-                  <Label>Imagem do Banner *</Label>
-                  <p className="mb-2 text-xs text-muted-foreground">
-                    Recomendado: 1920x640px (proporção 21:9)
-                  </p>
-                  <ImageUploader
-                    value={form.image_url}
-                    onChange={(url) => setForm({ ...form, image_url: url })}
-                    onAltChange={(alt) => setForm({ ...form, alt_text: alt })}
-                  />
-                </div>
+      <Tabs defaultValue="list">
+        <TabsList>
+          <TabsTrigger value="list">Banners</TabsTrigger>
+          <TabsTrigger value="metrics">Métricas</TabsTrigger>
+        </TabsList>
 
-                {form.image_url && (
-                  <div className="overflow-hidden rounded-lg border">
-                    <div className="aspect-[21/9] w-full">
-                      <img
-                        src={form.image_url}
-                        alt="Preview"
-                        className="h-full w-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = "/placeholder.svg";
-                        }}
+        <TabsContent value="list" className="space-y-6">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">
+              {activeBannerCount} de {MAX_BANNERS} banners ativos
+            </span>
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => setForm(defaultForm)} disabled={isAtLimit}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Novo Banner
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>{form.id ? "Editar" : "Novo"} Banner</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <Label htmlFor="title">Título (identificador interno)</Label>
+                    <Input
+                      id="title"
+                      value={form.title}
+                      onChange={(e) => setForm({ ...form, title: e.target.value })}
+                      placeholder="Ex: Promoção Janeiro"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Imagem do Banner *</Label>
+                    <p className="mb-2 text-xs text-muted-foreground">
+                      Recomendado: 1920x640px (proporção 21:9). Arraste ou clique para fazer upload.
+                    </p>
+                    <ImageUploader
+                      value={form.image_url}
+                      onChange={(url) => setForm({ ...form, image_url: url })}
+                      onAltChange={(alt) => setForm({ ...form, alt_text: alt })}
+                      bucket="banners"
+                      path="banners"
+                    />
+                  </div>
+
+                  {form.image_url && (
+                    <div className="overflow-hidden rounded-lg border">
+                      <div className="aspect-[21/9] w-full">
+                        <img
+                          src={form.image_url}
+                          alt="Preview"
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = "/placeholder.svg";
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <Label htmlFor="link_url">URL de Destino</Label>
+                      <Input
+                        id="link_url"
+                        value={form.link_url}
+                        onChange={(e) => setForm({ ...form, link_url: e.target.value })}
+                        placeholder="https://... ou /pagina-interna"
                       />
                     </div>
+                    <div>
+                      <Label htmlFor="link_target">Abrir em</Label>
+                      <Select
+                        value={form.link_target}
+                        onValueChange={(v) => setForm({ ...form, link_target: v })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="_self">Mesma janela (link interno)</SelectItem>
+                          <SelectItem value="_blank">Nova aba (link externo)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                )}
 
-                <div className="grid gap-4 sm:grid-cols-2">
+                  {/* Scheduling Section */}
+                  <div className="rounded-lg border p-4">
+                    <h4 className="mb-3 flex items-center gap-2 font-medium">
+                      <Calendar className="h-4 w-4" />
+                      Agendamento de Campanha
+                    </h4>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <Label htmlFor="starts_at">Início da Campanha</Label>
+                        <Input
+                          id="starts_at"
+                          type="datetime-local"
+                          value={form.starts_at}
+                          onChange={(e) => setForm({ ...form, starts_at: e.target.value })}
+                        />
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Deixe vazio para exibir imediatamente
+                        </p>
+                      </div>
+                      <div>
+                        <Label htmlFor="ends_at">Fim da Campanha</Label>
+                        <Input
+                          id="ends_at"
+                          type="datetime-local"
+                          value={form.ends_at}
+                          onChange={(e) => setForm({ ...form, ends_at: e.target.value })}
+                        />
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Deixe vazio para exibir indefinidamente
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   <div>
-                    <Label htmlFor="link_url">URL de Destino</Label>
+                    <Label htmlFor="alt_text">Texto Alternativo (SEO/Acessibilidade)</Label>
                     <Input
-                      id="link_url"
-                      value={form.link_url}
-                      onChange={(e) => setForm({ ...form, link_url: e.target.value })}
-                      placeholder="https://... ou /pagina-interna"
+                      id="alt_text"
+                      value={form.alt_text}
+                      onChange={(e) => setForm({ ...form, alt_text: e.target.value })}
+                      placeholder="Descrição da imagem para acessibilidade"
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="link_target">Abrir em</Label>
-                    <Select
-                      value={form.link_target}
-                      onValueChange={(v) => setForm({ ...form, link_target: v })}
+
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={form.is_active}
+                      onCheckedChange={(checked) => setForm({ ...form, is_active: checked })}
+                    />
+                    <Label>Banner ativo</Label>
+                  </div>
+
+                  <Button type="submit" className="w-full" disabled={saveMutation.isPending}>
+                    {saveMutation.isPending ? "Salvando..." : "Salvar Banner"}
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {isAtLimit && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                Limite de {MAX_BANNERS} banners ativos atingido. Desative ou exclua um banner para adicionar novos.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <div className="rounded-lg border bg-card">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-10"></TableHead>
+                  <TableHead className="w-32">Preview</TableHead>
+                  <TableHead>Título</TableHead>
+                  <TableHead>Link</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Período</TableHead>
+                  <TableHead>Cliques</TableHead>
+                  <TableHead className="w-24"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="py-8 text-center">
+                      Carregando...
+                    </TableCell>
+                  </TableRow>
+                ) : banners?.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="py-8 text-center">
+                      Nenhum banner cadastrado
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext
+                      items={banners?.map((b) => b.id) || []}
+                      strategy={verticalListSortingStrategy}
                     >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="_self">Mesma janela (link interno)</SelectItem>
-                        <SelectItem value="_blank">Nova aba (link externo)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+                      {banners?.map((banner) => (
+                        <SortableRow
+                          key={banner.id}
+                          banner={banner}
+                          onEdit={() => handleEdit(banner)}
+                          onDelete={() => {
+                            if (confirm("Excluir banner?")) {
+                              deleteMutation.mutate(banner.id);
+                            }
+                          }}
+                        />
+                      ))}
+                    </SortableContext>
+                  </DndContext>
+                )}
+              </TableBody>
+            </Table>
+          </div>
 
-                <div>
-                  <Label htmlFor="alt_text">Texto Alternativo (SEO/Acessibilidade)</Label>
-                  <Input
-                    id="alt_text"
-                    value={form.alt_text}
-                    onChange={(e) => setForm({ ...form, alt_text: e.target.value })}
-                    placeholder="Descrição da imagem para acessibilidade"
-                  />
-                </div>
+          <p className="text-center text-sm text-muted-foreground">
+            Arraste os banners pela alça ☰ para reordenar. A ordem define a sequência de exibição no slider.
+          </p>
+        </TabsContent>
 
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={form.is_active}
-                    onCheckedChange={(checked) => setForm({ ...form, is_active: checked })}
-                  />
-                  <Label>Banner ativo</Label>
-                </div>
-
-                <Button type="submit" className="w-full" disabled={saveMutation.isPending}>
-                  {saveMutation.isPending ? "Salvando..." : "Salvar Banner"}
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
-
-      {isAtLimit && (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            Limite de {MAX_BANNERS} banners ativos atingido. Desative ou exclua um banner para adicionar novos.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      <div className="rounded-lg border bg-card">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-10"></TableHead>
-              <TableHead className="w-32">Preview</TableHead>
-              <TableHead>Título</TableHead>
-              <TableHead>Link</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Cliques</TableHead>
-              <TableHead className="w-24"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={7} className="py-8 text-center">
-                  Carregando...
-                </TableCell>
-              </TableRow>
-            ) : banners?.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="py-8 text-center">
-                  Nenhum banner cadastrado
-                </TableCell>
-              </TableRow>
-            ) : (
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext
-                  items={banners?.map((b) => b.id) || []}
-                  strategy={verticalListSortingStrategy}
-                >
-                  {banners?.map((banner) => (
-                    <SortableRow
-                      key={banner.id}
-                      banner={banner}
-                      onEdit={() => handleEdit(banner)}
-                      onDelete={() => {
-                        if (confirm("Excluir banner?")) {
-                          deleteMutation.mutate(banner.id);
-                        }
-                      }}
-                    />
-                  ))}
-                </SortableContext>
-              </DndContext>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      <p className="text-center text-sm text-muted-foreground">
-        Arraste os banners pela alça ☰ para reordenar. A ordem define a sequência de exibição no slider.
-      </p>
+        <TabsContent value="metrics">
+          <BannerMetrics />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

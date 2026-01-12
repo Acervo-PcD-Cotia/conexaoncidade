@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -7,6 +7,17 @@ import { supabase } from "@/integrations/supabase/client";
 export function SuperBanner() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const trackedImpressions = useRef<Set<string>>(new Set());
+
+  // Generate or retrieve session ID for tracking
+  const sessionId = useMemo(() => {
+    if (typeof window === "undefined") return "";
+    const stored = sessionStorage.getItem("banner_session_id");
+    if (stored) return stored;
+    const newId = crypto.randomUUID();
+    sessionStorage.setItem("banner_session_id", newId);
+    return newId;
+  }, []);
 
   const { data: banners = [] } = useQuery({
     queryKey: ["super-banners"],
@@ -53,6 +64,49 @@ export function SuperBanner() {
     }
   }, [banners.length, currentIndex]);
 
+  // Track impressions when banner is viewed
+  useEffect(() => {
+    if (banners.length === 0 || !sessionId) return;
+    
+    const currentBanner = banners[currentIndex];
+    if (!currentBanner) return;
+    
+    const impressionKey = `${currentBanner.id}-${sessionId}`;
+    
+    // Only track once per session per banner
+    if (trackedImpressions.current.has(impressionKey)) return;
+    trackedImpressions.current.add(impressionKey);
+    
+    // Record impression
+    supabase
+      .from("banner_impressions")
+      .insert({
+        banner_id: currentBanner.id,
+        session_id: sessionId,
+      })
+      .then();
+  }, [currentIndex, banners, sessionId]);
+
+  const handleBannerClick = (banner: NonNullable<typeof banners>[number]) => {
+    // Increment accumulated click count
+    supabase
+      .from("super_banners")
+      .update({ click_count: (banner.click_count || 0) + 1 })
+      .eq("id", banner.id)
+      .then();
+
+    // Record detailed click for analytics
+    supabase
+      .from("banner_clicks")
+      .insert({
+        banner_id: banner.id,
+        session_id: sessionId,
+        user_agent: navigator.userAgent,
+        referer: document.referrer || null,
+      })
+      .then();
+  };
+
   if (banners.length === 0) return null;
 
   return (
@@ -73,14 +127,7 @@ export function SuperBanner() {
             target={banner.link_target || "_blank"}
             rel="noopener noreferrer"
             className="relative w-full shrink-0"
-            onClick={() => {
-              // Track click - increment click_count
-              supabase
-                .from("super_banners")
-                .update({ click_count: (banner.click_count || 0) + 1 })
-                .eq("id", banner.id)
-                .then();
-            }}
+            onClick={() => handleBannerClick(banner)}
           >
             {/* Responsive aspect ratio: 16:9 on mobile, 21:9 on desktop */}
             <div className="aspect-[16/9] w-full md:aspect-[21/9]">

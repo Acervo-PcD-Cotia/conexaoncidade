@@ -1208,6 +1208,70 @@ export type Database = {
           },
         ]
       }
+      banner_clicks: {
+        Row: {
+          banner_id: string | null
+          clicked_at: string | null
+          id: string
+          referer: string | null
+          session_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          banner_id?: string | null
+          clicked_at?: string | null
+          id?: string
+          referer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          banner_id?: string | null
+          clicked_at?: string | null
+          id?: string
+          referer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "banner_clicks_banner_id_fkey"
+            columns: ["banner_id"]
+            isOneToOne: false
+            referencedRelation: "super_banners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      banner_impressions: {
+        Row: {
+          banner_id: string | null
+          id: string
+          session_id: string | null
+          viewed_at: string | null
+        }
+        Insert: {
+          banner_id?: string | null
+          id?: string
+          session_id?: string | null
+          viewed_at?: string | null
+        }
+        Update: {
+          banner_id?: string | null
+          id?: string
+          session_id?: string | null
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "banner_impressions_banner_id_fkey"
+            columns: ["banner_id"]
+            isOneToOne: false
+            referencedRelation: "super_banners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bio_buttons: {
         Row: {
           bio_page_id: string
