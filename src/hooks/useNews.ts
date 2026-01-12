@@ -21,6 +21,9 @@ export interface NewsItem {
   category_id: string | null;
   author_id: string | null;
   source: string | null;
+  // Editor fields
+  editor_id: string | null;
+  editor_name: string | null;
   // Audio fields
   audio_url: string | null;
   audio_status: string | null;
@@ -50,6 +53,10 @@ export interface NewsItem {
     full_name: string | null;
     avatar_url: string | null;
     bio: string | null;
+  } | null;
+  editor?: {
+    id: string;
+    full_name: string | null;
   } | null;
   tags?: Array<{
     id: string;
@@ -161,6 +168,17 @@ export function useNewsBySlug(slug: string) {
         author = authorData;
       }
 
+      // Fetch editor separately
+      let editor = null;
+      if (data.editor_id) {
+        const { data: editorData } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .eq('id', data.editor_id)
+          .maybeSingle();
+        editor = editorData;
+      }
+
       // Fetch tags separately
       const { data: tagsData } = await supabase
         .from('news_tags')
@@ -168,7 +186,7 @@ export function useNewsBySlug(slug: string) {
         .eq('news_id', data.id);
 
       const tags = tagsData?.map((t) => t.tag).filter(Boolean) || [];
-      return { ...data, author, tags } as NewsItem;
+      return { ...data, author, editor, tags } as NewsItem;
     },
     enabled: !!slug,
   });

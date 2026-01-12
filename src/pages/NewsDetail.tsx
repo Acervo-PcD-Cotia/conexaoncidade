@@ -10,6 +10,7 @@ import { NewsSummaryBlock } from '@/components/news/NewsSummaryBlock';
 import { NewsTableOfContents } from '@/components/news/NewsTableOfContents';
 import { ReadingProgressBar } from '@/components/news/ReadingProgressBar';
 import { FactCheckCTA } from '@/components/news/FactCheckCTA';
+import { PrintButton } from '@/components/news/PrintButton';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
@@ -18,6 +19,7 @@ import { ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useReadingTracker } from '@/hooks/useReadingTracker';
 import { useAuth } from '@/contexts/AuthContext';
+import { getNewsHeaderColor } from '@/lib/colorUtils';
 
 function calculateReadTime(content: string | null): number {
   if (!content) return 1;
@@ -125,6 +127,11 @@ export default function NewsDetail() {
   const readTime = calculateReadTime(news.content);
   const wordCount = countWords(news.content);
 
+  // Dynamic header color based on category
+  const headerBgColor = useMemo(() => {
+    return getNewsHeaderColor(news.category?.color || null, news.highlight);
+  }, [news.category?.color, news.highlight]);
+
   const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
   const metaDescription = news.meta_description || news.summary_short || news.excerpt || news.subtitle || '';
   const ogImage = news.og_image_url || news.featured_image_url || '';
@@ -217,8 +224,27 @@ export default function NewsDetail() {
       </a>
 
       <article role="article" aria-labelledby="news-title">
-        {/* Dark Header - Agência Brasil Style */}
-        <header className="bg-[hsl(217,91%,20%)] text-white py-8 md:py-12">
+        {/* Print Header - Hidden on screen */}
+        <div className="hidden print:block news-header-print">
+          <div className="news-category-print">
+            {news.category?.name}
+          </div>
+          <h1 className="news-title-print">{news.title}</h1>
+          {news.subtitle && (
+            <p className="news-subtitle-print">{news.subtitle}</p>
+          )}
+          <div className="news-meta-print">
+            Por {news.author?.full_name || 'Redação'} | {' '}
+            {news.published_at && format(new Date(news.published_at), "dd/MM/yyyy")} | {' '}
+            {news.source || 'Conexão na Cidade'}
+          </div>
+        </div>
+
+        {/* Dark Header - Agência Brasil Style (hidden on print) */}
+        <header 
+          className="print-hide text-white py-8 md:py-12 transition-colors duration-300"
+          style={{ backgroundColor: headerBgColor }}
+        >
           <div className="container max-w-4xl text-center">
             {/* Category Badge */}
             {news.category && (
@@ -270,14 +296,17 @@ export default function NewsDetail() {
                 )}
               </div>
 
-              {/* Share Buttons */}
-              <ShareButtons 
-                url={currentUrl} 
-                title={news.title} 
-                contentId={news.id}
-                contentType="news"
-                variant="circular"
-              />
+              {/* Share Buttons + Print */}
+              <div className="flex items-center gap-2 print-hide">
+                <ShareButtons 
+                  url={currentUrl} 
+                  title={news.title} 
+                  contentId={news.id}
+                  contentType="news"
+                  variant="circular"
+                />
+                <PrintButton />
+              </div>
             </div>
           </div>
         </div>
@@ -351,10 +380,11 @@ export default function NewsDetail() {
           </section>
 
           {/* Article Footer */}
-          <footer className="border-t pt-8 space-y-8" aria-label="Informações adicionais">
+          <footer className="border-t pt-8 space-y-8 article-footer" aria-label="Informações adicionais">
             {/* Editor Info */}
             <div className="text-sm text-muted-foreground">
-              <span className="font-medium">Edição:</span> {news.author?.full_name || 'Redação Conexão na Cidade'}
+              <span className="font-medium">Edição:</span>{' '}
+              {news.editor_name || news.editor?.full_name || news.author?.full_name || 'Redação Conexão na Cidade'}
             </div>
 
             {/* Tags */}
