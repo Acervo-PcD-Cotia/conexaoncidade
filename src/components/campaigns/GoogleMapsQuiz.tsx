@@ -109,7 +109,7 @@ export function GoogleMapsQuiz({ onComplete, onBack }: GoogleMapsQuizProps) {
       return {
         type: 'good',
         title: 'Seu negócio parece bem posicionado!',
-        message: 'Parabéns! Seu perfil no Google Maps está em bom estado. Mas sempre há espaço para melhorias.',
+        message: 'Parabéns! Seu perfil no Google Maps está em bom estado. O Conexão na Cidade pode ajudar você a melhorar ainda mais.',
         icon: CheckCircle,
         color: 'text-primary',
         bgColor: 'bg-primary/10',
@@ -117,8 +117,8 @@ export function GoogleMapsQuiz({ onComplete, onBack }: GoogleMapsQuizProps) {
     } else if (score <= 6) {
       return {
         type: 'warning',
-        title: 'Seu negócio pode estar perdendo visibilidade',
-        message: 'Identificamos alguns pontos de melhoria que podem aumentar suas visitas e clientes.',
+        title: 'Seu negócio pode estar perdendo visibilidade no Google Maps',
+        message: 'O Conexão na Cidade pode ajudar você a corrigir isso gratuitamente.',
         icon: AlertTriangle,
         color: 'text-amber-500',
         bgColor: 'bg-amber-500/10',
@@ -126,8 +126,8 @@ export function GoogleMapsQuiz({ onComplete, onBack }: GoogleMapsQuizProps) {
     } else {
       return {
         type: 'critical',
-        title: 'Atenção! Seu negócio pode estar invisível',
-        message: 'Existem problemas importantes que podem estar impedindo clientes de encontrar você no Google.',
+        title: 'Seu negócio pode estar perdendo visibilidade no Google Maps',
+        message: 'O Conexão na Cidade pode ajudar você a corrigir isso gratuitamente.',
         icon: AlertTriangle,
         color: 'text-destructive',
         bgColor: 'bg-destructive/10',
