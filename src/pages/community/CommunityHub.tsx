@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { 
-  Users, 
-  TrendingUp,
   Hash,
   ShieldCheck
 } from "lucide-react";
@@ -14,6 +12,8 @@ import { useCommunity } from "@/hooks/useCommunity";
 import { MemberBadge, AchievementBadge } from "@/components/community/MemberBadge";
 import { CommunityFeed } from "@/components/community/CommunityFeed";
 import { CommunityTermsModal } from "@/components/community/CommunityTermsModal";
+import { TrendingTopics } from "@/components/community/TrendingTopics";
+import { ActiveMembersRanking } from "@/components/community/ActiveMembersRanking";
 
 export default function CommunityHub() {
   const navigate = useNavigate();
@@ -158,33 +158,11 @@ export default function CommunityHub() {
 
           {/* Right Sidebar - Trending & Stats */}
           <div className="lg:col-span-1 space-y-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4" />
-                  Em Alta
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Em breve: tópicos mais discutidos
-                </p>
-              </CardContent>
-            </Card>
+            {/* Trending Topics */}
+            <TrendingTopics />
 
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Membros Ativos
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Em breve: ranking de contribuidores
-                </p>
-              </CardContent>
-            </Card>
+            {/* Active Members Ranking */}
+            <ActiveMembersRanking />
 
             {/* Anti Fake News Card */}
             <Card className="border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/30">
