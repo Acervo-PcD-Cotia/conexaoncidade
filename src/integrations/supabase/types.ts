@@ -2462,11 +2462,15 @@ export type Database = {
           access_method: string | null
           badges: string[] | null
           bio: string | null
+          city: string | null
           created_at: string | null
+          fact_check_count: number | null
           id: string
+          interests: string[] | null
           invited_by: string | null
           is_suspended: boolean | null
           level: Database["public"]["Enums"]["community_level"] | null
+          onboarding_completed_at: string | null
           points: number | null
           quiz_completed: boolean | null
           quiz_completed_at: string | null
@@ -2482,11 +2486,15 @@ export type Database = {
           access_method?: string | null
           badges?: string[] | null
           bio?: string | null
+          city?: string | null
           created_at?: string | null
+          fact_check_count?: number | null
           id?: string
+          interests?: string[] | null
           invited_by?: string | null
           is_suspended?: boolean | null
           level?: Database["public"]["Enums"]["community_level"] | null
+          onboarding_completed_at?: string | null
           points?: number | null
           quiz_completed?: boolean | null
           quiz_completed_at?: string | null
@@ -2502,11 +2510,15 @@ export type Database = {
           access_method?: string | null
           badges?: string[] | null
           bio?: string | null
+          city?: string | null
           created_at?: string | null
+          fact_check_count?: number | null
           id?: string
+          interests?: string[] | null
           invited_by?: string | null
           is_suspended?: boolean | null
           level?: Database["public"]["Enums"]["community_level"] | null
+          onboarding_completed_at?: string | null
           points?: number | null
           quiz_completed?: boolean | null
           quiz_completed_at?: string | null
@@ -2727,10 +2739,12 @@ export type Database = {
           hidden_reason: string | null
           id: string
           is_hidden: boolean | null
+          is_official: boolean | null
           is_pinned: boolean | null
           like_count: number | null
           moderated_at: string | null
           moderated_by: string | null
+          pin_order: number | null
           post_type: string | null
           updated_at: string | null
           view_count: number | null
@@ -2744,10 +2758,12 @@ export type Database = {
           hidden_reason?: string | null
           id?: string
           is_hidden?: boolean | null
+          is_official?: boolean | null
           is_pinned?: boolean | null
           like_count?: number | null
           moderated_at?: string | null
           moderated_by?: string | null
+          pin_order?: number | null
           post_type?: string | null
           updated_at?: string | null
           view_count?: number | null
@@ -2761,10 +2777,12 @@ export type Database = {
           hidden_reason?: string | null
           id?: string
           is_hidden?: boolean | null
+          is_official?: boolean | null
           is_pinned?: boolean | null
           like_count?: number | null
           moderated_at?: string | null
           moderated_by?: string | null
+          pin_order?: number | null
           post_type?: string | null
           updated_at?: string | null
           view_count?: number | null
