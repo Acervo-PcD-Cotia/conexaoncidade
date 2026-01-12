@@ -54,6 +54,7 @@ import { BannerABTests } from "@/components/admin/BannerABTests";
 import { BannerAlerts } from "@/components/admin/BannerAlerts";
 import { BannerHeatmap } from "@/components/admin/BannerHeatmap";
 import { BannerCampaigns } from "@/components/admin/BannerCampaigns";
+import { BannerPreview } from "@/components/admin/BannerPreview";
 import { format } from "date-fns";
 
 const MAX_BANNERS = 7;
@@ -431,18 +432,7 @@ export default function Banners() {
                   </div>
 
                   {form.image_url && (
-                    <div className="overflow-hidden rounded-lg border">
-                      <div className="aspect-[21/9] w-full">
-                        <img
-                          src={form.image_url}
-                          alt="Preview"
-                          className="h-full w-full object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = "/placeholder.svg";
-                          }}
-                        />
-                      </div>
-                    </div>
+                    <BannerPreview imageUrl={form.image_url} title={form.title} />
                   )}
 
                   <div className="grid gap-4 sm:grid-cols-2">
