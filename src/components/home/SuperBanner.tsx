@@ -11,11 +11,15 @@ export function SuperBanner() {
   const { data: banners = [] } = useQuery({
     queryKey: ["super-banners"],
     queryFn: async () => {
+      const now = new Date().toISOString();
       const { data, error } = await supabase
         .from("super_banners")
         .select("*")
         .eq("is_active", true)
-        .order("sort_order");
+        .or(`starts_at.is.null,starts_at.lte.${now}`)
+        .or(`ends_at.is.null,ends_at.gte.${now}`)
+        .order("sort_order")
+        .limit(7);
       if (error) throw error;
       return data;
     },
@@ -53,13 +57,13 @@ export function SuperBanner() {
 
   return (
     <div
-      className="relative overflow-hidden"
+      className="relative w-full overflow-hidden bg-black"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Banner container */}
+      {/* Banner container - fullwidth */}
       <div
-        className="flex transition-transform duration-500 ease-out"
+        className="flex transition-transform duration-700 ease-out"
         style={{ transform: `translateX(-${currentIndex * 100}%)` }}
       >
         {banners.map((banner) => (
@@ -70,57 +74,80 @@ export function SuperBanner() {
             rel="noopener noreferrer"
             className="relative w-full shrink-0"
             onClick={() => {
-              // Track click - can be implemented later
+              // Track click - increment click_count
+              supabase
+                .from("super_banners")
+                .update({ click_count: (banner.click_count || 0) + 1 })
+                .eq("id", banner.id)
+                .then();
             }}
           >
-            <div className="aspect-[3/1] w-full">
+            {/* Responsive aspect ratio: 16:9 on mobile, 21:9 on desktop */}
+            <div className="aspect-[16/9] w-full md:aspect-[21/9]">
               <img
                 src={banner.image_url}
-                alt={banner.alt_text || banner.title || "Banner"}
+                alt={banner.alt_text || banner.title || "Banner promocional"}
                 className="h-full w-full object-cover"
+                loading="eager"
               />
             </div>
           </a>
         ))}
       </div>
 
-      {/* Navigation arrows */}
+      {/* Navigation arrows - larger and more visible */}
       {banners.length > 1 && (
         <>
           <Button
             variant="ghost"
             size="icon"
-            className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm hover:bg-background"
-            onClick={goToPrev}
+            className="absolute left-2 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full bg-black/40 text-white backdrop-blur-sm hover:bg-black/60 hover:text-white md:left-4 md:h-12 md:w-12"
+            onClick={(e) => {
+              e.preventDefault();
+              goToPrev();
+            }}
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-6 w-6 md:h-8 md:w-8" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm hover:bg-background"
-            onClick={goToNext}
+            className="absolute right-2 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full bg-black/40 text-white backdrop-blur-sm hover:bg-black/60 hover:text-white md:right-4 md:h-12 md:w-12"
+            onClick={(e) => {
+              e.preventDefault();
+              goToNext();
+            }}
           >
-            <ChevronRight className="h-5 w-5" />
+            <ChevronRight className="h-6 w-6 md:h-8 md:w-8" />
           </Button>
         </>
       )}
 
-      {/* Dots */}
+      {/* Dots - larger and more visible */}
       {banners.length > 1 && (
-        <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2">
+        <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2 md:bottom-4 md:gap-3">
           {banners.map((_, index) => (
             <button
               key={index}
-              onClick={() => goToSlide(index)}
-              className={`h-2 w-2 rounded-full transition-all ${
+              onClick={(e) => {
+                e.preventDefault();
+                goToSlide(index);
+              }}
+              className={`h-2.5 w-2.5 rounded-full transition-all duration-300 md:h-3 md:w-3 ${
                 index === currentIndex
-                  ? "w-6 bg-primary"
-                  : "bg-background/60 hover:bg-background"
+                  ? "w-6 scale-110 bg-white md:w-8"
+                  : "bg-white/50 hover:bg-white/75"
               }`}
-              aria-label={`Go to slide ${index + 1}`}
+              aria-label={`Ir para slide ${index + 1}`}
             />
           ))}
+        </div>
+      )}
+
+      {/* Counter badge */}
+      {banners.length > 1 && (
+        <div className="absolute right-2 top-2 rounded-full bg-black/50 px-2 py-1 text-xs font-medium text-white backdrop-blur-sm md:right-4 md:top-4 md:px-3 md:text-sm">
+          {currentIndex + 1} / {banners.length}
         </div>
       )}
     </div>
