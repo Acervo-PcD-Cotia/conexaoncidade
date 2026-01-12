@@ -87,7 +87,17 @@ export function SuperBanner() {
       .then();
   }, [currentIndex, banners, sessionId]);
 
-  const handleBannerClick = (banner: NonNullable<typeof banners>[number]) => {
+  const handleBannerClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    banner: NonNullable<typeof banners>[number]
+  ) => {
+    // Capture click coordinates for heatmap
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = Math.round(((e.clientX - rect.left) / rect.width) * 100);
+    const clickY = Math.round(((e.clientY - rect.top) / rect.height) * 100);
+    const bannerWidth = Math.round(rect.width);
+    const bannerHeight = Math.round(rect.height);
+
     // Increment accumulated click count
     supabase
       .from("super_banners")
@@ -95,7 +105,7 @@ export function SuperBanner() {
       .eq("id", banner.id)
       .then();
 
-    // Record detailed click for analytics
+    // Record detailed click for analytics with coordinates
     supabase
       .from("banner_clicks")
       .insert({
@@ -103,6 +113,10 @@ export function SuperBanner() {
         session_id: sessionId,
         user_agent: navigator.userAgent,
         referer: document.referrer || null,
+        click_x: clickX,
+        click_y: clickY,
+        banner_width: bannerWidth,
+        banner_height: bannerHeight,
       })
       .then();
   };
@@ -127,7 +141,7 @@ export function SuperBanner() {
             target={banner.link_target || "_blank"}
             rel="noopener noreferrer"
             className="relative w-full shrink-0"
-            onClick={() => handleBannerClick(banner)}
+            onClick={(e) => handleBannerClick(e, banner)}
           >
             {/* Responsive aspect ratio: 16:9 on mobile, 21:9 on desktop */}
             <div className="aspect-[16/9] w-full md:aspect-[21/9]">

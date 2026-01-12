@@ -52,6 +52,8 @@ import { ImageUploader } from "@/components/admin/ImageUploader";
 import { BannerMetrics } from "@/components/admin/BannerMetrics";
 import { BannerABTests } from "@/components/admin/BannerABTests";
 import { BannerAlerts } from "@/components/admin/BannerAlerts";
+import { BannerHeatmap } from "@/components/admin/BannerHeatmap";
+import { BannerCampaigns } from "@/components/admin/BannerCampaigns";
 import { format } from "date-fns";
 
 const MAX_BANNERS = 7;
@@ -378,9 +380,11 @@ export default function Banners() {
       </div>
 
       <Tabs defaultValue="list">
-        <TabsList>
+        <TabsList className="flex-wrap">
           <TabsTrigger value="list">Banners</TabsTrigger>
+          <TabsTrigger value="campaigns">Campanhas</TabsTrigger>
           <TabsTrigger value="metrics">Métricas</TabsTrigger>
+          <TabsTrigger value="heatmap">Heatmap</TabsTrigger>
           <TabsTrigger value="ab-tests">Testes A/B</TabsTrigger>
           <TabsTrigger value="alerts">Alertas</TabsTrigger>
         </TabsList>
@@ -598,8 +602,16 @@ export default function Banners() {
           </p>
         </TabsContent>
 
+        <TabsContent value="campaigns">
+          <BannerCampaigns />
+        </TabsContent>
+
         <TabsContent value="metrics">
           <BannerMetrics />
+        </TabsContent>
+
+        <TabsContent value="heatmap">
+          <BannerHeatmap />
         </TabsContent>
 
         <TabsContent value="ab-tests">

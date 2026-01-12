@@ -1396,9 +1396,145 @@ export type Database = {
           },
         ]
       }
+      banner_campaign_spend_log: {
+        Row: {
+          amount: number
+          campaign_id: string
+          click_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          impression_id: string | null
+        }
+        Insert: {
+          amount: number
+          campaign_id: string
+          click_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          impression_id?: string | null
+        }
+        Update: {
+          amount?: number
+          campaign_id?: string
+          click_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          impression_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "banner_campaign_spend_log_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "banner_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "banner_campaign_spend_log_click_id_fkey"
+            columns: ["click_id"]
+            isOneToOne: false
+            referencedRelation: "banner_clicks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "banner_campaign_spend_log_impression_id_fkey"
+            columns: ["impression_id"]
+            isOneToOne: false
+            referencedRelation: "banner_impressions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      banner_campaigns: {
+        Row: {
+          advertiser_email: string | null
+          advertiser_name: string | null
+          banner_id: string | null
+          billing_type: string
+          budget_spent: number
+          budget_total: number
+          cost_per_click: number | null
+          cost_per_impression: number | null
+          created_at: string
+          daily_reset_at: string | null
+          daily_spent: number
+          ends_at: string | null
+          id: string
+          max_daily_spend: number | null
+          name: string
+          starts_at: string | null
+          status: string
+          targeting_categories: string[] | null
+          targeting_devices: string[] | null
+          targeting_locations: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          advertiser_email?: string | null
+          advertiser_name?: string | null
+          banner_id?: string | null
+          billing_type?: string
+          budget_spent?: number
+          budget_total?: number
+          cost_per_click?: number | null
+          cost_per_impression?: number | null
+          created_at?: string
+          daily_reset_at?: string | null
+          daily_spent?: number
+          ends_at?: string | null
+          id?: string
+          max_daily_spend?: number | null
+          name: string
+          starts_at?: string | null
+          status?: string
+          targeting_categories?: string[] | null
+          targeting_devices?: string[] | null
+          targeting_locations?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          advertiser_email?: string | null
+          advertiser_name?: string | null
+          banner_id?: string | null
+          billing_type?: string
+          budget_spent?: number
+          budget_total?: number
+          cost_per_click?: number | null
+          cost_per_impression?: number | null
+          created_at?: string
+          daily_reset_at?: string | null
+          daily_spent?: number
+          ends_at?: string | null
+          id?: string
+          max_daily_spend?: number | null
+          name?: string
+          starts_at?: string | null
+          status?: string
+          targeting_categories?: string[] | null
+          targeting_devices?: string[] | null
+          targeting_locations?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "banner_campaigns_banner_id_fkey"
+            columns: ["banner_id"]
+            isOneToOne: false
+            referencedRelation: "super_banners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       banner_clicks: {
         Row: {
+          banner_height: number | null
           banner_id: string | null
+          banner_width: number | null
+          click_x: number | null
+          click_y: number | null
           clicked_at: string | null
           id: string
           referer: string | null
@@ -1406,7 +1542,11 @@ export type Database = {
           user_agent: string | null
         }
         Insert: {
+          banner_height?: number | null
           banner_id?: string | null
+          banner_width?: number | null
+          click_x?: number | null
+          click_y?: number | null
           clicked_at?: string | null
           id?: string
           referer?: string | null
@@ -1414,7 +1554,11 @@ export type Database = {
           user_agent?: string | null
         }
         Update: {
+          banner_height?: number | null
           banner_id?: string | null
+          banner_width?: number | null
+          click_x?: number | null
+          click_y?: number | null
           clicked_at?: string | null
           id?: string
           referer?: string | null
