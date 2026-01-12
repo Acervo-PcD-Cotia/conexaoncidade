@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   Plus, 
@@ -6,17 +6,21 @@ import {
   Heart, 
   Share2, 
   MoreHorizontal,
-  Send
+  Send,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { NestedComments } from "./NestedComments";
 
 interface Post {
   id: string;
@@ -25,7 +29,12 @@ interface Post {
   post_type: string;
   like_count: number;
   comment_count: number;
+  view_count: number;
   created_at: string;
+  author?: {
+    full_name: string | null;
+    avatar_url: string | null;
+  };
 }
 
 export function CommunityFeed() {
@@ -46,9 +55,44 @@ export function CommunityFeed() {
         .limit(20);
       
       if (error) throw error;
-      return data as Post[];
+      
+      // Fetch author profiles
+      const authorIds = [...new Set(data.map(p => p.author_id))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url')
+        .in('id', authorIds);
+      
+      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+      
+      return data.map(post => ({
+        ...post,
+        author: profileMap.get(post.author_id) || null,
+      })) as Post[];
     },
   });
+
+  // Realtime subscription for new posts
+  useEffect(() => {
+    const channel = supabase
+      .channel('community-posts-feed')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'community_posts',
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['community-posts'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const createPostMutation = useMutation({
     mutationFn: async (content: string) => {
@@ -183,6 +227,7 @@ function PostCard({ post }: { post: Post }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [showComments, setShowComments] = useState(false);
 
   const toggleLikeMutation = useMutation({
     mutationFn: async () => {
@@ -225,18 +270,41 @@ function PostCard({ post }: { post: Post }) {
     },
   });
 
+  const initials = post.author?.full_name
+    ?.split(' ')
+    .map((n) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || 'U';
+
+  // Highlight @mentions in content
+  const renderContent = (content: string) => {
+    const parts = content.split(/(@\w+)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('@')) {
+        return (
+          <span key={i} className="text-primary font-medium">
+            {part}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
+
   return (
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10">
+              <AvatarImage src={post.author?.avatar_url || undefined} />
               <AvatarFallback className="bg-muted">
-                U
+                {initials}
               </AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-medium text-sm">Membro da Comunidade</p>
+              <p className="font-medium text-sm">{post.author?.full_name || 'Membro da Comunidade'}</p>
               <p className="text-xs text-muted-foreground">
                 {formatDistanceToNow(new Date(post.created_at), { 
                   addSuffix: true, 
@@ -251,9 +319,9 @@ function PostCard({ post }: { post: Post }) {
         </div>
       </CardHeader>
       <CardContent className="pb-2">
-        <p className="text-sm whitespace-pre-wrap">{post.content}</p>
+        <p className="text-sm whitespace-pre-wrap">{renderContent(post.content)}</p>
       </CardContent>
-      <CardFooter className="pt-2 border-t">
+      <CardFooter className="pt-2 border-t flex-col items-stretch gap-0">
         <div className="flex items-center gap-4">
           <Button 
             variant="ghost" 
@@ -264,14 +332,27 @@ function PostCard({ post }: { post: Post }) {
             <Heart className="h-4 w-4" />
             {post.like_count > 0 && <span>{post.like_count}</span>}
           </Button>
-          <Button variant="ghost" size="sm" className="gap-1">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="gap-1"
+            onClick={() => setShowComments(!showComments)}
+          >
             <MessageSquare className="h-4 w-4" />
             {post.comment_count > 0 && <span>{post.comment_count}</span>}
+            {showComments ? <ChevronUp className="h-3 w-3 ml-1" /> : <ChevronDown className="h-3 w-3 ml-1" />}
           </Button>
           <Button variant="ghost" size="sm" className="gap-1">
             <Share2 className="h-4 w-4" />
           </Button>
         </div>
+        
+        {/* Nested Comments */}
+        <Collapsible open={showComments} onOpenChange={setShowComments}>
+          <CollapsibleContent>
+            <NestedComments postId={post.id} />
+          </CollapsibleContent>
+        </Collapsible>
       </CardFooter>
     </Card>
   );
