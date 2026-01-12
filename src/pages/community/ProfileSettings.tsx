@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AvatarUploader } from "@/components/community/AvatarUploader";
 import { TwoFactorSetup } from "@/components/community/TwoFactorSetup";
 import { DeleteAccountDialog } from "@/components/community/DeleteAccountDialog";
+import { SessionsManager } from "@/components/community/SessionsManager";
 
 const passwordSchema = z.object({
   currentPassword: z.string().min(1, "Senha atual é obrigatória"),
@@ -481,6 +482,9 @@ export default function ProfileSettings() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Sessions Manager */}
+              <SessionsManager />
 
               {/* Danger Zone */}
               <Card className="border-destructive/50">

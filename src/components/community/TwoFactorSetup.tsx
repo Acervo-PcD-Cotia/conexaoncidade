@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Shield, ShieldCheck, ShieldOff, Loader2, Copy, Check } from "lucide-react";
+import { useState } from "react";
+import { Shield, ShieldCheck, ShieldOff, Loader2, Copy, Check, Key } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { RecoveryCodesDisplay } from "./RecoveryCodesDisplay";
 
 interface TwoFactorSetupProps {
   isEnabled: boolean;
@@ -30,6 +31,9 @@ export function TwoFactorSetup({ isEnabled, onStatusChange }: TwoFactorSetupProp
   const [copied, setCopied] = useState(false);
   const [showDisableDialog, setShowDisableDialog] = useState(false);
   const [disableCode, setDisableCode] = useState("");
+  const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
+  const [showRecoveryCodes, setShowRecoveryCodes] = useState(false);
+  const [isGeneratingCodes, setIsGeneratingCodes] = useState(false);
   const { toast } = useToast();
 
   const handleEnroll = async () => {
@@ -88,8 +92,11 @@ export function TwoFactorSetup({ isEnabled, onStatusChange }: TwoFactorSetupProp
 
       toast({
         title: "2FA ativado!",
-        description: "Autenticação de dois fatores configurada com sucesso.",
+        description: "Gerando códigos de recuperação...",
       });
+
+      // Generate recovery codes after successful 2FA activation
+      await generateRecoveryCodes();
       
       setStep("idle");
       setQrCode("");
@@ -191,6 +198,45 @@ export function TwoFactorSetup({ isEnabled, onStatusChange }: TwoFactorSetupProp
     setFactorId("");
   };
 
+  const generateRecoveryCodes = async () => {
+    setIsGeneratingCodes(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Não autenticado");
+
+      const response = await supabase.functions.invoke('generate-recovery-codes', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (response.error) throw response.error;
+      
+      const data = response.data;
+      if (data?.codes && Array.isArray(data.codes)) {
+        setRecoveryCodes(data.codes);
+        setShowRecoveryCodes(true);
+      }
+    } catch (error) {
+      console.error("Error generating recovery codes:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao gerar códigos",
+        description: "Os códigos de recuperação não puderam ser gerados. Tente novamente nas configurações.",
+      });
+    } finally {
+      setIsGeneratingCodes(false);
+    }
+  };
+
+  const handleRegenerateRecoveryCodes = async () => {
+    await generateRecoveryCodes();
+    toast({
+      title: "Códigos regenerados!",
+      description: "Novos códigos de recuperação foram gerados.",
+    });
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
@@ -215,14 +261,29 @@ export function TwoFactorSetup({ isEnabled, onStatusChange }: TwoFactorSetupProp
         </div>
 
         {isEnabled ? (
-          <Button
-            variant="outline"
-            onClick={() => setShowDisableDialog(true)}
-            className="text-destructive hover:text-destructive"
-          >
-            <ShieldOff className="h-4 w-4 mr-2" />
-            Desativar
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRegenerateRecoveryCodes}
+              disabled={isGeneratingCodes}
+            >
+              {isGeneratingCodes ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Key className="h-4 w-4 mr-2" />
+              )}
+              Novos códigos
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowDisableDialog(true)}
+              className="text-destructive hover:text-destructive"
+            >
+              <ShieldOff className="h-4 w-4 mr-2" />
+              Desativar
+            </Button>
+          </div>
         ) : (
           <Button onClick={handleEnroll} disabled={isLoading}>
             {isLoading ? (
@@ -367,6 +428,13 @@ export function TwoFactorSetup({ isEnabled, onStatusChange }: TwoFactorSetupProp
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Recovery Codes Display */}
+      <RecoveryCodesDisplay
+        codes={recoveryCodes}
+        isOpen={showRecoveryCodes}
+        onClose={() => setShowRecoveryCodes(false)}
+      />
     </div>
   );
 }
