@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   Plus, 
@@ -8,12 +8,14 @@ import {
   MoreHorizontal,
   Send,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -30,12 +32,25 @@ interface Post {
   like_count: number;
   comment_count: number;
   view_count: number;
+  is_pinned: boolean;
+  is_official: boolean;
+  pin_order: number;
   created_at: string;
   author?: {
     full_name: string | null;
     avatar_url: string | null;
   };
 }
+
+const POST_SUGGESTIONS = [
+  "O que precisa melhorar na sua cidade?",
+  "Você já identificou uma fake news hoje?",
+  "Qual tema você quer ver mais no portal?",
+  "Compartilhe algo positivo da sua comunidade!",
+  "Qual iniciativa local merece destaque?",
+  "O que você aprendeu recentemente que vale compartilhar?",
+  "Qual é o maior desafio da sua região?",
+];
 
 export function CommunityFeed() {
   const { user } = useAuth();
@@ -44,15 +59,22 @@ export function CommunityFeed() {
   const [newPost, setNewPost] = useState("");
   const [isPosting, setIsPosting] = useState(false);
 
+  // Random suggestion
+  const suggestion = useMemo(() => {
+    return POST_SUGGESTIONS[Math.floor(Math.random() * POST_SUGGESTIONS.length)];
+  }, []);
+
   const { data: posts, isLoading } = useQuery({
     queryKey: ['community-posts'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('community_posts')
-        .select('*')
+        .select('*, is_pinned, is_official, pin_order')
         .eq('is_hidden', false)
+        .order('is_pinned', { ascending: false })
+        .order('pin_order', { ascending: true })
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(30);
       
       if (error) throw error;
       
@@ -116,7 +138,7 @@ export function CommunityFeed() {
       setNewPost("");
       setIsPosting(false);
       toast({
-        title: 'Publicado!',
+        title: 'Publicado! +10 pontos 🎉',
         description: 'Sua publicação foi enviada com sucesso.',
       });
     },
@@ -157,7 +179,7 @@ export function CommunityFeed() {
               {isPosting ? (
                 <>
                   <Textarea
-                    placeholder="O que você gostaria de compartilhar com a comunidade?"
+                    placeholder={suggestion}
                     value={newPost}
                     onChange={(e) => setNewPost(e.target.value)}
                     rows={3}
@@ -191,7 +213,7 @@ export function CommunityFeed() {
                   onClick={() => setIsPosting(true)}
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Criar publicação...
+                  {suggestion}
                 </Button>
               )}
             </div>
@@ -292,19 +314,37 @@ function PostCard({ post }: { post: Post }) {
     });
   };
 
+  const isOfficial = post.is_official;
+  const isPinned = post.is_pinned && !post.is_official;
+
   return (
-    <Card>
+    <Card className={isOfficial ? "border-primary/30 bg-primary/5" : isPinned ? "border-yellow-200 dark:border-yellow-800" : ""}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10">
               <AvatarImage src={post.author?.avatar_url || undefined} />
-              <AvatarFallback className="bg-muted">
-                {initials}
+              <AvatarFallback className={isOfficial ? "bg-primary text-primary-foreground" : "bg-muted"}>
+                {isOfficial ? <Shield className="h-5 w-5" /> : initials}
               </AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-medium text-sm">{post.author?.full_name || 'Membro da Comunidade'}</p>
+              <div className="flex items-center gap-2">
+                <p className="font-medium text-sm">
+                  {isOfficial ? 'Conexão na Cidade' : post.author?.full_name || 'Membro da Comunidade'}
+                </p>
+                {isOfficial && (
+                  <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 text-xs py-0">
+                    <Shield className="h-3 w-3 mr-1" />
+                    Oficial
+                  </Badge>
+                )}
+                {isPinned && (
+                  <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-200 text-xs py-0">
+                    📌 Fixado
+                  </Badge>
+                )}
+              </div>
               <p className="text-xs text-muted-foreground">
                 {formatDistanceToNow(new Date(post.created_at), { 
                   addSuffix: true, 
@@ -313,13 +353,17 @@ function PostCard({ post }: { post: Post }) {
               </p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
+          {!isOfficial && (
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent className="pb-2">
-        <p className="text-sm whitespace-pre-wrap">{renderContent(post.content)}</p>
+        <div className="text-sm whitespace-pre-wrap prose prose-sm dark:prose-invert max-w-none">
+          {renderContent(post.content)}
+        </div>
       </CardContent>
       <CardFooter className="pt-2 border-t flex-col items-stretch gap-0">
         <div className="flex items-center gap-4">

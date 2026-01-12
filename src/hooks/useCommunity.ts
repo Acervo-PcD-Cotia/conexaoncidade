@@ -19,6 +19,11 @@ export interface CommunityMember {
   quiz_completed_at: string | null;
   created_at: string;
   updated_at: string;
+  // New fields for onboarding
+  interests: string[] | null;
+  city: string | null;
+  onboarding_completed_at: string | null;
+  fact_check_count: number;
 }
 
 export interface CommunityGroup {
@@ -406,6 +411,7 @@ export const badgeLabels: Record<string, string> = {
   invited_member: 'Convidado',
   top_contributor: 'Top Contribuidor',
   verified: 'Verificado',
+  verified_checker: 'Verificador Confiável',
 };
 
 // Points needed for each level
