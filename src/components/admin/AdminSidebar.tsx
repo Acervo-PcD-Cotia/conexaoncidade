@@ -26,6 +26,7 @@ import {
   UsersRound,
   Mic,
   ShieldCheck,
+  MapPin,
   LucideIcon,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -82,6 +83,7 @@ const businessItems = [
   { title: "Treinamento", url: "/admin/training", icon: GraduationCap },
   { title: "Financeiro", url: "/admin/financial", icon: Receipt },
   { title: "Auto Post PRO", url: "/admin/autopost", icon: Bot },
+  { title: "Campanhas", url: "/admin/campaigns/google-maps", icon: MapPin },
 ];
 
 const adminOnlyItems = [
