@@ -12,14 +12,14 @@ import { AdSlot } from "@/components/home/AdSlot";
 const Index = () => {
   return (
     <div className="space-y-0">
-      {/* 1. Market/Weather data bar with BTC/ETH */}
+      {/* 1. Super Banner - TOPO ABSOLUTO (fullwidth 21:9) */}
+      <SuperBanner />
+      
+      {/* 2. Market/Weather data bar with BTC/ETH */}
       <MarketDataBar />
       
-      {/* 2. WebStories - Instagram-style carousel */}
+      {/* 3. WebStories - Instagram-style carousel */}
       <TopWebStoriesBar />
-      
-      {/* 3. Super Banner Slide (7 banners) */}
-      <SuperBanner />
       
       {/* 4. Ad Slot: Home Top - 728x90 */}
       <div className="container py-2">
