@@ -37,7 +37,8 @@ export function useCommunity() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { isSuperAdmin, isAdmin } = useUserRole();
+  const { isSuperAdmin, isAdmin, loading: roleLoading } = useUserRole();
+  
   // Fetch current user's membership
   const { data: membership, isLoading: membershipLoading } = useQuery({
     queryKey: ['community-membership', user?.id],
@@ -56,8 +57,17 @@ export function useCommunity() {
     enabled: !!user,
   });
 
+  // Combined loading state - wait for both role and membership to load
+  const isLoading = membershipLoading || roleLoading;
+
   // Check if user has community access - admins get automatic access
-  const hasAccess = isSuperAdmin || isAdmin || !!(membership?.access_granted_at && !membership?.is_suspended);
+  // Only calculate hasAccess when not loading to prevent race conditions
+  const hasAccess = !isLoading && (
+    isSuperAdmin || 
+    isAdmin || 
+    !!(membership?.access_granted_at && !membership?.is_suspended)
+  );
+  
   // Get share progress (X/12)
   const shareProgress = membership?.share_count || 0;
   const sharesRemaining = Math.max(0, 12 - shareProgress);
@@ -369,7 +379,7 @@ export function useCommunity() {
     shareProgress,
     sharesRemaining,
     groups,
-    isLoading: membershipLoading,
+    isLoading,
     ensureMembership: ensureMembershipMutation.mutate,
     useInvite: useInviteMutation.mutate,
     validateInviteCode,
