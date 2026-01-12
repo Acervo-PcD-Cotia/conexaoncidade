@@ -50,6 +50,8 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { ImageUploader } from "@/components/admin/ImageUploader";
 import { BannerMetrics } from "@/components/admin/BannerMetrics";
+import { BannerABTests } from "@/components/admin/BannerABTests";
+import { BannerAlerts } from "@/components/admin/BannerAlerts";
 import { format } from "date-fns";
 
 const MAX_BANNERS = 7;
@@ -379,6 +381,8 @@ export default function Banners() {
         <TabsList>
           <TabsTrigger value="list">Banners</TabsTrigger>
           <TabsTrigger value="metrics">Métricas</TabsTrigger>
+          <TabsTrigger value="ab-tests">Testes A/B</TabsTrigger>
+          <TabsTrigger value="alerts">Alertas</TabsTrigger>
         </TabsList>
 
         <TabsContent value="list" className="space-y-6">
@@ -596,6 +600,14 @@ export default function Banners() {
 
         <TabsContent value="metrics">
           <BannerMetrics />
+        </TabsContent>
+
+        <TabsContent value="ab-tests">
+          <BannerABTests />
+        </TabsContent>
+
+        <TabsContent value="alerts">
+          <BannerAlerts />
         </TabsContent>
       </Tabs>
     </div>

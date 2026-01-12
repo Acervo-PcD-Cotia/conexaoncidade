@@ -80,3 +80,6 @@ verify_jwt = false
 
 [functions.notify-admin-content]
 verify_jwt = false
+
+[functions.check-banner-alerts]
+verify_jwt = false

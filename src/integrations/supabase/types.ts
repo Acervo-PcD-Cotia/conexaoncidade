@@ -1208,6 +1208,194 @@ export type Database = {
           },
         ]
       }
+      banner_ab_impressions: {
+        Row: {
+          banner_id: string | null
+          converted: boolean | null
+          id: string
+          session_id: string | null
+          test_id: string | null
+          variant: string | null
+          viewed_at: string | null
+        }
+        Insert: {
+          banner_id?: string | null
+          converted?: boolean | null
+          id?: string
+          session_id?: string | null
+          test_id?: string | null
+          variant?: string | null
+          viewed_at?: string | null
+        }
+        Update: {
+          banner_id?: string | null
+          converted?: boolean | null
+          id?: string
+          session_id?: string | null
+          test_id?: string | null
+          variant?: string | null
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "banner_ab_impressions_banner_id_fkey"
+            columns: ["banner_id"]
+            isOneToOne: false
+            referencedRelation: "super_banners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "banner_ab_impressions_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "banner_ab_tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      banner_ab_tests: {
+        Row: {
+          banner_a_id: string | null
+          banner_b_id: string | null
+          confidence_level: number | null
+          created_at: string | null
+          ends_at: string | null
+          id: string
+          name: string
+          starts_at: string | null
+          status: string | null
+          traffic_split: number | null
+          updated_at: string | null
+          winner_id: string | null
+        }
+        Insert: {
+          banner_a_id?: string | null
+          banner_b_id?: string | null
+          confidence_level?: number | null
+          created_at?: string | null
+          ends_at?: string | null
+          id?: string
+          name: string
+          starts_at?: string | null
+          status?: string | null
+          traffic_split?: number | null
+          updated_at?: string | null
+          winner_id?: string | null
+        }
+        Update: {
+          banner_a_id?: string | null
+          banner_b_id?: string | null
+          confidence_level?: number | null
+          created_at?: string | null
+          ends_at?: string | null
+          id?: string
+          name?: string
+          starts_at?: string | null
+          status?: string | null
+          traffic_split?: number | null
+          updated_at?: string | null
+          winner_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "banner_ab_tests_banner_a_id_fkey"
+            columns: ["banner_a_id"]
+            isOneToOne: false
+            referencedRelation: "super_banners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "banner_ab_tests_banner_b_id_fkey"
+            columns: ["banner_b_id"]
+            isOneToOne: false
+            referencedRelation: "super_banners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "banner_ab_tests_winner_id_fkey"
+            columns: ["winner_id"]
+            isOneToOne: false
+            referencedRelation: "super_banners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      banner_alerts_config: {
+        Row: {
+          alert_type: string
+          banner_id: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          last_triggered_at: string | null
+          threshold_ctr: number | null
+          threshold_days: number | null
+        }
+        Insert: {
+          alert_type: string
+          banner_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_triggered_at?: string | null
+          threshold_ctr?: number | null
+          threshold_days?: number | null
+        }
+        Update: {
+          alert_type?: string
+          banner_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_triggered_at?: string | null
+          threshold_ctr?: number | null
+          threshold_days?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "banner_alerts_config_banner_id_fkey"
+            columns: ["banner_id"]
+            isOneToOne: false
+            referencedRelation: "super_banners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      banner_alerts_log: {
+        Row: {
+          alert_type: string
+          banner_id: string | null
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+        }
+        Insert: {
+          alert_type: string
+          banner_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+        }
+        Update: {
+          alert_type?: string
+          banner_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "banner_alerts_log_banner_id_fkey"
+            columns: ["banner_id"]
+            isOneToOne: false
+            referencedRelation: "super_banners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       banner_clicks: {
         Row: {
           banner_id: string | null

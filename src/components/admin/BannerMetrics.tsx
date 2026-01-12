@@ -14,8 +14,40 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { BarChart3, Eye, MousePointer, TrendingUp, Download } from "lucide-react";
-import { format, subDays } from "date-fns";
+import { format, subDays, parseISO, eachDayOfInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+
+const chartConfig = {
+  clicks: {
+    label: "Cliques",
+    color: "hsl(var(--primary))",
+  },
+  impressions: {
+    label: "Impressões",
+    color: "hsl(var(--secondary))",
+  },
+  ctr: {
+    label: "CTR (%)",
+    color: "hsl(var(--accent))",
+  },
+};
 
 export function BannerMetrics() {
   const [dateRange, setDateRange] = useState({
@@ -104,6 +136,49 @@ export function BannerMetrics() {
 
     return Object.values(bannerStats).sort((a, b) => b.clicks - a.clicks);
   }, [clicksData, impressionsData]);
+
+  // Daily data for line chart
+  const dailyData = useMemo(() => {
+    if (!dateRange.start || !dateRange.end) return [];
+
+    const startDate = parseISO(dateRange.start);
+    const endDate = parseISO(dateRange.end);
+    const days = eachDayOfInterval({ start: startDate, end: endDate });
+
+    const grouped: Record<string, { date: string; clicks: number; impressions: number; ctr: number }> = {};
+
+    // Initialize all days
+    days.forEach((day) => {
+      const dateKey = format(day, "yyyy-MM-dd");
+      grouped[dateKey] = { date: format(day, "dd/MM", { locale: ptBR }), clicks: 0, impressions: 0, ctr: 0 };
+    });
+
+    clicksData?.forEach((click) => {
+      const date = format(new Date(click.clicked_at), "yyyy-MM-dd");
+      if (grouped[date]) grouped[date].clicks++;
+    });
+
+    impressionsData?.forEach((imp) => {
+      const date = format(new Date(imp.viewed_at), "yyyy-MM-dd");
+      if (grouped[date]) grouped[date].impressions++;
+    });
+
+    // Calculate CTR for each day
+    Object.values(grouped).forEach((day) => {
+      day.ctr = day.impressions > 0 ? (day.clicks / day.impressions) * 100 : 0;
+    });
+
+    return Object.values(grouped);
+  }, [clicksData, impressionsData, dateRange]);
+
+  // CTR bar chart data
+  const ctrBarData = useMemo(() => {
+    return metrics.slice(0, 10).map((m) => ({
+      name: m.title.length > 15 ? m.title.slice(0, 15) + "..." : m.title,
+      ctr: Number(m.ctr.toFixed(2)),
+      clicks: m.clicks,
+    }));
+  }, [metrics]);
 
   const totalClicks = metrics.reduce((sum, m) => sum + m.clicks, 0);
   const totalImpressions = metrics.reduce((sum, m) => sum + m.impressions, 0);
@@ -212,6 +287,153 @@ export function BannerMetrics() {
           <CardContent>
             <div className="text-2xl font-bold">{isLoading ? "..." : metrics.length}</div>
             <p className="text-xs text-muted-foreground">com dados no período</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Line Chart - Daily Evolution */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Evolução Diária
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex h-[300px] items-center justify-center text-muted-foreground">
+                Carregando...
+              </div>
+            ) : dailyData.length === 0 ? (
+              <div className="flex h-[300px] items-center justify-center text-muted-foreground">
+                Sem dados no período
+              </div>
+            ) : (
+              <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={dailyData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fontSize: 12 }}
+                      interval="preserveStartEnd"
+                      className="text-muted-foreground"
+                    />
+                    <YAxis yAxisId="left" tick={{ fontSize: 12 }} className="text-muted-foreground" />
+                    <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} className="text-muted-foreground" />
+                    <Tooltip
+                      content={({ active, payload, label }) => {
+                        if (active && payload && payload.length) {
+                          return (
+                            <div className="rounded-lg border bg-background p-2 shadow-sm">
+                              <p className="text-sm font-medium">{label}</p>
+                              {payload.map((entry, index) => (
+                                <p key={index} className="text-xs" style={{ color: entry.color }}>
+                                  {entry.name}: {entry.value}
+                                  {entry.name === "CTR" ? "%" : ""}
+                                </p>
+                              ))}
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Legend />
+                    <Line
+                      yAxisId="left"
+                      type="monotone"
+                      dataKey="clicks"
+                      name="Cliques"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                    <Line
+                      yAxisId="left"
+                      type="monotone"
+                      dataKey="impressions"
+                      name="Impressões"
+                      stroke="hsl(var(--muted-foreground))"
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                    <Line
+                      yAxisId="right"
+                      type="monotone"
+                      dataKey="ctr"
+                      name="CTR"
+                      stroke="hsl(var(--destructive))"
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Bar Chart - CTR by Banner */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              CTR por Banner
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex h-[300px] items-center justify-center text-muted-foreground">
+                Carregando...
+              </div>
+            ) : ctrBarData.length === 0 ? (
+              <div className="flex h-[300px] items-center justify-center text-muted-foreground">
+                Sem dados no período
+              </div>
+            ) : (
+              <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={ctrBarData} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis type="number" tick={{ fontSize: 12 }} className="text-muted-foreground" />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      width={100}
+                      tick={{ fontSize: 11 }}
+                      className="text-muted-foreground"
+                    />
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload;
+                          return (
+                            <div className="rounded-lg border bg-background p-2 shadow-sm">
+                              <p className="text-sm font-medium">{data.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                CTR: {data.ctr}%
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Cliques: {data.clicks}
+                              </p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Bar
+                      dataKey="ctr"
+                      fill="hsl(var(--primary))"
+                      radius={[0, 4, 4, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            )}
           </CardContent>
         </Card>
       </div>
