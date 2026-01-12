@@ -4,8 +4,6 @@ import {
   Share2, MessageSquare, UserPlus, BookOpen, Newspaper, 
   Trophy, Star, Award, ArrowLeft, Target, Zap
 } from 'lucide-react';
-import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -92,8 +90,6 @@ export default function HowToEarnPoints() {
         <title>Como Ganhar Pontos | Comunidade Conexão na Cidade</title>
         <meta name="description" content="Descubra todas as formas de ganhar pontos na comunidade e suba de nível para desbloquear benefícios exclusivos." />
       </Helmet>
-
-      <Header />
 
       <main className="min-h-screen bg-gradient-to-b from-primary/5 to-background">
         {/* Hero */}
@@ -233,8 +229,6 @@ export default function HowToEarnPoints() {
           </div>
         </section>
       </main>
-
-      <Footer />
     </>
   );
 }

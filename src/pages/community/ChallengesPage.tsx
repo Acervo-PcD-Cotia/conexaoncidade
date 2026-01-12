@@ -2,8 +2,6 @@ import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Trophy, ArrowLeft, HelpCircle } from 'lucide-react';
-import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { ChallengesList } from '@/components/community/ChallengesList';
 import { useAuth } from '@/contexts/AuthContext';
@@ -43,8 +41,6 @@ export default function ChallengesPage() {
         <meta name="description" content="Participe dos desafios semanais e mensais da comunidade e ganhe recompensas especiais." />
       </Helmet>
 
-      <Header />
-
       <main className="min-h-screen bg-background">
         {/* Hero section */}
         <section className="bg-gradient-to-br from-primary/10 via-background to-background py-12">
@@ -82,8 +78,6 @@ export default function ChallengesPage() {
           </div>
         </section>
       </main>
-
-      <Footer />
     </>
   );
 }
