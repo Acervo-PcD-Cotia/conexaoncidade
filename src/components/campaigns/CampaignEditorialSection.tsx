@@ -23,12 +23,11 @@ export function CampaignEditorialSection({ onStartQuiz }: CampaignEditorialSecti
           </div>
           
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
-            Seu negócio aparece no <span className="text-primary">Google Maps</span> como deveria?
+            Divulgue seu Negócio no <span className="text-primary">Google Maps</span>
           </h1>
           
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Muitos negócios existem no Google Maps, mas não aparecem nas buscas. 
-            Descubra se o seu está invisível para clientes em potencial.
+            Aumente sua visibilidade local, apareça nas buscas e atraia mais clientes — gratuito para membros da comunidade.
           </p>
 
           <motion.div
@@ -40,8 +39,8 @@ export function CampaignEditorialSection({ onStartQuiz }: CampaignEditorialSecti
               onClick={onStartQuiz}
               className="text-lg px-8 py-6 rounded-full shadow-lg hover:shadow-xl transition-all"
             >
-              <Search className="mr-2 h-5 w-5" />
-              Descubra agora em 2 minutos
+              <MapPin className="mr-2 h-5 w-5" />
+              Quero aparecer no Google Maps
             </Button>
           </motion.div>
         </motion.div>
