@@ -2667,6 +2667,35 @@ export type Database = {
         }
         Relationships: []
       }
+      community_location_favorites: {
+        Row: {
+          created_at: string | null
+          id: string
+          location_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          location_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          location_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_location_favorites_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "community_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_location_reviews: {
         Row: {
           accessibility_rating: number | null
@@ -3205,6 +3234,7 @@ export type Database = {
           reason: string
           reported_user_id: string | null
           reporter_id: string
+          review_id: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           status: string | null
@@ -3220,6 +3250,7 @@ export type Database = {
           reason: string
           reported_user_id?: string | null
           reporter_id: string
+          review_id?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string | null
@@ -3235,6 +3266,7 @@ export type Database = {
           reason?: string
           reported_user_id?: string | null
           reporter_id?: string
+          review_id?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string | null
@@ -3252,6 +3284,13 @@ export type Database = {
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_reports_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "community_location_reviews"
             referencedColumns: ["id"]
           },
         ]

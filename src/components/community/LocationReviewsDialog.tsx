@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Star, Accessibility, Loader2, Trash2 } from "lucide-react";
+import { Star, Accessibility, Loader2, Trash2, Flag } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -27,8 +27,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { StarRating } from "./StarRating";
-import { useLocationReviews } from "@/hooks/useLocationReviews";
+import { ReportReviewDialog } from "./ReportReviewDialog";
+import { useLocationReviews, LocationReview } from "@/hooks/useLocationReviews";
 import { useAuth } from "@/contexts/AuthContext";
 import { CommunityLocation } from "@/hooks/useCommunityLocations";
 
@@ -53,6 +60,13 @@ export function LocationReviewsDialog({
   );
   const [comment, setComment] = useState(userReview?.comment || "");
   const [showForm, setShowForm] = useState(!userReview);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [reviewToReport, setReviewToReport] = useState<LocationReview | null>(null);
+
+  const handleReportClick = (review: LocationReview) => {
+    setReviewToReport(review);
+    setReportDialogOpen(true);
+  };
 
   // Update form when user review changes
   useState(() => {
@@ -152,14 +166,38 @@ export function LocationReviewsDialog({
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-sm">
-                          {review.reviewer?.full_name || "Usuário"}
-                        </span>
-                        {review.user_id === user?.id && (
-                          <Badge variant="secondary" className="text-xs">
-                            Você
-                          </Badge>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-medium text-sm">
+                            {review.reviewer?.full_name || "Usuário"}
+                          </span>
+                          {review.user_id === user?.id && (
+                            <Badge variant="secondary" className="text-xs">
+                              Você
+                            </Badge>
+                          )}
+                        </div>
+                        {user && review.user_id !== user.id && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleReportClick(review);
+                                  }}
+                                >
+                                  <Flag className="h-3 w-3" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Denunciar avaliação</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         )}
                       </div>
                       <div className="flex items-center gap-2 mt-0.5">
@@ -314,6 +352,13 @@ export function LocationReviewsDialog({
           </div>
         )}
       </DialogContent>
+
+      {/* Report Dialog */}
+      <ReportReviewDialog
+        review={reviewToReport}
+        open={reportDialogOpen}
+        onOpenChange={setReportDialogOpen}
+      />
     </Dialog>
   );
 }
