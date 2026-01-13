@@ -2,11 +2,12 @@ import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { 
   Share2, MessageSquare, UserPlus, BookOpen, Newspaper, 
-  Trophy, Star, Award, ArrowLeft, Target, Zap
+  Trophy, Star, Award, Target, Zap
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { CommunityLayout } from '@/components/community/CommunityLayout';
 
 interface PointAction {
   icon: React.ReactNode;
@@ -85,150 +86,118 @@ const specialBadges = [
 
 export default function HowToEarnPoints() {
   return (
-    <>
+    <CommunityLayout>
       <Helmet>
         <title>Como Ganhar Pontos | Comunidade Conexão na Cidade</title>
         <meta name="description" content="Descubra todas as formas de ganhar pontos na comunidade e suba de nível para desbloquear benefícios exclusivos." />
       </Helmet>
 
-      <main className="min-h-screen bg-gradient-to-b from-primary/5 to-background">
+      <div className="space-y-8">
         {/* Hero */}
-        <section className="py-12 px-4">
-          <div className="container max-w-4xl mx-auto">
-            <Link to="/comunidade" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6">
-              <ArrowLeft className="w-4 h-4" />
-              Voltar à Comunidade
-            </Link>
-
-            <div className="text-center mb-12">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-                <Star className="w-8 h-8 text-primary" />
-              </div>
-              <h1 className="text-4xl font-bold mb-4">Como Ganhar Pontos</h1>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Participe, engaje e suba de nível na comunidade! Cada ação contribui para seu crescimento.
-              </p>
-            </div>
+        <div className="text-center py-6">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-pink-100 dark:bg-pink-900/30 mb-4">
+            <Star className="w-8 h-8 text-pink-600" />
           </div>
-        </section>
+          <h1 className="text-3xl font-bold mb-2">Como Ganhar Pontos</h1>
+          <p className="text-muted-foreground max-w-xl mx-auto">
+            Participe, engaje e suba de nível na comunidade! Cada ação contribui para seu crescimento.
+          </p>
+        </div>
 
         {/* Point Actions */}
-        <section className="py-8 px-4">
-          <div className="container max-w-4xl mx-auto">
-            <div className="flex items-center gap-3 mb-6">
-              <Zap className="w-6 h-6 text-primary" />
-              <h2 className="text-2xl font-bold">Ações que Geram Pontos</h2>
-            </div>
+        <section>
+          <div className="flex items-center gap-3 mb-4">
+            <Zap className="w-5 h-5 text-pink-600" />
+            <h2 className="text-xl font-bold">Ações que Geram Pontos</h2>
+          </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              {pointActions.map((action, index) => (
-                <Card key={index} className="relative overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className={`absolute top-0 right-0 ${action.color} text-white px-3 py-1 text-sm font-bold rounded-bl-lg`}>
-                    +{action.points} pts
+          <div className="grid gap-4 sm:grid-cols-2">
+            {pointActions.map((action, index) => (
+              <Card key={index} className="relative overflow-hidden hover:shadow-lg transition-shadow">
+                <div className={`absolute top-0 right-0 ${action.color} text-white px-3 py-1 text-sm font-bold rounded-bl-lg`}>
+                  +{action.points} pts
+                </div>
+                <CardHeader className="pb-2">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${action.color} text-white`}>
+                      {action.icon}
+                    </div>
+                    <CardTitle className="text-base">{action.title}</CardTitle>
                   </div>
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${action.color} text-white`}>
-                        {action.icon}
-                      </div>
-                      <CardTitle className="text-lg">{action.title}</CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground mb-2">{action.description}</p>
-                    <div className="flex items-start gap-2 p-2 bg-muted/50 rounded-lg">
-                      <span className="text-lg">💡</span>
-                      <p className="text-sm text-muted-foreground">{action.tip}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-2">{action.description}</p>
+                  <p className="text-xs bg-muted p-2 rounded italic">💡 {action.tip}</p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </section>
 
         {/* Levels */}
-        <section className="py-12 px-4 bg-muted/30">
-          <div className="container max-w-4xl mx-auto">
-            <div className="flex items-center gap-3 mb-6">
-              <Trophy className="w-6 h-6 text-primary" />
-              <h2 className="text-2xl font-bold">Níveis da Comunidade</h2>
-            </div>
-
-            <div className="grid gap-4">
-              {levels.map((level, index) => (
-                <Card key={index} className="overflow-hidden">
-                  <div className="flex items-center gap-4 p-4">
-                    <div className="text-4xl">{level.icon}</div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-lg">{level.name}</h3>
-                        <Badge variant="outline" className="text-xs">
-                          {level.points === 0 ? 'Inicial' : `${level.points.toLocaleString()}+ pts`}
-                        </Badge>
-                      </div>
-                      <p className="text-muted-foreground text-sm">{level.benefits}</p>
-                    </div>
-                    {index < levels.length - 1 && (
-                      <div className="hidden sm:block text-muted-foreground">→</div>
-                    )}
-                  </div>
-                </Card>
-              ))}
-            </div>
+        <section>
+          <div className="flex items-center gap-3 mb-4">
+            <Trophy className="w-5 h-5 text-pink-600" />
+            <h2 className="text-xl font-bold">Níveis da Comunidade</h2>
           </div>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                {levels.map((level, index) => (
+                  <div key={index} className="flex items-center gap-4 p-3 rounded-lg bg-muted/50">
+                    <span className="text-3xl">{level.icon}</span>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold">{level.name}</h3>
+                        <Badge variant="secondary">{level.points}+ pts</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{level.benefits}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </section>
 
         {/* Special Badges */}
-        <section className="py-12 px-4">
-          <div className="container max-w-4xl mx-auto">
-            <div className="flex items-center gap-3 mb-6">
-              <Award className="w-6 h-6 text-primary" />
-              <h2 className="text-2xl font-bold">Selos Especiais</h2>
-            </div>
+        <section>
+          <div className="flex items-center gap-3 mb-4">
+            <Award className="w-5 h-5 text-pink-600" />
+            <h2 className="text-xl font-bold">Badges Especiais</h2>
+          </div>
 
-            <div className="flex flex-wrap gap-3">
-              {specialBadges.map((badge, index) => (
-                <Card key={index} className="flex items-center gap-3 p-4 hover:shadow-md transition-shadow">
-                  <span className="text-3xl">{badge.icon}</span>
-                  <div>
-                    <h3 className="font-medium">{badge.name}</h3>
-                    <p className="text-xs text-muted-foreground">{badge.description}</p>
-                  </div>
-                </Card>
-              ))}
-            </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {specialBadges.map((badge, index) => (
+              <Card key={index} className="text-center p-4">
+                <span className="text-4xl mb-2 block">{badge.icon}</span>
+                <h3 className="font-semibold mb-1">{badge.name}</h3>
+                <p className="text-xs text-muted-foreground">{badge.description}</p>
+              </Card>
+            ))}
           </div>
         </section>
 
         {/* CTA */}
-        <section className="py-12 px-4">
-          <div className="container max-w-4xl mx-auto text-center">
-            <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
-              <CardContent className="py-8">
-                <Target className="w-12 h-12 mx-auto text-primary mb-4" />
-                <h2 className="text-2xl font-bold mb-2">Pronto para começar?</h2>
-                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                  Explore os desafios ativos e comece a acumular pontos hoje mesmo!
-                </p>
-                <div className="flex flex-wrap gap-3 justify-center">
-                  <Link to="/comunidade/desafios">
-                    <Button size="lg">
-                      <Trophy className="w-4 h-4 mr-2" />
-                      Ver Desafios Ativos
-                    </Button>
-                  </Link>
-                  <Link to="/comunidade">
-                    <Button variant="outline" size="lg">
-                      Ir para Comunidade
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </section>
-      </main>
-    </>
+        <Card className="bg-gradient-to-r from-pink-600 to-purple-600 text-white border-0">
+          <CardContent className="p-6 text-center">
+            <Target className="w-12 h-12 mx-auto mb-4" />
+            <h3 className="text-xl font-bold mb-2">Pronto para começar?</h3>
+            <p className="mb-4 opacity-90">
+              Participe dos desafios e ganhe pontos extras!
+            </p>
+            <div className="flex gap-3 justify-center flex-wrap">
+              <Button asChild variant="secondary">
+                <Link to="/comunidade/desafios">Ver Desafios</Link>
+              </Button>
+              <Button asChild variant="outline" className="bg-white/10 border-white/20 hover:bg-white/20">
+                <Link to="/comunidade">Voltar à Comunidade</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </CommunityLayout>
   );
 }
