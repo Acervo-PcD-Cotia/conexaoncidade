@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CommunityLayout } from "@/components/community/CommunityLayout";
 
 interface HelpRequest {
   id: string;
@@ -112,13 +113,15 @@ export default function RedeDoBem() {
 
   if (authLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-12 w-full" />
-        <div className="grid gap-4 md:grid-cols-2">
-          <Skeleton className="h-48 rounded-xl" />
-          <Skeleton className="h-48 rounded-xl" />
+      <CommunityLayout>
+        <div className="space-y-6">
+          <Skeleton className="h-12 w-full" />
+          <div className="grid gap-4 md:grid-cols-2">
+            <Skeleton className="h-48 rounded-xl" />
+            <Skeleton className="h-48 rounded-xl" />
+          </div>
         </div>
-      </div>
+      </CommunityLayout>
     );
   }
 
@@ -131,7 +134,7 @@ export default function RedeDoBem() {
     : placeholderRequests.filter((r) => r.type === activeTab);
 
   return (
-    <>
+    <CommunityLayout>
       <Helmet>
         <title>Rede do Bem | Comunidade Conexão na Cidade</title>
         <meta name="description" content="Ajude e seja ajudado pela comunidade de Cotia" />
@@ -364,6 +367,6 @@ export default function RedeDoBem() {
           </CardContent>
         </Card>
       </div>
-    </>
+    </CommunityLayout>
   );
 }

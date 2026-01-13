@@ -22,6 +22,7 @@ import { LevelProgressBar } from "@/components/community/LevelProgressBar";
 import { AntiFactCheckRanking } from "@/components/community/AntiFactCheckRanking";
 import { MemberOfTheWeek } from "@/components/community/MemberOfTheWeek";
 import { PhoneBenefitCard } from "@/components/community/PhoneBenefitCard";
+import { CommunityLayout } from "@/components/community/CommunityLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -94,9 +95,11 @@ export default function CommunityHub() {
 
   if (isLoading) {
     return (
-      <div className="container py-12 flex items-center justify-center min-h-[60vh]">
-        <div className="animate-pulse text-muted-foreground">Carregando...</div>
-      </div>
+      <CommunityLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="animate-pulse text-muted-foreground">Carregando...</div>
+        </div>
+      </CommunityLayout>
     );
   }
 
@@ -112,7 +115,7 @@ export default function CommunityHub() {
     .toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U';
 
   return (
-    <div className="container py-6">
+    <CommunityLayout>
       {/* Welcome Modal */}
       <OnboardingWelcomeModal 
         open={showWelcome} 
@@ -279,6 +282,6 @@ export default function CommunityHub() {
           </Card>
         </div>
       </div>
-    </div>
+    </CommunityLayout>
   );
 }

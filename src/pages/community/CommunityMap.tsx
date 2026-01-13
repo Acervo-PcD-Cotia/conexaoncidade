@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { MapPin, Store, Accessibility, Calendar, HelpCircle, Filter, Search, Plus } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { MapPin, Store, Accessibility, Calendar, HelpCircle, Search, Plus } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CommunityLayout } from "@/components/community/CommunityLayout";
 
 interface Location {
   id: string;
@@ -85,18 +86,20 @@ export default function CommunityMap() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-12 w-full" />
-        <div className="grid gap-4 md:grid-cols-2">
-          <Skeleton className="h-48 rounded-xl" />
-          <Skeleton className="h-48 rounded-xl" />
+      <CommunityLayout>
+        <div className="space-y-6">
+          <Skeleton className="h-12 w-full" />
+          <div className="grid gap-4 md:grid-cols-2">
+            <Skeleton className="h-48 rounded-xl" />
+            <Skeleton className="h-48 rounded-xl" />
+          </div>
         </div>
-      </div>
+      </CommunityLayout>
     );
   }
 
   return (
-    <>
+    <CommunityLayout>
       <Helmet>
         <title>Mapa da Comunidade | Conexão na Cidade</title>
         <meta name="description" content="Encontre negócios, serviços e locais acessíveis em Cotia" />
@@ -270,6 +273,6 @@ export default function CommunityMap() {
           </CardContent>
         </Card>
       </div>
-    </>
+    </CommunityLayout>
   );
 }

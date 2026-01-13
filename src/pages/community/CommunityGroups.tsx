@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { CommunityLayout } from "@/components/community/CommunityLayout";
 
 interface Group {
   id: string;
@@ -79,13 +79,15 @@ export default function CommunityGroups() {
 
   if (authLoading || isLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-12 w-full" />
-        <div className="grid gap-4 md:grid-cols-2">
-          <Skeleton className="h-48 rounded-xl" />
-          <Skeleton className="h-48 rounded-xl" />
+      <CommunityLayout>
+        <div className="space-y-6">
+          <Skeleton className="h-12 w-full" />
+          <div className="grid gap-4 md:grid-cols-2">
+            <Skeleton className="h-48 rounded-xl" />
+            <Skeleton className="h-48 rounded-xl" />
+          </div>
         </div>
-      </div>
+      </CommunityLayout>
     );
   }
 
@@ -97,7 +99,7 @@ export default function CommunityGroups() {
   const discoverGroups = placeholderGroups.filter((g) => !g.isJoined);
 
   return (
-    <>
+    <CommunityLayout>
       <Helmet>
         <title>Grupos | Comunidade Conexão na Cidade</title>
         <meta name="description" content="Participe de grupos temáticos na comunidade de Cotia" />
@@ -231,6 +233,6 @@ export default function CommunityGroups() {
           </Card>
         )}
       </div>
-    </>
+    </CommunityLayout>
   );
 }
