@@ -124,6 +124,15 @@ import TransportadoresAdmin from "./pages/admin/transporte-escolar/Transportador
 import LeadsAdmin from "./pages/admin/transporte-escolar/LeadsAdmin";
 import ReportsAdmin from "./pages/admin/transporte-escolar/ReportsAdmin";
 
+// Censo PcD Pages
+import CensoPcdHome from "./pages/censo-pcd/CensoPcdHome";
+import CensoPcdQuiz from "./pages/censo-pcd/CensoPcdQuiz";
+import CensoPcdConclusao from "./pages/censo-pcd/CensoPcdConclusao";
+
+// Censo PcD Admin Pages
+import CensoPcdDashboard from "./pages/admin/censo-pcd/CensoPcdDashboard";
+import CensoPcdRespostas from "./pages/admin/censo-pcd/CensoPcdRespostas";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -160,6 +169,9 @@ const App = () => (
                         <Route path="/transporte-escolar/escola/:slug" element={<TransporteEscolarEscola />} />
                         <Route path="/transporte-escolar/rede/:rede" element={<TransporteEscolarRede />} />
                         <Route path="/transporte-escolar/bairro/:bairro" element={<TransporteEscolarBairro />} />
+                        <Route path="/censo-pcd" element={<CensoPcdHome />} />
+                        <Route path="/censo-pcd/participar" element={<CensoPcdQuiz />} />
+                        <Route path="/censo-pcd/concluido" element={<CensoPcdConclusao />} />
                         <Route path="/stories" element={<StoriesPage />} />
                       </Route>
                       <Route path="/story/:slug" element={<StoryViewer />} />
@@ -253,6 +265,10 @@ const App = () => (
                         <Route path="transporte-escolar/transportadores" element={<TransportadoresAdmin />} />
                         <Route path="transporte-escolar/leads" element={<LeadsAdmin />} />
                         <Route path="transporte-escolar/reports" element={<ReportsAdmin />} />
+                        
+                        {/* Censo PcD Admin Routes */}
+                        <Route path="censo-pcd" element={<CensoPcdDashboard />} />
+                        <Route path="censo-pcd/respostas" element={<CensoPcdRespostas />} />
                       </Route>
 
                       <Route path="*" element={<NotFound />} />
