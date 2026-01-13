@@ -67,14 +67,14 @@ export function TransporterFilters({ filters, onChange, onClear }: TransporterFi
         <div className="space-y-2">
           <Label htmlFor="filter-rede">Rede da escola</Label>
           <Select
-            value={filters.rede || ""}
-            onValueChange={(v) => updateFilter("rede", v || undefined)}
+            value={filters.rede || "all"}
+            onValueChange={(v) => updateFilter("rede", v === "all" ? undefined : v)}
           >
             <SelectTrigger id="filter-rede">
               <SelectValue placeholder="Todas" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todas</SelectItem>
+              <SelectItem value="all">Todas</SelectItem>
               {REDES.map(rede => (
                 <SelectItem key={rede.value} value={rede.value}>
                   {rede.label}
@@ -87,14 +87,14 @@ export function TransporterFilters({ filters, onChange, onClear }: TransporterFi
         <div className="space-y-2">
           <Label htmlFor="filter-bairro">Bairro</Label>
           <Select
-            value={filters.bairro || ""}
-            onValueChange={(v) => updateFilter("bairro", v || undefined)}
+            value={filters.bairro || "all"}
+            onValueChange={(v) => updateFilter("bairro", v === "all" ? undefined : v)}
           >
             <SelectTrigger id="filter-bairro">
               <SelectValue placeholder="Todos" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos</SelectItem>
+              <SelectItem value="all">Todos</SelectItem>
               {BAIRROS_COTIA.map(bairro => (
                 <SelectItem key={bairro} value={bairro}>
                   {bairro}
@@ -107,14 +107,14 @@ export function TransporterFilters({ filters, onChange, onClear }: TransporterFi
         <div className="space-y-2">
           <Label htmlFor="filter-turno">Turno</Label>
           <Select
-            value={filters.turno || ""}
-            onValueChange={(v) => updateFilter("turno", v || undefined)}
+            value={filters.turno || "all"}
+            onValueChange={(v) => updateFilter("turno", v === "all" ? undefined : v)}
           >
             <SelectTrigger id="filter-turno">
               <SelectValue placeholder="Todos" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos</SelectItem>
+              <SelectItem value="all">Todos</SelectItem>
               {TURNOS.map(turno => (
                 <SelectItem key={turno.value} value={turno.value}>
                   {turno.label}

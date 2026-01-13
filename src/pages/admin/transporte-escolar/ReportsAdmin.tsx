@@ -89,12 +89,12 @@ export default function ReportsAdmin() {
         <Card>
           <CardContent className="p-4">
             <div className="flex gap-4">
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <Select value={filterStatus || "all"} onValueChange={(v) => setFilterStatus(v === "all" ? "" : v)}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="novo">Novo</SelectItem>
                   <SelectItem value="revisando">Revisando</SelectItem>
                   <SelectItem value="resolvido">Resolvido</SelectItem>

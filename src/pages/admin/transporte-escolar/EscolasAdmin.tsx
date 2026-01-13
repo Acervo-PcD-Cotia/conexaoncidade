@@ -190,23 +190,23 @@ export default function EscolasAdmin() {
                   />
                 </div>
               </div>
-              <Select value={filterRede} onValueChange={setFilterRede}>
+              <Select value={filterRede || "all"} onValueChange={(v) => setFilterRede(v === "all" ? "" : v)}>
                 <SelectTrigger className="w-[150px]">
                   <SelectValue placeholder="Rede" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas</SelectItem>
+                  <SelectItem value="all">Todas</SelectItem>
                   {REDES.map(r => (
                     <SelectItem key={r} value={r} className="capitalize">{r}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <Select value={filterStatus || "all"} onValueChange={(v) => setFilterStatus(v === "all" ? "" : v)}>
                 <SelectTrigger className="w-[150px]">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="ativo">Ativo</SelectItem>
                   <SelectItem value="pendente">Pendente</SelectItem>
                   <SelectItem value="inativo">Inativo</SelectItem>
