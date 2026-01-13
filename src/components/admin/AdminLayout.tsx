@@ -8,6 +8,7 @@ import { useRequireRole } from "@/hooks/useRequireRole";
 import { NewsCreationModal } from "./NewsCreationModal";
 import { useNewsCreationModal } from "@/contexts/NewsCreationModalContext";
 import { AccessDeniedScreen } from "@/components/auth/AccessDeniedScreen";
+import { AdminErrorBoundary } from "./AdminErrorBoundary";
 
 export function AdminLayout() {
   const { hasAccess, checkingRole, showDenied, redirectCountdown } = useRequireRole([
@@ -61,7 +62,9 @@ export function AdminLayout() {
           <AdminHeader />
           <main className="flex-1 overflow-auto bg-muted/30 p-6">
             <Breadcrumb />
-            <Outlet />
+            <AdminErrorBoundary>
+              <Outlet />
+            </AdminErrorBoundary>
           </main>
         </div>
       </div>

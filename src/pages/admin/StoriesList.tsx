@@ -158,7 +158,7 @@ export default function StoriesList() {
                       <DropdownMenuContent align="end">
                         {story.status === "published" && (
                           <DropdownMenuItem asChild>
-                            <Link to={`/stories/${story.slug}`} target="_blank">
+                            <Link to={`/story/${story.slug}`} target="_blank">
                               <Eye className="mr-2 h-4 w-4" />
                               Visualizar
                             </Link>
