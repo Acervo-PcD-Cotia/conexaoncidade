@@ -88,6 +88,7 @@ const businessItems = [
 
 const adminOnlyItems = [
   { title: "Comunidade", url: "/admin/community", icon: UsersRound },
+  { title: "Relatório Ofertas", url: "/admin/community/phone-offers-report", icon: BarChart3 },
   { title: "Usuários", url: "/admin/users", icon: Users },
   { title: "Logs", url: "/admin/logs", icon: History },
   { title: "Configurações", url: "/admin/settings", icon: Settings },
