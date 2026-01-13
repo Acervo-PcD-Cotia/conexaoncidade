@@ -255,20 +255,20 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Operational Stats */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
+      {/* Operational Stats - Compact */}
+      <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
         {operationalCards.map((stat) => (
-          <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+          <Card key={stat.title} className="py-0">
+            <CardHeader className="flex flex-row items-center justify-between pb-1 pt-3 px-4">
+              <CardTitle className="text-xs font-medium text-muted-foreground">
                 {stat.title}
               </CardTitle>
-              <div className={`rounded-lg p-2 ${stat.bgColor}`}>
-                <stat.icon className={`h-4 w-4 ${stat.color}`} />
+              <div className={`rounded-md p-1.5 ${stat.bgColor}`}>
+                <stat.icon className={`h-3.5 w-3.5 ${stat.color}`} />
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
+            <CardContent className="pb-3 px-4">
+              <div className="text-xl font-bold">
                 {typeof stat.value === "number"
                   ? stat.value.toLocaleString("pt-BR")
                   : stat.value}
@@ -290,21 +290,21 @@ export default function Dashboard() {
               <Link to="/admin/news">Ver todas</Link>
             </Button>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {recentNews?.map((news) => (
+          <CardContent className="pt-0">
+            <div className="space-y-2">
+              {recentNews?.slice(0, 5).map((news) => (
                 <div
                   key={news.id}
-                  className="flex items-center justify-between rounded-lg border p-3"
+                  className="flex items-center justify-between rounded-lg border p-2"
                 >
                   <div className="flex-1 min-w-0">
                     <Link
                       to={`/admin/news/${news.id}/edit`}
-                      className="font-medium hover:text-primary line-clamp-1"
+                      className="text-sm font-medium hover:text-primary line-clamp-1"
                     >
                       {news.title}
                     </Link>
-                    <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                    <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
                       {getStatusBadge(news.status)}
                       <span className="flex items-center gap-1">
                         <Eye className="h-3 w-3" />
@@ -318,9 +318,9 @@ export default function Dashboard() {
                       </span>
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon" asChild>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
                     <Link to={`/admin/news/${news.id}/edit`}>
-                      <Edit3 className="h-4 w-4" />
+                      <Edit3 className="h-3.5 w-3.5" />
                     </Link>
                   </Button>
                 </div>
@@ -460,23 +460,23 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* Quick Stats */}
+          {/* Quick Stats - Compact inline */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <PlaySquare className="h-5 w-5" />
-                Resumo
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-lg bg-muted p-3 text-center">
-                  <p className="text-2xl font-bold">{stats?.totalNews || 0}</p>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-around text-center">
+                <div>
+                  <p className="text-xl font-bold">{stats?.totalNews || 0}</p>
                   <p className="text-xs text-muted-foreground">Notícias</p>
                 </div>
-                <div className="rounded-lg bg-muted p-3 text-center">
-                  <p className="text-2xl font-bold">{stats?.totalStories || 0}</p>
+                <div className="h-8 w-px bg-border" />
+                <div>
+                  <p className="text-xl font-bold">{stats?.totalStories || 0}</p>
                   <p className="text-xs text-muted-foreground">Stories</p>
+                </div>
+                <div className="h-8 w-px bg-border" />
+                <div>
+                  <p className="text-xl font-bold">{stats?.totalViews?.toLocaleString('pt-BR') || 0}</p>
+                  <p className="text-xs text-muted-foreground">Views</p>
                 </div>
               </div>
             </CardContent>

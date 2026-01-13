@@ -2,7 +2,8 @@ import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bus, School, Users, MessageSquare, AlertTriangle, ChevronRight, Loader2 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Bus, School, Users, MessageSquare, AlertTriangle, ChevronRight, Loader2, Upload } from "lucide-react";
 import { useSchools } from "@/hooks/useSchools";
 import { useTransporters } from "@/hooks/useTransporters";
 import { useTransportLeads, useTransportReports } from "@/hooks/useTransportLeads";
@@ -71,6 +72,23 @@ export default function TransporteEscolarAdmin() {
             Gerencie o módulo de transporte escolar de Cotia
           </p>
         </div>
+
+        {/* Alert: No schools */}
+        {!isLoading && activeSchools === 0 && (
+          <Alert variant="destructive" className="border-yellow-500 bg-yellow-50 text-yellow-900 dark:border-yellow-600 dark:bg-yellow-950 dark:text-yellow-100">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Nenhuma escola cadastrada</AlertTitle>
+            <AlertDescription className="flex items-center justify-between">
+              <span>Importe o catálogo de escolas antes de começar a receber cadastros de transportadores.</span>
+              <Link to="/admin/transporte-escolar/escolas">
+                <Button size="sm" variant="outline" className="gap-2 ml-4">
+                  <Upload className="h-4 w-4" />
+                  Importar Escolas
+                </Button>
+              </Link>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Stats */}
         <div className="grid gap-4 md:grid-cols-4">
