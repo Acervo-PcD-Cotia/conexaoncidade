@@ -2997,6 +2997,7 @@ export type Database = {
       community_posts: {
         Row: {
           author_id: string
+          category: string | null
           comment_count: number | null
           content: string
           created_at: string | null
@@ -3016,6 +3017,7 @@ export type Database = {
         }
         Insert: {
           author_id: string
+          category?: string | null
           comment_count?: number | null
           content: string
           created_at?: string | null
@@ -3035,6 +3037,7 @@ export type Database = {
         }
         Update: {
           author_id?: string
+          category?: string | null
           comment_count?: number | null
           content?: string
           created_at?: string | null

@@ -14,6 +14,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { CommunityErrorBoundary } from "./CommunityErrorBoundary";
+import { CommunityChatButton } from "./CommunityChatButton";
 import { Badge } from "@/components/ui/badge";
 
 interface CommunityLayoutProps {
@@ -159,6 +160,9 @@ export function CommunityLayout({ children }: CommunityLayoutProps) {
           </div>
         </div>
       </div>
+      
+      {/* AI Chat Button */}
+      <CommunityChatButton />
     </CommunityErrorBoundary>
   );
 }

@@ -101,3 +101,6 @@ verify_jwt = false
 
 [functions.phone-parse-specs]
 verify_jwt = false
+
+[functions.community-ai-chat]
+verify_jwt = false
