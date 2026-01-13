@@ -47,7 +47,7 @@ export function OnboardingWelcomeModal({ open, onContinue }: OnboardingWelcomeMo
               <ShieldCheck className="h-4 w-4 text-green-600" />
             </div>
             <div>
-              <p className="font-medium text-sm">Combate à desinformação</p>
+              <p className="font-medium text-sm">Check Fake News</p>
               <p className="text-sm text-muted-foreground">
                 Aqui valorizamos informações verificadas e combatemos fake news.
               </p>

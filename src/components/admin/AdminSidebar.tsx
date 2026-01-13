@@ -73,7 +73,7 @@ const editorialItems = [
   { title: "Editor da Home", url: "/admin/home-editor", icon: PanelTop },
   { title: "Banners", url: "/admin/banners", icon: Image },
   { title: "Anúncios", url: "/admin/ads", icon: Megaphone },
-  { title: "Anti Fake News", url: "/admin/anti-fake-news", icon: ShieldCheck },
+  { title: "Check Fake News", url: "/admin/anti-fake-news", icon: ShieldCheck },
   { title: "Parceiros & Sindicação", url: "/admin/partners", icon: Handshake },
   { title: "Distribuição Social", url: "/admin/social", icon: Share2 },
   { title: "Gerador de Links", url: "/admin/links", icon: Link2 },
@@ -133,7 +133,7 @@ export function AdminSidebar() {
             <img 
               src={logoFull} 
               alt="Conexão na Cidade" 
-              className="h-8 w-auto"
+              className="h-12 w-auto"
             />
           )}
         </NavLink>

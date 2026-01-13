@@ -239,7 +239,7 @@ export function Header() {
                   className="inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-green-600 dark:text-green-500 transition-colors hover:bg-green-50 dark:hover:bg-green-950/50"
                 >
                   <ShieldCheck className="h-4 w-4" />
-                  Anti Fake News
+                  Check Fake News
                 </Link>
               </li>
               {/* Transporte Escolar Link */}

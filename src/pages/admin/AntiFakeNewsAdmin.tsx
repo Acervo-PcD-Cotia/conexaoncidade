@@ -60,7 +60,7 @@ export default function AntiFakeNewsAdmin() {
   return (
     <>
       <Helmet>
-        <title>Anti Fake News - Admin | Conexão na Cidade</title>
+        <title>Check Fake News - Admin | Conexão na Cidade</title>
       </Helmet>
 
       <div className="space-y-6">
@@ -69,7 +69,7 @@ export default function AntiFakeNewsAdmin() {
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <ShieldCheck className="h-6 w-6 text-primary" />
-              Painel Anti Fake News
+              Painel Check Fake News
             </h1>
             <p className="text-muted-foreground">
               Gerencie verificações, fila de apuração e fontes confiáveis

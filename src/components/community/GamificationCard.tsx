@@ -7,7 +7,7 @@ const POINT_ACTIONS = [
   { icon: BookOpen, label: "Criar publicação", points: 10, color: "text-blue-500" },
   { icon: MessageSquare, label: "Comentar", points: 5, color: "text-green-500" },
   { icon: Share2, label: "Compartilhar notícia", points: 5, color: "text-purple-500" },
-  { icon: ShieldCheck, label: "Verificar no Anti Fake News", points: 15, color: "text-emerald-500" },
+  { icon: ShieldCheck, label: "Verificar no Check Fake News", points: 15, color: "text-emerald-500" },
   { icon: UserPlus, label: "Convidar novo membro", points: 20, color: "text-orange-500" },
 ];
 
