@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Star, Accessibility, Loader2, Trash2, Flag } from "lucide-react";
+import { Star, Accessibility, Loader2, Trash2, Flag, BadgeCheck } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/tooltip";
 import { StarRating } from "./StarRating";
 import { ReportReviewDialog } from "./ReportReviewDialog";
+import { LocationPhotosGallery } from "./LocationPhotosGallery";
 import { useLocationReviews, LocationReview } from "@/hooks/useLocationReviews";
 import { useAuth } from "@/contexts/AuthContext";
 import { CommunityLocation } from "@/hooks/useCommunityLocations";
@@ -124,9 +125,15 @@ export function LocationReviewsDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Star className="h-5 w-5 text-yellow-500" />
-            Avaliações
+            {location.name}
+            {location.is_verified && (
+              <Badge className="bg-green-100 text-green-700 border-green-300">
+                <BadgeCheck className="h-3 w-3 mr-1" />
+                Verificado
+              </Badge>
+            )}
           </DialogTitle>
-          <DialogDescription>{location.name}</DialogDescription>
+          <DialogDescription>{location.address || location.neighborhood || "Guia Na Cidade"}</DialogDescription>
         </DialogHeader>
 
         {/* Stats */}
@@ -147,6 +154,11 @@ export function LocationReviewsDialog({
             )}
           </div>
         </div>
+
+        {/* Photos Gallery */}
+        <LocationPhotosGallery locationId={location.id} locationName={location.name} />
+
+        <Separator />
 
         <ScrollArea className="flex-1 min-h-0">
           {/* Reviews List */}

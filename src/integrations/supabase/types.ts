@@ -2696,6 +2696,44 @@ export type Database = {
           },
         ]
       }
+      community_location_photos: {
+        Row: {
+          caption: string | null
+          created_at: string | null
+          id: string
+          is_approved: boolean | null
+          location_id: string
+          photo_url: string
+          user_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string | null
+          id?: string
+          is_approved?: boolean | null
+          location_id: string
+          photo_url: string
+          user_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string | null
+          id?: string
+          is_approved?: boolean | null
+          location_id?: string
+          photo_url?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_location_photos_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "community_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_location_reviews: {
         Row: {
           accessibility_rating: number | null
@@ -5932,6 +5970,7 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           created_at: string
+          email_notifications: Json | null
           full_name: string | null
           id: string
           is_active: boolean | null
@@ -5942,6 +5981,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          email_notifications?: Json | null
           full_name?: string | null
           id: string
           is_active?: boolean | null
@@ -5952,6 +5992,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          email_notifications?: Json | null
           full_name?: string | null
           id?: string
           is_active?: boolean | null

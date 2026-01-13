@@ -119,14 +119,7 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
       return;
     }
 
-    if (detectedMode === 'batch' && !canUseBatch) {
-      toast({
-        title: 'Recurso bloqueado',
-        description: 'Modo lote disponível a partir do nível Intermediário',
-        variant: 'destructive',
-      });
-      return;
-    }
+    // Modo lote agora está sempre disponível - removido bloqueio
 
     if (detectedMode === 'batch') {
       // Simulate batch progress
@@ -168,17 +161,15 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
           {Object.entries(MODE_CONFIG).filter(([key]) => key !== 'auto').map(([key, config]) => {
             const Icon = config.icon;
             const isActive = detectedMode === key;
-            const isLocked = key === 'batch' && !canUseBatch;
             
             return (
               <Badge 
                 key={key} 
                 variant={isActive ? 'default' : 'outline'}
-                className={`${isActive ? config.color : ''} ${isLocked ? 'opacity-50' : ''} cursor-default`}
+                className={`${isActive ? config.color : ''} cursor-default`}
               >
                 <Icon className="mr-1 h-3 w-3" />
                 {config.label}
-                {isLocked && ' 🔒'}
               </Badge>
             );
           })}
