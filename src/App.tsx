@@ -52,9 +52,16 @@ import EventsList from "./pages/admin/EventsList";
 import EditionsList from "./pages/admin/EditionsList";
 import EditionEditor from "./pages/admin/EditionEditor";
 import FinancialDashboard from "./pages/admin/FinancialDashboard";
+import FinancialProfiles from "./pages/admin/FinancialProfiles";
+import FinancialReceivables from "./pages/admin/FinancialReceivables";
+import FinancialInvoices from "./pages/admin/FinancialInvoices";
 import TrainingHub from "./pages/admin/TrainingHub";
 import PodcastsList from "./pages/admin/PodcastsList";
 import AntiFakeNewsAdmin from "./pages/admin/AntiFakeNewsAdmin";
+import LinksQRGenerator from "./pages/admin/LinksQRGenerator";
+import LinksBioBuilder from "./pages/admin/LinksBioBuilder";
+import LinksReports from "./pages/admin/LinksReports";
+import CampaignsHub from "./pages/admin/CampaignsHub";
 
 // Auto Post PRO Pages
 import AutoPostDashboard from "./pages/admin/autopost/AutoPostDashboard";
@@ -189,6 +196,9 @@ const App = () => (
                         <Route path="social/settings" element={<SocialSettings />} />
                         <Route path="links" element={<LinksDashboard />} />
                         <Route path="links/create" element={<LinksBuilder />} />
+                        <Route path="links/qr" element={<LinksQRGenerator />} />
+                        <Route path="links/bio" element={<LinksBioBuilder />} />
+                        <Route path="links/reports" element={<LinksReports />} />
                         <Route path="logs" element={<AuditLogs />} />
                         <Route path="settings" element={<Settings />} />
                         <Route path="solutions" element={<Solutions />} />
@@ -197,6 +207,9 @@ const App = () => (
                         <Route path="editions/new" element={<EditionEditor />} />
                         <Route path="editions/:id/edit" element={<EditionEditor />} />
                         <Route path="financial" element={<FinancialDashboard />} />
+                        <Route path="financial/profiles" element={<FinancialProfiles />} />
+                        <Route path="financial/receivables" element={<FinancialReceivables />} />
+                        <Route path="financial/invoices" element={<FinancialInvoices />} />
                         <Route path="training" element={<TrainingHub />} />
                         <Route path="podcasts" element={<PodcastsList />} />
                         <Route path="anti-fake-news" element={<AntiFakeNewsAdmin />} />
@@ -231,6 +244,7 @@ const App = () => (
                         <Route path="community/phone-import" element={<PhoneImportAssisted />} />
                         
                         {/* Campaign Admin Routes */}
+                        <Route path="campaigns" element={<CampaignsHub />} />
                         <Route path="campaigns/google-maps" element={<GoogleMapsLeads />} />
                         
                         {/* Transporte Escolar Admin Routes */}
