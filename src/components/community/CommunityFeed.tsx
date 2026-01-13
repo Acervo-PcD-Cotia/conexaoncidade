@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   Plus, 
   MessageSquare, 
-  Heart, 
   Share2, 
   MoreHorizontal,
   Send,
@@ -23,12 +22,16 @@ import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { NestedComments } from "./NestedComments";
+import { FeedCategoryFilter } from "./FeedCategoryFilter";
+import { PostReactions } from "./PostReactions";
+import { InlinePoll } from "./InlinePoll";
 
 interface Post {
   id: string;
   author_id: string;
   content: string;
   post_type: string;
+  category: string;
   like_count: number;
   comment_count: number;
   view_count: number;
@@ -40,6 +43,13 @@ interface Post {
     full_name: string | null;
     avatar_url: string | null;
   };
+  poll?: {
+    id: string;
+    question: string;
+    options: { text: string }[];
+    ends_at: string | null;
+    allow_multiple: boolean;
+  } | null;
 }
 
 const POST_SUGGESTIONS = [
@@ -58,6 +68,7 @@ export function CommunityFeed() {
   const queryClient = useQueryClient();
   const [newPost, setNewPost] = useState("");
   const [isPosting, setIsPosting] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState("all");
 
   // Random suggestion
   const suggestion = useMemo(() => {
@@ -65,16 +76,27 @@ export function CommunityFeed() {
   }, []);
 
   const { data: posts, isLoading } = useQuery({
-    queryKey: ['community-posts'],
+    queryKey: ['community-posts', categoryFilter],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('community_posts')
-        .select('*, is_pinned, is_official, pin_order')
+        .select('*, is_pinned, is_official, pin_order, category')
         .eq('is_hidden', false)
         .order('is_pinned', { ascending: false })
         .order('pin_order', { ascending: true })
         .order('created_at', { ascending: false })
         .limit(30);
+      
+      // Apply category filter
+      if (categoryFilter !== 'all') {
+        if (categoryFilter === 'oficial') {
+          query = query.eq('is_official', true);
+        } else {
+          query = query.eq('category', categoryFilter);
+        }
+      }
+      
+      const { data, error } = await query;
       
       if (error) throw error;
       
@@ -87,9 +109,25 @@ export function CommunityFeed() {
       
       const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
       
+      // Fetch polls for posts with post_type = 'poll'
+      const pollPostIds = data.filter(p => p.post_type === 'poll').map(p => p.id);
+      let pollMap = new Map();
+      
+      if (pollPostIds.length > 0) {
+        const { data: polls } = await supabase
+          .from('community_polls' as any)
+          .select('*')
+          .in('post_id', pollPostIds);
+        
+        if (polls) {
+          pollMap = new Map((polls as any[]).map(p => [p.post_id, p]));
+        }
+      }
+      
       return data.map(post => ({
         ...post,
         author: profileMap.get(post.author_id) || null,
+        poll: pollMap.get(post.id) || null,
       })) as Post[];
     },
   });
@@ -166,6 +204,11 @@ export function CommunityFeed() {
 
   return (
     <div className="space-y-4">
+      {/* Category Filter */}
+      <Card className="p-3">
+        <FeedCategoryFilter value={categoryFilter} onChange={setCategoryFilter} />
+      </Card>
+
       {/* New Post */}
       <Card>
         <CardContent className="pt-4">
@@ -366,16 +409,8 @@ function PostCard({ post }: { post: Post }) {
         </div>
       </CardContent>
       <CardFooter className="pt-2 border-t flex-col items-stretch gap-0">
-        <div className="flex items-center gap-4">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="gap-1"
-            onClick={() => toggleLikeMutation.mutate()}
-          >
-            <Heart className="h-4 w-4" />
-            {post.like_count > 0 && <span>{post.like_count}</span>}
-          </Button>
+        <div className="flex items-center justify-between">
+          <PostReactions postId={post.id} compact />
           <Button 
             variant="ghost" 
             size="sm" 
