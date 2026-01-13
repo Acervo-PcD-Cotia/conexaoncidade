@@ -1,23 +1,18 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { MapPin, Store, Accessibility, Calendar, HelpCircle, Search, Plus } from "lucide-react";
+import { MapPin, Store, Accessibility, Calendar, HelpCircle, Search, Plus, Check } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CommunityLayout } from "@/components/community/CommunityLayout";
-
-interface Location {
-  id: string;
-  name: string;
-  category: "business" | "service" | "event" | "support_pcd";
-  address: string;
-  neighborhood: string;
-  isAccessible: boolean;
-  accessibilityFeatures?: string[];
-}
+import { useCommunityLocations, CommunityLocation, LocationCategory } from "@/hooks/useCommunityLocations";
 
 const categoryLabels: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   business: { label: "Comércio", icon: Store, color: "bg-blue-100 text-blue-700" },
@@ -26,63 +21,84 @@ const categoryLabels: Record<string, { label: string; icon: React.ElementType; c
   support_pcd: { label: "Apoio PcD", icon: Accessibility, color: "bg-pink-100 text-pink-700" },
 };
 
-const neighborhoods = [
+const defaultNeighborhoods = [
   "Centro", "Jardim das Flores", "Vila São João", "Parque das Nações",
   "Granja Viana", "Jardim Atalaia", "Portão", "Caucaia do Alto",
 ];
 
-// Placeholder data - will be replaced with real data from database
-const placeholderLocations: Location[] = [
-  {
-    id: "1",
-    name: "Farmácia Popular",
-    category: "business",
-    address: "Rua Principal, 123",
-    neighborhood: "Centro",
-    isAccessible: true,
-    accessibilityFeatures: ["Rampa de acesso", "Banheiro adaptado"],
-  },
-  {
-    id: "2",
-    name: "CRAS Centro",
-    category: "service",
-    address: "Av. Central, 456",
-    neighborhood: "Centro",
-    isAccessible: true,
-    accessibilityFeatures: ["Elevador", "Intérprete de Libras"],
-  },
-  {
-    id: "3",
-    name: "Associação PcD Cotia",
-    category: "support_pcd",
-    address: "Rua das Flores, 789",
-    neighborhood: "Jardim das Flores",
-    isAccessible: true,
-    accessibilityFeatures: ["Rampa", "Piso tátil", "Banheiro adaptado"],
-  },
+const accessibilityOptions = [
+  "Rampa de acesso",
+  "Banheiro adaptado",
+  "Elevador",
+  "Piso tátil",
+  "Vaga PcD",
+  "Intérprete de Libras",
+  "Cardápio em Braille",
 ];
 
 export default function CommunityMap() {
+  const { locations, isLoading, neighborhoods: dbNeighborhoods, createLocation, stats } = useCommunityLocations();
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedNeighborhood, setSelectedNeighborhood] = useState<string>("all");
-  const [isLoading] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
+  // Form state
+  const [formData, setFormData] = useState({
+    name: "",
+    category: "business" as LocationCategory,
+    address: "",
+    neighborhood: "",
+    is_accessible: false,
+    accessibility_features: [] as string[],
+  });
 
-  const filteredLocations = placeholderLocations.filter((location) => {
+  // Combine db neighborhoods with defaults
+  const allNeighborhoods = [...new Set([...defaultNeighborhoods, ...dbNeighborhoods])].sort();
+
+  const filteredLocations = (locations || []).filter((location) => {
     const matchesSearch = location.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      location.address.toLowerCase().includes(searchTerm.toLowerCase());
+      (location.address || "").toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === "all" || location.category === selectedCategory;
     const matchesNeighborhood = selectedNeighborhood === "all" || location.neighborhood === selectedNeighborhood;
     return matchesSearch && matchesCategory && matchesNeighborhood;
   });
 
   const groupedByNeighborhood = filteredLocations.reduce((acc, location) => {
-    if (!acc[location.neighborhood]) {
-      acc[location.neighborhood] = [];
+    const neighborhood = location.neighborhood || "Sem bairro";
+    if (!acc[neighborhood]) {
+      acc[neighborhood] = [];
     }
-    acc[location.neighborhood].push(location);
+    acc[neighborhood].push(location);
     return acc;
-  }, {} as Record<string, Location[]>);
+  }, {} as Record<string, CommunityLocation[]>);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    createLocation.mutate(formData, {
+      onSuccess: () => {
+        setIsDialogOpen(false);
+        setFormData({
+          name: "",
+          category: "business",
+          address: "",
+          neighborhood: "",
+          is_accessible: false,
+          accessibility_features: [],
+        });
+      },
+    });
+  };
+
+  const toggleAccessibilityFeature = (feature: string) => {
+    setFormData(prev => ({
+      ...prev,
+      accessibility_features: prev.accessibility_features.includes(feature)
+        ? prev.accessibility_features.filter(f => f !== feature)
+        : [...prev.accessibility_features, feature],
+    }));
+  };
 
   if (isLoading) {
     return (
@@ -114,13 +130,127 @@ export default function CommunityMap() {
               Guia Na Cidade
             </h1>
             <p className="text-muted-foreground">
-              Encontre locais, serviços e pontos de apoio na cidade
+              {stats.total} locais cadastrados • {stats.accessible} acessíveis
             </p>
           </div>
-          <Button className="gap-2 bg-pink-600 hover:bg-pink-700">
-            <Plus className="h-4 w-4" />
-            Adicionar Local
-          </Button>
+          
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2 bg-pink-600 hover:bg-pink-700">
+                <Plus className="h-4 w-4" />
+                Adicionar Local
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Adicionar Novo Local</DialogTitle>
+                <DialogDescription>
+                  Preencha as informações do local para adicionar ao guia
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Nome do local *</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Ex: Farmácia Popular"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="category">Categoria *</Label>
+                  <Select
+                    value={formData.category}
+                    onValueChange={(value: LocationCategory) => setFormData(prev => ({ ...prev, category: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a categoria" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="business">Comércio</SelectItem>
+                      <SelectItem value="service">Serviço</SelectItem>
+                      <SelectItem value="event">Evento</SelectItem>
+                      <SelectItem value="support_pcd">Apoio PcD</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="address">Endereço</Label>
+                  <Input
+                    id="address"
+                    value={formData.address}
+                    onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                    placeholder="Rua, número"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="neighborhood">Bairro</Label>
+                  <Select
+                    value={formData.neighborhood}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, neighborhood: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o bairro" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {allNeighborhoods.map((n) => (
+                        <SelectItem key={n} value={n}>{n}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="is_accessible"
+                    checked={formData.is_accessible}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_accessible: !!checked }))}
+                  />
+                  <Label htmlFor="is_accessible" className="cursor-pointer">
+                    Local com acessibilidade
+                  </Label>
+                </div>
+
+                {formData.is_accessible && (
+                  <div className="space-y-2">
+                    <Label>Recursos de acessibilidade</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {accessibilityOptions.map((feature) => (
+                        <div key={feature} className="flex items-center gap-2">
+                          <Checkbox
+                            id={feature}
+                            checked={formData.accessibility_features.includes(feature)}
+                            onCheckedChange={() => toggleAccessibilityFeature(feature)}
+                          />
+                          <Label htmlFor={feature} className="text-sm cursor-pointer">
+                            {feature}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-2 pt-2">
+                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1">
+                    Cancelar
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    className="flex-1 bg-pink-600 hover:bg-pink-700"
+                    disabled={createLocation.isPending || !formData.name}
+                  >
+                    {createLocation.isPending ? "Salvando..." : "Adicionar"}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Search & Filters */}
@@ -154,7 +284,7 @@ export default function CommunityMap() {
                   className="rounded-md border px-3 py-2 text-sm"
                 >
                   <option value="all">Todos bairros</option>
-                  {neighborhoods.map((n) => (
+                  {allNeighborhoods.map((n) => (
                     <option key={n} value={n}>{n}</option>
                   ))}
                 </select>
@@ -182,16 +312,16 @@ export default function CommunityMap() {
                 </CardContent>
               </Card>
             ) : (
-              Object.entries(groupedByNeighborhood).map(([neighborhood, locations]) => (
+              Object.entries(groupedByNeighborhood).map(([neighborhood, locs]) => (
                 <div key={neighborhood}>
                   <h2 className="mb-3 text-lg font-semibold flex items-center gap-2">
                     <MapPin className="h-5 w-5 text-pink-600" />
                     {neighborhood}
-                    <Badge variant="secondary">{locations.length}</Badge>
+                    <Badge variant="secondary">{locs.length}</Badge>
                   </h2>
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {locations.map((location) => {
-                      const categoryInfo = categoryLabels[location.category];
+                    {locs.map((location) => {
+                      const categoryInfo = categoryLabels[location.category] || categoryLabels.business;
                       const CategoryIcon = categoryInfo.icon;
                       return (
                         <Card key={location.id} className="hover:border-pink-300 transition-colors">
@@ -201,7 +331,7 @@ export default function CommunityMap() {
                                 <CategoryIcon className="mr-1 h-3 w-3" />
                                 {categoryInfo.label}
                               </Badge>
-                              {location.isAccessible && (
+                              {location.is_accessible && (
                                 <Badge variant="outline" className="border-pink-300 text-pink-700">
                                   <Accessibility className="mr-1 h-3 w-3" />
                                   Acessível
@@ -209,10 +339,10 @@ export default function CommunityMap() {
                               )}
                             </div>
                             <h3 className="mt-3 font-semibold">{location.name}</h3>
-                            <p className="text-sm text-muted-foreground">{location.address}</p>
-                            {location.accessibilityFeatures && location.accessibilityFeatures.length > 0 && (
+                            <p className="text-sm text-muted-foreground">{location.address || "Endereço não informado"}</p>
+                            {location.accessibility_features && location.accessibility_features.length > 0 && (
                               <div className="mt-2 flex flex-wrap gap-1">
-                                {location.accessibilityFeatures.map((feature) => (
+                                {location.accessibility_features.map((feature) => (
                                   <Badge key={feature} variant="secondary" className="text-xs">
                                     {feature}
                                   </Badge>
@@ -232,31 +362,38 @@ export default function CommunityMap() {
           <TabsContent value="list" className="mt-4">
             <Card>
               <CardContent className="p-0">
-                <div className="divide-y">
-                  {filteredLocations.map((location) => {
-                    const categoryInfo = categoryLabels[location.category];
-                    const CategoryIcon = categoryInfo.icon;
-                    return (
-                      <div key={location.id} className="flex items-center gap-4 p-4 hover:bg-muted/50">
-                        <div className={`rounded-full p-2 ${categoryInfo.color}`}>
-                          <CategoryIcon className="h-5 w-5" />
+                {filteredLocations.length === 0 ? (
+                  <div className="p-8 text-center">
+                    <MapPin className="mx-auto h-12 w-12 text-muted-foreground/50" />
+                    <h3 className="mt-4 font-semibold">Nenhum local encontrado</h3>
+                  </div>
+                ) : (
+                  <div className="divide-y">
+                    {filteredLocations.map((location) => {
+                      const categoryInfo = categoryLabels[location.category] || categoryLabels.business;
+                      const CategoryIcon = categoryInfo.icon;
+                      return (
+                        <div key={location.id} className="flex items-center gap-4 p-4 hover:bg-muted/50">
+                          <div className={`rounded-full p-2 ${categoryInfo.color}`}>
+                            <CategoryIcon className="h-5 w-5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium truncate">{location.name}</h3>
+                            <p className="text-sm text-muted-foreground truncate">
+                              {location.address || "Endereço não informado"} • {location.neighborhood || "Sem bairro"}
+                            </p>
+                          </div>
+                          {location.is_accessible && (
+                            <Badge variant="outline" className="border-pink-300 text-pink-700 shrink-0">
+                              <Accessibility className="mr-1 h-3 w-3" />
+                              Acessível
+                            </Badge>
+                          )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-medium truncate">{location.name}</h3>
-                          <p className="text-sm text-muted-foreground truncate">
-                            {location.address} • {location.neighborhood}
-                          </p>
-                        </div>
-                        {location.isAccessible && (
-                          <Badge variant="outline" className="border-pink-300 text-pink-700 shrink-0">
-                            <Accessibility className="mr-1 h-3 w-3" />
-                            Acessível
-                          </Badge>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

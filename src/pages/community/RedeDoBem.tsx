@@ -14,6 +14,7 @@ import {
   AlertCircle,
   MapPin,
   Lock,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,27 +24,15 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CommunityLayout } from "@/components/community/CommunityLayout";
 import { useCommunity } from "@/hooks/useCommunity";
+import { useRedeDoBem, HelpRequestType } from "@/hooks/useRedeDoBem";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-
-interface HelpRequest {
-  id: string;
-  type: "need_help" | "can_help" | "volunteer" | "donation";
-  category: string;
-  title: string;
-  description: string;
-  neighborhood: string;
-  status: "open" | "in_progress" | "resolved";
-  isUrgent: boolean;
-  createdAt: string;
-  author: {
-    name: string;
-    avatar?: string;
-  };
-}
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const typeLabels: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   need_help: { label: "Preciso de Ajuda", icon: HelpCircle, color: "bg-orange-100 text-orange-700" },
@@ -69,44 +58,9 @@ const categoryOptions = [
   "Outros",
 ];
 
-// Placeholder data
-const placeholderRequests: HelpRequest[] = [
-  {
-    id: "1",
-    type: "need_help",
-    category: "Transporte",
-    title: "Preciso de carona para consulta médica",
-    description: "Preciso ir ao Hospital Regional na próxima terça-feira às 14h. Alguém pode me ajudar?",
-    neighborhood: "Jardim das Flores",
-    status: "open",
-    isUrgent: true,
-    createdAt: new Date().toISOString(),
-    author: { name: "Maria S." },
-  },
-  {
-    id: "2",
-    type: "can_help",
-    category: "Educação",
-    title: "Ofereço aulas de reforço escolar",
-    description: "Sou professor aposentado e posso ajudar crianças com matemática e português, de segunda a quarta.",
-    neighborhood: "Centro",
-    status: "open",
-    isUrgent: false,
-    createdAt: new Date().toISOString(),
-    author: { name: "João P." },
-  },
-  {
-    id: "3",
-    type: "donation",
-    category: "Alimentação",
-    title: "Doação de cestas básicas",
-    description: "Empresa local está doando 50 cestas básicas. Entre em contato para retirada.",
-    neighborhood: "Portão",
-    status: "in_progress",
-    isUrgent: false,
-    createdAt: new Date().toISOString(),
-    author: { name: "Mercado Bom Preço" },
-  },
+const neighborhoodOptions = [
+  "Centro", "Jardim das Flores", "Vila São João", "Parque das Nações",
+  "Granja Viana", "Jardim Atalaia", "Portão", "Caucaia do Alto",
 ];
 
 export default function RedeDoBem() {
@@ -115,7 +69,19 @@ export default function RedeDoBem() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isLoading] = useState(false);
+
+  // Get real data from hook
+  const { requests, isLoading: requestsLoading, stats, createRequest, respondToRequest } = useRedeDoBem();
+
+  // Form state
+  const [formData, setFormData] = useState({
+    type: "need_help" as HelpRequestType,
+    category: "Outros",
+    title: "",
+    description: "",
+    neighborhood: "",
+    is_urgent: false,
+  });
 
   // Check if user is super_admin
   const { data: isSuperAdmin, isLoading: roleLoading } = useQuery({
@@ -136,6 +102,30 @@ export default function RedeDoBem() {
   // Check if user has rede_do_bem_access badge
   const hasRedeDoBemAccess = isSuperAdmin || 
     (membership?.badges && Array.isArray(membership.badges) && membership.badges.includes("rede_do_bem_access"));
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    createRequest.mutate(formData, {
+      onSuccess: () => {
+        setIsDialogOpen(false);
+        setFormData({
+          type: "need_help",
+          category: "Outros",
+          title: "",
+          description: "",
+          neighborhood: "",
+          is_urgent: false,
+        });
+      },
+    });
+  };
+
+  const handleRespond = (requestId: string) => {
+    respondToRequest.mutate({ 
+      request_id: requestId, 
+      message: "Olá! Gostaria de ajudar com sua solicitação." 
+    });
+  };
 
   if (authLoading || roleLoading) {
     return (
@@ -181,8 +171,8 @@ export default function RedeDoBem() {
   }
 
   const filteredRequests = activeTab === "all" 
-    ? placeholderRequests 
-    : placeholderRequests.filter((r) => r.type === activeTab);
+    ? (requests || [])
+    : (requests || []).filter((r) => r.type === activeTab);
 
   return (
     <CommunityLayout>
@@ -210,57 +200,135 @@ export default function RedeDoBem() {
                 Nova Solicitação
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Nova Solicitação</DialogTitle>
                 <DialogDescription>
                   Preencha os dados para pedir ajuda ou oferecer suporte
                 </DialogDescription>
               </DialogHeader>
-              <form className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Tipo</Label>
+                  <Label>Tipo de solicitação</Label>
                   <div className="grid grid-cols-2 gap-2">
-                    <Button type="button" variant="outline" className="gap-2">
+                    <Button 
+                      type="button" 
+                      variant={formData.type === "need_help" ? "default" : "outline"} 
+                      className={`gap-2 ${formData.type === "need_help" ? "bg-orange-600 hover:bg-orange-700" : ""}`}
+                      onClick={() => setFormData(prev => ({ ...prev, type: "need_help" }))}
+                    >
                       <HelpCircle className="h-4 w-4" />
                       Preciso de Ajuda
                     </Button>
-                    <Button type="button" variant="outline" className="gap-2">
+                    <Button 
+                      type="button" 
+                      variant={formData.type === "can_help" ? "default" : "outline"} 
+                      className={`gap-2 ${formData.type === "can_help" ? "bg-green-600 hover:bg-green-700" : ""}`}
+                      onClick={() => setFormData(prev => ({ ...prev, type: "can_help" }))}
+                    >
                       <Heart className="h-4 w-4" />
                       Posso Ajudar
                     </Button>
+                    <Button 
+                      type="button" 
+                      variant={formData.type === "volunteer" ? "default" : "outline"} 
+                      className={`gap-2 ${formData.type === "volunteer" ? "bg-blue-600 hover:bg-blue-700" : ""}`}
+                      onClick={() => setFormData(prev => ({ ...prev, type: "volunteer" }))}
+                    >
+                      <Users className="h-4 w-4" />
+                      Voluntariado
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant={formData.type === "donation" ? "default" : "outline"} 
+                      className={`gap-2 ${formData.type === "donation" ? "bg-purple-600 hover:bg-purple-700" : ""}`}
+                      onClick={() => setFormData(prev => ({ ...prev, type: "donation" }))}
+                    >
+                      <Gift className="h-4 w-4" />
+                      Doação
+                    </Button>
                   </div>
                 </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="category">Categoria</Label>
-                  <select id="category" className="w-full rounded-md border px-3 py-2">
+                  <select 
+                    id="category" 
+                    className="w-full rounded-md border px-3 py-2"
+                    value={formData.category}
+                    onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                  >
                     {categoryOptions.map((cat) => (
                       <option key={cat} value={cat}>{cat}</option>
                     ))}
                   </select>
                 </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="title">Título</Label>
-                  <Input id="title" placeholder="Resumo da sua solicitação" />
+                  <Label htmlFor="title">Título *</Label>
+                  <Input 
+                    id="title" 
+                    placeholder="Resumo da sua solicitação" 
+                    value={formData.title}
+                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                    required
+                  />
                 </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="description">Descrição</Label>
                   <Textarea 
                     id="description" 
                     placeholder="Descreva com detalhes..."
                     rows={3}
+                    value={formData.description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   />
                 </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="neighborhood">Bairro</Label>
-                  <Input id="neighborhood" placeholder="Seu bairro" />
+                  <select 
+                    id="neighborhood" 
+                    className="w-full rounded-md border px-3 py-2"
+                    value={formData.neighborhood}
+                    onChange={(e) => setFormData(prev => ({ ...prev, neighborhood: e.target.value }))}
+                  >
+                    <option value="">Selecione o bairro</option>
+                    {neighborhoodOptions.map((n) => (
+                      <option key={n} value={n}>{n}</option>
+                    ))}
+                  </select>
                 </div>
+
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="is_urgent"
+                    checked={formData.is_urgent}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_urgent: !!checked }))}
+                  />
+                  <Label htmlFor="is_urgent" className="cursor-pointer text-orange-600 font-medium">
+                    Marcar como urgente
+                  </Label>
+                </div>
+
                 <div className="flex gap-2 pt-2">
                   <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1">
                     Cancelar
                   </Button>
-                  <Button type="submit" className="flex-1 bg-pink-600 hover:bg-pink-700">
-                    Publicar
+                  <Button 
+                    type="submit" 
+                    className="flex-1 bg-pink-600 hover:bg-pink-700"
+                    disabled={createRequest.isPending || !formData.title}
+                  >
+                    {createRequest.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Publicando...
+                      </>
+                    ) : (
+                      "Publicar"
+                    )}
                   </Button>
                 </div>
               </form>
@@ -278,7 +346,7 @@ export default function RedeDoBem() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">
-                    {placeholderRequests.filter((r) => r.type === key).length}
+                    {stats[key as keyof typeof stats] || 0}
                   </p>
                   <p className="text-sm text-muted-foreground">{label}</p>
                 </div>
@@ -306,7 +374,12 @@ export default function RedeDoBem() {
           </TabsList>
 
           <TabsContent value={activeTab} className="mt-4">
-            {filteredRequests.length === 0 ? (
+            {requestsLoading ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                <Skeleton className="h-48 rounded-xl" />
+                <Skeleton className="h-48 rounded-xl" />
+              </div>
+            ) : filteredRequests.length === 0 ? (
               <Card>
                 <CardContent className="p-8 text-center">
                   <HandHeart className="mx-auto h-12 w-12 text-muted-foreground/50" />
@@ -319,13 +392,14 @@ export default function RedeDoBem() {
             ) : (
               <div className="grid gap-4 md:grid-cols-2">
                 {filteredRequests.map((request) => {
-                  const typeInfo = typeLabels[request.type];
-                  const statusInfo = statusLabels[request.status];
+                  const typeInfo = typeLabels[request.type] || typeLabels.need_help;
+                  const statusInfo = statusLabels[request.status] || statusLabels.open;
                   const TypeIcon = typeInfo.icon;
                   const StatusIcon = statusInfo.icon;
+                  const authorName = request.author?.full_name || "Anônimo";
 
                   return (
-                    <Card key={request.id} className={`hover:border-pink-300 transition-colors ${request.isUrgent ? "border-orange-300" : ""}`}>
+                    <Card key={request.id} className={`hover:border-pink-300 transition-colors ${request.is_urgent ? "border-orange-300" : ""}`}>
                       <CardHeader className="pb-2">
                         <div className="flex items-start justify-between gap-2">
                           <Badge className={typeInfo.color}>
@@ -333,7 +407,7 @@ export default function RedeDoBem() {
                             {typeInfo.label}
                           </Badge>
                           <div className="flex gap-1">
-                            {request.isUrgent && (
+                            {request.is_urgent && (
                               <Badge variant="destructive" className="text-xs">
                                 Urgente
                               </Badge>
@@ -347,26 +421,36 @@ export default function RedeDoBem() {
                         <CardTitle className="text-lg mt-2">{request.title}</CardTitle>
                         <CardDescription className="flex items-center gap-1">
                           <MapPin className="h-3 w-3" />
-                          {request.neighborhood}
+                          {request.neighborhood || "Não informado"}
+                          <span className="mx-1">•</span>
+                          {formatDistanceToNow(new Date(request.created_at), { addSuffix: true, locale: ptBR })}
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          {request.description}
+                        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                          {request.description || "Sem descrição"}
                         </p>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <div className="h-8 w-8 rounded-full bg-pink-100 flex items-center justify-center">
                               <span className="text-sm font-medium text-pink-700">
-                                {request.author.name.charAt(0)}
+                                {authorName.charAt(0).toUpperCase()}
                               </span>
                             </div>
-                            <span className="text-sm">{request.author.name}</span>
+                            <span className="text-sm">{authorName}</span>
                           </div>
-                          <Button size="sm" variant="outline" className="gap-1">
-                            <Heart className="h-4 w-4" />
-                            Quero Ajudar
-                          </Button>
+                          {request.status === "open" && request.type === "need_help" && (
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="gap-1"
+                              onClick={() => handleRespond(request.id)}
+                              disabled={respondToRequest.isPending}
+                            >
+                              <Heart className="h-4 w-4" />
+                              Quero Ajudar
+                            </Button>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
