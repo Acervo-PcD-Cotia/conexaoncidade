@@ -78,12 +78,40 @@ export function useRedeDoBem() {
       if (error) throw error;
       return result;
     },
-    onSuccess: () => {
+    onSuccess: async (result: any) => {
       queryClient.invalidateQueries({ queryKey: ["help-requests"] });
       toast({
         title: "Solicitação criada",
         description: "Sua solicitação foi publicada na Rede do Bem!",
       });
+
+      // Send push notification for urgent requests
+      if (result?.is_urgent) {
+        try {
+          // Get volunteers with rede_do_bem_access badge
+          const { data: volunteers } = await supabase
+            .from("community_members" as any)
+            .select("user_id");
+
+          const volunteersList = volunteers as unknown as { user_id: string }[] | null;
+          
+          if (volunteersList && volunteersList.length > 0) {
+            await supabase.functions.invoke("send-push", {
+              body: {
+                title: "🆘 Pedido Urgente na Rede do Bem",
+                body: result.title || "Alguém precisa de ajuda urgente!",
+                url: "/comunidade/rede-do-bem",
+                tag: "rede-do-bem-urgente",
+                target_type: "users",
+                target_user_ids: volunteersList.map((v) => v.user_id),
+              },
+            });
+          }
+        } catch (pushError) {
+          console.error("Error sending push notification:", pushError);
+          // Don't fail the mutation if push fails
+        }
+      }
     },
     onError: (error: Error) => {
       toast({

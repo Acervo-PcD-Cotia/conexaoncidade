@@ -19,6 +19,8 @@ export interface CommunityLocation {
   is_verified: boolean;
   created_at: string;
   updated_at: string;
+  avg_rating?: number | null;
+  review_count?: number | null;
 }
 
 export function useCommunityLocations() {

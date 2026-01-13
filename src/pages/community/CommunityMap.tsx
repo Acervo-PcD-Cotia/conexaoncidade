@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { MapPin, Store, Accessibility, Calendar, HelpCircle, Search, Plus, Check } from "lucide-react";
+import { MapPin, Store, Accessibility, Calendar, HelpCircle, Search, Plus, Check, Star, Loader2, Navigation } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CommunityLayout } from "@/components/community/CommunityLayout";
 import { useCommunityLocations, CommunityLocation, LocationCategory } from "@/hooks/useCommunityLocations";
+import { LocationMap, geocodeAddress } from "@/components/community/LocationMap";
+import { LocationReviewsDialog } from "@/components/community/LocationReviewsDialog";
+import { StarRating } from "@/components/community/StarRating";
+import { useToast } from "@/hooks/use-toast";
 
 const categoryLabels: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   business: { label: "Comércio", icon: Store, color: "bg-blue-100 text-blue-700" },
@@ -43,6 +47,10 @@ export default function CommunityMap() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedNeighborhood, setSelectedNeighborhood] = useState<string>("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isGeocoding, setIsGeocoding] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<CommunityLocation | null>(null);
+  const [reviewsDialogOpen, setReviewsDialogOpen] = useState(false);
+  const { toast } = useToast();
   
   // Form state
   const [formData, setFormData] = useState({
@@ -52,6 +60,8 @@ export default function CommunityMap() {
     neighborhood: "",
     is_accessible: false,
     accessibility_features: [] as string[],
+    lat: null as number | null,
+    lng: null as number | null,
   });
 
   // Combine db neighborhoods with defaults
@@ -74,9 +84,28 @@ export default function CommunityMap() {
     return acc;
   }, {} as Record<string, CommunityLocation[]>);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    createLocation.mutate(formData, {
+    
+    // Try to geocode if we have an address but no coordinates
+    let lat = formData.lat;
+    let lng = formData.lng;
+    
+    if (formData.address && (!lat || !lng)) {
+      setIsGeocoding(true);
+      const coords = await geocodeAddress(formData.address);
+      if (coords) {
+        lat = coords.lat;
+        lng = coords.lng;
+      }
+      setIsGeocoding(false);
+    }
+    
+    createLocation.mutate({
+      ...formData,
+      lat: lat ?? undefined,
+      lng: lng ?? undefined,
+    }, {
       onSuccess: () => {
         setIsDialogOpen(false);
         setFormData({
@@ -86,9 +115,40 @@ export default function CommunityMap() {
           neighborhood: "",
           is_accessible: false,
           accessibility_features: [],
+          lat: null,
+          lng: null,
+        });
+        toast({
+          title: "Local adicionado!",
+          description: lat ? "O local foi mapeado automaticamente." : "O local foi adicionado sem coordenadas.",
         });
       },
     });
+  };
+
+  const handleGeocode = async () => {
+    if (!formData.address) return;
+    setIsGeocoding(true);
+    const coords = await geocodeAddress(formData.address);
+    if (coords) {
+      setFormData(prev => ({ ...prev, lat: coords.lat, lng: coords.lng }));
+      toast({
+        title: "Endereço localizado!",
+        description: "As coordenadas foram preenchidas automaticamente.",
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Endereço não encontrado",
+        description: "Tente um endereço mais específico.",
+      });
+    }
+    setIsGeocoding(false);
+  };
+
+  const handleLocationCardClick = (location: CommunityLocation) => {
+    setSelectedLocation(location);
+    setReviewsDialogOpen(true);
   };
 
   const toggleAccessibilityFeature = (feature: string) => {
@@ -180,12 +240,35 @@ export default function CommunityMap() {
 
                 <div className="space-y-2">
                   <Label htmlFor="address">Endereço</Label>
-                  <Input
-                    id="address"
-                    value={formData.address}
-                    onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-                    placeholder="Rua, número"
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      id="address"
+                      value={formData.address}
+                      onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value, lat: null, lng: null }))}
+                      placeholder="Rua, número"
+                      className="flex-1"
+                    />
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="icon"
+                      onClick={handleGeocode}
+                      disabled={!formData.address || isGeocoding}
+                      title="Localizar no mapa"
+                    >
+                      {isGeocoding ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Navigation className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  {formData.lat && formData.lng && (
+                    <p className="text-xs text-green-600 flex items-center gap-1">
+                      <Check className="h-3 w-3" />
+                      Coordenadas encontradas
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -295,9 +378,10 @@ export default function CommunityMap() {
 
         {/* Category Tabs */}
         <Tabs defaultValue="grid" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="grid">Por Bairro</TabsTrigger>
             <TabsTrigger value="list">Lista Completa</TabsTrigger>
+            <TabsTrigger value="map">Mapa</TabsTrigger>
           </TabsList>
 
           <TabsContent value="grid" className="mt-4 space-y-6">
@@ -324,7 +408,11 @@ export default function CommunityMap() {
                       const categoryInfo = categoryLabels[location.category] || categoryLabels.business;
                       const CategoryIcon = categoryInfo.icon;
                       return (
-                        <Card key={location.id} className="hover:border-pink-300 transition-colors">
+                        <Card 
+                          key={location.id} 
+                          className="hover:border-pink-300 transition-colors cursor-pointer"
+                          onClick={() => handleLocationCardClick(location)}
+                        >
                           <CardContent className="p-4">
                             <div className="flex items-start justify-between">
                               <Badge className={categoryInfo.color}>
@@ -340,6 +428,15 @@ export default function CommunityMap() {
                             </div>
                             <h3 className="mt-3 font-semibold">{location.name}</h3>
                             <p className="text-sm text-muted-foreground">{location.address || "Endereço não informado"}</p>
+                            
+                            {/* Rating */}
+                            <div className="flex items-center gap-1 mt-2">
+                              <StarRating rating={Number(location.avg_rating) || 0} size="sm" />
+                              <span className="text-sm text-muted-foreground">
+                                ({location.review_count || 0})
+                              </span>
+                            </div>
+                            
                             {location.accessibility_features && location.accessibility_features.length > 0 && (
                               <div className="mt-2 flex flex-wrap gap-1">
                                 {location.accessibility_features.map((feature) => (
@@ -397,18 +494,36 @@ export default function CommunityMap() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="map" className="mt-4">
+            <Card>
+              <CardContent className="p-4">
+                {filteredLocations.filter(l => l.lat && l.lng).length === 0 ? (
+                  <div className="p-8 text-center">
+                    <MapPin className="mx-auto h-12 w-12 text-muted-foreground/50" />
+                    <h3 className="mt-4 font-semibold">Nenhum local com coordenadas</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Adicione locais com endereço para vê-los no mapa
+                    </p>
+                  </div>
+                ) : (
+                  <LocationMap 
+                    locations={filteredLocations} 
+                    onLocationClick={handleLocationCardClick}
+                    className="h-[500px]"
+                  />
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
 
-        {/* Coming Soon Notice */}
-        <Card className="border-dashed">
-          <CardContent className="p-6 text-center">
-            <MapPin className="mx-auto h-8 w-8 text-muted-foreground" />
-            <h3 className="mt-2 font-semibold">Integração com Google Maps em breve</h3>
-            <p className="text-sm text-muted-foreground">
-              Em breve você poderá ver todos os locais em um mapa interativo
-            </p>
-          </CardContent>
-        </Card>
+        {/* Reviews Dialog */}
+        <LocationReviewsDialog
+          location={selectedLocation}
+          open={reviewsDialogOpen}
+          onOpenChange={setReviewsDialogOpen}
+        />
       </div>
     </CommunityLayout>
   );
