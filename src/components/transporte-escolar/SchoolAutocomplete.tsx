@@ -1,5 +1,13 @@
-import { useState, useEffect, useRef } from "react";
-import { Check, ChevronsUpDown, School, Plus } from "lucide-react";
+import { useState, useRef } from "react";
+import { Check, ChevronsUpDown, School as SchoolIcon, Plus } from "lucide-react";
+
+export interface School {
+  id: string;
+  nome_oficial: string;
+  rede: string;
+  bairro: string;
+  slug?: string;
+}
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -67,7 +75,7 @@ export function SchoolAutocomplete({
           disabled={disabled}
         >
           <div className="flex items-center gap-2 truncate">
-            <School className="h-4 w-4 shrink-0" />
+            <SchoolIcon className="h-4 w-4 shrink-0" />
             {selectedSchool ? (
               <span className="truncate">{selectedSchool.nome_oficial}</span>
             ) : (

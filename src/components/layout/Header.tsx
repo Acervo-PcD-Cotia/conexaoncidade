@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Search, Sun, Moon, LogOut, LayoutDashboard, Newspaper, FolderOpen, Megaphone, Settings, ShieldCheck } from "lucide-react";
+import { Menu, X, Search, Sun, Moon, LogOut, LayoutDashboard, Newspaper, FolderOpen, Megaphone, Settings, ShieldCheck, Bus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTheme } from "@/hooks/useTheme";
@@ -240,6 +240,16 @@ export function Header() {
                 >
                   <ShieldCheck className="h-4 w-4" />
                   Anti Fake News
+                </Link>
+              </li>
+              {/* Transporte Escolar Link */}
+              <li>
+                <Link
+                  to="/transporte-escolar"
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-orange-600 dark:text-orange-500 transition-colors hover:bg-orange-50 dark:hover:bg-orange-950/50"
+                >
+                  <Bus className="h-4 w-4" />
+                  Transporte Escolar
                 </Link>
               </li>
             </ul>

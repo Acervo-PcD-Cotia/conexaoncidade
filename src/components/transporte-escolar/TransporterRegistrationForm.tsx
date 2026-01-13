@@ -10,8 +10,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Plus, Trash2, Loader2 } from "lucide-react";
-import { SchoolAutocomplete, School } from "./SchoolAutocomplete";
+import { SchoolAutocomplete, type School } from "./SchoolAutocomplete";
 import { useCreateTransporter } from "@/hooks/useTransporters";
+
+// Local type for form school data
+interface FormSchool {
+  id: string;
+  nome_oficial: string;
+  rede?: string;
+  bairro?: string;
+}
 
 const TIPOS_SERVICO = [
   { value: "porta_a_porta", label: "Porta a porta" },
@@ -66,8 +74,8 @@ const formSchema = z.object({
     }).nullable(),
   })).min(1, "Adicione pelo menos uma escola"),
   areas: z.array(z.object({
-    bairro: z.string().min(1, "Selecione o bairro"),
-    turno: z.string().min(1, "Selecione o turno"),
+    bairro: z.string().optional(),
+    turno: z.string().optional(),
   })).min(1, "Adicione pelo menos uma área de cobertura"),
 });
 
@@ -78,7 +86,7 @@ interface TransporterRegistrationFormProps {
 }
 
 export function TransporterRegistrationForm({ onSuccess }: TransporterRegistrationFormProps) {
-  const [selectedSchools, setSelectedSchools] = useState<(School | null)[]>([null]);
+  const [selectedSchools, setSelectedSchools] = useState<(FormSchool | null)[]>([null]);
   const createTransporter = useCreateTransporter();
 
   const form = useForm<FormValues>({
@@ -131,11 +139,11 @@ export function TransporterRegistrationForm({ onSuccess }: TransporterRegistrati
     }
   };
 
-  const updateSchool = (index: number, school: School | null) => {
+  const updateSchool = (index: number, school: FormSchool | null) => {
     const newSchools = [...selectedSchools];
     newSchools[index] = school;
     setSelectedSchools(newSchools);
-    form.setValue("schools", newSchools.map(s => ({ school: s })));
+    form.setValue("schools", newSchools.map(s => ({ school: s ? { id: s.id, nome_oficial: s.nome_oficial } : null })));
   };
 
   const toggleAcessibilidadeTipo = (tipo: string) => {
@@ -147,10 +155,20 @@ export function TransporterRegistrationForm({ onSuccess }: TransporterRegistrati
   };
 
   const onSubmit = async (values: FormValues) => {
-    const schoolIds = selectedSchools.filter((s): s is School => s !== null).map(s => s.id);
+    const schoolIds = selectedSchools.filter((s): s is FormSchool => s !== null).map(s => s.id);
     
     if (schoolIds.length === 0) {
       form.setError("schools", { message: "Adicione pelo menos uma escola" });
+      return;
+    }
+
+    // Filter valid areas
+    const validAreas = values.areas
+      .filter(a => a.bairro && a.turno)
+      .map(a => ({ bairro: a.bairro!, turno: a.turno! }));
+
+    if (validAreas.length === 0) {
+      form.setError("areas", { message: "Adicione pelo menos uma área válida" });
       return;
     }
 
@@ -169,7 +187,7 @@ export function TransporterRegistrationForm({ onSuccess }: TransporterRegistrati
         acessibilidade_tipos: values.acessibilidade_tipos,
       },
       schools: schoolIds,
-      areas: values.areas,
+      areas: validAreas,
     });
 
     onSuccess();
@@ -421,8 +439,8 @@ export function TransporterRegistrationForm({ onSuccess }: TransporterRegistrati
               <div key={index} className="flex gap-2 items-start">
                 <div className="flex-1">
                   <SchoolAutocomplete
-                    value={school || undefined}
-                    onChange={(s) => updateSchool(index, s)}
+                    value={school?.id}
+                    onSelect={(id, data) => updateSchool(index, data ? { id, nome_oficial: data.nome_oficial, rede: data.rede, bairro: data.bairro } : null)}
                     placeholder={`Escola ${index + 1}`}
                   />
                 </div>

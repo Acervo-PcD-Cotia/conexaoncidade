@@ -6,12 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { ChevronLeft, ChevronRight, School, MapPin, Clock, Accessibility, CheckCircle2 } from "lucide-react";
-import { SchoolAutocomplete, School as SchoolType } from "./SchoolAutocomplete";
+import { SchoolAutocomplete, type School as SchoolType } from "./SchoolAutocomplete";
 import { cn } from "@/lib/utils";
 
 export interface QuizAnswers {
   rede: string;
-  school?: SchoolType;
+  school?: { id: string; nome_oficial: string };
   schoolTexto?: string;
   turno: string;
   bairro: string;
@@ -154,9 +154,9 @@ export function TransportQuizWizard({ onComplete, onSchoolNotFound }: TransportQ
               Selecione a escola do seu filho(a):
             </p>
             <SchoolAutocomplete
-              value={answers.school}
-              onChange={(school) => setAnswers({ ...answers, school, schoolTexto: undefined })}
-              filterRede={answers.rede !== "nao_sei" ? answers.rede : undefined}
+              value={answers.school?.id}
+              onSelect={(id, data) => setAnswers({ ...answers, school: { id, nome_oficial: data?.nome_oficial || '' }, schoolTexto: undefined })}
+              rede={answers.rede !== "nao_sei" ? answers.rede : undefined}
             />
             <div className="pt-2">
               <Button
