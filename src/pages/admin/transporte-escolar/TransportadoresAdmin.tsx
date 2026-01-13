@@ -101,12 +101,12 @@ export default function TransportadoresAdmin() {
                   />
                 </div>
               </div>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <Select value={filterStatus || "all"} onValueChange={(v) => setFilterStatus(v === "all" ? "" : v)}>
                 <SelectTrigger className="w-[150px]">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="ativo">Ativo</SelectItem>
                   <SelectItem value="pendente">Pendente</SelectItem>
                   <SelectItem value="bloqueado">Bloqueado</SelectItem>

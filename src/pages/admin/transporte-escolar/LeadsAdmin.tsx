@@ -82,12 +82,12 @@ export default function LeadsAdmin() {
         <Card>
           <CardContent className="p-4">
             <div className="flex gap-4">
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <Select value={filterStatus || "all"} onValueChange={(v) => setFilterStatus(v === "all" ? "" : v)}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="novo">Novo</SelectItem>
                   <SelectItem value="em_andamento">Em andamento</SelectItem>
                   <SelectItem value="concluido">Concluído</SelectItem>
