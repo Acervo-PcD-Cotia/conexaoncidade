@@ -2128,6 +2128,134 @@ export type Database = {
           },
         ]
       }
+      censo_pcd_admin_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          recipients: string[] | null
+          response_id: string | null
+          sent_at: string | null
+          summary_data: Json | null
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          recipients?: string[] | null
+          response_id?: string | null
+          sent_at?: string | null
+          summary_data?: Json | null
+          type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          recipients?: string[] | null
+          response_id?: string | null
+          sent_at?: string | null
+          summary_data?: Json | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "censo_pcd_admin_notifications_response_id_fkey"
+            columns: ["response_id"]
+            isOneToOne: false
+            referencedRelation: "censo_pcd_responses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      censo_pcd_responses: {
+        Row: {
+          apoio_educacional: string | null
+          atendimentos_necessarios: string[] | null
+          autoriza_contato: boolean
+          bairro: string
+          beneficio_recebido: string[] | null
+          consentimento_lgpd: boolean
+          created_at: string
+          data_nascimento: string
+          ebook_downloaded: boolean | null
+          ebook_sent_whatsapp: boolean | null
+          em_fila_espera: boolean | null
+          email: string | null
+          id: string
+          local_atendimento: string | null
+          maior_necessidade: string
+          matriculado_escola: string | null
+          necessidades_educacionais: string[] | null
+          nivel_suporte_tea: string | null
+          nome_completo: string
+          possui_laudo: string
+          recebe_acompanhamento_medico: boolean
+          renda_suficiente: boolean | null
+          respondente_tipo: string
+          sexo: string
+          telefone_whatsapp: string | null
+          tipos_deficiencia: string[]
+          updated_at: string
+        }
+        Insert: {
+          apoio_educacional?: string | null
+          atendimentos_necessarios?: string[] | null
+          autoriza_contato: boolean
+          bairro: string
+          beneficio_recebido?: string[] | null
+          consentimento_lgpd?: boolean
+          created_at?: string
+          data_nascimento: string
+          ebook_downloaded?: boolean | null
+          ebook_sent_whatsapp?: boolean | null
+          em_fila_espera?: boolean | null
+          email?: string | null
+          id?: string
+          local_atendimento?: string | null
+          maior_necessidade: string
+          matriculado_escola?: string | null
+          necessidades_educacionais?: string[] | null
+          nivel_suporte_tea?: string | null
+          nome_completo: string
+          possui_laudo: string
+          recebe_acompanhamento_medico: boolean
+          renda_suficiente?: boolean | null
+          respondente_tipo: string
+          sexo: string
+          telefone_whatsapp?: string | null
+          tipos_deficiencia: string[]
+          updated_at?: string
+        }
+        Update: {
+          apoio_educacional?: string | null
+          atendimentos_necessarios?: string[] | null
+          autoriza_contato?: boolean
+          bairro?: string
+          beneficio_recebido?: string[] | null
+          consentimento_lgpd?: boolean
+          created_at?: string
+          data_nascimento?: string
+          ebook_downloaded?: boolean | null
+          ebook_sent_whatsapp?: boolean | null
+          em_fila_espera?: boolean | null
+          email?: string | null
+          id?: string
+          local_atendimento?: string | null
+          maior_necessidade?: string
+          matriculado_escola?: string | null
+          necessidades_educacionais?: string[] | null
+          nivel_suporte_tea?: string | null
+          nome_completo?: string
+          possui_laudo?: string
+          recebe_acompanhamento_medico?: boolean
+          renda_suficiente?: boolean | null
+          respondente_tipo?: string
+          sexo?: string
+          telefone_whatsapp?: string | null
+          tipos_deficiencia?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       click_events: {
         Row: {
           bio_button_id: string | null
