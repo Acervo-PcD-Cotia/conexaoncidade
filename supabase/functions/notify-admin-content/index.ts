@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
         body = payload.claim 
           ? `Alegação: "${payload.claim.substring(0, 50)}..."`
           : "Uma nova alegação foi submetida para verificação";
-        url = "/admin/anti-fake-news";
+        url = "/admin/check-fake-news";
         break;
       
       case 'community_report':

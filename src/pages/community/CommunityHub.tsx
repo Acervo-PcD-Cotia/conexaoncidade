@@ -260,12 +260,12 @@ export default function CommunityHub() {
           {/* Active Members Ranking */}
           <ActiveMembersRanking />
 
-          {/* Anti Fake News Card */}
+          {/* Check Fake News Card */}
           <Card className="border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/30">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-green-600" />
-                Anti Fake News
+                Check Fake News
               </CardTitle>
             </CardHeader>
             <CardContent>

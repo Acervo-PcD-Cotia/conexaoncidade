@@ -84,7 +84,7 @@ export default function AntiFakeNews() {
   return (
     <>
       <Helmet>
-        <title>Anti Fake News | Conexão na Cidade</title>
+        <title>Check Fake News | Conexão na Cidade</title>
         <meta 
           name="description" 
           content="Verifique se uma informação é verdadeira antes de compartilhar. Cheque links, textos, títulos e imagens." 
@@ -100,7 +100,7 @@ export default function AntiFakeNews() {
             </div>
           </div>
           <h1 className="text-3xl md:text-4xl font-bold font-heading mb-3">
-            Anti Fake News
+            Check Fake News
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Verifique links, textos, prints e boatos antes de compartilhar.
