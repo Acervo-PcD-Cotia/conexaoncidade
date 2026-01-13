@@ -46,13 +46,13 @@ export function useCommunityRewards() {
     queryKey: ["community-rewards"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("community_rewards")
+        .from("community_rewards" as any)
         .select("*")
         .eq("is_active", true)
         .order("points_required");
 
       if (error) throw error;
-      return data as CommunityReward[];
+      return (data || []) as unknown as CommunityReward[];
     },
     enabled: !!user,
   });
@@ -63,12 +63,12 @@ export function useCommunityRewards() {
     queryFn: async () => {
       if (!user) return [];
       const { data, error } = await supabase
-        .from("community_reward_claims")
+        .from("community_reward_claims" as any)
         .select("*")
         .eq("user_id", user.id);
 
       if (error) throw error;
-      return data as RewardClaim[];
+      return (data || []) as unknown as RewardClaim[];
     },
     enabled: !!user,
   });
@@ -120,7 +120,7 @@ export function useCommunityRewards() {
 
       // Insert claim
       const { error: claimError } = await supabase
-        .from("community_reward_claims")
+        .from("community_reward_claims" as any)
         .insert({
           reward_id: rewardId,
           user_id: user.id,
@@ -130,7 +130,7 @@ export function useCommunityRewards() {
 
       // Update claim count
       const { error: updateError } = await supabase
-        .from("community_rewards")
+        .from("community_rewards" as any)
         .update({ current_claims: (reward.current_claims || 0) + 1 })
         .eq("id", rewardId);
 
@@ -148,7 +148,7 @@ export function useCommunityRewards() {
           : `Você desbloqueou: ${reward.name}`,
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         variant: "destructive",
         title: "Erro ao resgatar",

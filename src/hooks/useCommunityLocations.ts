@@ -35,12 +35,12 @@ export function useCommunityLocations() {
     queryKey: ["community-locations"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("community_locations")
+        .from("community_locations" as any)
         .select("*")
         .order("name");
 
       if (error) throw error;
-      return data as CommunityLocation[];
+      return (data || []) as unknown as CommunityLocation[];
     },
   });
 
@@ -59,7 +59,7 @@ export function useCommunityLocations() {
       if (!user) throw new Error("Usuário não autenticado");
 
       const { data: result, error } = await supabase
-        .from("community_locations")
+        .from("community_locations" as any)
         .insert({
           name: data.name,
           category: data.category,
@@ -84,7 +84,7 @@ export function useCommunityLocations() {
         description: "O local foi adicionado ao mapa da comunidade!",
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         variant: "destructive",
         title: "Erro ao adicionar local",

@@ -18,6 +18,7 @@ import { AvatarUploader } from "@/components/community/AvatarUploader";
 import { TwoFactorSetup } from "@/components/community/TwoFactorSetup";
 import { DeleteAccountDialog } from "@/components/community/DeleteAccountDialog";
 import { SessionsManager } from "@/components/community/SessionsManager";
+import { CommunityLayout } from "@/components/community/CommunityLayout";
 
 const passwordSchema = z.object({
   currentPassword: z.string().min(1, "Senha atual é obrigatória"),
@@ -235,29 +236,30 @@ export default function ProfileSettings() {
 
   if (authLoading || communityLoading || isLoadingProfile) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <CommunityLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </CommunityLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/30">
-      <div className="container max-w-3xl mx-auto px-4 py-8">
+    <CommunityLayout>
+      <div className="max-w-3xl mx-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-6"
         >
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/comunidade")}
-            className="mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar para Comunidade
-          </Button>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <User className="h-6 w-6 text-pink-600" />
+            Configurações do Perfil
+          </h1>
+          <p className="text-muted-foreground">
+            Gerencie seu perfil e preferências de segurança
+          </p>
 
           <h1 className="text-3xl font-bold">Configurações da Conta</h1>
           <p className="text-muted-foreground mt-1">
@@ -510,6 +512,6 @@ export default function ProfileSettings() {
           </Tabs>
         </motion.div>
       </div>
-    </div>
+    </CommunityLayout>
   );
 }
