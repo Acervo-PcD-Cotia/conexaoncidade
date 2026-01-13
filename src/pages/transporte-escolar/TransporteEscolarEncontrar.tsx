@@ -26,7 +26,7 @@ export default function TransporteEscolarEncontrar() {
         schoolId: quizAnswers.school?.id,
         turno: quizAnswers.turno,
         bairro: quizAnswers.bairro,
-        acessibilidade: quizAnswers.acessibilidade.length > 0,
+        acessibilidade: quizAnswers.acessibilidade,
       }
     : undefined;
 
@@ -38,8 +38,7 @@ export default function TransporteEscolarEncontrar() {
     setQuizCompleted(true);
   };
 
-  const handleSchoolNotFound = (schoolName: string) => {
-    setQuizAnswers(prev => prev ? { ...prev, schoolTexto: schoolName } : null);
+  const handleSchoolNotFound = () => {
     setShowSchoolModal(false);
   };
 
@@ -132,7 +131,6 @@ export default function TransporteEscolarEncontrar() {
                   <TransporterCard
                     key={transporter.id}
                     transporter={transporter}
-                    showScore
                   />
                 ))}
               </div>
@@ -187,7 +185,7 @@ export default function TransporteEscolarEncontrar() {
       <SchoolNotFoundModal
         open={showSchoolModal}
         onOpenChange={setShowSchoolModal}
-        onSubmit={handleSchoolNotFound}
+        onSuccess={handleSchoolNotFound}
       />
     </>
   );

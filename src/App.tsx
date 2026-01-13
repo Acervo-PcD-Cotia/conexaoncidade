@@ -102,6 +102,21 @@ import PhoneChooserPage from "./pages/community/PhoneChooserPage";
 import GoogleMapsCampaign from "./pages/campaigns/GoogleMapsCampaign";
 import GoogleMapsLeads from "./pages/admin/campaigns/GoogleMapsLeads";
 
+// Transporte Escolar Pages
+import TransporteEscolarHome from "./pages/transporte-escolar/TransporteEscolarHome";
+import TransporteEscolarEncontrar from "./pages/transporte-escolar/TransporteEscolarEncontrar";
+import TransporteEscolarCadastrar from "./pages/transporte-escolar/TransporteEscolarCadastrar";
+import TransporteEscolarEscola from "./pages/transporte-escolar/TransporteEscolarEscola";
+import TransporteEscolarRede from "./pages/transporte-escolar/TransporteEscolarRede";
+import TransporteEscolarBairro from "./pages/transporte-escolar/TransporteEscolarBairro";
+
+// Transporte Escolar Admin Pages
+import TransporteEscolarAdmin from "./pages/admin/transporte-escolar/TransporteEscolarAdmin";
+import EscolasAdmin from "./pages/admin/transporte-escolar/EscolasAdmin";
+import TransportadoresAdmin from "./pages/admin/transporte-escolar/TransportadoresAdmin";
+import LeadsAdmin from "./pages/admin/transporte-escolar/LeadsAdmin";
+import ReportsAdmin from "./pages/admin/transporte-escolar/ReportsAdmin";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -131,6 +146,12 @@ const App = () => (
                         <Route path="/comunidade/beneficios/celular-ideal" element={<PhoneChooserPage />} />
                         <Route path="/anti-fake-news" element={<AntiFakeNews />} />
                         <Route path="/campanha/google-maps" element={<GoogleMapsCampaign />} />
+                        <Route path="/transporte-escolar" element={<TransporteEscolarHome />} />
+                        <Route path="/transporte-escolar/encontrar" element={<TransporteEscolarEncontrar />} />
+                        <Route path="/transporte-escolar/cadastrar" element={<TransporteEscolarCadastrar />} />
+                        <Route path="/transporte-escolar/escola/:slug" element={<TransporteEscolarEscola />} />
+                        <Route path="/transporte-escolar/rede/:rede" element={<TransporteEscolarRede />} />
+                        <Route path="/transporte-escolar/bairro/:bairro" element={<TransporteEscolarBairro />} />
                         <Route path="/stories" element={<StoriesPage />} />
                       </Route>
                       <Route path="/story/:slug" element={<StoryViewer />} />
@@ -210,6 +231,13 @@ const App = () => (
                         
                         {/* Campaign Admin Routes */}
                         <Route path="campaigns/google-maps" element={<GoogleMapsLeads />} />
+                        
+                        {/* Transporte Escolar Admin Routes */}
+                        <Route path="transporte-escolar" element={<TransporteEscolarAdmin />} />
+                        <Route path="transporte-escolar/escolas" element={<EscolasAdmin />} />
+                        <Route path="transporte-escolar/transportadores" element={<TransportadoresAdmin />} />
+                        <Route path="transporte-escolar/leads" element={<LeadsAdmin />} />
+                        <Route path="transporte-escolar/reports" element={<ReportsAdmin />} />
                       </Route>
 
                       <Route path="*" element={<NotFound />} />

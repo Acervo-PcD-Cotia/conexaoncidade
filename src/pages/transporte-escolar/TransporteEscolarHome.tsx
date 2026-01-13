@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Bus, Search, UserPlus, School, MapPin, Shield, CheckCircle2, Clock, Accessibility } from "lucide-react";
-import { SchoolAutocomplete, School as SchoolType } from "@/components/transporte-escolar/SchoolAutocomplete";
+import { Bus, Search, UserPlus, School, MapPin, Shield, Accessibility } from "lucide-react";
+import { SchoolAutocomplete, type School as SchoolType } from "@/components/transporte-escolar/SchoolAutocomplete";
 import { TransporterCard } from "@/components/transporte-escolar/TransporterCard";
 import { TransporterFilters, TransporterFiltersState } from "@/components/transporte-escolar/TransporterFilters";
 import { TransportDisclaimer } from "@/components/transporte-escolar/TransportDisclaimer";
@@ -13,7 +13,7 @@ import { useTransporters } from "@/hooks/useTransporters";
 import { useTransportStats } from "@/hooks/useTransportSearch";
 
 export default function TransporteEscolarHome() {
-  const [selectedSchool, setSelectedSchool] = useState<SchoolType | null>(null);
+  const [selectedSchool, setSelectedSchool] = useState<{ id: string; nome_oficial: string; slug?: string } | null>(null);
   const [filters, setFilters] = useState<TransporterFiltersState>({});
 
   const { data: stats } = useTransportStats();
@@ -54,11 +54,11 @@ export default function TransporteEscolarHome() {
           {stats && (
             <div className="flex flex-wrap justify-center gap-8 pt-4">
               <div className="text-center">
-                <p className="text-3xl font-bold text-primary">{stats.activeSchools}</p>
+                <p className="text-3xl font-bold text-primary">{stats.schools}</p>
                 <p className="text-sm text-muted-foreground">Escolas cadastradas</p>
               </div>
               <div className="text-center">
-                <p className="text-3xl font-bold text-primary">{stats.activeTransporters}</p>
+                <p className="text-3xl font-bold text-primary">{stats.transportersActive}</p>
                 <p className="text-sm text-muted-foreground">Transportadores ativos</p>
               </div>
             </div>
@@ -87,8 +87,8 @@ export default function TransporteEscolarHome() {
             <CardContent className="p-6 space-y-4">
               <h2 className="text-lg font-semibold text-center">Busca Rápida por Escola</h2>
               <SchoolAutocomplete
-                value={selectedSchool || undefined}
-                onChange={(school) => setSelectedSchool(school)}
+                value={selectedSchool?.id}
+                onSelect={(id, data) => setSelectedSchool(data ? { id, nome_oficial: data.nome_oficial } : null)}
                 placeholder="Digite o nome da escola..."
               />
               {selectedSchool && (
