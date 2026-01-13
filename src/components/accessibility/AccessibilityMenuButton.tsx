@@ -32,22 +32,17 @@ export function AccessibilityMenuButton() {
 
   return (
     <DropdownMenu>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <DropdownMenuTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="icon"
-              aria-label="Menu de acessibilidade"
-            >
-              <Accessibility className="h-5 w-5" />
-            </Button>
-          </DropdownMenuTrigger>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>Acessibilidade</p>
-        </TooltipContent>
-      </Tooltip>
+      <DropdownMenuTrigger asChild>
+        <Button 
+          variant="ghost" 
+          size="sm"
+          aria-label="Menu de acessibilidade"
+          className="gap-2"
+        >
+          <Accessibility className="h-5 w-5" />
+          <span className="hidden sm:inline">Acessibilidade</span>
+        </Button>
+      </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-64">
         <DropdownMenuLabel className="flex items-center gap-2">
