@@ -264,13 +264,27 @@ export default function NoticiasAI() {
     }
   };
 
-  // Process import queue
-  const processImportQueue = async (startIndex: number = 0, skipDuplicateCheck: boolean = false) => {
+  // Process import queue - accepts articles directly to avoid race condition
+  const processImportQueue = async (
+    startIndex: number = 0, 
+    skipDuplicateCheck: boolean = false,
+    articles?: ManualData[] // Pass articles directly to avoid state race condition
+  ) => {
+    const queue = articles || importQueue;
+    
+    if (!queue.length) {
+      console.warn('processImportQueue: queue is empty');
+      setIsImporting(false);
+      return;
+    }
+    
+    console.log(`Iniciando importação de ${queue.length} artigos a partir do índice ${startIndex}`);
     setIsImporting(true);
     let successCount = 0;
     
-    for (let i = startIndex; i < importQueue.length; i++) {
-      const article = importQueue[i];
+    for (let i = startIndex; i < queue.length; i++) {
+      const article = queue[i];
+      console.log(`Processando artigo ${i + 1}/${queue.length}: ${article.titulo}`);
       
       // Check for duplicates unless skipping
       if (!skipDuplicateCheck) {
@@ -292,7 +306,12 @@ export default function NoticiasAI() {
       }
       
       const success = await importArticle(article);
-      if (success) successCount++;
+      if (success) {
+        successCount++;
+        console.log(`Artigo importado com sucesso: ${article.titulo}`);
+      } else {
+        console.error(`Falha ao importar: ${article.titulo}`);
+      }
     }
     
     // All done
@@ -302,9 +321,11 @@ export default function NoticiasAI() {
       await completeMilestone('first_import');
     }
     
+    console.log(`Importação concluída: ${successCount}/${queue.length} artigos`);
+    
     toast({
       title: 'Importação concluída!',
-      description: `${successCount} de ${importQueue.length} artigos importados.`,
+      description: `${successCount} de ${queue.length} artigos importados.`,
     });
     
     setJsonData(null);
@@ -314,18 +335,26 @@ export default function NoticiasAI() {
   };
 
   const handleImport = async () => {
-    if (!jsonData?.noticias?.length || !user) return;
+    if (!jsonData?.noticias?.length || !user) {
+      console.warn('handleImport: nenhuma notícia para importar ou usuário não autenticado');
+      return;
+    }
     
-    // Start the queue
-    setImportQueue(jsonData.noticias);
+    const articles = jsonData.noticias;
+    console.log(`handleImport: iniciando importação de ${articles.length} artigos`);
+    
+    // Set state for UI tracking
+    setImportQueue(articles);
     setCurrentImportIndex(0);
-    await processImportQueue(0);
+    
+    // Pass articles directly to avoid race condition with setState
+    await processImportQueue(0, false, articles);
   };
 
   const handleSkipDuplicate = () => {
     setDuplicateDialogOpen(false);
-    // Continue with next item
-    processImportQueue(currentImportIndex + 1);
+    // Continue with next item, passing importQueue to avoid race condition
+    processImportQueue(currentImportIndex + 1, false, importQueue);
   };
 
   const handleImportAnyway = async () => {
@@ -333,7 +362,7 @@ export default function NoticiasAI() {
     // Import this one (skip duplicate check) then continue
     const article = importQueue[currentImportIndex];
     await importArticle(article);
-    processImportQueue(currentImportIndex + 1);
+    processImportQueue(currentImportIndex + 1, false, importQueue);
   };
 
   const handleImageUpload = () => {
