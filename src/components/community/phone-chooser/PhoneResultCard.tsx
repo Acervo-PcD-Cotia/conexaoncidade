@@ -2,6 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Smartphone, Check, AlertCircle, Star } from 'lucide-react';
 import type { Phone } from '@/hooks/usePhoneChooser';
+import { PhoneOfferButtons } from './PhoneOfferButtons';
 
 interface PhoneResultCardProps {
   phone: Phone;
@@ -130,6 +131,9 @@ export function PhoneResultCard({ phone, isMain = false, reasonText }: PhoneResu
             ))}
           </ul>
         </div>
+
+        {/* Affiliate Offer Buttons */}
+        <PhoneOfferButtons phoneId={phone.id} />
       </CardContent>
     </Card>
   );

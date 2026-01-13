@@ -10,10 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Pencil, Trash2, Star, Search, ArrowLeft } from 'lucide-react';
+import { Plus, Pencil, Trash2, Star, Search, ArrowLeft, ShoppingBag } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { usePhoneChooser, type Phone } from '@/hooks/usePhoneChooser';
 import { useRequireRole } from '@/hooks/useRequireRole';
+import { PhoneOffersManager } from '@/components/admin/phone-catalog/PhoneOffersManager';
 
 type PhoneFormData = Omit<Phone, 'id' | 'created_at' | 'updated_at'>;
 
@@ -46,6 +47,7 @@ export default function PhoneCatalogAdmin() {
   const [strengthsInput, setStrengthsInput] = useState('');
   const [considerationsInput, setConsiderationsInput] = useState('');
   const [useCasesInput, setUseCasesInput] = useState('');
+  const [managingOffersPhone, setManagingOffersPhone] = useState<Phone | null>(null);
 
   const filteredPhones = allPhones.filter(
     (phone) =>
@@ -202,7 +204,15 @@ export default function PhoneCatalogAdmin() {
                         />
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Gerenciar Ofertas"
+                            onClick={() => setManagingOffersPhone(phone)}
+                          >
+                            <ShoppingBag className="w-4 h-4" />
+                          </Button>
                           <Button variant="ghost" size="icon" onClick={() => openEditForm(phone)}>
                             <Pencil className="w-4 h-4" />
                           </Button>
@@ -416,6 +426,18 @@ export default function PhoneCatalogAdmin() {
               {editingPhone ? 'Salvar' : 'Cadastrar'}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Offers Manager Dialog */}
+      <Dialog open={!!managingOffersPhone} onOpenChange={(open) => !open && setManagingOffersPhone(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Ofertas - {managingOffersPhone?.name}</DialogTitle>
+          </DialogHeader>
+          {managingOffersPhone && (
+            <PhoneOffersManager phoneId={managingOffersPhone.id} phoneName={managingOffersPhone.name} />
+          )}
         </DialogContent>
       </Dialog>
     </div>

@@ -5055,6 +5055,33 @@ export type Database = {
           },
         ]
       }
+      phone_affiliate_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          store: string
+          url_template: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          store: string
+          url_template: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          store?: string
+          url_template?: string
+        }
+        Relationships: []
+      }
       phone_catalog: {
         Row: {
           battery_score: number
@@ -5122,6 +5149,95 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      phone_offer_clicks: {
+        Row: {
+          clicked_at: string
+          id: string
+          offer_id: string
+          phone_id: string
+          store: string
+          user_id: string | null
+        }
+        Insert: {
+          clicked_at?: string
+          id?: string
+          offer_id: string
+          phone_id: string
+          store: string
+          user_id?: string | null
+        }
+        Update: {
+          clicked_at?: string
+          id?: string
+          offer_id?: string
+          phone_id?: string
+          store?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phone_offer_clicks_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "phone_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "phone_offer_clicks_phone_id_fkey"
+            columns: ["phone_id"]
+            isOneToOne: false
+            referencedRelation: "phone_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      phone_offers: {
+        Row: {
+          affiliate_url: string
+          button_text: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          phone_id: string
+          price: number | null
+          priority: number
+          store: string
+          updated_at: string
+        }
+        Insert: {
+          affiliate_url: string
+          button_text?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          phone_id: string
+          price?: number | null
+          priority?: number
+          store: string
+          updated_at?: string
+        }
+        Update: {
+          affiliate_url?: string
+          button_text?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          phone_id?: string
+          price?: number | null
+          priority?: number
+          store?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phone_offers_phone_id_fkey"
+            columns: ["phone_id"]
+            isOneToOne: false
+            referencedRelation: "phone_catalog"
             referencedColumns: ["id"]
           },
         ]
