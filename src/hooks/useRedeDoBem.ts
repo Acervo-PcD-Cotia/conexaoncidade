@@ -24,18 +24,6 @@ export interface HelpRequest {
   };
 }
 
-export interface HelpResponse {
-  id: string;
-  request_id: string;
-  user_id: string;
-  message: string | null;
-  created_at: string;
-  responder?: {
-    full_name: string | null;
-    avatar_url: string | null;
-  };
-}
-
 export function useRedeDoBem() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -49,16 +37,14 @@ export function useRedeDoBem() {
   } = useQuery({
     queryKey: ["help-requests"],
     queryFn: async () => {
+      // Using rpc or raw query since types may not be generated yet
       const { data, error } = await supabase
-        .from("community_help_requests")
-        .select(`
-          *,
-          author:profiles!community_help_requests_user_id_fkey(full_name, avatar_url)
-        `)
+        .from("community_help_requests" as any)
+        .select(`*, author:profiles!community_help_requests_user_id_fkey(full_name, avatar_url)`)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as HelpRequest[];
+      return (data || []) as unknown as HelpRequest[];
     },
     enabled: !!user,
   });
@@ -76,7 +62,7 @@ export function useRedeDoBem() {
       if (!user) throw new Error("Usuário não autenticado");
 
       const { data: result, error } = await supabase
-        .from("community_help_requests")
+        .from("community_help_requests" as any)
         .insert({
           user_id: user.id,
           type: data.type,
@@ -99,7 +85,7 @@ export function useRedeDoBem() {
         description: "Sua solicitação foi publicada na Rede do Bem!",
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         variant: "destructive",
         title: "Erro ao criar solicitação",
@@ -114,7 +100,7 @@ export function useRedeDoBem() {
       if (!user) throw new Error("Usuário não autenticado");
 
       const { data: result, error } = await supabase
-        .from("community_help_responses")
+        .from("community_help_responses" as any)
         .insert({
           request_id: data.request_id,
           user_id: user.id,
@@ -133,7 +119,7 @@ export function useRedeDoBem() {
         description: "Obrigado por ajudar! O solicitante será notificado.",
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         variant: "destructive",
         title: "Erro ao responder",
@@ -146,7 +132,7 @@ export function useRedeDoBem() {
   const updateStatus = useMutation({
     mutationFn: async (data: { id: string; status: HelpRequestStatus }) => {
       const { error } = await supabase
-        .from("community_help_requests")
+        .from("community_help_requests" as any)
         .update({
           status: data.status,
           resolved_at: data.status === "resolved" ? new Date().toISOString() : null,

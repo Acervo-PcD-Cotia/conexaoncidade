@@ -2554,6 +2554,80 @@ export type Database = {
         }
         Relationships: []
       }
+      community_help_requests: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_urgent: boolean | null
+          neighborhood: string | null
+          resolved_at: string | null
+          status: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_urgent?: boolean | null
+          neighborhood?: string | null
+          resolved_at?: string | null
+          status?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_urgent?: boolean | null
+          neighborhood?: string | null
+          resolved_at?: string | null
+          status?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      community_help_responses: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string | null
+          request_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          request_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          request_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_help_responses_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "community_help_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_invites: {
         Row: {
           code: string
@@ -2593,6 +2667,54 @@ export type Database = {
         }
         Relationships: []
       }
+      community_locations: {
+        Row: {
+          accessibility_features: string[] | null
+          address: string | null
+          category: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_accessible: boolean | null
+          is_verified: boolean | null
+          lat: number | null
+          lng: number | null
+          name: string
+          neighborhood: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          accessibility_features?: string[] | null
+          address?: string | null
+          category: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_accessible?: boolean | null
+          is_verified?: boolean | null
+          lat?: number | null
+          lng?: number | null
+          name: string
+          neighborhood?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          accessibility_features?: string[] | null
+          address?: string | null
+          category?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_accessible?: boolean | null
+          is_verified?: boolean | null
+          lat?: number | null
+          lng?: number | null
+          name?: string
+          neighborhood?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       community_members: {
         Row: {
           access_granted_at: string | null
@@ -2607,8 +2729,10 @@ export type Database = {
           invited_by: string | null
           is_suspended: boolean | null
           level: Database["public"]["Enums"]["community_level"] | null
+          neighborhood: string | null
           onboarding_completed_at: string | null
           points: number | null
+          profile_type: string | null
           quiz_completed: boolean | null
           quiz_completed_at: string | null
           share_count: number | null
@@ -2631,8 +2755,10 @@ export type Database = {
           invited_by?: string | null
           is_suspended?: boolean | null
           level?: Database["public"]["Enums"]["community_level"] | null
+          neighborhood?: string | null
           onboarding_completed_at?: string | null
           points?: number | null
+          profile_type?: string | null
           quiz_completed?: boolean | null
           quiz_completed_at?: string | null
           share_count?: number | null
@@ -2655,8 +2781,10 @@ export type Database = {
           invited_by?: string | null
           is_suspended?: boolean | null
           level?: Database["public"]["Enums"]["community_level"] | null
+          neighborhood?: string | null
           onboarding_completed_at?: string | null
           points?: number | null
+          profile_type?: string | null
           quiz_completed?: boolean | null
           quiz_completed_at?: string | null
           share_count?: number | null
@@ -3077,6 +3205,80 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      community_reward_claims: {
+        Row: {
+          claimed_at: string | null
+          id: string
+          reward_id: string
+          user_id: string
+        }
+        Insert: {
+          claimed_at?: string | null
+          id?: string
+          reward_id: string
+          user_id: string
+        }
+        Update: {
+          claimed_at?: string | null
+          id?: string
+          reward_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_reward_claims_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "community_rewards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_rewards: {
+        Row: {
+          coupon_code: string | null
+          created_at: string | null
+          current_claims: number | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          level_required: string | null
+          max_claims: number | null
+          name: string
+          points_required: number
+          reward_type: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          coupon_code?: string | null
+          created_at?: string | null
+          current_claims?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          level_required?: string | null
+          max_claims?: number | null
+          name: string
+          points_required?: number
+          reward_type?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          coupon_code?: string | null
+          created_at?: string | null
+          current_claims?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          level_required?: string | null
+          max_claims?: number | null
+          name?: string
+          points_required?: number
+          reward_type?: string | null
+          valid_until?: string | null
+        }
+        Relationships: []
       }
       community_shares: {
         Row: {
