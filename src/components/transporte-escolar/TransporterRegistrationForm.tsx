@@ -9,9 +9,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Plus, Trash2, Loader2 } from "lucide-react";
+import { Plus, Trash2, Loader2, AlertCircle, CheckCircle } from "lucide-react";
 import { SchoolAutocomplete, type School } from "./SchoolAutocomplete";
 import { useCreateTransporter } from "@/hooks/useTransporters";
+import { useCheckWhatsAppUnique } from "@/hooks/useCheckWhatsAppUnique";
+import { cn } from "@/lib/utils";
 
 // Local type for form school data
 interface FormSchool {
@@ -154,7 +156,17 @@ export function TransporterRegistrationForm({ onSuccess }: TransporterRegistrati
     form.setValue("acessibilidade_tipos", updated);
   };
 
+  // WhatsApp unique validation
+  const whatsappValue = form.watch("whatsapp");
+  const { data: isWhatsAppTaken, isLoading: checkingWhatsApp } = useCheckWhatsAppUnique(whatsappValue);
+
   const onSubmit = async (values: FormValues) => {
+    // Block submission if WhatsApp is already taken
+    if (isWhatsAppTaken) {
+      form.setError("whatsapp", { message: "Este WhatsApp já está cadastrado" });
+      return;
+    }
+
     const schoolIds = selectedSchools.filter((s): s is FormSchool => s !== null).map(s => s.id);
     
     if (schoolIds.length === 0) {
@@ -224,14 +236,36 @@ export function TransporterRegistrationForm({ onSuccess }: TransporterRegistrati
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>WhatsApp *</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="(11) 99999-9999"
-                        onChange={(e) => field.onChange(formatWhatsApp(e.target.value))}
-                        aria-required="true"
-                      />
-                    </FormControl>
+                    <div className="relative">
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="(11) 99999-9999"
+                          onChange={(e) => field.onChange(formatWhatsApp(e.target.value))}
+                          aria-required="true"
+                          className={cn(
+                            "pr-10",
+                            isWhatsAppTaken && "border-destructive focus-visible:ring-destructive"
+                          )}
+                        />
+                      </FormControl>
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {checkingWhatsApp && (
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        )}
+                        {!checkingWhatsApp && isWhatsAppTaken && (
+                          <AlertCircle className="h-4 w-4 text-destructive" />
+                        )}
+                        {!checkingWhatsApp && isWhatsAppTaken === false && field.value.replace(/\D/g, "").length === 11 && (
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        )}
+                      </div>
+                    </div>
+                    {isWhatsAppTaken && (
+                      <p className="text-sm text-destructive" role="alert">
+                        Este WhatsApp já está cadastrado
+                      </p>
+                    )}
                     <FormMessage role="alert" />
                   </FormItem>
                 )}
@@ -550,7 +584,7 @@ export function TransporterRegistrationForm({ onSuccess }: TransporterRegistrati
           type="submit"
           className="w-full"
           size="lg"
-          disabled={createTransporter.isPending}
+          disabled={createTransporter.isPending || isWhatsAppTaken || checkingWhatsApp}
         >
           {createTransporter.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
           Enviar Cadastro
