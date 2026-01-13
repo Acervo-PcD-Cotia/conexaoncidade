@@ -3,13 +3,12 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Smartphone, ArrowLeft, RotateCcw, GitCompare, History, Bookmark, Loader2 } from 'lucide-react';
+import { Smartphone, ArrowLeft, RotateCcw, GitCompare, History, Loader2, Accessibility } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCommunity } from '@/hooks/useCommunity';
-import { usePhoneChooser, type QuizAnswers, type Phone } from '@/hooks/usePhoneChooser';
-import { PhoneQuizWizard } from '@/components/community/phone-chooser/PhoneQuizWizard';
+import { usePhoneChooser, type QuizAnswersPCD, type Phone } from '@/hooks/usePhoneChooser';
+import { PhoneQuizWizardPCD } from '@/components/community/phone-chooser/PhoneQuizWizardPCD';
 import { PhoneResultCard } from '@/components/community/phone-chooser/PhoneResultCard';
 import { PhoneComparisonModal } from '@/components/community/phone-chooser/PhoneComparisonModal';
 import { PhoneHistoryList } from '@/components/community/phone-chooser/PhoneHistoryList';
@@ -26,7 +25,7 @@ export default function PhoneChooserPage() {
     isLoadingPhones, 
     history, 
     isLoadingHistory, 
-    calculateRecommendation, 
+    calculatePCDRecommendation, 
     saveRecommendation 
   } = usePhoneChooser();
 
@@ -34,20 +33,19 @@ export default function PhoneChooserPage() {
   const [isCalculating, setIsCalculating] = useState(false);
   const [result, setResult] = useState<{ main: Phone; alternatives: Phone[] } | null>(null);
   const [showComparison, setShowComparison] = useState(false);
-  const [currentAnswers, setCurrentAnswers] = useState<QuizAnswers | null>(null);
+  const [currentAnswers, setCurrentAnswers] = useState<QuizAnswersPCD | null>(null);
 
   const isLoading = authLoading || communityLoading;
 
   // Handle quiz completion
-  const handleQuizComplete = async (answers: QuizAnswers) => {
+  const handleQuizComplete = async (answers: QuizAnswersPCD) => {
     setIsCalculating(true);
     setCurrentAnswers(answers);
 
     try {
-      // Small delay for UX
       await new Promise((resolve) => setTimeout(resolve, 800));
 
-      const recommendation = calculateRecommendation(answers);
+      const recommendation = calculatePCDRecommendation(answers);
 
       if (!recommendation) {
         toast.error('Não encontramos celulares compatíveis. Tente ajustar suas preferências.');
@@ -58,7 +56,6 @@ export default function PhoneChooserPage() {
       setResult(recommendation);
       setPageState('result');
 
-      // Save to history
       if (user) {
         await saveRecommendation.mutateAsync({
           answers,
@@ -96,26 +93,27 @@ export default function PhoneChooserPage() {
     }
   };
 
-  // Generate reason text
-  const generateReasonText = (phone: Phone, answers: QuizAnswers | null) => {
+  // Generate reason text for PCD
+  const generateReasonText = (phone: Phone, answers: QuizAnswersPCD | null) => {
     if (!answers) return '';
 
     const reasons: string[] = [];
 
-    if (answers.priority === 'camera' && phone.camera_score >= 4) {
-      reasons.push('tem uma câmera excelente para suas fotos');
+    if (answers.isPCD === 'yes' && (phone.accessibility_score || 0) >= 6) {
+      reasons.push('tem ótimos recursos de acessibilidade');
     }
-    if (answers.priority === 'battery' && phone.battery_score >= 4) {
+    if (answers.accessibilityNeeds.includes('large_screen') && (phone.screen_size || 0) >= 6.5) {
+      reasons.push('possui tela grande e fácil de visualizar');
+    }
+    if (answers.accessibilityNeeds.includes('screen_reader') && 
+        phone.accessibility_features?.includes('talkback')) {
+      reasons.push('funciona bem com leitor de tela');
+    }
+    if (answers.physicalPreferences.includes('long_battery') && phone.battery_score >= 4) {
       reasons.push('a bateria dura muito tempo');
     }
-    if (answers.priority === 'gaming' && phone.gaming_score >= 4) {
-      reasons.push('roda jogos sem problemas');
-    }
-    if (answers.gaming === 'heavy' && phone.gaming_score >= 4) {
-      reasons.push('tem ótimo desempenho para jogos pesados');
-    }
-    if (answers.usage === 'photography' && phone.camera_score >= 4) {
-      reasons.push('vai tirar fotos incríveis');
+    if (answers.budget === 'under800' || answers.budget === '800to1500') {
+      reasons.push('cabe no seu orçamento');
     }
 
     if (reasons.length === 0) {
@@ -196,11 +194,12 @@ export default function PhoneChooserPage() {
   return (
     <>
       <Helmet>
-        <title>Escolha do Celular Ideal | Comunidade Conexão na Cidade</title>
+        <title>Celular Acessível para Pessoas com Deficiência | Comunidade</title>
         <meta
           name="description"
-          content="Descubra o celular ideal para você com nossa ferramenta exclusiva. Responda algumas perguntas e receba uma recomendação personalizada."
+          content="Descubra o celular ideal para pessoas com deficiência. Quiz inclusivo com recomendações personalizadas baseadas em acessibilidade, recursos PCD e necessidades específicas."
         />
+        <meta name="keywords" content="celular acessível, smartphone pcd, celular deficiência visual, celular deficiência auditiva, celular deficiência motora, celular ideal 2026" />
       </Helmet>
 
       <div className="min-h-screen bg-background">
@@ -257,11 +256,13 @@ export default function PhoneChooserPage() {
             </Card>
           )}
 
-          {/* Quiz State */}
           {pageState === 'quiz' && (
             <Card>
               <CardContent className="p-6 md:p-8">
-                <PhoneQuizWizard onComplete={handleQuizComplete} isCalculating={isCalculating} />
+                <PhoneQuizWizardPCD onComplete={handleQuizComplete} isCalculating={isCalculating} />
+              </CardContent>
+            </Card>
+          )}
               </CardContent>
             </Card>
           )}

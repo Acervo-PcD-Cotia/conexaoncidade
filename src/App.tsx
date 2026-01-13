@@ -93,6 +93,7 @@ import CommunityMembers from "./pages/admin/community/CommunityMembers";
 import CommunityModeration from "./pages/admin/community/CommunityModeration";
 import PhoneCatalogAdmin from "./pages/admin/community/PhoneCatalogAdmin";
 import PhoneOffersReport from "./pages/admin/community/PhoneOffersReport";
+import PhoneImportAssisted from "./pages/admin/community/PhoneImportAssisted";
 
 // Community Benefit Pages
 import PhoneChooserPage from "./pages/community/PhoneChooserPage";
@@ -205,6 +206,7 @@ const App = () => (
                         <Route path="community/moderation" element={<CommunityModeration />} />
                         <Route path="community/phone-catalog" element={<PhoneCatalogAdmin />} />
                         <Route path="community/phone-offers-report" element={<PhoneOffersReport />} />
+                        <Route path="community/phone-import" element={<PhoneImportAssisted />} />
                         
                         {/* Campaign Admin Routes */}
                         <Route path="campaigns/google-maps" element={<GoogleMapsLeads />} />

@@ -98,3 +98,6 @@ verify_jwt = false
 
 [functions.verify-recovery-code]
 verify_jwt = false
+
+[functions.phone-parse-specs]
+verify_jwt = false

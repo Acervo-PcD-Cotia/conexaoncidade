@@ -27,6 +27,7 @@ import {
   Mic,
   ShieldCheck,
   MapPin,
+  Smartphone,
   LucideIcon,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -88,6 +89,7 @@ const businessItems = [
 
 const adminOnlyItems = [
   { title: "Comunidade", url: "/admin/community", icon: UsersRound },
+  { title: "Cadastro Assistido", url: "/admin/community/phone-import", icon: Smartphone },
   { title: "Relatório Ofertas", url: "/admin/community/phone-offers-report", icon: BarChart3 },
   { title: "Usuários", url: "/admin/users", icon: Users },
   { title: "Logs", url: "/admin/logs", icon: History },
