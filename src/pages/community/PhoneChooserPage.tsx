@@ -256,13 +256,11 @@ export default function PhoneChooserPage() {
             </Card>
           )}
 
+          {/* Quiz State */}
           {pageState === 'quiz' && (
             <Card>
               <CardContent className="p-6 md:p-8">
                 <PhoneQuizWizardPCD onComplete={handleQuizComplete} isCalculating={isCalculating} />
-              </CardContent>
-            </Card>
-          )}
               </CardContent>
             </Card>
           )}
