@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { MapPin, Store, Accessibility, Calendar, HelpCircle, Search, Plus, Check, Star, Loader2, Navigation, Trophy, Medal, Award, Heart } from "lucide-react";
+import { MapPin, Store, Accessibility, Calendar, HelpCircle, Search, Plus, Check, Star, Loader2, Navigation, Trophy, Medal, Award, Heart, BadgeCheck } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -447,6 +447,12 @@ export default function CommunityMap() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <h3 className="font-semibold truncate">{location.name}</h3>
+                              {location.is_verified && (
+                                <Badge className="bg-green-100 text-green-700 border-green-300">
+                                  <BadgeCheck className="h-3 w-3 mr-0.5" />
+                                  Verificado
+                                </Badge>
+                              )}
                               {isHighRated && (
                                 <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">
                                   <Award className="h-3 w-3 mr-1" />

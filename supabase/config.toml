@@ -104,3 +104,6 @@ verify_jwt = false
 
 [functions.community-ai-chat]
 verify_jwt = false
+
+[functions.notify-favorite-update]
+verify_jwt = false

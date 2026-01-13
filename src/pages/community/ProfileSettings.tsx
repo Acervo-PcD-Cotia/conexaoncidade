@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, User, Shield, Loader2, Save, Lock, Eye, EyeOff, MapPin } from "lucide-react";
+import { ArrowLeft, User, Shield, Loader2, Save, Lock, Eye, EyeOff, MapPin, Bell } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCommunity } from "@/hooks/useCommunity";
 import { supabase } from "@/integrations/supabase/client";
@@ -61,6 +62,9 @@ export default function ProfileSettings() {
   const [mfaEnabled, setMfaEnabled] = useState(false);
   const [checkingMfa, setCheckingMfa] = useState(true);
 
+  // Email notifications
+  const [favoriteUpdatesEnabled, setFavoriteUpdatesEnabled] = useState(true);
+
   // Load profile data
   useEffect(() => {
     const loadProfile = async () => {
@@ -69,7 +73,7 @@ export default function ProfileSettings() {
       try {
         const { data: profile, error } = await supabase
           .from("profiles")
-          .select("full_name, avatar_url")
+          .select("full_name, avatar_url, email_notifications")
           .eq("id", user.id)
           .single();
 
@@ -77,6 +81,10 @@ export default function ProfileSettings() {
 
         setFullName(profile?.full_name || "");
         setAvatarUrl(profile?.avatar_url || null);
+        
+        // Load email notification preferences
+        const emailNotifications = profile?.email_notifications as { favorite_updates?: boolean } | null;
+        setFavoriteUpdatesEnabled(emailNotifications?.favorite_updates !== false);
 
         // Load community member data
         const { data: member } = await supabase
@@ -400,6 +408,54 @@ export default function ProfileSettings() {
                     )}
                     Salvar alterações
                   </Button>
+                </CardContent>
+              </Card>
+
+              {/* Email Notifications Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Bell className="h-5 w-5" />
+                    Notificações por Email
+                  </CardTitle>
+                  <CardDescription>
+                    Configure quais alertas deseja receber
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Atualizações de favoritos</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Receba notificações quando locais favoritados receberem novas avaliações
+                      </p>
+                    </div>
+                    <Switch
+                      checked={favoriteUpdatesEnabled}
+                      onCheckedChange={async (checked) => {
+                        setFavoriteUpdatesEnabled(checked);
+                        try {
+                          const { error } = await supabase
+                            .from("profiles")
+                            .update({ 
+                              email_notifications: { favorite_updates: checked } 
+                            })
+                            .eq("id", user?.id);
+                          
+                          if (error) throw error;
+                          toast({
+                            title: checked ? "Notificações ativadas" : "Notificações desativadas",
+                          });
+                        } catch {
+                          toast({
+                            variant: "destructive",
+                            title: "Erro ao salvar preferência",
+                          });
+                          setFavoriteUpdatesEnabled(!checked);
+                        }
+                      }}
+                    />
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>

@@ -74,9 +74,26 @@ export function useLocationReviews(locationId: string) {
       if (error) throw error;
       return result;
     },
-    onSuccess: () => {
+    onSuccess: async (result: any) => {
       queryClient.invalidateQueries({ queryKey: ["location-reviews", locationId] });
       queryClient.invalidateQueries({ queryKey: ["community-locations"] });
+      
+      // Notify users who favorited this location
+      try {
+        await supabase.functions.invoke("notify-favorite-update", {
+          body: {
+            location_id: locationId,
+            event_type: "new_review",
+            review_data: {
+              rating: result?.rating,
+              comment: result?.comment,
+            },
+          },
+        });
+      } catch (notifyError) {
+        console.log("Notification skipped:", notifyError);
+      }
+
       toast({
         title: "Avaliação salva!",
         description: "Obrigado por sua contribuição.",
