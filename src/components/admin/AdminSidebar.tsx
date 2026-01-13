@@ -133,7 +133,7 @@ export function AdminSidebar() {
             <img 
               src={logoFull} 
               alt="Conexão na Cidade" 
-              className="h-12 w-auto"
+              className="h-16 w-auto"
             />
           )}
         </NavLink>
