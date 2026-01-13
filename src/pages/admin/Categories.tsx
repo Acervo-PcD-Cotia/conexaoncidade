@@ -393,19 +393,17 @@ export default function Categories() {
           </span>
         </TableCell>
         <TableCell>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => handleToggleVisibility(cat)}
-            title={cat.is_active ? "Ocultar do menu" : "Mostrar no menu"}
-          >
-            {cat.is_active ? (
-              <Eye className="h-4 w-4 text-green-600" />
-            ) : (
-              <EyeOff className="h-4 w-4 text-muted-foreground" />
-            )}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={cat.is_active}
+              onCheckedChange={() => handleToggleVisibility(cat)}
+              disabled={toggleVisibility.isPending}
+              aria-label={cat.is_active ? "Ocultar categoria" : "Mostrar categoria"}
+            />
+            <span className="text-xs text-muted-foreground">
+              {cat.is_active ? "Ativa" : "Oculta"}
+            </span>
+          </div>
         </TableCell>
         <TableCell>
           <div className="flex items-center gap-1">
