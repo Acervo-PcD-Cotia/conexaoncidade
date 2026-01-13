@@ -5084,64 +5084,103 @@ export type Database = {
       }
       phone_catalog: {
         Row: {
+          accessibility_badges: string[] | null
+          accessibility_features: string[] | null
+          accessibility_score: number | null
           battery_score: number
           brand: string
           camera_score: number
           considerations: string[]
           created_at: string
+          drop_resistant: boolean | null
           gaming_score: number
+          has_emergency_sos: boolean | null
+          has_nfc: boolean | null
+          has_physical_buttons: boolean | null
           id: string
           ideal_for: string
           image_url: string | null
+          import_source: string | null
           is_active: boolean
           name: string
           price_max: number
           price_min: number
           price_range: string
+          screen_size: number | null
+          speaker_quality: string | null
           strengths: string[]
           tenant_id: string | null
           updated_at: string
           use_cases: string[]
+          vibration_strength: string | null
+          water_resistant: boolean | null
+          weight_grams: number | null
         }
         Insert: {
+          accessibility_badges?: string[] | null
+          accessibility_features?: string[] | null
+          accessibility_score?: number | null
           battery_score?: number
           brand: string
           camera_score?: number
           considerations?: string[]
           created_at?: string
+          drop_resistant?: boolean | null
           gaming_score?: number
+          has_emergency_sos?: boolean | null
+          has_nfc?: boolean | null
+          has_physical_buttons?: boolean | null
           id?: string
           ideal_for: string
           image_url?: string | null
+          import_source?: string | null
           is_active?: boolean
           name: string
           price_max: number
           price_min: number
           price_range: string
+          screen_size?: number | null
+          speaker_quality?: string | null
           strengths?: string[]
           tenant_id?: string | null
           updated_at?: string
           use_cases?: string[]
+          vibration_strength?: string | null
+          water_resistant?: boolean | null
+          weight_grams?: number | null
         }
         Update: {
+          accessibility_badges?: string[] | null
+          accessibility_features?: string[] | null
+          accessibility_score?: number | null
           battery_score?: number
           brand?: string
           camera_score?: number
           considerations?: string[]
           created_at?: string
+          drop_resistant?: boolean | null
           gaming_score?: number
+          has_emergency_sos?: boolean | null
+          has_nfc?: boolean | null
+          has_physical_buttons?: boolean | null
           id?: string
           ideal_for?: string
           image_url?: string | null
+          import_source?: string | null
           is_active?: boolean
           name?: string
           price_max?: number
           price_min?: number
           price_range?: string
+          screen_size?: number | null
+          speaker_quality?: string | null
           strengths?: string[]
           tenant_id?: string | null
           updated_at?: string
           use_cases?: string[]
+          vibration_strength?: string | null
+          water_resistant?: boolean | null
+          weight_grams?: number | null
         }
         Relationships: [
           {
