@@ -126,6 +126,17 @@ export function useCommunityLocations() {
     total: locations?.length || 0,
   };
 
+  // Get top rated locations for ranking
+  const topRatedLocations = [...(locations || [])]
+    .filter((l) => (l.review_count || 0) > 0)
+    .sort((a, b) => {
+      // Sort by avg_rating desc, then review_count desc
+      const ratingDiff = (Number(b.avg_rating) || 0) - (Number(a.avg_rating) || 0);
+      if (ratingDiff !== 0) return ratingDiff;
+      return (b.review_count || 0) - (a.review_count || 0);
+    })
+    .slice(0, 10);
+
   return {
     locations,
     isLoading,
@@ -135,5 +146,6 @@ export function useCommunityLocations() {
     createLocation,
     filterByCategory,
     filterByNeighborhood,
+    topRatedLocations,
   };
 }

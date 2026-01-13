@@ -10,6 +10,7 @@ import {
   Clock,
   Filter,
   Loader2,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,12 +40,18 @@ interface Report {
   reported_user_id: string;
   post_id: string | null;
   comment_id: string | null;
+  review_id: string | null;
   reason: string;
   description: string | null;
   status: string;
   created_at: string;
   reporter_name?: string;
   reported_name?: string;
+  review_data?: {
+    rating: number;
+    comment: string | null;
+    location_name: string | null;
+  };
 }
 
 interface Penalty {
@@ -88,9 +95,11 @@ export default function CommunityModeration() {
 
       // Get unique user IDs
       const userIds = new Set<string>();
+      const reviewIds: string[] = [];
       data?.forEach((r) => {
         if (r.reporter_id) userIds.add(r.reporter_id);
         if (r.reported_user_id) userIds.add(r.reported_user_id);
+        if (r.review_id) reviewIds.push(r.review_id);
       });
 
       // Fetch profiles
@@ -101,10 +110,30 @@ export default function CommunityModeration() {
 
       const profileMap = new Map(profiles?.map((p) => [p.id, p.full_name]) || []);
 
+      // Fetch reviews if any
+      let reviewMap = new Map<string, { rating: number; comment: string | null; location_name: string | null }>();
+      if (reviewIds.length > 0) {
+        const { data: reviews } = await supabase
+          .from("community_location_reviews" as any)
+          .select("id, rating, comment, location:community_locations(name)")
+          .in("id", reviewIds);
+        
+        if (reviews) {
+          reviews.forEach((r: any) => {
+            reviewMap.set(r.id, {
+              rating: r.rating,
+              comment: r.comment,
+              location_name: r.location?.name || null,
+            });
+          });
+        }
+      }
+
       return data?.map((r) => ({
         ...r,
         reporter_name: profileMap.get(r.reporter_id) || "Usuário",
         reported_name: profileMap.get(r.reported_user_id) || "Usuário",
+        review_data: r.review_id ? reviewMap.get(r.review_id) : undefined,
       })) as Report[];
     },
   });
@@ -293,6 +322,9 @@ export default function CommunityModeration() {
   });
 
   const getTypeBadge = (report: Report) => {
+    if (report.review_id) {
+      return <Badge variant="outline" className="border-yellow-500 text-yellow-700"><Star className="h-3 w-3 mr-1" />Avaliação</Badge>;
+    }
     if (report.post_id) {
       return <Badge variant="outline"><MessageSquare className="h-3 w-3 mr-1" />Post</Badge>;
     }
@@ -421,6 +453,34 @@ export default function CommunityModeration() {
                           <p className="text-sm bg-muted p-3 rounded-lg">
                             "{report.description}"
                           </p>
+                        )}
+
+                        {/* Show review context if it's a review report */}
+                        {report.review_data && (
+                          <div className="text-sm bg-yellow-50 border border-yellow-200 p-3 rounded-lg space-y-1">
+                            <div className="font-medium text-yellow-800">Avaliação denunciada:</div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-yellow-700">Local:</span>
+                              <span>{report.review_data.location_name || "Desconhecido"}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-yellow-700">Nota:</span>
+                              <div className="flex items-center gap-1">
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className={`h-3 w-3 ${i < report.review_data!.rating ? "fill-yellow-500 text-yellow-500" : "text-gray-300"}`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            {report.review_data.comment && (
+                              <div>
+                                <span className="text-yellow-700">Comentário:</span>
+                                <p className="italic mt-0.5">"{report.review_data.comment}"</p>
+                              </div>
+                            )}
+                          </div>
                         )}
                         
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">

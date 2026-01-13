@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { MapPin, Store, Accessibility, Calendar, HelpCircle, Search, Plus, Check, Star, Loader2, Navigation } from "lucide-react";
+import { MapPin, Store, Accessibility, Calendar, HelpCircle, Search, Plus, Check, Star, Loader2, Navigation, Trophy, Medal, Award, Heart } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,10 +13,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CommunityLayout } from "@/components/community/CommunityLayout";
 import { useCommunityLocations, CommunityLocation, LocationCategory } from "@/hooks/useCommunityLocations";
+import { useLocationFavorites } from "@/hooks/useLocationFavorites";
 import { LocationMap, geocodeAddress } from "@/components/community/LocationMap";
 import { LocationReviewsDialog } from "@/components/community/LocationReviewsDialog";
 import { StarRating } from "@/components/community/StarRating";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const categoryLabels: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   business: { label: "Comércio", icon: Store, color: "bg-blue-100 text-blue-700" },
@@ -41,7 +43,9 @@ const accessibilityOptions = [
 ];
 
 export default function CommunityMap() {
-  const { locations, isLoading, neighborhoods: dbNeighborhoods, createLocation, stats } = useCommunityLocations();
+  const { locations, isLoading, neighborhoods: dbNeighborhoods, createLocation, stats, topRatedLocations } = useCommunityLocations();
+  const { user } = useAuth();
+  const { isFavorite, toggleFavorite, favoriteLocations, count: favoritesCount } = useLocationFavorites();
   
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -377,12 +381,188 @@ export default function CommunityMap() {
         </Card>
 
         {/* Category Tabs */}
-        <Tabs defaultValue="grid" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs defaultValue="ranking" className="w-full">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="ranking" className="gap-1">
+              <Trophy className="h-4 w-4" />
+              <span className="hidden sm:inline">Destaque</span>
+            </TabsTrigger>
+            <TabsTrigger value="favorites" className="gap-1">
+              <Heart className="h-4 w-4" />
+              <span className="hidden sm:inline">Favoritos</span>
+              {favoritesCount > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">{favoritesCount}</Badge>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="grid">Por Bairro</TabsTrigger>
-            <TabsTrigger value="list">Lista Completa</TabsTrigger>
+            <TabsTrigger value="list">Lista</TabsTrigger>
             <TabsTrigger value="map">Mapa</TabsTrigger>
           </TabsList>
+
+          {/* Ranking Tab */}
+          <TabsContent value="ranking" className="mt-4 space-y-4">
+            <div className="text-center py-4">
+              <Trophy className="h-10 w-10 mx-auto text-yellow-500" />
+              <h2 className="text-xl font-bold mt-2">Top 10 Mais Bem Avaliados</h2>
+              <p className="text-sm text-muted-foreground">Os locais mais recomendados pela comunidade</p>
+            </div>
+            
+            {topRatedLocations.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Star className="h-12 w-12 mx-auto text-muted-foreground/50" />
+                  <h3 className="mt-4 font-semibold">Nenhum local avaliado ainda</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Seja o primeiro a avaliar um local!
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {topRatedLocations.map((location, index) => {
+                  const categoryInfo = categoryLabels[location.category] || categoryLabels.business;
+                  const CategoryIcon = categoryInfo.icon;
+                  const isTopThree = index < 3;
+                  const isHighRated = (Number(location.avg_rating) || 0) >= 4.5 && (location.review_count || 0) >= 5;
+                  
+                  return (
+                    <Card 
+                      key={location.id} 
+                      className={`cursor-pointer transition-all hover:shadow-md ${
+                        isTopThree ? "border-2 border-yellow-300 bg-gradient-to-r from-yellow-50 to-transparent" : ""
+                      }`}
+                      onClick={() => handleLocationCardClick(location)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-4">
+                          {/* Ranking Position */}
+                          <div className="flex-shrink-0 w-12 text-center">
+                            {index === 0 && <Medal className="h-8 w-8 mx-auto text-yellow-500" />}
+                            {index === 1 && <Medal className="h-8 w-8 mx-auto text-gray-400" />}
+                            {index === 2 && <Medal className="h-8 w-8 mx-auto text-orange-600" />}
+                            {index > 2 && <span className="text-2xl font-bold text-muted-foreground">#{index + 1}</span>}
+                          </div>
+                          
+                          {/* Location Info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 className="font-semibold truncate">{location.name}</h3>
+                              {isHighRated && (
+                                <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">
+                                  <Award className="h-3 w-3 mr-1" />
+                                  Destaque
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <StarRating rating={Number(location.avg_rating) || 0} size="sm" />
+                              <span className="text-sm font-medium">{Number(location.avg_rating).toFixed(1)}</span>
+                              <span className="text-sm text-muted-foreground">
+                                ({location.review_count} {location.review_count === 1 ? "avaliação" : "avaliações"})
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
+                              <Badge variant="outline" className={`${categoryInfo.color} text-xs`}>
+                                <CategoryIcon className="h-3 w-3 mr-1" />
+                                {categoryInfo.label}
+                              </Badge>
+                              {location.neighborhood && <span>• {location.neighborhood}</span>}
+                            </div>
+                          </div>
+
+                          {/* Favorite Button */}
+                          {user && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="flex-shrink-0"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleFavorite.mutate(location.id);
+                              }}
+                              disabled={toggleFavorite.isPending}
+                            >
+                              <Heart 
+                                className={`h-5 w-5 ${isFavorite(location.id) ? "fill-red-500 text-red-500" : "text-muted-foreground"}`} 
+                              />
+                            </Button>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Favorites Tab */}
+          <TabsContent value="favorites" className="mt-4 space-y-4">
+            {!user ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Heart className="h-12 w-12 mx-auto text-muted-foreground/50" />
+                  <h3 className="mt-4 font-semibold">Faça login para ver seus favoritos</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Salve seus locais preferidos para acesso rápido
+                  </p>
+                </CardContent>
+              </Card>
+            ) : favoriteLocations.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Heart className="h-12 w-12 mx-auto text-muted-foreground/50" />
+                  <h3 className="mt-4 font-semibold">Nenhum favorito ainda</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Clique no coração nos locais para salvá-los aqui
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {favoriteLocations.map((location) => {
+                  const categoryInfo = categoryLabels[location.category] || categoryLabels.business;
+                  const CategoryIcon = categoryInfo.icon;
+                  return (
+                    <Card 
+                      key={location.id} 
+                      className="hover:border-pink-300 transition-colors cursor-pointer relative"
+                      onClick={() => handleLocationCardClick(location)}
+                    >
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-2 right-2 h-8 w-8"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFavorite.mutate(location.id);
+                        }}
+                        disabled={toggleFavorite.isPending}
+                      >
+                        <Heart className="h-5 w-5 fill-red-500 text-red-500" />
+                      </Button>
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between">
+                          <Badge className={categoryInfo.color}>
+                            <CategoryIcon className="mr-1 h-3 w-3" />
+                            {categoryInfo.label}
+                          </Badge>
+                        </div>
+                        <h3 className="mt-3 font-semibold">{location.name}</h3>
+                        <p className="text-sm text-muted-foreground">{location.address || "Endereço não informado"}</p>
+                        <div className="flex items-center gap-1 mt-2">
+                          <StarRating rating={Number(location.avg_rating) || 0} size="sm" />
+                          <span className="text-sm text-muted-foreground">
+                            ({location.review_count || 0})
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
 
           <TabsContent value="grid" className="mt-4 space-y-6">
             {Object.keys(groupedByNeighborhood).length === 0 ? (
@@ -410,11 +590,28 @@ export default function CommunityMap() {
                       return (
                         <Card 
                           key={location.id} 
-                          className="hover:border-pink-300 transition-colors cursor-pointer"
+                          className="hover:border-pink-300 transition-colors cursor-pointer relative"
                           onClick={() => handleLocationCardClick(location)}
                         >
+                          {/* Favorite Button */}
+                          {user && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="absolute top-2 right-2 h-8 w-8 z-10"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleFavorite.mutate(location.id);
+                              }}
+                              disabled={toggleFavorite.isPending}
+                            >
+                              <Heart 
+                                className={`h-5 w-5 ${isFavorite(location.id) ? "fill-red-500 text-red-500" : "text-muted-foreground hover:text-red-400"}`} 
+                              />
+                            </Button>
+                          )}
                           <CardContent className="p-4">
-                            <div className="flex items-start justify-between">
+                            <div className="flex items-start justify-between pr-8">
                               <Badge className={categoryInfo.color}>
                                 <CategoryIcon className="mr-1 h-3 w-3" />
                                 {categoryInfo.label}
@@ -429,12 +626,18 @@ export default function CommunityMap() {
                             <h3 className="mt-3 font-semibold">{location.name}</h3>
                             <p className="text-sm text-muted-foreground">{location.address || "Endereço não informado"}</p>
                             
-                            {/* Rating */}
-                            <div className="flex items-center gap-1 mt-2">
+                            {/* Rating with highlight badge */}
+                            <div className="flex items-center gap-2 mt-2">
                               <StarRating rating={Number(location.avg_rating) || 0} size="sm" />
                               <span className="text-sm text-muted-foreground">
                                 ({location.review_count || 0})
                               </span>
+                              {(Number(location.avg_rating) || 0) >= 4.5 && (location.review_count || 0) >= 5 && (
+                                <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs">
+                                  <Award className="h-3 w-3 mr-0.5" />
+                                  Destaque
+                                </Badge>
+                              )}
                             </div>
                             
                             {location.accessibility_features && location.accessibility_features.length > 0 && (
