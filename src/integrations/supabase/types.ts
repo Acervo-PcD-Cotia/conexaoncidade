@@ -5055,6 +5055,112 @@ export type Database = {
           },
         ]
       }
+      phone_catalog: {
+        Row: {
+          battery_score: number
+          brand: string
+          camera_score: number
+          considerations: string[]
+          created_at: string
+          gaming_score: number
+          id: string
+          ideal_for: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          price_max: number
+          price_min: number
+          price_range: string
+          strengths: string[]
+          tenant_id: string | null
+          updated_at: string
+          use_cases: string[]
+        }
+        Insert: {
+          battery_score?: number
+          brand: string
+          camera_score?: number
+          considerations?: string[]
+          created_at?: string
+          gaming_score?: number
+          id?: string
+          ideal_for: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          price_max: number
+          price_min: number
+          price_range: string
+          strengths?: string[]
+          tenant_id?: string | null
+          updated_at?: string
+          use_cases?: string[]
+        }
+        Update: {
+          battery_score?: number
+          brand?: string
+          camera_score?: number
+          considerations?: string[]
+          created_at?: string
+          gaming_score?: number
+          id?: string
+          ideal_for?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          price_max?: number
+          price_min?: number
+          price_range?: string
+          strengths?: string[]
+          tenant_id?: string | null
+          updated_at?: string
+          use_cases?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phone_catalog_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      phone_recommendations: {
+        Row: {
+          alternative_phones: string[] | null
+          answers: Json
+          created_at: string
+          id: string
+          recommended_phone_id: string | null
+          user_id: string
+        }
+        Insert: {
+          alternative_phones?: string[] | null
+          answers: Json
+          created_at?: string
+          id?: string
+          recommended_phone_id?: string | null
+          user_id: string
+        }
+        Update: {
+          alternative_phones?: string[] | null
+          answers?: Json
+          created_at?: string
+          id?: string
+          recommended_phone_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phone_recommendations_recommended_phone_id_fkey"
+            columns: ["recommended_phone_id"]
+            isOneToOne: false
+            referencedRelation: "phone_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pitch_requests: {
         Row: {
           created_at: string
