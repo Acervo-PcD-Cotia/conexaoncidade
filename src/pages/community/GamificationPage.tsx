@@ -1,44 +1,42 @@
-import { useAuth } from "@/contexts/AuthContext";
-import { useCommunity, levelLabels, badgeLabels, levelThresholds } from "@/hooks/useCommunity";
-import { Navigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import {
-  Trophy,
-  Star,
-  Target,
-  Medal,
-  Crown,
-  Zap,
+import { useAuth } from "@/contexts/AuthContext";
+import { useCommunity, levelLabels, levelThresholds, levelOrder, levelToNumber } from "@/hooks/useCommunity";
+import { Navigate } from "react-router-dom";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
+import { 
+  Trophy, 
+  Star, 
   TrendingUp,
   Award,
+  Medal,
+  Crown,
+  Shield,
+  Zap
 } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { LevelProgressBar } from "@/components/community/LevelProgressBar";
-import { MemberBadge } from "@/components/community/MemberBadge";
 
-const levelIcons: Record<number, React.ElementType> = {
-  1: Star,
-  2: Target,
-  3: Medal,
-  4: Crown,
-  5: Trophy,
+const levelIcons: Record<string, React.ElementType> = {
+  supporter: Star,
+  collaborator: Medal,
+  ambassador: Crown,
+  leader: Shield,
 };
 
 export default function GamificationPage() {
   const { user, isLoading: authLoading } = useAuth();
-  const { membership: member, isLoading } = useCommunity();
+  const { membership, isLoading: communityLoading } = useCommunity();
 
-  if (authLoading || isLoading) {
+  if (authLoading || communityLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-48 w-full rounded-xl" />
-        <div className="grid gap-4 md:grid-cols-3">
-          <Skeleton className="h-32 rounded-xl" />
-          <Skeleton className="h-32 rounded-xl" />
-          <Skeleton className="h-32 rounded-xl" />
+      <div className="container mx-auto px-4 py-8 space-y-6">
+        <Skeleton className="h-10 w-64" />
+        <Skeleton className="h-48 w-full" />
+        <div className="grid gap-4 md:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-24" />
+          ))}
         </div>
       </div>
     );
@@ -48,17 +46,26 @@ export default function GamificationPage() {
     return <Navigate to="/auth-comunidade" replace />;
   }
 
-  if (!member) {
+  if (!membership) {
     return <Navigate to="/comunidade" replace />;
   }
 
-  const currentLevel = member.level || 1;
-  const currentPoints = member.points || 0;
-  const currentThreshold = levelThresholds[currentLevel - 1] || 0;
-  const nextThreshold = levelThresholds[currentLevel] || levelThresholds[levelThresholds.length - 1];
-  const progressToNext = ((currentPoints - currentThreshold) / (nextThreshold - currentThreshold)) * 100;
-  const LevelIcon = levelIcons[currentLevel] || Star;
-  const badgeCount = member.badges ? Object.values(member.badges).filter(Boolean).length : 0;
+  const member = membership;
+  const currentLevelStr = member.level || 'supporter';
+  const currentLevelNum = levelToNumber[currentLevelStr] || 1;
+  const currentPoints = Number(member.points) || 0;
+  
+  // Calculate progress to next level
+  const currentThreshold = levelThresholds[currentLevelStr] || 0;
+  const nextLevelIndex = levelOrder.indexOf(currentLevelStr) + 1;
+  const nextLevelStr = nextLevelIndex < levelOrder.length ? levelOrder[nextLevelIndex] : currentLevelStr;
+  const nextThreshold = levelThresholds[nextLevelStr] || currentThreshold;
+  
+  const progressToNext = nextThreshold > currentThreshold 
+    ? Math.min(100, ((currentPoints - currentThreshold) / (nextThreshold - currentThreshold)) * 100)
+    : 100;
+
+  const LevelIcon = levelIcons[currentLevelStr] || Star;
 
   const allBadges = [
     { key: "pioneer", label: "Pioneiro 🌟", description: "Entrou na comunidade", earned: member.badges?.includes("pioneer") },
@@ -87,7 +94,7 @@ export default function GamificationPage() {
                 <p className="text-sm font-medium text-pink-100">Nível Atual</p>
                 <h1 className="text-3xl font-bold flex items-center gap-2">
                   <LevelIcon className="h-8 w-8" />
-                  {levelLabels[currentLevel] || `Nível ${currentLevel}`}
+                  {levelLabels[currentLevelStr] || `Nível ${currentLevelNum}`}
                 </h1>
               </div>
               <div className="text-right">
@@ -141,7 +148,7 @@ export default function GamificationPage() {
                 <Trophy className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{currentLevel}</p>
+                <p className="text-2xl font-bold">{currentLevelNum}</p>
                 <p className="text-sm text-muted-foreground">Nível</p>
               </div>
             </CardContent>

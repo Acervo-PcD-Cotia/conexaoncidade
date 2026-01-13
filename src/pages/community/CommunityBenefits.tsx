@@ -1,6 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCommunity, levelLabels } from "@/hooks/useCommunity";
+import { useCommunity, levelLabels, levelToNumber } from "@/hooks/useCommunity";
 import { Navigate, Link } from "react-router-dom";
 import {
   Gift,
@@ -50,8 +50,10 @@ export default function CommunityBenefits() {
     return <Navigate to="/auth-comunidade" replace />;
   }
 
-  const currentLevel = member?.level || 1;
-  const currentPoints = member?.points || 0;
+  // Convert level string to number for comparisons
+  const currentLevelNum = levelToNumber[member?.level || 'supporter'] || 1;
+  const currentPoints = Number(member?.points) || 0;
+  const currentLevelStr = member?.level || 'supporter';
 
   const benefits: Benefit[] = [
     {
@@ -73,7 +75,7 @@ export default function CommunityBenefits() {
       pointsRequired: 100,
       levelRequired: 2,
       type: "vip",
-      isAvailable: currentLevel >= 2 && currentPoints >= 100,
+      isAvailable: currentLevelNum >= 2 && currentPoints >= 100,
     },
     {
       id: "local-coupons",
@@ -83,7 +85,7 @@ export default function CommunityBenefits() {
       pointsRequired: 200,
       levelRequired: 3,
       type: "coupon",
-      isAvailable: currentLevel >= 3 && currentPoints >= 200,
+      isAvailable: currentLevelNum >= 3 && currentPoints >= 200,
     },
     {
       id: "vip-events",
@@ -93,17 +95,7 @@ export default function CommunityBenefits() {
       pointsRequired: 500,
       levelRequired: 4,
       type: "vip",
-      isAvailable: currentLevel >= 4 && currentPoints >= 500,
-    },
-    {
-      id: "ambassador",
-      name: "Embaixador",
-      description: "Destaque no portal e benefícios especiais de embaixador",
-      icon: Trophy,
-      pointsRequired: 1000,
-      levelRequired: 5,
-      type: "vip",
-      isAvailable: currentLevel >= 5 && currentPoints >= 1000,
+      isAvailable: currentLevelNum >= 4 && currentPoints >= 500,
     },
   ];
 
@@ -136,7 +128,7 @@ export default function CommunityBenefits() {
               <div>
                 <p className="text-sm text-muted-foreground">Seu nível atual</p>
                 <h2 className="text-2xl font-bold">
-                  {levelLabels[currentLevel] || `Nível ${currentLevel}`}
+                  {levelLabels[currentLevelStr] || `Nível ${currentLevelNum}`}
                 </h2>
               </div>
               <div className="text-right">

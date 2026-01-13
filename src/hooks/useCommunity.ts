@@ -415,9 +415,20 @@ export const badgeLabels: Record<string, string> = {
 };
 
 // Points needed for each level
-export const levelThresholds = {
+export const levelThresholds: Record<string, number> = {
   supporter: 0,
   collaborator: 500,
   ambassador: 2000,
   leader: 5000,
+};
+
+// Level order for progression
+export const levelOrder = ['supporter', 'collaborator', 'ambassador', 'leader'];
+
+// Level to number mapping for comparisons
+export const levelToNumber: Record<string, number> = {
+  supporter: 1,
+  collaborator: 2,
+  ambassador: 3,
+  leader: 4,
 };
