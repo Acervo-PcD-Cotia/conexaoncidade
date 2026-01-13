@@ -87,6 +87,11 @@ function LeadDetailsDialog({ lead }: { lead: CampaignLead }) {
         {/* Info Section */}
         <div className="space-y-4">
           <div>
+            <Label className="text-muted-foreground text-xs">Responsável</Label>
+            <p className="font-medium">{(lead as any).contact_name || 'N/A'}</p>
+          </div>
+
+          <div>
             <Label className="text-muted-foreground text-xs">Categoria</Label>
             <p className="font-medium">{categoryLabels[lead.business_category] || lead.business_category}</p>
           </div>
@@ -94,7 +99,9 @@ function LeadDetailsDialog({ lead }: { lead: CampaignLead }) {
           <div>
             <Label className="text-muted-foreground text-xs">Endereço</Label>
             <p className="font-medium">{lead.address}</p>
-            <p className="text-sm text-muted-foreground">{lead.city}, {lead.state}</p>
+            <p className="text-sm text-muted-foreground">
+              {(lead as any).neighborhood && `${(lead as any).neighborhood}, `}{lead.city}{(lead as any).zip_code && ` - ${(lead as any).zip_code}`}
+            </p>
           </div>
 
           <div className="flex gap-4">
@@ -145,9 +152,9 @@ function LeadDetailsDialog({ lead }: { lead: CampaignLead }) {
 
           <div className="p-3 bg-muted rounded-lg space-y-2 text-sm">
             <p><strong>Google Maps:</strong> {lead.has_google_maps === 'yes' ? 'Sim' : lead.has_google_maps === 'no' ? 'Não' : 'Não sabe'}</p>
-            <p><strong>Fotos:</strong> {lead.has_photos === 'yes' ? 'Sim' : lead.has_photos === 'few' ? 'Poucas' : 'Não'}</p>
-            <p><strong>Responde avaliações:</strong> {lead.responds_reviews === 'always' ? 'Sempre' : lead.responds_reviews === 'sometimes' ? 'Às vezes' : 'Nunca'}</p>
-            <p><strong>Horário correto:</strong> {lead.correct_hours === 'yes' ? 'Sim' : lead.correct_hours === 'no' ? 'Não' : 'Não sabe'}</p>
+            {(lead as any).goals?.length > 0 && (
+              <p><strong>Objetivos:</strong> {(lead as any).goals.join(', ')}</p>
+            )}
           </div>
 
           <div className="p-3 bg-muted rounded-lg space-y-1 text-sm">

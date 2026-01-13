@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Search, Sun, Moon, LogOut, LayoutDashboard, Newspaper, FolderOpen, Megaphone, Settings, ShieldCheck, Bus } from "lucide-react";
+import { Menu, X, Search, Sun, Moon, LogOut, LayoutDashboard, Newspaper, FolderOpen, Megaphone, Settings, ShieldCheck, Bus, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTheme } from "@/hooks/useTheme";
@@ -250,6 +250,16 @@ export function Header() {
                 >
                   <Bus className="h-4 w-4" />
                   Transporte Escolar
+                </Link>
+              </li>
+              {/* Google Maps Campaign Link */}
+              <li>
+                <Link
+                  to="/google-maps"
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-blue-600 dark:text-blue-500 transition-colors hover:bg-blue-50 dark:hover:bg-blue-950/50"
+                >
+                  <MapPin className="h-4 w-4" />
+                  Google Maps
                 </Link>
               </li>
             </ul>

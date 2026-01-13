@@ -8,10 +8,13 @@ export interface CampaignLead {
   business_name: string;
   business_category: string;
   address: string;
+  neighborhood?: string;
   city: string;
   state: string;
+  zip_code?: string;
   whatsapp: string;
   email: string;
+  contact_name?: string;
   has_google_maps?: 'yes' | 'no' | 'unknown';
   google_maps_link?: string;
   has_photos?: 'yes' | 'few' | 'no';
@@ -28,6 +31,7 @@ export interface CampaignLead {
   consent_portal: boolean;
   consent_community: boolean;
   wants_community?: 'yes' | 'yes_support' | 'only_free';
+  goals?: string[];
   priority: 'high' | 'medium' | 'low';
   estimated_points: number;
   status: 'received' | 'in_progress' | 'completed' | 'rejected';
@@ -52,10 +56,13 @@ export interface LeadFormData {
   business_name: string;
   business_category: string;
   address: string;
+  neighborhood?: string;
   city?: string;
   state?: string;
+  zip_code?: string;
   whatsapp: string;
   email: string;
+  contact_name?: string;
   has_google_maps?: 'yes' | 'no' | 'unknown';
   google_maps_link?: string;
   has_photos?: 'yes' | 'few' | 'no';
@@ -72,6 +79,7 @@ export interface LeadFormData {
   consent_portal?: boolean;
   consent_community?: boolean;
   wants_community?: 'yes' | 'yes_support' | 'only_free';
+  goals?: string[];
 }
 
 interface LeadsFilter {

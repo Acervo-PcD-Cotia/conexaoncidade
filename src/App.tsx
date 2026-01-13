@@ -146,6 +146,7 @@ const App = () => (
                         <Route path="/comunidade/beneficios/celular-ideal" element={<PhoneChooserPage />} />
                         <Route path="/anti-fake-news" element={<AntiFakeNews />} />
                         <Route path="/campanha/google-maps" element={<GoogleMapsCampaign />} />
+                        <Route path="/google-maps" element={<GoogleMapsCampaign />} />
                         <Route path="/transporte-escolar" element={<TransporteEscolarHome />} />
                         <Route path="/transporte-escolar/encontrar" element={<TransporteEscolarEncontrar />} />
                         <Route path="/transporte-escolar/cadastrar" element={<TransporteEscolarCadastrar />} />

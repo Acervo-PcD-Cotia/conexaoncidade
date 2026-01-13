@@ -1904,10 +1904,12 @@ export type Database = {
           created_at: string | null
           email: string
           estimated_points: number | null
+          goals: string[] | null
           google_maps_link: string | null
           has_google_maps: string | null
           has_photos: string | null
           id: string
+          neighborhood: string | null
           notes: string | null
           priority: string | null
           processed_at: string | null
@@ -1921,6 +1923,7 @@ export type Database = {
           updated_at: string | null
           wants_community: string | null
           whatsapp: string
+          zip_code: string | null
         }
         Insert: {
           address: string
@@ -1939,10 +1942,12 @@ export type Database = {
           created_at?: string | null
           email: string
           estimated_points?: number | null
+          goals?: string[] | null
           google_maps_link?: string | null
           has_google_maps?: string | null
           has_photos?: string | null
           id?: string
+          neighborhood?: string | null
           notes?: string | null
           priority?: string | null
           processed_at?: string | null
@@ -1956,6 +1961,7 @@ export type Database = {
           updated_at?: string | null
           wants_community?: string | null
           whatsapp: string
+          zip_code?: string | null
         }
         Update: {
           address?: string
@@ -1974,10 +1980,12 @@ export type Database = {
           created_at?: string | null
           email?: string
           estimated_points?: number | null
+          goals?: string[] | null
           google_maps_link?: string | null
           has_google_maps?: string | null
           has_photos?: string | null
           id?: string
+          neighborhood?: string | null
           notes?: string | null
           priority?: string | null
           processed_at?: string | null
@@ -1991,6 +1999,7 @@ export type Database = {
           updated_at?: string | null
           wants_community?: string | null
           whatsapp?: string
+          zip_code?: string | null
         }
         Relationships: [
           {

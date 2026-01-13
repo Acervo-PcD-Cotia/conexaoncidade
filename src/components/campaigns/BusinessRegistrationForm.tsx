@@ -17,30 +17,33 @@ import { BusinessPhotoUploader, PhotoType } from './BusinessPhotoUploader';
 import { LeadFormData } from '@/hooks/useCampaignLeads';
 
 const formSchema = z.object({
-  // Bloco A
-  business_name: z.string().min(2, 'Nome do negócio é obrigatório').max(100),
-  business_category: z.string().min(1, 'Selecione uma categoria'),
-  address: z.string().min(5, 'Endereço é obrigatório'),
+  // Bloco A - Dados do Responsável
+  contact_name: z.string().min(2, 'Nome é obrigatório').max(100),
   whatsapp: z.string().min(10, 'WhatsApp inválido').max(15),
   email: z.string().email('Email inválido'),
   
-  // Bloco B
+  // Bloco B - Dados do Negócio
+  business_name: z.string().min(2, 'Nome do negócio é obrigatório').max(100),
+  business_category: z.string().min(1, 'Selecione uma categoria'),
+  address: z.string().min(5, 'Endereço é obrigatório'),
+  neighborhood: z.string().min(2, 'Bairro é obrigatório'),
+  city: z.string().min(2, 'Cidade é obrigatória').default('Cotia'),
+  zip_code: z.string().min(8, 'CEP inválido').max(9).optional().or(z.literal('')),
+  
+  // Bloco C - Situação no Google Maps
   has_google_maps: z.enum(['yes', 'no', 'unknown']).optional(),
   google_maps_link: z.string().url().optional().or(z.literal('')),
-  has_photos: z.enum(['yes', 'few', 'no']).optional(),
-  responds_reviews: z.enum(['always', 'sometimes', 'never']).optional(),
-  correct_hours: z.enum(['yes', 'no', 'unknown']).optional(),
   
-  // Bloco C
+  // Bloco D - Objetivos (multi-select)
+  goals: z.array(z.string()).optional(),
+  
+  // Bloco E - Autorizações
   authorized_review: z.boolean().default(false),
   authorized_photos: z.boolean().default(false),
   authorized_corrections: z.boolean().default(false),
   authorized_local_guide: z.boolean().default(false),
   
-  // Bloco D
-  business_description: z.string().optional(),
-  
-  // Bloco E
+  // Bloco F - Consentimentos
   consent_google_maps: z.boolean().default(false),
   consent_portal: z.boolean().default(false),
   consent_community: z.boolean().default(false),
@@ -64,11 +67,11 @@ interface BusinessRegistrationFormProps {
 }
 
 const steps = [
-  { id: 'identification', title: 'Identificação', icon: Building2 },
+  { id: 'contact', title: 'Responsável', icon: Users },
+  { id: 'business', title: 'Negócio', icon: Building2 },
   { id: 'status', title: 'Situação', icon: MapPin },
   { id: 'authorizations', title: 'Autorizações', icon: Settings },
-  { id: 'content', title: 'Conteúdo', icon: FileText },
-  { id: 'consent', title: 'Finalizar', icon: Users },
+  { id: 'consent', title: 'Finalizar', icon: FileText },
 ];
 
 const categories = [
@@ -80,6 +83,13 @@ const categories = [
   { value: 'beauty', label: 'Beleza / Estética' },
   { value: 'automotive', label: 'Automotivo' },
   { value: 'other', label: 'Outro' },
+];
+
+const goalOptions = [
+  { value: 'create', label: 'Criar meu negócio no Google Maps' },
+  { value: 'improve', label: 'Melhorar meu posicionamento' },
+  { value: 'correct', label: 'Corrigir informações' },
+  { value: 'reviews', label: 'Receber mais avaliações' },
 ];
 
 export function BusinessRegistrationForm({
@@ -95,20 +105,21 @@ export function BusinessRegistrationForm({
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      contact_name: '',
+      whatsapp: '',
+      email: '',
       business_name: '',
       business_category: '',
       address: '',
-      whatsapp: '',
-      email: '',
+      neighborhood: '',
+      city: 'Cotia',
+      zip_code: '',
       has_google_maps: quizResponses.q1 as 'yes' | 'no' | 'unknown' | undefined,
-      has_photos: quizResponses.q2 as 'yes' | 'few' | 'no' | undefined,
-      responds_reviews: quizResponses.q3 as 'always' | 'sometimes' | 'never' | undefined,
-      correct_hours: quizResponses.q4 as 'yes' | 'no' | 'unknown' | undefined,
+      goals: [],
       authorized_review: false,
       authorized_photos: false,
       authorized_corrections: false,
       authorized_local_guide: false,
-      business_description: '',
       consent_google_maps: false,
       consent_portal: false,
       consent_community: false,
@@ -138,13 +149,13 @@ export function BusinessRegistrationForm({
   const getFieldsForStep = (step: number): (keyof FormData)[] => {
     switch (step) {
       case 0:
-        return ['business_name', 'business_category', 'address', 'whatsapp', 'email'];
+        return ['contact_name', 'whatsapp', 'email'];
       case 1:
-        return ['has_google_maps', 'has_photos', 'responds_reviews', 'correct_hours'];
+        return ['business_name', 'business_category', 'address', 'neighborhood', 'city'];
       case 2:
-        return ['authorized_review', 'authorized_photos', 'authorized_corrections', 'authorized_local_guide'];
+        return ['has_google_maps'];
       case 3:
-        return ['business_description'];
+        return ['authorized_review', 'authorized_photos', 'authorized_corrections', 'authorized_local_guide'];
       case 4:
         return ['consent_google_maps', 'consent_portal', 'consent_community', 'wants_community'];
       default:
@@ -154,21 +165,22 @@ export function BusinessRegistrationForm({
 
   const handleSubmit = async (data: FormData) => {
     const leadData: LeadFormData = {
+      contact_name: data.contact_name,
       business_name: data.business_name,
       business_category: data.business_category,
       address: data.address,
+      neighborhood: data.neighborhood,
+      city: data.city,
+      zip_code: data.zip_code || undefined,
       whatsapp: data.whatsapp,
       email: data.email,
       has_google_maps: data.has_google_maps,
       google_maps_link: data.google_maps_link || undefined,
-      has_photos: data.has_photos,
-      responds_reviews: data.responds_reviews,
-      correct_hours: data.correct_hours,
+      goals: data.goals,
       authorized_review: data.authorized_review,
       authorized_photos: data.authorized_photos,
       authorized_corrections: data.authorized_corrections,
       authorized_local_guide: data.authorized_local_guide,
-      business_description: data.business_description,
       consent_google_maps: data.consent_google_maps,
       consent_portal: data.consent_portal,
       consent_community: data.consent_community,
@@ -181,7 +193,51 @@ export function BusinessRegistrationForm({
 
   const renderStep = () => {
     switch (currentStep) {
+      // Step 0: Dados do Responsável
       case 0:
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="contact_name">Nome completo *</Label>
+              <Input
+                id="contact_name"
+                placeholder="Seu nome completo"
+                {...form.register('contact_name')}
+              />
+              {form.formState.errors.contact_name && (
+                <p className="text-sm text-destructive mt-1">{form.formState.errors.contact_name.message}</p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="whatsapp">WhatsApp *</Label>
+              <Input
+                id="whatsapp"
+                placeholder="11999999999"
+                {...form.register('whatsapp')}
+              />
+              {form.formState.errors.whatsapp && (
+                <p className="text-sm text-destructive mt-1">{form.formState.errors.whatsapp.message}</p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="email">E-mail *</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="seu@email.com"
+                {...form.register('email')}
+              />
+              {form.formState.errors.email && (
+                <p className="text-sm text-destructive mt-1">{form.formState.errors.email.message}</p>
+              )}
+            </div>
+          </div>
+        );
+
+      // Step 1: Dados do Negócio
+      case 1:
         return (
           <div className="space-y-4">
             <div>
@@ -197,7 +253,7 @@ export function BusinessRegistrationForm({
             </div>
 
             <div>
-              <Label htmlFor="business_category">Categoria principal *</Label>
+              <Label htmlFor="business_category">Categoria do negócio *</Label>
               <Select
                 onValueChange={(value) => form.setValue('business_category', value)}
                 value={form.watch('business_category')}
@@ -222,7 +278,7 @@ export function BusinessRegistrationForm({
               <Label htmlFor="address">Endereço completo *</Label>
               <Input
                 id="address"
-                placeholder="Rua, número, bairro, cidade"
+                placeholder="Rua, número"
                 {...form.register('address')}
               />
               {form.formState.errors.address && (
@@ -232,38 +288,47 @@ export function BusinessRegistrationForm({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="whatsapp">WhatsApp do negócio *</Label>
+                <Label htmlFor="neighborhood">Bairro *</Label>
                 <Input
-                  id="whatsapp"
-                  placeholder="11999999999"
-                  {...form.register('whatsapp')}
+                  id="neighborhood"
+                  placeholder="Nome do bairro"
+                  {...form.register('neighborhood')}
                 />
-                {form.formState.errors.whatsapp && (
-                  <p className="text-sm text-destructive mt-1">{form.formState.errors.whatsapp.message}</p>
+                {form.formState.errors.neighborhood && (
+                  <p className="text-sm text-destructive mt-1">{form.formState.errors.neighborhood.message}</p>
                 )}
               </div>
 
               <div>
-                <Label htmlFor="email">Email do responsável *</Label>
+                <Label htmlFor="city">Cidade *</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="contato@negocio.com"
-                  {...form.register('email')}
+                  id="city"
+                  placeholder="Cotia"
+                  {...form.register('city')}
                 />
-                {form.formState.errors.email && (
-                  <p className="text-sm text-destructive mt-1">{form.formState.errors.email.message}</p>
+                {form.formState.errors.city && (
+                  <p className="text-sm text-destructive mt-1">{form.formState.errors.city.message}</p>
                 )}
               </div>
+            </div>
+
+            <div>
+              <Label htmlFor="zip_code">CEP</Label>
+              <Input
+                id="zip_code"
+                placeholder="00000-000"
+                {...form.register('zip_code')}
+              />
             </div>
           </div>
         );
 
-      case 1:
+      // Step 2: Situação no Google Maps + Objetivos
+      case 2:
         return (
           <div className="space-y-6">
             <div>
-              <Label className="text-base">Seu negócio já possui cadastro no Google Maps?</Label>
+              <Label className="text-base">Seu negócio já aparece no Google Maps?</Label>
               <RadioGroup
                 onValueChange={(value) => form.setValue('has_google_maps', value as 'yes' | 'no' | 'unknown')}
                 value={form.watch('has_google_maps')}
@@ -277,16 +342,12 @@ export function BusinessRegistrationForm({
                   <RadioGroupItem value="no" id="gm-no" />
                   <Label htmlFor="gm-no" className="font-normal">Não</Label>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="unknown" id="gm-unknown" />
-                  <Label htmlFor="gm-unknown" className="font-normal">Não sei</Label>
-                </div>
               </RadioGroup>
             </div>
 
             {watchHasGoogleMaps === 'yes' && (
               <div>
-                <Label htmlFor="google_maps_link">Link do seu negócio no Google Maps</Label>
+                <Label htmlFor="google_maps_link">Link do Google Maps (opcional)</Label>
                 <Input
                   id="google_maps_link"
                   placeholder="https://maps.google.com/..."
@@ -295,75 +356,37 @@ export function BusinessRegistrationForm({
               </div>
             )}
 
-            <div>
-              <Label className="text-base">O perfil possui fotos reais e recentes?</Label>
-              <RadioGroup
-                onValueChange={(value) => form.setValue('has_photos', value as 'yes' | 'few' | 'no')}
-                value={form.watch('has_photos')}
-                className="mt-3"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="yes" id="photos-yes" />
-                  <Label htmlFor="photos-yes" className="font-normal">Sim</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="few" id="photos-few" />
-                  <Label htmlFor="photos-few" className="font-normal">Poucas</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="no" id="photos-no" />
-                  <Label htmlFor="photos-no" className="font-normal">Não</Label>
-                </div>
-              </RadioGroup>
-            </div>
-
-            <div>
-              <Label className="text-base">Você responde avaliações de clientes?</Label>
-              <RadioGroup
-                onValueChange={(value) => form.setValue('responds_reviews', value as 'always' | 'sometimes' | 'never')}
-                value={form.watch('responds_reviews')}
-                className="mt-3"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="always" id="reviews-always" />
-                  <Label htmlFor="reviews-always" className="font-normal">Sempre</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="sometimes" id="reviews-sometimes" />
-                  <Label htmlFor="reviews-sometimes" className="font-normal">Às vezes</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="never" id="reviews-never" />
-                  <Label htmlFor="reviews-never" className="font-normal">Nunca</Label>
-                </div>
-              </RadioGroup>
-            </div>
-
-            <div>
-              <Label className="text-base">O horário de funcionamento está correto?</Label>
-              <RadioGroup
-                onValueChange={(value) => form.setValue('correct_hours', value as 'yes' | 'no' | 'unknown')}
-                value={form.watch('correct_hours')}
-                className="mt-3"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="yes" id="hours-yes" />
-                  <Label htmlFor="hours-yes" className="font-normal">Sim</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="no" id="hours-no" />
-                  <Label htmlFor="hours-no" className="font-normal">Não</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="unknown" id="hours-unknown" />
-                  <Label htmlFor="hours-unknown" className="font-normal">Não sei</Label>
-                </div>
-              </RadioGroup>
+            <div className="pt-4 border-t">
+              <Label className="text-base mb-3 block">O que você deseja?</Label>
+              <div className="space-y-3">
+                {goalOptions.map((goal) => {
+                  const currentGoals = form.watch('goals') || [];
+                  const isChecked = currentGoals.includes(goal.value);
+                  return (
+                    <div key={goal.value} className="flex items-center space-x-3">
+                      <Checkbox
+                        id={`goal-${goal.value}`}
+                        checked={isChecked}
+                        onCheckedChange={(checked) => {
+                          const newGoals = checked
+                            ? [...currentGoals, goal.value]
+                            : currentGoals.filter(g => g !== goal.value);
+                          form.setValue('goals', newGoals);
+                        }}
+                      />
+                      <Label htmlFor={`goal-${goal.value}`} className="font-normal cursor-pointer">
+                        {goal.label}
+                      </Label>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         );
 
-      case 2:
+      // Step 3: Autorizações
+      case 3:
         return (
           <div className="space-y-6">
             <div className="p-4 bg-muted rounded-lg">
@@ -382,7 +405,7 @@ export function BusinessRegistrationForm({
                 />
                 <div className="space-y-1">
                   <Label htmlFor="auth-review" className="font-medium cursor-pointer">
-                    Avaliação descritiva do local
+                    Avaliação descritiva do local (+10 pts)
                   </Label>
                   <p className="text-sm text-muted-foreground">
                     Publicaremos uma avaliação positiva e honesta sobre seu negócio
@@ -398,10 +421,10 @@ export function BusinessRegistrationForm({
                 />
                 <div className="space-y-1">
                   <Label htmlFor="auth-photos" className="font-medium cursor-pointer">
-                    Envio de fotos reais do estabelecimento
+                    Envio de fotos do local (+5 pts)
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    Usaremos as fotos que você enviar para melhorar seu perfil
+                    Usaremos fotos para melhorar seu perfil
                   </p>
                 </div>
               </div>
@@ -414,7 +437,7 @@ export function BusinessRegistrationForm({
                 />
                 <div className="space-y-1">
                   <Label htmlFor="auth-corrections" className="font-medium cursor-pointer">
-                    Correção de informações
+                    Correção de informações (+5 pts)
                   </Label>
                   <p className="text-sm text-muted-foreground">
                     Horário, categoria, descrição e outras informações
@@ -430,33 +453,13 @@ export function BusinessRegistrationForm({
                 />
                 <div className="space-y-1">
                   <Label htmlFor="auth-local-guide" className="font-medium cursor-pointer">
-                    Inclusão no Guia Local do Conexão na Cidade
+                    Inclusão no Guia Local (+5 pts)
                   </Label>
                   <p className="text-sm text-muted-foreground">
                     Seu negócio será listado em nosso diretório de empresas locais
                   </p>
                 </div>
               </div>
-            </div>
-          </div>
-        );
-
-      case 3:
-        return (
-          <div className="space-y-6">
-            <div>
-              <Label htmlFor="business_description" className="text-base">
-                Descreva brevemente seu negócio
-              </Label>
-              <p className="text-sm text-muted-foreground mb-3">
-                O que faz, para quem atende, há quanto tempo existe
-              </p>
-              <Textarea
-                id="business_description"
-                placeholder="Ex: Padaria artesanal há 15 anos no bairro, especializada em pães integrais e bolos caseiros..."
-                className="min-h-[120px]"
-                {...form.register('business_description')}
-              />
             </div>
 
             <BusinessPhotoUploader
@@ -467,6 +470,7 @@ export function BusinessRegistrationForm({
           </div>
         );
 
+      // Step 4: Finalizar
       case 4:
         return (
           <div className="space-y-6">
@@ -633,7 +637,7 @@ export function BusinessRegistrationForm({
                     Enviando...
                   </>
                 ) : (
-                  'Finalizar Cadastro'
+                  'Enviar para análise gratuita'
                 )}
               </Button>
             )}
