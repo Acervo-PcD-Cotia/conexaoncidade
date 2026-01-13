@@ -101,7 +101,7 @@ export default function CommunityMap() {
   return (
     <CommunityLayout>
       <Helmet>
-        <title>Mapa da Comunidade | Conexão na Cidade</title>
+        <title>Guia Na Cidade | Conexão na Cidade</title>
         <meta name="description" content="Encontre negócios, serviços e locais acessíveis em Cotia" />
       </Helmet>
 
@@ -111,7 +111,7 @@ export default function CommunityMap() {
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <MapPin className="h-6 w-6 text-pink-600" />
-              Mapa da Comunidade
+              Guia Na Cidade
             </h1>
             <p className="text-muted-foreground">
               Encontre locais, serviços e pontos de apoio na cidade

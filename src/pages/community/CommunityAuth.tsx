@@ -81,12 +81,12 @@ export default function CommunityAuth() {
     setFieldErrors({});
   }, [activeTab]);
 
-  // Process community access after user logs in
+  // Process community access after user logs in - ALWAYS redirect to /comunidade
   useEffect(() => {
     const processCommunityAccess = async () => {
       if (!user || isProcessingAccess) return;
       
-      // If user already has access, redirect
+      // If user already has access, redirect immediately
       if (hasAccess) {
         navigate("/comunidade");
         return;
@@ -101,7 +101,6 @@ export default function CommunityAuth() {
           } else if (quizCompleted) {
             await processQuizAfterLogin();
           }
-          navigate("/comunidade");
         } catch (error) {
           console.error("Error processing community access:", error);
           toast({
@@ -113,12 +112,15 @@ export default function CommunityAuth() {
           setIsProcessingAccess(false);
         }
       }
+      
+      // ALWAYS redirect to community (CommunityHub handles unlock screen if needed)
+      navigate("/comunidade");
     };
     
     if (user && !communityLoading) {
       processCommunityAccess();
     }
-  }, [user, hasAccess, communityLoading, inviteCode, quizCompleted]);
+  }, [user, hasAccess, communityLoading, inviteCode, quizCompleted, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

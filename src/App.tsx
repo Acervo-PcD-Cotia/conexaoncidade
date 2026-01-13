@@ -165,7 +165,8 @@ const App = () => (
                         <Route path="/comunidade/membro/:userId" element={<MemberProfile />} />
                         <Route path="/comunidade/configuracoes" element={<ProfileSettings />} />
                         <Route path="/comunidade/gamificacao" element={<GamificationPage />} />
-                        <Route path="/comunidade/mapa" element={<CommunityMap />} />
+                        <Route path="/comunidade/guia" element={<CommunityMap />} />
+                        <Route path="/comunidade/mapa" element={<Navigate to="/comunidade/guia" replace />} />
                         <Route path="/comunidade/rede-do-bem" element={<RedeDoBem />} />
                         <Route path="/comunidade/grupos" element={<CommunityGroups />} />
                         <Route path="/comunidade/grupos/:slug" element={<CommunityGroups />} />

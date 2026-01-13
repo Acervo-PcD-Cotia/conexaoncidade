@@ -12,6 +12,8 @@ import {
   ClipboardList,
   Smartphone,
   Sparkles,
+  ShieldCheck,
+  Bus,
 } from "lucide-react";
 import { CommunityErrorBoundary } from "./CommunityErrorBoundary";
 import { CommunityChatButton } from "./CommunityChatButton";
@@ -36,7 +38,7 @@ const communityNavItems: { section: string; items: NavItem[] }[] = [
     section: "Comunidade",
     items: [
       { label: "Feed", href: "/comunidade", icon: Home, description: "Início" },
-      { label: "Mapa", href: "/comunidade/mapa", icon: MapPin, description: "Locais" },
+      { label: "Guia", href: "/comunidade/guia", icon: MapPin, description: "Locais" },
       { label: "Grupos", href: "/comunidade/grupos", icon: Users, description: "Participe" },
     ],
   },
@@ -57,6 +59,9 @@ const communityNavItems: { section: string; items: NavItem[] }[] = [
   {
     section: "Serviços",
     items: [
+      { label: "Apareça no Google", href: "/campanha/google-maps", icon: MapPin, badge: "Destaque", description: "Negócio local" },
+      { label: "Check Fake News", href: "/anti-fake-news", icon: ShieldCheck, description: "Verificar notícia" },
+      { label: "Transporte Escolar", href: "/transporte-escolar", icon: Bus, description: "Encontrar" },
       { label: "Censo PcD", href: "/censo-pcd", icon: ClipboardList, badge: "Novo" },
       { label: "Celular Ideal", href: "/comunidade/beneficios/celular-ideal", icon: Smartphone },
     ],

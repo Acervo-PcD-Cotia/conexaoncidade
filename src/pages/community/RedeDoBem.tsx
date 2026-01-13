@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { useAuth } from "@/contexts/AuthContext";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import {
   HandHeart,
   HelpCircle,
@@ -13,6 +13,7 @@ import {
   CheckCircle,
   AlertCircle,
   MapPin,
+  Lock,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +25,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CommunityLayout } from "@/components/community/CommunityLayout";
+import { useCommunity } from "@/hooks/useCommunity";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface HelpRequest {
   id: string;
@@ -107,11 +111,33 @@ const placeholderRequests: HelpRequest[] = [
 
 export default function RedeDoBem() {
   const { user, isLoading: authLoading } = useAuth();
+  const { membership } = useCommunity();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading] = useState(false);
 
-  if (authLoading) {
+  // Check if user is super_admin
+  const { data: isSuperAdmin, isLoading: roleLoading } = useQuery({
+    queryKey: ["user-role-super-admin", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return false;
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "super_admin")
+        .maybeSingle();
+      return !!data;
+    },
+    enabled: !!user?.id,
+  });
+
+  // Check if user has rede_do_bem_access badge
+  const hasRedeDoBemAccess = isSuperAdmin || 
+    (membership?.badges && Array.isArray(membership.badges) && membership.badges.includes("rede_do_bem_access"));
+
+  if (authLoading || roleLoading) {
     return (
       <CommunityLayout>
         <div className="space-y-6">
@@ -127,6 +153,31 @@ export default function RedeDoBem() {
 
   if (!user) {
     return <Navigate to="/auth-comunidade" replace />;
+  }
+
+  // Access restriction: only super_admin or users with rede_do_bem_access badge
+  if (!hasRedeDoBemAccess) {
+    return (
+      <CommunityLayout>
+        <Helmet>
+          <title>Rede do Bem | Acesso Restrito</title>
+        </Helmet>
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="rounded-full bg-muted p-6 mb-6">
+            <Lock className="h-12 w-12 text-muted-foreground" />
+          </div>
+          <h1 className="text-2xl font-bold mb-2">Acesso Restrito</h1>
+          <p className="text-muted-foreground max-w-md mb-6">
+            A Rede do Bem está disponível apenas para administradores e membros convidados.
+            Entre em contato com a equipe para solicitar acesso.
+          </p>
+          <Button onClick={() => navigate("/comunidade")} className="bg-pink-600 hover:bg-pink-700">
+            <HandHeart className="mr-2 h-4 w-4" />
+            Voltar para Comunidade
+          </Button>
+        </div>
+      </CommunityLayout>
+    );
   }
 
   const filteredRequests = activeTab === "all" 
