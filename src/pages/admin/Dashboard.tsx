@@ -16,7 +16,7 @@ import {
   Sparkles,
   Image,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -24,9 +24,16 @@ import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNewsCreationModal } from "@/contexts/NewsCreationModalContext";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function Dashboard() {
   const { openModal } = useNewsCreationModal();
+  
   // Fetch operational stats
   const { data: stats } = useQuery({
     queryKey: ["admin-stats"],
@@ -130,7 +137,7 @@ export default function Dashboard() {
         .from("news")
         .select("id, title, slug, status, published_at, view_count, updated_at")
         .order("updated_at", { ascending: false })
-        .limit(8);
+        .limit(5);
       return data || [];
     },
   });
@@ -168,7 +175,7 @@ export default function Dashboard() {
 
   const operationalCards = [
     {
-      title: "Publicadas Hoje",
+      title: "Pub. Hoje",
       value: stats?.publishedToday || 0,
       icon: Newspaper,
       color: "text-green-500",
@@ -182,7 +189,7 @@ export default function Dashboard() {
       bgColor: "bg-yellow-500/10",
     },
     {
-      title: "Em Revisão",
+      title: "Revisão",
       value: stats?.inReview || 0,
       icon: FileSearch,
       color: "text-orange-500",
@@ -196,14 +203,14 @@ export default function Dashboard() {
       bgColor: "bg-blue-500/10",
     },
     {
-      title: "Usuários Ativos",
+      title: "Ativos",
       value: stats?.activeUsers || 0,
       icon: Eye,
       color: "text-purple-500",
       bgColor: "bg-purple-500/10",
     },
     {
-      title: "Online (24h)",
+      title: "Online",
       value: stats?.onlineUsers || 0,
       icon: Users,
       color: "text-cyan-500",
@@ -213,89 +220,108 @@ export default function Dashboard() {
 
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
-      published: "bg-green-100 text-green-700",
-      draft: "bg-yellow-100 text-yellow-700",
-      scheduled: "bg-blue-100 text-blue-700",
-      archived: "bg-gray-100 text-gray-700",
+      published: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+      draft: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+      scheduled: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+      archived: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400",
     };
     const labels: Record<string, string> = {
-      published: "Publicado",
-      draft: "Rascunho",
-      scheduled: "Agendado",
-      archived: "Arquivado",
+      published: "Pub",
+      draft: "Rasc",
+      scheduled: "Agend",
+      archived: "Arq",
     };
     return (
-      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${styles[status] || styles.draft}`}>
+      <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${styles[status] || styles.draft}`}>
         {labels[status] || status}
       </span>
     );
   };
 
-  const hasAlerts = (alerts?.oldDraftsCount || 0) > 0 || (alerts?.noImageCount || 0) > 0 || (stats?.inactiveIntegrations || 0) > 0;
+  const alertsCount = (alerts?.oldDraftsCount || 0) + (alerts?.noImageCount || 0) + (stats?.inactiveIntegrations || 0);
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-heading text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Visão operacional do portal</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" asChild>
-            <Link to="/admin/quick-notes">
-              <Zap className="mr-2 h-4 w-4" />
-              Nota Rápida
-            </Link>
-          </Button>
-          <Button onClick={openModal}>
-            <Newspaper className="mr-2 h-4 w-4" />
-            Nova Notícia
-          </Button>
-        </div>
-      </div>
-
-      {/* Operational Stats - Compact */}
-      <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
-        {operationalCards.map((stat) => (
-          <Card key={stat.title} className="py-0">
-            <CardHeader className="flex flex-row items-center justify-between pb-1 pt-3 px-4">
-              <CardTitle className="text-xs font-medium text-muted-foreground">
-                {stat.title}
-              </CardTitle>
-              <div className={`rounded-md p-1.5 ${stat.bgColor}`}>
-                <stat.icon className={`h-3.5 w-3.5 ${stat.color}`} />
-              </div>
-            </CardHeader>
-            <CardContent className="pb-3 px-4">
-              <div className="text-xl font-bold">
-                {typeof stat.value === "number"
-                  ? stat.value.toLocaleString("pt-BR")
-                  : stat.value}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Recent Activity */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              Últimas Atualizações
-            </CardTitle>
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/admin/news">Ver todas</Link>
+    <TooltipProvider>
+      <div className="flex flex-col h-[calc(100vh-80px)] gap-3">
+        {/* Header - Compact */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h1 className="font-heading text-2xl font-bold">Dashboard</h1>
+            {alertsCount > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="destructive" className="gap-1 cursor-help">
+                    <AlertTriangle className="h-3 w-3" />
+                    {alertsCount}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="max-w-xs">
+                  <div className="space-y-1 text-sm">
+                    {alerts?.oldDraftsCount ? (
+                      <p>{alerts.oldDraftsCount} rascunhos antigos (&gt;7 dias)</p>
+                    ) : null}
+                    {alerts?.noImageCount ? (
+                      <p>{alerts.noImageCount} notícias sem imagem</p>
+                    ) : null}
+                    {stats?.inactiveIntegrations ? (
+                      <p>{stats.inactiveIntegrations} integrações inativas</p>
+                    ) : null}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/admin/quick-notes">
+                <Zap className="mr-1.5 h-4 w-4" />
+                Nota
+              </Link>
             </Button>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="space-y-2">
-              {recentNews?.slice(0, 5).map((news) => (
+            <Button size="sm" onClick={openModal}>
+              <Newspaper className="mr-1.5 h-4 w-4" />
+              Nova Notícia
+            </Button>
+          </div>
+        </div>
+
+        {/* Stats Row - Ultra Compact */}
+        <div className="grid gap-2 grid-cols-3 md:grid-cols-6">
+          {operationalCards.map((stat) => (
+            <Card key={stat.title} className="py-0">
+              <div className="flex items-center justify-between p-2">
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{stat.title}</p>
+                  <p className="text-lg font-bold leading-none mt-0.5">
+                    {typeof stat.value === "number" ? stat.value.toLocaleString("pt-BR") : stat.value}
+                  </p>
+                </div>
+                <div className={`rounded p-1 ${stat.bgColor}`}>
+                  <stat.icon className={`h-3.5 w-3.5 ${stat.color}`} />
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+
+        {/* Main Grid - Flex-1 to fill remaining space */}
+        <div className="grid gap-3 lg:grid-cols-3 flex-1 min-h-0">
+          {/* Recent Activity - 2 columns */}
+          <Card className="lg:col-span-2 flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between p-3 border-b shrink-0">
+              <span className="font-medium flex items-center gap-2 text-sm">
+                <Clock className="h-4 w-4" />
+                Últimas Atualizações
+              </span>
+              <Button variant="ghost" size="sm" className="h-7 text-xs" asChild>
+                <Link to="/admin/news">Ver todas</Link>
+              </Button>
+            </div>
+            <div className="p-2 space-y-1 overflow-auto flex-1">
+              {recentNews?.map((news) => (
                 <div
                   key={news.id}
-                  className="flex items-center justify-between rounded-lg border p-2"
+                  className="flex items-center justify-between rounded border p-1.5 hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex-1 min-w-0">
                     <Link
@@ -304,10 +330,10 @@ export default function Dashboard() {
                     >
                       {news.title}
                     </Link>
-                    <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
                       {getStatusBadge(news.status)}
-                      <span className="flex items-center gap-1">
-                        <Eye className="h-3 w-3" />
+                      <span className="flex items-center gap-0.5">
+                        <Eye className="h-2.5 w-2.5" />
                         {news.view_count}
                       </span>
                       <span>
@@ -318,171 +344,137 @@ export default function Dashboard() {
                       </span>
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" asChild>
                     <Link to={`/admin/news/${news.id}/edit`}>
-                      <Edit3 className="h-3.5 w-3.5" />
+                      <Edit3 className="h-3 w-3" />
                     </Link>
                   </Button>
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </Card>
 
-        {/* Sidebar: Most Read + Alerts */}
-        <div className="space-y-6">
-          {/* Most Read */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <TrendingUp className="h-5 w-5" />
-                Mais Lidas
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
+          {/* Sidebar */}
+          <div className="flex flex-col gap-3 min-h-0">
+            {/* Most Read */}
+            <Card className="flex-1 flex flex-col overflow-hidden min-h-0">
+              <div className="flex items-center justify-between p-3 border-b shrink-0">
+                <span className="font-medium flex items-center gap-2 text-sm">
+                  <TrendingUp className="h-4 w-4" />
+                  Mais Lidas
+                </span>
+              </div>
+              <div className="p-2 space-y-1 overflow-auto flex-1">
                 {mostRead?.map((news, index) => (
-                  <div key={news.id} className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                  <div key={news.id} className="flex items-center gap-2 py-1">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary shrink-0">
                       {index + 1}
                     </span>
                     <Link
                       to={`/admin/news/${news.id}/edit`}
-                      className="flex-1 text-sm hover:text-primary line-clamp-1"
+                      className="flex-1 text-xs hover:text-primary line-clamp-1"
                     >
                       {news.title}
                     </Link>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-[10px] text-muted-foreground shrink-0">
                       {news.view_count}
                     </span>
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Editorial Alerts */}
-          {hasAlerts && (
-            <Card className="border-yellow-200 bg-yellow-50/50 dark:border-yellow-900 dark:bg-yellow-950/20">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base text-yellow-700 dark:text-yellow-400">
-                  <AlertTriangle className="h-5 w-5" />
-                  Alertas Editoriais
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {alerts?.oldDraftsCount ? (
-                  <div className="text-sm">
-                    <p className="font-medium text-yellow-700 dark:text-yellow-400">
-                      {alerts.oldDraftsCount} rascunhos antigos
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Rascunhos com mais de 7 dias
-                    </p>
-                  </div>
-                ) : null}
-                {stats?.inactiveIntegrations ? (
-                  <div className="text-sm">
-                    <p className="font-medium text-yellow-700 dark:text-yellow-400">
-                      {stats.inactiveIntegrations} integração(ões) inativa(s)
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Redes sociais desabilitadas
-                    </p>
-                  </div>
-                ) : null}
-                {alerts?.noImageCount ? (
-                  <div className="text-sm">
-                    <p className="font-medium text-yellow-700 dark:text-yellow-400">
-                      {alerts.noImageCount} sem imagem
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Notícias publicadas sem imagem destacada
-                    </p>
-                  </div>
-                ) : null}
-              </CardContent>
             </Card>
-          )}
 
-          {/* Quick Creation Widget */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Zap className="h-5 w-5" />
-                Criação Rápida
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid grid-cols-2 gap-2">
-                <Button 
-                  variant="outline" 
-                  className="h-auto flex-col gap-1 py-3"
-                  onClick={openModal}
-                >
-                  <PenLine className="h-5 w-5" />
-                  <span className="text-xs">Notícia Manual</span>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="h-auto flex-col gap-1 py-3"
-                  onClick={openModal}
-                >
-                  <Sparkles className="h-5 w-5 text-purple-500" />
-                  <span className="text-xs">Com IA</span>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="h-auto flex-col gap-1 py-3"
-                  asChild
-                >
-                  <Link to="/admin/quick-notes">
-                    <FileText className="h-5 w-5" />
-                    <span className="text-xs">Nota Rápida</span>
-                  </Link>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="h-auto flex-col gap-1 py-3"
-                  asChild
-                >
-                  <Link to="/admin/stories/new">
-                    <Image className="h-5 w-5" />
-                    <span className="text-xs">Web Story</span>
-                  </Link>
-                </Button>
-              </div>
-              <div className="rounded-lg bg-muted/50 p-2 text-center">
-                <p className="text-xs text-muted-foreground">
-                  💡 Dica: <kbd className="rounded bg-muted px-1 font-mono">Ctrl+N</kbd> para nova notícia
+            {/* Quick Creation - Compact */}
+            <Card className="shrink-0">
+              <div className="p-2">
+                <p className="text-xs font-medium mb-2 flex items-center gap-1.5">
+                  <Zap className="h-3.5 w-3.5" />
+                  Criação Rápida
                 </p>
+                <div className="grid grid-cols-4 gap-1">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        className="h-8 w-full"
+                        onClick={openModal}
+                      >
+                        <PenLine className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Manual</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        className="h-8 w-full"
+                        onClick={openModal}
+                      >
+                        <Sparkles className="h-4 w-4 text-purple-500" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Com IA</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        className="h-8 w-full"
+                        asChild
+                      >
+                        <Link to="/admin/quick-notes">
+                          <FileText className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Nota Rápida</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        className="h-8 w-full"
+                        asChild
+                      >
+                        <Link to="/admin/stories/new">
+                          <Image className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Web Story</TooltipContent>
+                  </Tooltip>
+                </div>
               </div>
-            </CardContent>
-          </Card>
+            </Card>
+          </div>
+        </div>
 
-          {/* Quick Stats - Compact inline */}
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-around text-center">
-                <div>
-                  <p className="text-xl font-bold">{stats?.totalNews || 0}</p>
-                  <p className="text-xs text-muted-foreground">Notícias</p>
-                </div>
-                <div className="h-8 w-px bg-border" />
-                <div>
-                  <p className="text-xl font-bold">{stats?.totalStories || 0}</p>
-                  <p className="text-xs text-muted-foreground">Stories</p>
-                </div>
-                <div className="h-8 w-px bg-border" />
-                <div>
-                  <p className="text-xl font-bold">{stats?.totalViews?.toLocaleString('pt-BR') || 0}</p>
-                  <p className="text-xs text-muted-foreground">Views</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Footer Stats Bar */}
+        <div className="flex items-center justify-center gap-6 py-2 border-t text-sm shrink-0 bg-muted/30 rounded-lg">
+          <div className="flex items-center gap-1.5">
+            <Newspaper className="h-4 w-4 text-muted-foreground" />
+            <span className="font-semibold">{stats?.totalNews || 0}</span>
+            <span className="text-muted-foreground text-xs">notícias</span>
+          </div>
+          <div className="h-4 w-px bg-border" />
+          <div className="flex items-center gap-1.5">
+            <PlaySquare className="h-4 w-4 text-muted-foreground" />
+            <span className="font-semibold">{stats?.totalStories || 0}</span>
+            <span className="text-muted-foreground text-xs">stories</span>
+          </div>
+          <div className="h-4 w-px bg-border" />
+          <div className="flex items-center gap-1.5">
+            <Eye className="h-4 w-4 text-muted-foreground" />
+            <span className="font-semibold">{stats?.totalViews?.toLocaleString('pt-BR') || 0}</span>
+            <span className="text-muted-foreground text-xs">views</span>
+          </div>
         </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }
