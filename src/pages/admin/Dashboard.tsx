@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import {
   Newspaper,
   Eye,
@@ -20,6 +21,11 @@ import {
   Minimize2,
   ChevronRight,
   ImageOff,
+  Search,
+  Rss,
+  Megaphone,
+  Link2,
+  Shield,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,9 +47,22 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 
 export default function Dashboard() {
   const { openModal } = useNewsCreationModal();
+  const navigate = useNavigate();
+  
+  // Estado para busca global (Ctrl+K)
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   
   // Estado para modo de visualização com persistência
   const [viewMode, setViewMode] = useState<'compact' | 'expanded'>(() => {
@@ -57,6 +76,45 @@ export default function Dashboard() {
   useEffect(() => {
     localStorage.setItem('dashboard-view-mode', viewMode);
   }, [viewMode]);
+
+  // Atalho de teclado: Ctrl+K para busca global
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Busca de notícias para o comando
+  const { data: searchResults } = useQuery({
+    queryKey: ["global-search", searchQuery],
+    queryFn: async () => {
+      if (!searchQuery || searchQuery.length < 2) return { news: [], stories: [] };
+      
+      const [newsResult, storiesResult] = await Promise.all([
+        supabase
+          .from("news")
+          .select("id, title, slug, status")
+          .ilike("title", `%${searchQuery}%`)
+          .limit(5),
+        supabase
+          .from("web_stories")
+          .select("id, title, slug")
+          .ilike("title", `%${searchQuery}%`)
+          .limit(3),
+      ]);
+
+      return {
+        news: newsResult.data || [],
+        stories: storiesResult.data || [],
+      };
+    },
+    enabled: searchQuery.length >= 2,
+  });
   
   // Fetch operational stats
   const { data: stats } = useQuery({
@@ -360,6 +418,21 @@ export default function Dashboard() {
           </div>
 
           <div className="flex gap-2">
+            {/* Busca Global */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="h-8 gap-2"
+                  onClick={() => setSearchOpen(true)}
+                >
+                  <Search className="h-4 w-4" />
+                  <span className="hidden sm:inline text-xs text-muted-foreground">Ctrl+K</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Buscar (Ctrl+K)</TooltipContent>
+            </Tooltip>
             {/* Toggle Compacto/Expandido */}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -493,7 +566,7 @@ export default function Dashboard() {
               </div>
             </Card>
 
-            {/* Quick Creation - Compact */}
+            {/* Quick Creation - Expanded Grid */}
             <Card className="shrink-0">
               <div className="p-2">
                 <p className="text-xs font-medium mb-2 flex items-center gap-1.5">
@@ -512,7 +585,7 @@ export default function Dashboard() {
                         <PenLine className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Manual</TooltipContent>
+                    <TooltipContent>Notícia Manual</TooltipContent>
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -525,7 +598,7 @@ export default function Dashboard() {
                         <Sparkles className="h-4 w-4 text-purple-500" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Com IA</TooltipContent>
+                    <TooltipContent>Notícia com IA</TooltipContent>
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -558,6 +631,69 @@ export default function Dashboard() {
                     <TooltipContent>Web Story</TooltipContent>
                   </Tooltip>
                 </div>
+                {/* Segunda linha de ações */}
+                <div className="grid grid-cols-4 gap-1 mt-1">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        className="h-8 w-full"
+                        asChild
+                      >
+                        <Link to="/admin/autopost/sources/new">
+                          <Rss className="h-4 w-4 text-orange-500" />
+                        </Link>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Fonte AutoPost</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        className="h-8 w-full"
+                        asChild
+                      >
+                        <Link to="/admin/banners">
+                          <Megaphone className="h-4 w-4 text-blue-500" />
+                        </Link>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Novo Banner</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        className="h-8 w-full"
+                        asChild
+                      >
+                        <Link to="/admin/links/create">
+                          <Link2 className="h-4 w-4 text-green-500" />
+                        </Link>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Novo Link</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        className="h-8 w-full"
+                        asChild
+                      >
+                        <Link to="/admin/community/moderation">
+                          <Shield className="h-4 w-4 text-red-500" />
+                        </Link>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Moderação</TooltipContent>
+                  </Tooltip>
+                </div>
               </div>
             </Card>
           </div>
@@ -584,6 +720,88 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Command Dialog - Busca Global */}
+      <CommandDialog open={searchOpen} onOpenChange={setSearchOpen}>
+        <CommandInput 
+          placeholder="Buscar notícias, stories, categorias..." 
+          value={searchQuery}
+          onValueChange={setSearchQuery}
+        />
+        <CommandList>
+          <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
+          
+          {searchResults?.news && searchResults.news.length > 0 && (
+            <CommandGroup heading="Notícias">
+              {searchResults.news.map((news) => (
+                <CommandItem
+                  key={news.id}
+                  onSelect={() => {
+                    navigate(`/admin/news/${news.id}/edit`);
+                    setSearchOpen(false);
+                    setSearchQuery("");
+                  }}
+                >
+                  <Newspaper className="mr-2 h-4 w-4" />
+                  <span className="flex-1 truncate">{news.title}</span>
+                  <Badge variant="outline" className="ml-2 text-[10px]">
+                    {news.status}
+                  </Badge>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+
+          {searchResults?.stories && searchResults.stories.length > 0 && (
+            <CommandGroup heading="Web Stories">
+              {searchResults.stories.map((story) => (
+                <CommandItem
+                  key={story.id}
+                  onSelect={() => {
+                    navigate(`/admin/stories/${story.id}/edit`);
+                    setSearchOpen(false);
+                    setSearchQuery("");
+                  }}
+                >
+                  <PlaySquare className="mr-2 h-4 w-4" />
+                  <span className="truncate">{story.title}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+
+          <CommandGroup heading="Ações Rápidas">
+            <CommandItem onSelect={() => { openModal(); setSearchOpen(false); }}>
+              <PenLine className="mr-2 h-4 w-4" />
+              Nova Notícia
+            </CommandItem>
+            <CommandItem onSelect={() => { navigate('/admin/stories/new'); setSearchOpen(false); }}>
+              <Image className="mr-2 h-4 w-4" />
+              Nova Web Story
+            </CommandItem>
+            <CommandItem onSelect={() => { navigate('/admin/quick-notes'); setSearchOpen(false); }}>
+              <Zap className="mr-2 h-4 w-4" />
+              Notas Rápidas
+            </CommandItem>
+            <CommandItem onSelect={() => { navigate('/admin/autopost'); setSearchOpen(false); }}>
+              <Rss className="mr-2 h-4 w-4" />
+              Auto Post PRO
+            </CommandItem>
+            <CommandItem onSelect={() => { navigate('/admin/campaigns'); setSearchOpen(false); }}>
+              <Megaphone className="mr-2 h-4 w-4" />
+              Campanhas
+            </CommandItem>
+            <CommandItem onSelect={() => { navigate('/admin/links'); setSearchOpen(false); }}>
+              <Link2 className="mr-2 h-4 w-4" />
+              Links Rastreáveis
+            </CommandItem>
+            <CommandItem onSelect={() => { navigate('/admin/community/moderation'); setSearchOpen(false); }}>
+              <Shield className="mr-2 h-4 w-4" />
+              Moderação
+            </CommandItem>
+          </CommandGroup>
+        </CommandList>
+      </CommandDialog>
     </TooltipProvider>
   );
 }

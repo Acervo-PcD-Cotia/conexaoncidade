@@ -31,7 +31,7 @@ import {
 } from '@/components/ui/select';
 import { Plus, Users, Edit, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { AdminLoadingState, AdminTableSkeleton } from '@/components/admin/AdminLoadingState';
+import { AdminLoadingState } from '@/components/admin/AdminLoadingState';
 import { AdminEmptyState } from '@/components/admin/AdminEmptyState';
 
 interface FiscalProfile {
@@ -47,7 +47,16 @@ interface FiscalProfile {
   created_at: string;
 }
 
-const emptyProfile = {
+interface FormData {
+  document_type: string;
+  document_number: string;
+  legal_name: string;
+  trade_name: string;
+  email: string;
+  phone: string;
+}
+
+const emptyProfile: FormData = {
   document_type: 'cpf',
   document_number: '',
   legal_name: '',
@@ -60,7 +69,7 @@ export default function FinancialProfiles() {
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState<FiscalProfile | null>(null);
-  const [formData, setFormData] = useState(emptyProfile);
+  const [formData, setFormData] = useState<FormData>(emptyProfile);
 
   const { data: profiles = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['fiscal-profiles'],
@@ -70,19 +79,23 @@ export default function FinancialProfiles() {
         .select('*')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data as FiscalProfile[];
+      return (data || []) as FiscalProfile[];
     },
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
+    mutationFn: async (data: FormData) => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Usuário não autenticado');
       
       const { error } = await supabase.from('fiscal_profiles').insert({
-        ...data,
+        document_type: data.document_type,
+        document_number: data.document_number,
+        legal_name: data.legal_name,
+        trade_name: data.trade_name || null,
+        email: data.email,
+        phone: data.phone || null,
         user_id: user.user.id,
-        is_active: true,
       });
       if (error) throw error;
     },
@@ -98,10 +111,17 @@ export default function FinancialProfiles() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
+    mutationFn: async ({ id, data }: { id: string; data: FormData }) => {
       const { error } = await supabase
         .from('fiscal_profiles')
-        .update(data)
+        .update({
+          document_type: data.document_type,
+          document_number: data.document_number,
+          legal_name: data.legal_name,
+          trade_name: data.trade_name || null,
+          email: data.email,
+          phone: data.phone || null,
+        })
         .eq('id', id);
       if (error) throw error;
     },
@@ -140,14 +160,6 @@ export default function FinancialProfiles() {
       trade_name: profile.trade_name || '',
       email: profile.email,
       phone: profile.phone || '',
-      address_street: profile.address_street || '',
-      address_city: profile.address_city || '',
-      address_state: profile.address_state || '',
-      address_zip: profile.address_zip || '',
-      bank_name: profile.bank_name || '',
-      bank_agency: profile.bank_agency || '',
-      bank_account: profile.bank_account || '',
-      pix_key: profile.pix_key || '',
     });
     setIsOpen(true);
   };
@@ -161,6 +173,12 @@ export default function FinancialProfiles() {
     }
   };
 
+  const handleOpenNew = () => {
+    setEditingProfile(null);
+    setFormData(emptyProfile);
+    setIsOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -172,7 +190,7 @@ export default function FinancialProfiles() {
         </div>
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
-            <Button onClick={() => { setEditingProfile(null); setFormData(emptyProfile); }}>
+            <Button onClick={handleOpenNew}>
               <Plus className="mr-2 h-4 w-4" />
               Novo Perfil
             </Button>
@@ -248,75 +266,6 @@ export default function FinancialProfiles() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>Endereço</Label>
-                <Input
-                  value={formData.address_street}
-                  onChange={(e) => setFormData({ ...formData, address_street: e.target.value })}
-                  placeholder="Rua, número, complemento"
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>Cidade</Label>
-                  <Input
-                    value={formData.address_city}
-                    onChange={(e) => setFormData({ ...formData, address_city: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Estado</Label>
-                  <Input
-                    value={formData.address_state}
-                    onChange={(e) => setFormData({ ...formData, address_state: e.target.value })}
-                    maxLength={2}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>CEP</Label>
-                  <Input
-                    value={formData.address_zip}
-                    onChange={(e) => setFormData({ ...formData, address_zip: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className="pt-4 border-t">
-                <h4 className="font-medium mb-3">Dados Bancários</h4>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label>Banco</Label>
-                    <Input
-                      value={formData.bank_name}
-                      onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Agência</Label>
-                    <Input
-                      value={formData.bank_agency}
-                      onChange={(e) => setFormData({ ...formData, bank_agency: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Conta</Label>
-                    <Input
-                      value={formData.bank_account}
-                      onChange={(e) => setFormData({ ...formData, bank_account: e.target.value })}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2 mt-4">
-                  <Label>Chave PIX</Label>
-                  <Input
-                    value={formData.pix_key}
-                    onChange={(e) => setFormData({ ...formData, pix_key: e.target.value })}
-                    placeholder="CPF, e-mail, telefone ou chave aleatória"
-                  />
-                </div>
-              </div>
-
               <div className="flex gap-2 pt-4">
                 <Button type="submit" className="flex-1" disabled={createMutation.isPending || updateMutation.isPending}>
                   {editingProfile ? 'Salvar Alterações' : 'Criar Perfil'}
@@ -341,7 +290,7 @@ export default function FinancialProfiles() {
             icon={Users}
             title="Nenhum perfil fiscal"
             description="Adicione perfis fiscais para emitir notas e recibos para colaboradores."
-            action={{ label: 'Novo Perfil', onClick: () => setIsOpen(true) }}
+            action={{ label: 'Novo Perfil', onClick: handleOpenNew }}
           />
         ) : (
           <Card>
@@ -351,7 +300,7 @@ export default function FinancialProfiles() {
                   <TableHead>Nome</TableHead>
                   <TableHead>Documento</TableHead>
                   <TableHead>E-mail</TableHead>
-                  <TableHead>PIX</TableHead>
+                  <TableHead>Telefone</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="w-[100px]"></TableHead>
                 </TableRow>
@@ -372,19 +321,19 @@ export default function FinancialProfiles() {
                       <span className="ml-2 text-sm">{profile.document_number}</span>
                     </TableCell>
                     <TableCell>{profile.email}</TableCell>
-                    <TableCell className="font-mono text-sm">
-                      {profile.pix_key || '-'}
+                    <TableCell className="text-sm">
+                      {profile.phone || '-'}
                     </TableCell>
                     <TableCell>
-                      {profile.is_active ? (
+                      {profile.is_verified ? (
                         <Badge variant="default" className="bg-green-100 text-green-700">
                           <CheckCircle className="h-3 w-3 mr-1" />
-                          Ativo
+                          Verificado
                         </Badge>
                       ) : (
                         <Badge variant="secondary">
                           <XCircle className="h-3 w-3 mr-1" />
-                          Inativo
+                          Pendente
                         </Badge>
                       )}
                     </TableCell>
