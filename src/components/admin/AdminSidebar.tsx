@@ -31,6 +31,7 @@ import {
   Bus,
   School,
   AlertTriangle,
+  Accessibility,
   LucideIcon,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -89,6 +90,7 @@ const businessItems = [
   { title: "Auto Post PRO", url: "/admin/autopost", icon: Bot },
   { title: "Campanhas", url: "/admin/campaigns/google-maps", icon: MapPin },
   { title: "Transporte Escolar", url: "/admin/transporte-escolar", icon: Bus },
+  { title: "Censo PcD", url: "/admin/censo-pcd", icon: Accessibility },
 ];
 
 const transporteEscolarItems = [

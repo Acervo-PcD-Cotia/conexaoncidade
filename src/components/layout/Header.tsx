@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Search, Sun, Moon, LogOut, LayoutDashboard, Newspaper, FolderOpen, Megaphone, Settings, ShieldCheck, Bus, MapPin } from "lucide-react";
+import { Menu, X, Search, Sun, Moon, LogOut, LayoutDashboard, Newspaper, FolderOpen, Megaphone, Settings, ShieldCheck, Bus, MapPin, Accessibility } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTheme } from "@/hooks/useTheme";
@@ -90,6 +90,13 @@ export function Header() {
                   >
                     <MapPin className="h-4 w-4" />
                     Apareça no Google
+                  </Link>
+                  <Link
+                    to="/censo-pcd"
+                    className="flex items-center gap-2 text-purple-600 dark:text-purple-500 hover:underline"
+                  >
+                    <Accessibility className="h-4 w-4" />
+                    Censo PcD Cotia
                   </Link>
                 </div>
                 
@@ -269,6 +276,13 @@ export function Header() {
             >
               <MapPin className="h-4 w-4" />
               Apareça no Google
+            </Link>
+            <Link
+              to="/censo-pcd"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-purple-600 dark:text-purple-500 bg-purple-50 dark:bg-purple-950/50 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors"
+            >
+              <Accessibility className="h-4 w-4" />
+              Censo PcD Cotia
             </Link>
           </div>
         </div>
