@@ -23,7 +23,7 @@ export function CampaignEditorialSection({ onStartQuiz }: CampaignEditorialSecti
           </div>
           
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
-            Divulgue seu Negócio no <span className="text-primary">Google Maps</span>
+            Divulgue seu Negócio no <span className="text-primary">Google</span>
           </h1>
           
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">

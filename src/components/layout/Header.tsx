@@ -65,6 +65,34 @@ export function Header() {
                   </Link>
                 ))}
                 
+                {/* Special Links for Mobile */}
+                <div className="mt-4 border-t pt-4 space-y-3">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                    Serviços
+                  </p>
+                  <Link
+                    to="/anti-fake-news"
+                    className="flex items-center gap-2 text-green-600 dark:text-green-500 hover:underline"
+                  >
+                    <ShieldCheck className="h-4 w-4" />
+                    Check Fake News
+                  </Link>
+                  <Link
+                    to="/transporte-escolar"
+                    className="flex items-center gap-2 text-orange-600 dark:text-orange-500 hover:underline"
+                  >
+                    <Bus className="h-4 w-4" />
+                    Transporte Escolar
+                  </Link>
+                  <Link
+                    to="/google-maps"
+                    className="flex items-center gap-2 text-blue-600 dark:text-blue-500 hover:underline"
+                  >
+                    <MapPin className="h-4 w-4" />
+                    Apareça no Google
+                  </Link>
+                </div>
+                
                 {/* Admin Links for Mobile */}
                 {hasAdminAccess && (
                   <div className="mt-4 border-t pt-4 space-y-3">
@@ -218,6 +246,33 @@ export function Header() {
           </div>
         )}
 
+        {/* Special Services Bar - Below search, above categories */}
+        <div className="hidden border-t bg-muted/50 lg:block">
+          <div className="container flex items-center justify-center gap-4 py-2">
+            <Link
+              to="/anti-fake-news"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-green-600 dark:text-green-500 bg-green-50 dark:bg-green-950/50 rounded-full hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors"
+            >
+              <ShieldCheck className="h-4 w-4" />
+              Check Fake News
+            </Link>
+            <Link
+              to="/transporte-escolar"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-orange-600 dark:text-orange-500 bg-orange-50 dark:bg-orange-950/50 rounded-full hover:bg-orange-100 dark:hover:bg-orange-900/50 transition-colors"
+            >
+              <Bus className="h-4 w-4" />
+              Transporte Escolar
+            </Link>
+            <Link
+              to="/google-maps"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-500 bg-blue-50 dark:bg-blue-950/50 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+            >
+              <MapPin className="h-4 w-4" />
+              Apareça no Google
+            </Link>
+          </div>
+        </div>
+
         {/* Categories navigation - Dynamic from database */}
         <nav className="hidden border-t lg:block">
           <div className="container">
@@ -232,36 +287,6 @@ export function Header() {
                   </Link>
                 </li>
               ))}
-              {/* Anti Fake News Link */}
-              <li>
-                <Link
-                  to="/anti-fake-news"
-                  className="inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-green-600 dark:text-green-500 transition-colors hover:bg-green-50 dark:hover:bg-green-950/50"
-                >
-                  <ShieldCheck className="h-4 w-4" />
-                  Check Fake News
-                </Link>
-              </li>
-              {/* Transporte Escolar Link */}
-              <li>
-                <Link
-                  to="/transporte-escolar"
-                  className="inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-orange-600 dark:text-orange-500 transition-colors hover:bg-orange-50 dark:hover:bg-orange-950/50"
-                >
-                  <Bus className="h-4 w-4" />
-                  Transporte Escolar
-                </Link>
-              </li>
-              {/* Google Maps Campaign Link */}
-              <li>
-                <Link
-                  to="/google-maps"
-                  className="inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-blue-600 dark:text-blue-500 transition-colors hover:bg-blue-50 dark:hover:bg-blue-950/50"
-                >
-                  <MapPin className="h-4 w-4" />
-                  Google Maps
-                </Link>
-              </li>
             </ul>
           </div>
         </nav>
