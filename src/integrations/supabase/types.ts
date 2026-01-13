@@ -2667,10 +2667,52 @@ export type Database = {
         }
         Relationships: []
       }
+      community_location_reviews: {
+        Row: {
+          accessibility_rating: number | null
+          comment: string | null
+          created_at: string | null
+          id: string
+          location_id: string
+          rating: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          accessibility_rating?: number | null
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          location_id: string
+          rating: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          accessibility_rating?: number | null
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          location_id?: string
+          rating?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_location_reviews_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "community_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_locations: {
         Row: {
           accessibility_features: string[] | null
           address: string | null
+          avg_rating: number | null
           category: string
           created_at: string | null
           created_by: string | null
@@ -2681,11 +2723,13 @@ export type Database = {
           lng: number | null
           name: string
           neighborhood: string | null
+          review_count: number | null
           updated_at: string | null
         }
         Insert: {
           accessibility_features?: string[] | null
           address?: string | null
+          avg_rating?: number | null
           category: string
           created_at?: string | null
           created_by?: string | null
@@ -2696,11 +2740,13 @@ export type Database = {
           lng?: number | null
           name: string
           neighborhood?: string | null
+          review_count?: number | null
           updated_at?: string | null
         }
         Update: {
           accessibility_features?: string[] | null
           address?: string | null
+          avg_rating?: number | null
           category?: string
           created_at?: string | null
           created_by?: string | null
@@ -2711,6 +2757,7 @@ export type Database = {
           lng?: number | null
           name?: string
           neighborhood?: string | null
+          review_count?: number | null
           updated_at?: string | null
         }
         Relationships: []
