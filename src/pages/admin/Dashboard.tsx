@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Newspaper,
@@ -15,6 +16,10 @@ import {
   PenLine,
   Sparkles,
   Image,
+  Maximize2,
+  Minimize2,
+  ChevronRight,
+  ImageOff,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,15 +29,34 @@ import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNewsCreationModal } from "@/contexts/NewsCreationModalContext";
+import { cn } from "@/lib/utils";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 export default function Dashboard() {
   const { openModal } = useNewsCreationModal();
+  
+  // Estado para modo de visualização com persistência
+  const [viewMode, setViewMode] = useState<'compact' | 'expanded'>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('dashboard-view-mode') as 'compact' | 'expanded') || 'compact';
+    }
+    return 'compact';
+  });
+
+  // Persistir preferência no localStorage
+  useEffect(() => {
+    localStorage.setItem('dashboard-view-mode', viewMode);
+  }, [viewMode]);
   
   // Fetch operational stats
   const { data: stats } = useQuery({
@@ -239,39 +263,124 @@ export default function Dashboard() {
   };
 
   const alertsCount = (alerts?.oldDraftsCount || 0) + (alerts?.noImageCount || 0) + (stats?.inactiveIntegrations || 0);
+  const itemsToShow = viewMode === 'compact' ? 5 : 10;
 
   return (
     <TooltipProvider>
-      <div className="flex flex-col h-[calc(100vh-80px)] gap-3">
+      <div className={cn(
+        "flex flex-col gap-3",
+        viewMode === 'compact' 
+          ? "h-[calc(100vh-80px)]" 
+          : "min-h-[calc(100vh-80px)]"
+      )}>
         {/* Header - Compact */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h1 className="font-heading text-2xl font-bold">Dashboard</h1>
-            {alertsCount > 0 && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge variant="destructive" className="gap-1 cursor-help">
-                    <AlertTriangle className="h-3 w-3" />
-                    {alertsCount}
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="max-w-xs">
-                  <div className="space-y-1 text-sm">
-                    {alerts?.oldDraftsCount ? (
-                      <p>{alerts.oldDraftsCount} rascunhos antigos (&gt;7 dias)</p>
-                    ) : null}
-                    {alerts?.noImageCount ? (
-                      <p>{alerts.noImageCount} notícias sem imagem</p>
-                    ) : null}
-                    {stats?.inactiveIntegrations ? (
-                      <p>{stats.inactiveIntegrations} integrações inativas</p>
-                    ) : null}
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            )}
+            
+            {/* Badge de Alertas Editoriais com Popover Interativo */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className={cn(
+                    "relative h-8 px-2",
+                    alertsCount === 0 && "text-muted-foreground"
+                  )}
+                >
+                  <AlertTriangle className={cn(
+                    "h-4 w-4",
+                    alertsCount > 0 && "text-destructive animate-pulse"
+                  )} />
+                  {alertsCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 h-4 min-w-[16px] rounded-full bg-destructive text-[10px] text-white flex items-center justify-center px-1">
+                      {alertsCount}
+                    </span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-80 bg-popover">
+                <div className="space-y-3">
+                  <h4 className="font-medium text-sm">Alertas Editoriais</h4>
+                  {alertsCount === 0 ? (
+                    <p className="text-sm text-muted-foreground">Nenhum alerta no momento! 🎉</p>
+                  ) : (
+                    <div className="space-y-1">
+                      {alerts?.oldDraftsCount > 0 && (
+                        <Link 
+                          to="/admin/news?status=draft" 
+                          className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors"
+                        >
+                          <div className="h-8 w-8 rounded-full bg-yellow-500/10 flex items-center justify-center">
+                            <FileText className="h-4 w-4 text-yellow-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium">{alerts.oldDraftsCount} rascunhos antigos</p>
+                            <p className="text-xs text-muted-foreground">Há mais de 7 dias</p>
+                          </div>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        </Link>
+                      )}
+                      {alerts?.noImageCount > 0 && (
+                        <Link 
+                          to="/admin/news?filter=no-image" 
+                          className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors"
+                        >
+                          <div className="h-8 w-8 rounded-full bg-orange-500/10 flex items-center justify-center">
+                            <ImageOff className="h-4 w-4 text-orange-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium">{alerts.noImageCount} sem imagem</p>
+                            <p className="text-xs text-muted-foreground">Notícias publicadas</p>
+                          </div>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        </Link>
+                      )}
+                      {stats?.inactiveIntegrations > 0 && (
+                        <Link 
+                          to="/admin/social/settings" 
+                          className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors"
+                        >
+                          <div className="h-8 w-8 rounded-full bg-red-500/10 flex items-center justify-center">
+                            <AlertTriangle className="h-4 w-4 text-red-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium">{stats.inactiveIntegrations} integrações inativas</p>
+                            <p className="text-xs text-muted-foreground">Redes sociais</p>
+                          </div>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        </Link>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
+
           <div className="flex gap-2">
+            {/* Toggle Compacto/Expandido */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setViewMode(v => v === 'compact' ? 'expanded' : 'compact')}
+                >
+                  {viewMode === 'compact' ? (
+                    <Maximize2 className="h-4 w-4" />
+                  ) : (
+                    <Minimize2 className="h-4 w-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {viewMode === 'compact' ? 'Modo expandido' : 'Modo compacto'}
+              </TooltipContent>
+            </Tooltip>
+
             <Button variant="outline" size="sm" asChild>
               <Link to="/admin/quick-notes">
                 <Zap className="mr-1.5 h-4 w-4" />
@@ -318,7 +427,7 @@ export default function Dashboard() {
               </Button>
             </div>
             <div className="p-2 space-y-1 overflow-auto flex-1">
-              {recentNews?.map((news) => (
+              {recentNews?.slice(0, itemsToShow).map((news) => (
                 <div
                   key={news.id}
                   className="flex items-center justify-between rounded border p-1.5 hover:bg-muted/50 transition-colors"
@@ -365,7 +474,7 @@ export default function Dashboard() {
                 </span>
               </div>
               <div className="p-2 space-y-1 overflow-auto flex-1">
-                {mostRead?.map((news, index) => (
+                {mostRead?.slice(0, itemsToShow).map((news, index) => (
                   <div key={news.id} className="flex items-center gap-2 py-1">
                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary shrink-0">
                       {index + 1}
