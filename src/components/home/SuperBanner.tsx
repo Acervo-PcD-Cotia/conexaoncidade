@@ -143,8 +143,8 @@ export function SuperBanner() {
             className="relative w-full shrink-0"
             onClick={(e) => handleBannerClick(e, banner)}
           >
-            {/* Responsive aspect ratio: 16:9 on mobile, 21:9 on desktop */}
-            <div className="aspect-[16/9] w-full md:aspect-[21/9]">
+            {/* Responsive aspect ratio: 3:1 on mobile, 4:1 on desktop for compact banners */}
+            <div className="aspect-[3/1] w-full md:aspect-[4/1] max-h-[280px] md:max-h-[350px]">
               <img
                 src={banner.image_url}
                 alt={banner.alt_text || banner.title || "Banner promocional"}
