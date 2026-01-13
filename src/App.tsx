@@ -84,6 +84,11 @@ import ChallengesPage from "./pages/community/ChallengesPage";
 import HowToEarnPoints from "./pages/community/HowToEarnPoints";
 import MemberProfile from "./pages/community/MemberProfile";
 import ProfileSettings from "./pages/community/ProfileSettings";
+import GamificationPage from "./pages/community/GamificationPage";
+import CommunityMap from "./pages/community/CommunityMap";
+import RedeDoBem from "./pages/community/RedeDoBem";
+import CommunityGroups from "./pages/community/CommunityGroups";
+import CommunityBenefits from "./pages/community/CommunityBenefits";
 
 // Auto Post PRO Form
 import AutoPostSourceForm from "./pages/admin/autopost/AutoPostSourceForm";
@@ -159,6 +164,12 @@ const App = () => (
                         <Route path="/comunidade/como-ganhar-pontos" element={<HowToEarnPoints />} />
                         <Route path="/comunidade/membro/:userId" element={<MemberProfile />} />
                         <Route path="/comunidade/configuracoes" element={<ProfileSettings />} />
+                        <Route path="/comunidade/gamificacao" element={<GamificationPage />} />
+                        <Route path="/comunidade/mapa" element={<CommunityMap />} />
+                        <Route path="/comunidade/rede-do-bem" element={<RedeDoBem />} />
+                        <Route path="/comunidade/grupos" element={<CommunityGroups />} />
+                        <Route path="/comunidade/grupos/:slug" element={<CommunityGroups />} />
+                        <Route path="/comunidade/beneficios" element={<CommunityBenefits />} />
                         <Route path="/comunidade/beneficios/celular-ideal" element={<PhoneChooserPage />} />
                         <Route path="/anti-fake-news" element={<AntiFakeNews />} />
                         <Route path="/campanha/google-maps" element={<GoogleMapsCampaign />} />
