@@ -91,7 +91,7 @@ export function TransporterCard({ transporter, onReport, showSchools = true }: T
           </Badge>
           <Badge variant="outline" className="gap-1">
             <MapPin className="h-3 w-3" />
-            {servicoLabels[transporter.tipo_servico]}
+            {servicoLabels[transporter.tipo_servico] || transporter.tipo_servico}
           </Badge>
           {transporter.capacidade_aprox && (
             <Badge variant="outline" className="gap-1">
