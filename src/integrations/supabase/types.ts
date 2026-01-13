@@ -5798,6 +5798,59 @@ export type Database = {
           },
         ]
       }
+      schools: {
+        Row: {
+          bairro: string
+          created_at: string | null
+          endereco: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          nome_oficial: string
+          rede: string
+          slug: string
+          status: string
+          tenant_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          bairro: string
+          created_at?: string | null
+          endereco?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          nome_oficial: string
+          rede: string
+          slug: string
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          bairro?: string
+          created_at?: string | null
+          endereco?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          nome_oficial?: string
+          rede?: string
+          slug?: string
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schools_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_settings: {
         Row: {
           id: string
@@ -6448,6 +6501,260 @@ export type Database = {
             columns: ["module_id"]
             isOneToOne: false
             referencedRelation: "training_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transport_leads: {
+        Row: {
+          acessibilidade: string[] | null
+          bairro: string
+          consentimento: boolean
+          contato_whatsapp: string
+          created_at: string | null
+          id: string
+          rede: string
+          school_id: string | null
+          school_texto: string | null
+          status: string | null
+          tenant_id: string | null
+          turno: string
+        }
+        Insert: {
+          acessibilidade?: string[] | null
+          bairro: string
+          consentimento?: boolean
+          contato_whatsapp: string
+          created_at?: string | null
+          id?: string
+          rede: string
+          school_id?: string | null
+          school_texto?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          turno: string
+        }
+        Update: {
+          acessibilidade?: string[] | null
+          bairro?: string
+          consentimento?: boolean
+          contato_whatsapp?: string
+          created_at?: string | null
+          id?: string
+          rede?: string
+          school_id?: string | null
+          school_texto?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          turno?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transport_leads_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transport_leads_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transport_reports: {
+        Row: {
+          contato: string | null
+          created_at: string | null
+          descricao: string | null
+          id: string
+          motivo: string
+          school_id: string | null
+          status: string | null
+          tenant_id: string | null
+          transporter_id: string | null
+        }
+        Insert: {
+          contato?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          motivo: string
+          school_id?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          transporter_id?: string | null
+        }
+        Update: {
+          contato?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          motivo?: string
+          school_id?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          transporter_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transport_reports_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transport_reports_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transport_reports_transporter_id_fkey"
+            columns: ["transporter_id"]
+            isOneToOne: false
+            referencedRelation: "transporters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transporter_areas: {
+        Row: {
+          bairro: string
+          created_at: string | null
+          id: string
+          transporter_id: string
+          turno: string
+        }
+        Insert: {
+          bairro: string
+          created_at?: string | null
+          id?: string
+          transporter_id: string
+          turno: string
+        }
+        Update: {
+          bairro?: string
+          created_at?: string | null
+          id?: string
+          transporter_id?: string
+          turno?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transporter_areas_transporter_id_fkey"
+            columns: ["transporter_id"]
+            isOneToOne: false
+            referencedRelation: "transporters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transporter_schools: {
+        Row: {
+          created_at: string | null
+          school_id: string
+          transporter_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          school_id: string
+          transporter_id: string
+        }
+        Update: {
+          created_at?: string | null
+          school_id?: string
+          transporter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transporter_schools_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transporter_schools_transporter_id_fkey"
+            columns: ["transporter_id"]
+            isOneToOne: false
+            referencedRelation: "transporters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transporters: {
+        Row: {
+          acessibilidade_tipos: string[] | null
+          ar_condicionado: boolean | null
+          atende_acessibilidade: boolean | null
+          capacidade_aprox: number | null
+          cinto_individual: boolean | null
+          created_at: string | null
+          descricao_curta: string | null
+          id: string
+          nivel_verificacao: number | null
+          nome: string
+          status: string | null
+          telefone: string | null
+          tenant_id: string | null
+          tipo_servico: string
+          updated_at: string | null
+          vagas_status: string | null
+          veiculo_tipo: string
+          whatsapp: string
+        }
+        Insert: {
+          acessibilidade_tipos?: string[] | null
+          ar_condicionado?: boolean | null
+          atende_acessibilidade?: boolean | null
+          capacidade_aprox?: number | null
+          cinto_individual?: boolean | null
+          created_at?: string | null
+          descricao_curta?: string | null
+          id?: string
+          nivel_verificacao?: number | null
+          nome: string
+          status?: string | null
+          telefone?: string | null
+          tenant_id?: string | null
+          tipo_servico: string
+          updated_at?: string | null
+          vagas_status?: string | null
+          veiculo_tipo: string
+          whatsapp: string
+        }
+        Update: {
+          acessibilidade_tipos?: string[] | null
+          ar_condicionado?: boolean | null
+          atende_acessibilidade?: boolean | null
+          capacidade_aprox?: number | null
+          cinto_individual?: boolean | null
+          created_at?: string | null
+          descricao_curta?: string | null
+          id?: string
+          nivel_verificacao?: number | null
+          nome?: string
+          status?: string | null
+          telefone?: string | null
+          tenant_id?: string | null
+          tipo_servico?: string
+          updated_at?: string | null
+          vagas_status?: string | null
+          veiculo_tipo?: string
+          whatsapp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transporters_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
             referencedColumns: ["id"]
           },
         ]
