@@ -171,7 +171,7 @@ export default function TransporteEscolarHome() {
                 <TransporterCard key={transporter.id} transporter={transporter} />
               ))}
             </div>
-          ) : (
+          ) : Object.keys(filters).length > 0 ? (
             <Card>
               <CardContent className="p-8 text-center">
                 <p className="text-muted-foreground">
@@ -184,6 +184,27 @@ export default function TransporteEscolarHome() {
                 >
                   Limpar filtros
                 </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="border-dashed">
+              <CardContent className="p-8 text-center space-y-4">
+                <div className="inline-flex items-center justify-center p-3 bg-muted rounded-full">
+                  <Bus className="h-10 w-10 text-muted-foreground" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold">Em breve!</h3>
+                  <p className="text-muted-foreground max-w-md mx-auto">
+                    Estamos cadastrando transportadores da região de Cotia. 
+                    É transportador escolar? Cadastre-se agora e seja um dos primeiros!
+                  </p>
+                </div>
+                <Link to="/transporte-escolar/cadastrar">
+                  <Button className="gap-2">
+                    <UserPlus className="h-4 w-4" />
+                    Quero me cadastrar
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
           )}
