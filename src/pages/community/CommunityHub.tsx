@@ -21,6 +21,7 @@ import { GamificationCard } from "@/components/community/GamificationCard";
 import { LevelProgressBar } from "@/components/community/LevelProgressBar";
 import { AntiFactCheckRanking } from "@/components/community/AntiFactCheckRanking";
 import { MemberOfTheWeek } from "@/components/community/MemberOfTheWeek";
+import { PhoneBenefitCard } from "@/components/community/PhoneBenefitCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -246,6 +247,9 @@ export default function CommunityHub() {
         <div className="lg:col-span-1 space-y-4">
           {/* Member of the Week */}
           <MemberOfTheWeek />
+
+          {/* Phone Chooser Benefit */}
+          <PhoneBenefitCard />
 
           {/* Trending Topics */}
           <TrendingTopics />

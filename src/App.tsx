@@ -91,6 +91,10 @@ import PartnersPitches from "./pages/admin/partners/PartnersPitches";
 import CommunityAdmin from "./pages/admin/community/CommunityAdmin";
 import CommunityMembers from "./pages/admin/community/CommunityMembers";
 import CommunityModeration from "./pages/admin/community/CommunityModeration";
+import PhoneCatalogAdmin from "./pages/admin/community/PhoneCatalogAdmin";
+
+// Community Benefit Pages
+import PhoneChooserPage from "./pages/community/PhoneChooserPage";
 
 // Campaign Pages
 import GoogleMapsCampaign from "./pages/campaigns/GoogleMapsCampaign";
@@ -122,6 +126,7 @@ const App = () => (
                         <Route path="/comunidade/como-ganhar-pontos" element={<HowToEarnPoints />} />
                         <Route path="/comunidade/membro/:userId" element={<MemberProfile />} />
                         <Route path="/comunidade/configuracoes" element={<ProfileSettings />} />
+                        <Route path="/comunidade/beneficios/celular-ideal" element={<PhoneChooserPage />} />
                         <Route path="/anti-fake-news" element={<AntiFakeNews />} />
                         <Route path="/campanha/google-maps" element={<GoogleMapsCampaign />} />
                         <Route path="/stories" element={<StoriesPage />} />
@@ -197,6 +202,7 @@ const App = () => (
                         <Route path="community" element={<CommunityAdmin />} />
                         <Route path="community/members" element={<CommunityMembers />} />
                         <Route path="community/moderation" element={<CommunityModeration />} />
+                        <Route path="community/phone-catalog" element={<PhoneCatalogAdmin />} />
                         
                         {/* Campaign Admin Routes */}
                         <Route path="campaigns/google-maps" element={<GoogleMapsLeads />} />
