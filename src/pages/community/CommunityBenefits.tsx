@@ -1,7 +1,7 @@
 import { Helmet } from "react-helmet-async";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCommunity, levelLabels, levelToNumber } from "@/hooks/useCommunity";
-import { Navigate, Link } from "react-router-dom";
+import { useCommunity, levelToNumber } from "@/hooks/useCommunity";
 import {
   Gift,
   Smartphone,
@@ -11,12 +11,15 @@ import {
   ChevronRight,
   Sparkles,
   Trophy,
+  CheckCircle,
+  Crown,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CommunityLayout } from "@/components/community/CommunityLayout";
 
 interface Benefit {
   id: string;
@@ -31,29 +34,40 @@ interface Benefit {
 }
 
 export default function CommunityBenefits() {
+  const navigate = useNavigate();
   const { user, isLoading: authLoading } = useAuth();
   const { membership: member, isLoading } = useCommunity();
 
   if (authLoading || isLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-12 w-full" />
-        <div className="grid gap-4 md:grid-cols-2">
-          <Skeleton className="h-48 rounded-xl" />
-          <Skeleton className="h-48 rounded-xl" />
+      <CommunityLayout>
+        <div className="space-y-6">
+          <Skeleton className="h-12 w-full" />
+          <div className="grid gap-4 md:grid-cols-2">
+            <Skeleton className="h-48 rounded-xl" />
+            <Skeleton className="h-48 rounded-xl" />
+          </div>
         </div>
-      </div>
+      </CommunityLayout>
     );
   }
 
   if (!user) {
-    return <Navigate to="/auth-comunidade" replace />;
+    navigate("/auth-comunidade");
+    return null;
   }
 
   // Convert level string to number for comparisons
   const currentLevelNum = levelToNumber[member?.level || 'supporter'] || 1;
   const currentPoints = Number(member?.points) || 0;
   const currentLevelStr = member?.level || 'supporter';
+
+  const levelLabels: Record<string, string> = {
+    supporter: "Apoiador",
+    collaborator: "Colaborador",
+    ambassador: "Embaixador",
+    leader: "Líder",
+  };
 
   const benefits: Benefit[] = [
     {
@@ -103,7 +117,7 @@ export default function CommunityBenefits() {
   const lockedBenefits = benefits.filter((b) => !b.isAvailable);
 
   return (
-    <>
+    <CommunityLayout>
       <Helmet>
         <title>Benefícios | Comunidade Conexão na Cidade</title>
         <meta name="description" content="Desbloqueie benefícios exclusivos participando da comunidade" />
@@ -275,6 +289,6 @@ export default function CommunityBenefits() {
           </CardContent>
         </Card>
       </div>
-    </>
+    </CommunityLayout>
   );
 }

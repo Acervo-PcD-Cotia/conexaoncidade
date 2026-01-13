@@ -1,11 +1,13 @@
 import { Helmet } from "react-helmet-async";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCommunity, levelLabels, levelThresholds, levelOrder, levelToNumber } from "@/hooks/useCommunity";
-import { Navigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useCommunity, levelThresholds, levelOrder, levelToNumber } from "@/hooks/useCommunity";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CommunityLayout } from "@/components/community/CommunityLayout";
 import { 
   Trophy, 
   Star, 
@@ -14,7 +16,15 @@ import {
   Medal,
   Crown,
   Shield,
-  Zap
+  Zap,
+  Target,
+  MessageCircle,
+  Share2,
+  CheckCircle2,
+  Heart,
+  Users,
+  Sparkles,
+  Rocket,
 } from "lucide-react";
 
 const levelIcons: Record<string, React.ElementType> = {
@@ -25,36 +35,41 @@ const levelIcons: Record<string, React.ElementType> = {
 };
 
 export default function GamificationPage() {
+  const navigate = useNavigate();
   const { user, isLoading: authLoading } = useAuth();
   const { membership, isLoading: communityLoading } = useCommunity();
 
   if (authLoading || communityLoading) {
     return (
-      <div className="container mx-auto px-4 py-8 space-y-6">
-        <Skeleton className="h-10 w-64" />
-        <Skeleton className="h-48 w-full" />
-        <div className="grid gap-4 md:grid-cols-4">
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-24" />
-          ))}
+      <CommunityLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
         </div>
-      </div>
+      </CommunityLayout>
     );
   }
 
   if (!user) {
-    return <Navigate to="/auth-comunidade" replace />;
+    navigate("/auth-comunidade");
+    return null;
   }
 
   if (!membership) {
-    return <Navigate to="/comunidade" replace />;
+    navigate("/comunidade");
+    return null;
   }
 
   const member = membership;
   const currentLevelStr = member.level || 'supporter';
   const currentLevelNum = levelToNumber[currentLevelStr] || 1;
   const currentPoints = Number(member.points) || 0;
-  
+
+  const levelLabels: Record<string, string> = {
+    supporter: "Apoiador",
+    collaborator: "Colaborador",
+    ambassador: "Embaixador",
+    leader: "Líder",
+  };
   // Calculate progress to next level
   const currentThreshold = levelThresholds[currentLevelStr] || 0;
   const nextLevelIndex = levelOrder.indexOf(currentLevelStr) + 1;
@@ -79,7 +94,7 @@ export default function GamificationPage() {
   ];
 
   return (
-    <>
+    <CommunityLayout>
       <Helmet>
         <title>Meus Pontos e Conquistas | Comunidade Conexão na Cidade</title>
         <meta name="description" content="Acompanhe seus pontos, nível e badges na Comunidade Conexão na Cidade" />
@@ -238,6 +253,6 @@ export default function GamificationPage() {
           </CardContent>
         </Card>
       </div>
-    </>
+    </CommunityLayout>
   );
 }
