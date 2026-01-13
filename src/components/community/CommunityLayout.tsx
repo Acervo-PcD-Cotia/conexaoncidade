@@ -15,7 +15,9 @@ import {
 } from "lucide-react";
 import { CommunityErrorBoundary } from "./CommunityErrorBoundary";
 import { CommunityChatButton } from "./CommunityChatButton";
+import { ImpactPanel } from "./ImpactPanel";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface CommunityLayoutProps {
   children: ReactNode;
@@ -69,6 +71,7 @@ const communityNavItems: { section: string; items: NavItem[] }[] = [
 
 export function CommunityLayout({ children }: CommunityLayoutProps) {
   const location = useLocation();
+  const { user } = useAuth();
 
   return (
     <CommunityErrorBoundary>
@@ -150,6 +153,13 @@ export function CommunityLayout({ children }: CommunityLayoutProps) {
                     </ul>
                   </div>
                 ))}
+                
+                {/* Impact Panel for authenticated users */}
+                {user && (
+                  <div className="mt-6 pt-6 border-t">
+                    <ImpactPanel />
+                  </div>
+                )}
               </nav>
             </aside>
 
