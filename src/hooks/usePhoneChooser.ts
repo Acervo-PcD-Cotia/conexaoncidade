@@ -221,12 +221,12 @@ export function usePhoneChooser() {
 
       const { data, error } = await supabase
         .from('phone_recommendations')
-        .insert([{
+        .insert({
           user_id: user.id,
-          answers: answers as unknown as Record<string, unknown>,
+          answers: JSON.parse(JSON.stringify(answers)),
           recommended_phone_id: mainPhoneId,
           alternative_phones: alternativeIds,
-        }])
+        })
         .select()
         .single();
 

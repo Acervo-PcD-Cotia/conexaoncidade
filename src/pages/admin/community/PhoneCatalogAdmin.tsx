@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -11,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Pencil, Trash2, Smartphone, Star, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, Star, Search, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { usePhoneChooser, type Phone } from '@/hooks/usePhoneChooser';
 import { useRequireRole } from '@/hooks/useRequireRole';
 
@@ -122,103 +122,109 @@ export default function PhoneCatalogAdmin() {
   );
 
   return (
-    <AdminLayout>
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold">Catálogo de Celulares</h1>
-            <p className="text-muted-foreground">Gerencie os celulares disponíveis para recomendação</p>
-          </div>
-          <Button onClick={openNewForm}>
-            <Plus className="w-4 h-4 mr-2" />
-            Novo Celular
-          </Button>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-4">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por nome ou marca..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Badge variant="outline">{filteredPhones.length} celulares</Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {isLoadingAllPhones ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-16 w-full" />
-                ))}
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>Marca</TableHead>
-                      <TableHead>Preço</TableHead>
-                      <TableHead>Câmera</TableHead>
-                      <TableHead>Bateria</TableHead>
-                      <TableHead>Jogos</TableHead>
-                      <TableHead>Ativo</TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredPhones.map((phone) => (
-                      <TableRow key={phone.id}>
-                        <TableCell className="font-medium">{phone.name}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{phone.brand}</Badge>
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {formatPrice(phone.price_min)} - {formatPrice(phone.price_max)}
-                        </TableCell>
-                        <TableCell>{renderScore(phone.camera_score)}</TableCell>
-                        <TableCell>{renderScore(phone.battery_score)}</TableCell>
-                        <TableCell>{renderScore(phone.gaming_score)}</TableCell>
-                        <TableCell>
-                          <Switch
-                            checked={phone.is_active}
-                            onCheckedChange={(checked) =>
-                              togglePhoneActive.mutate({ id: phone.id, is_active: checked })
-                            }
-                          />
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="icon" onClick={() => openEditForm(phone)}>
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-destructive"
-                              onClick={() => handleDelete(phone)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+    <div className="space-y-6">
+      <div className="flex items-center gap-4 mb-6">
+        <Button variant="ghost" size="sm" asChild>
+          <Link to="/admin/community">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar
+          </Link>
+        </Button>
       </div>
 
-      {/* Form Dialog */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Catálogo de Celulares</h1>
+          <p className="text-muted-foreground">Gerencie os celulares disponíveis para recomendação</p>
+        </div>
+        <Button onClick={openNewForm}>
+          <Plus className="w-4 h-4 mr-2" />
+          Novo Celular
+        </Button>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-4">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nome ou marca..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Badge variant="outline">{filteredPhones.length} celulares</Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isLoadingAllPhones ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-16 w-full" />
+              ))}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Marca</TableHead>
+                    <TableHead>Preço</TableHead>
+                    <TableHead>Câmera</TableHead>
+                    <TableHead>Bateria</TableHead>
+                    <TableHead>Jogos</TableHead>
+                    <TableHead>Ativo</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredPhones.map((phone) => (
+                    <TableRow key={phone.id}>
+                      <TableCell className="font-medium">{phone.name}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{phone.brand}</Badge>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {formatPrice(phone.price_min)} - {formatPrice(phone.price_max)}
+                      </TableCell>
+                      <TableCell>{renderScore(phone.camera_score)}</TableCell>
+                      <TableCell>{renderScore(phone.battery_score)}</TableCell>
+                      <TableCell>{renderScore(phone.gaming_score)}</TableCell>
+                      <TableCell>
+                        <Switch
+                          checked={phone.is_active}
+                          onCheckedChange={(checked) =>
+                            togglePhoneActive.mutate({ id: phone.id, is_active: checked })
+                          }
+                        />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="icon" onClick={() => openEditForm(phone)}>
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive"
+                            onClick={() => handleDelete(phone)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -412,6 +418,6 @@ export default function PhoneCatalogAdmin() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </div>
   );
 }
