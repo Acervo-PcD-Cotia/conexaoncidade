@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, User, Shield, Loader2, Save, Lock, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, User, Shield, Loader2, Save, Lock, Eye, EyeOff, MapPin } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,8 @@ import { TwoFactorSetup } from "@/components/community/TwoFactorSetup";
 import { DeleteAccountDialog } from "@/components/community/DeleteAccountDialog";
 import { SessionsManager } from "@/components/community/SessionsManager";
 import { CommunityLayout } from "@/components/community/CommunityLayout";
+import { ProfileTypeSelector } from "@/components/community/ProfileTypeSelector";
+import { NeighborhoodSelector } from "@/components/community/NeighborhoodSelector";
 
 const passwordSchema = z.object({
   currentPassword: z.string().min(1, "Senha atual é obrigatória"),
@@ -46,6 +48,8 @@ export default function ProfileSettings() {
   const [fullName, setFullName] = useState("");
   const [bio, setBio] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [profileType, setProfileType] = useState("cidadao");
+  const [neighborhood, setNeighborhood] = useState("");
 
   // Password change
   const [currentPassword, setCurrentPassword] = useState("");
@@ -74,15 +78,17 @@ export default function ProfileSettings() {
         setFullName(profile?.full_name || "");
         setAvatarUrl(profile?.avatar_url || null);
 
-        // Load community member bio if exists
+        // Load community member data
         const { data: member } = await supabase
           .from("community_members")
-          .select("bio")
+          .select("bio, profile_type, neighborhood")
           .eq("user_id", user.id)
           .single();
 
-        if (member?.bio) {
-          setBio(member.bio);
+        if (member) {
+          setBio(member.bio || "");
+          setProfileType(member.profile_type || "cidadao");
+          setNeighborhood(member.neighborhood || "");
         }
       } catch (error) {
         console.error("Error loading profile:", error);
@@ -143,10 +149,14 @@ export default function ProfileSettings() {
 
       if (profileError) throw profileError;
 
-      // Update community_members bio
+      // Update community_members
       const { error: memberError } = await supabase
         .from("community_members")
-        .update({ bio: bio.trim() })
+        .update({ 
+          bio: bio.trim(),
+          profile_type: profileType,
+          neighborhood: neighborhood 
+        })
         .eq("user_id", user.id);
 
       if (memberError) throw memberError;
@@ -301,6 +311,33 @@ export default function ProfileSettings() {
                     userName={fullName}
                     onUploadComplete={setAvatarUrl}
                   />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Tipo de Perfil</CardTitle>
+                  <CardDescription>
+                    Selecione o tipo que melhor representa você na comunidade
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ProfileTypeSelector value={profileType} onChange={setProfileType} />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MapPin className="h-5 w-5" />
+                    Localização
+                  </CardTitle>
+                  <CardDescription>
+                    Selecione seu bairro em Cotia
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <NeighborhoodSelector value={neighborhood} onChange={setNeighborhood} />
                 </CardContent>
               </Card>
 
