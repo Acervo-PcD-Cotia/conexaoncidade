@@ -207,13 +207,12 @@ export default function NewsDetail() {
         <meta name="twitter:title" content={news.title} />
         <meta name="twitter:description" content={metaDescription} />
         <meta name="twitter:image" content={ogImage} />
+        
+        {/* Schema.org JSON-LD */}
+        <script type="application/ld+json">
+          {JSON.stringify(schemaOrg)}
+        </script>
       </Helmet>
-
-      {/* Schema.org JSON-LD */}
-      <script 
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaOrg) }}
-      />
       
       {/* Skip Link for Accessibility */}
       <a 
