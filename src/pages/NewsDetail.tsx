@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useCallback } from 'react';
+import { useEffect, useMemo, useCallback, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useNewsBySlug, useRelatedNews } from '@/hooks/useNews';
@@ -37,6 +37,13 @@ export default function NewsDetail() {
   const { slug } = useParams<{ slug: string }>();
   const { user } = useAuth();
   const { data: news, isLoading, error } = useNewsBySlug(slug || '');
+  
+  // Client-side URL to avoid hydration mismatch
+  const [currentUrl, setCurrentUrl] = useState('');
+  
+  useEffect(() => {
+    setCurrentUrl(window.location.href);
+  }, []);
   
   // Get tag IDs for better related news selection
   const tagIds = useMemo(() => news?.tags?.map(t => t.id) || [], [news?.tags]);
@@ -132,52 +139,55 @@ export default function NewsDetail() {
     return getNewsHeaderColor(news.category?.color || null, news.highlight);
   }, [news.category?.color, news.highlight]);
 
-  const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
   const metaDescription = news.meta_description || news.summary_short || news.excerpt || news.subtitle || '';
   const ogImage = news.og_image_url || news.featured_image_url || '';
 
-  // Schema.org NewsArticle for SEO
-  const schemaOrg: Record<string, unknown> = {
-    "@context": "https://schema.org",
-    "@type": "NewsArticle",
-    "headline": news.title,
-    "description": metaDescription,
-    "image": ogImage,
-    "datePublished": news.published_at || "",
-    "dateModified": news.updated_at_display || news.updated_at || news.published_at || "",
-    "wordCount": wordCount,
-    "isAccessibleForFree": true,
-    "author": {
-      "@type": "Person",
-      "name": news.author?.full_name || "Redação"
-    },
-    "publisher": {
-      "@type": "Organization",
-      "name": "Conexão na Cidade",
-      "logo": {
-        "@type": "ImageObject",
-        "url": "https://conexaonacidade.com.br/favicon.png"
+  // Schema.org NewsArticle for SEO - memoized and conditional on currentUrl
+  const schemaOrg = useMemo(() => {
+    if (!currentUrl) return null;
+    
+    return {
+      "@context": "https://schema.org",
+      "@type": "NewsArticle",
+      "headline": news.title,
+      "description": metaDescription,
+      "image": ogImage,
+      "datePublished": news.published_at || "",
+      "dateModified": news.updated_at_display || news.updated_at || news.published_at || "",
+      "wordCount": wordCount,
+      "isAccessibleForFree": true,
+      "author": {
+        "@type": "Person",
+        "name": news.author?.full_name || "Redação"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Conexão na Cidade",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://conexaonacidade.com.br/favicon.png"
+        }
+      },
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": currentUrl
       }
-    },
-    "mainEntityOfPage": {
-      "@type": "WebPage",
-      "@id": currentUrl
+    } as Record<string, unknown>;
+  }, [currentUrl, news.title, metaDescription, ogImage, news.published_at, news.updated_at_display, news.updated_at, wordCount, news.author?.full_name]);
+
+  // Add AudioObject and PodcastEpisode to schemaOrg if applicable
+  if (schemaOrg) {
+    if (news.audio_url && news.audio_status === 'ready') {
+      schemaOrg["audio"] = {
+        "@type": "AudioObject",
+        "contentUrl": news.audio_url,
+        "duration": news.audio_duration_seconds ? `PT${Math.floor(news.audio_duration_seconds / 60)}M${news.audio_duration_seconds % 60}S` : undefined,
+        "encodingFormat": "audio/mpeg"
+      };
     }
-  };
-
-  // Add AudioObject if audio exists
-  if (news.audio_url && news.audio_status === 'ready') {
-    schemaOrg["audio"] = {
-      "@type": "AudioObject",
-      "contentUrl": news.audio_url,
-      "duration": news.audio_duration_seconds ? `PT${Math.floor(news.audio_duration_seconds / 60)}M${news.audio_duration_seconds % 60}S` : undefined,
-      "encodingFormat": "audio/mpeg"
-    };
-  }
-
-  // Add PodcastEpisode if podcast enabled
-  if (news.podcast_enabled && news.audio_url) {
-    schemaOrg["@type"] = ["NewsArticle", "PodcastEpisode"];
+    if (news.podcast_enabled && news.audio_url) {
+      schemaOrg["@type"] = ["NewsArticle", "PodcastEpisode"];
+    }
   }
 
   return (
@@ -208,10 +218,12 @@ export default function NewsDetail() {
         <meta name="twitter:description" content={metaDescription} />
         <meta name="twitter:image" content={ogImage} />
         
-        {/* Schema.org JSON-LD */}
-        <script type="application/ld+json">
-          {JSON.stringify(schemaOrg)}
-        </script>
+        {/* Schema.org JSON-LD - only render when currentUrl is available */}
+        {schemaOrg && (
+          <script type="application/ld+json">
+            {JSON.stringify(schemaOrg)}
+          </script>
+        )}
       </Helmet>
       
       {/* Skip Link for Accessibility */}
