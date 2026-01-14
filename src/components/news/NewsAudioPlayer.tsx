@@ -11,6 +11,8 @@ interface NewsAudioPlayerProps {
   newsId: string;
   spotifyUrl?: string | null;
   className?: string;
+  onPlay?: () => void;
+  onPause?: () => void;
 }
 
 const PLAYBACK_SPEEDS = [0.8, 1, 1.2, 1.5];
@@ -20,7 +22,9 @@ export function NewsAudioPlayer({
   duration = 0, 
   newsId,
   spotifyUrl,
-  className 
+  className,
+  onPlay,
+  onPause,
 }: NewsAudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -44,11 +48,13 @@ export function NewsAudioPlayer({
     
     if (isPlaying) {
       audioRef.current.pause();
+      onPause?.();
     } else {
       audioRef.current.play();
+      onPlay?.();
     }
     setIsPlaying(!isPlaying);
-  }, [isPlaying]);
+  }, [isPlaying, onPlay, onPause]);
 
   const handleTimeUpdate = useCallback(() => {
     if (!audioRef.current) return;

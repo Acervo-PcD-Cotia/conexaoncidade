@@ -19,6 +19,7 @@ import { ptBR } from 'date-fns/locale';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useReadingTracker } from '@/hooks/useReadingTracker';
+import { useNewsAnalytics } from '@/hooks/useNewsAnalytics';
 import { useAuth } from '@/contexts/AuthContext';
 import { getNewsHeaderColor } from '@/lib/colorUtils';
 
@@ -118,6 +119,16 @@ export default function NewsDetail() {
     minimumTimeSeconds: 45,
     completionThreshold: 85
   });
+
+  // Analytics tracking for reading behavior
+  const {
+    trackAudioPlay,
+    trackAudioStop,
+    trackPodcastPlay,
+    trackSummaryExpand,
+    trackTocClick,
+    trackShare,
+  } = useNewsAnalytics(news?.id || '');
 
   // Track scroll progress
   const handleScroll = useCallback(() => {
@@ -371,6 +382,7 @@ export default function NewsDetail() {
                   contentId={news.id}
                   contentType="news"
                   variant="circular"
+                  onShare={trackShare}
                 />
                 <PrintButton />
               </div>
@@ -417,6 +429,9 @@ export default function NewsDetail() {
             podcastStatus={news.podcast_status}
             podcastAudioUrl={news.podcast_audio_url}
             className="mb-8"
+            onAudioPlay={trackAudioPlay}
+            onAudioStop={trackAudioStop}
+            onPodcastPlay={trackPodcastPlay}
           />
 
           {/* Summary Block */}
@@ -426,6 +441,7 @@ export default function NewsDetail() {
             keyPoints={news.ai_summary_bullets}
             generatedAt={news.ai_summary_generated_at}
             className="mb-8"
+            onExpand={trackSummaryExpand}
           />
 
           {/* Table of Contents */}
@@ -433,6 +449,7 @@ export default function NewsDetail() {
             <NewsTableOfContents 
               contentHtml={news.content} 
               className="mb-8"
+              onItemClick={trackTocClick}
             />
           )}
 
@@ -482,6 +499,7 @@ export default function NewsDetail() {
                   contentId={news.id}
                   contentType="news"
                   variant="circular"
+                  onShare={trackShare}
                 />
               </div>
             </div>
