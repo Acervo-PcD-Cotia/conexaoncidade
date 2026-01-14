@@ -39,6 +39,7 @@ import Users from "./pages/admin/Users";
 import HomeEditor from "./pages/admin/HomeEditor";
 import QuickNotesAdmin from "./pages/admin/QuickNotesAdmin";
 import Analytics from "./pages/admin/Analytics";
+import ReadingAnalytics from "./pages/admin/ReadingAnalytics";
 import AuditLogs from "./pages/admin/AuditLogs";
 import Settings from "./pages/admin/Settings";
 import NoticiasAI from "./pages/admin/NoticiasAI";
@@ -217,6 +218,7 @@ const App = () => (
                         <Route path="home-editor" element={<HomeEditor />} />
                         <Route path="quick-notes" element={<QuickNotesAdmin />} />
                         <Route path="analytics" element={<Analytics />} />
+                        <Route path="analytics/leitura" element={<ReadingAnalytics />} />
                         <Route path="social" element={<SocialDashboard />} />
                         <Route path="social/queue" element={<SocialQueue />} />
                         <Route path="social/history" element={<SocialHistory />} />
