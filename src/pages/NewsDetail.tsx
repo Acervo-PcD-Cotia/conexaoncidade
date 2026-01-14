@@ -349,7 +349,7 @@ export default function NewsDetail() {
             </figure>
           )}
 
-          {/* Audio Block - Dark Style */}
+          {/* Audio Block - Dark Style (dois players: leitura + podcast) */}
           <NewsAudioBlock
             newsId={news.id}
             audioUrl={news.audio_url}
@@ -357,6 +357,9 @@ export default function NewsDetail() {
             audioDuration={news.audio_duration_seconds}
             transcriptText={news.transcript_text}
             contentHtml={news.content}
+            spotifyUrl={news.spotify_url}
+            podcastStatus={news.podcast_status}
+            podcastAudioUrl={news.podcast_audio_url}
             className="mb-8"
           />
 
