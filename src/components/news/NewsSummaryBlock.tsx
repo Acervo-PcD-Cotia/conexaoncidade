@@ -12,6 +12,7 @@ interface NewsSummaryBlockProps {
   generatedAt?: string | null;
   isGenerating?: boolean;
   className?: string;
+  onExpand?: () => void;
 }
 
 export function NewsSummaryBlock({
@@ -21,8 +22,19 @@ export function NewsSummaryBlock({
   generatedAt,
   isGenerating = false,
   className,
+  onExpand,
 }: NewsSummaryBlockProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [hasTrackedExpand, setHasTrackedExpand] = useState(false);
+
+  const handleToggle = () => {
+    const willExpand = !isExpanded;
+    setIsExpanded(willExpand);
+    if (willExpand && !hasTrackedExpand && onExpand) {
+      onExpand();
+      setHasTrackedExpand(true);
+    }
+  };
 
   // Check if any summary content is available
   const hasContent = summaryShort || summaryMedium || (keyPoints && keyPoints.length > 0);
@@ -50,7 +62,7 @@ export function NewsSummaryBlock({
     >
       {/* Header - Toggle Button */}
       <button
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={handleToggle}
         className="w-full flex items-center justify-between p-4 bg-muted/30 hover:bg-muted/50 transition-colors"
         aria-expanded={isExpanded}
         aria-controls="summary-content"

@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 interface NewsTableOfContentsProps {
   contentHtml: string;
   className?: string;
+  onItemClick?: () => void;
 }
 
 interface TocItem {
@@ -13,7 +14,7 @@ interface TocItem {
   level: number;
 }
 
-export function NewsTableOfContents({ contentHtml, className }: NewsTableOfContentsProps) {
+export function NewsTableOfContents({ contentHtml, className, onItemClick }: NewsTableOfContentsProps) {
   const [isExpanded, setIsExpanded] = useState(true);
 
   const tocItems = useMemo(() => {
@@ -54,6 +55,7 @@ export function NewsTableOfContents({ contentHtml, className }: NewsTableOfConte
     
     if (targetHeading) {
       targetHeading.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      onItemClick?.();
     }
   };
 

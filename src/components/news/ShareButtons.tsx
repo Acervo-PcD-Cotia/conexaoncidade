@@ -11,6 +11,7 @@ interface ShareButtonsProps {
   contentId?: string;
   contentType?: 'news' | 'project' | 'campaign' | 'story' | 'edition';
   variant?: 'default' | 'circular';
+  onShare?: (platform: string) => void;
 }
 
 export function ShareButtons({ 
@@ -18,7 +19,8 @@ export function ShareButtons({
   title, 
   contentId, 
   contentType = 'news',
-  variant = 'default'
+  variant = 'default',
+  onShare,
 }: ShareButtonsProps) {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -44,6 +46,9 @@ export function ShareButtons({
         platform: platform === 'x' ? 'x' : platform,
       });
     }
+    
+    // Track share for analytics
+    onShare?.(platform);
   };
 
   const copyToClipboard = async () => {
@@ -62,6 +67,9 @@ export function ShareButtons({
           platform: 'copy',
         });
       }
+      
+      // Track copy for analytics
+      onShare?.('copy');
     } catch {
       toast({
         variant: 'destructive',

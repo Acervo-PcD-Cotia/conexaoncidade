@@ -18,6 +18,9 @@ interface NewsAudioBlockProps {
   podcastStatus?: string | null;
   podcastAudioUrl?: string | null;
   className?: string;
+  onAudioPlay?: () => void;
+  onAudioStop?: () => void;
+  onPodcastPlay?: () => void;
 }
 
 export function NewsAudioBlock({
@@ -31,6 +34,9 @@ export function NewsAudioBlock({
   podcastStatus,
   podcastAudioUrl,
   className,
+  onAudioPlay,
+  onAudioStop,
+  onPodcastPlay,
 }: NewsAudioBlockProps) {
   const [showPodcastModal, setShowPodcastModal] = useState(false);
 
@@ -82,6 +88,8 @@ export function NewsAudioBlock({
                 duration={audioDuration || 0}
                 newsId={newsId}
                 spotifyUrl={spotifyUrl}
+                onPlay={onAudioPlay}
+                onPause={onAudioStop}
               />
             </div>
 
@@ -179,6 +187,7 @@ export function NewsAudioBlock({
                 duration={audioDuration || 0}
                 newsId={newsId}
                 spotifyUrl={spotifyUrl}
+                onPlay={onPodcastPlay}
               />
             </div>
 
