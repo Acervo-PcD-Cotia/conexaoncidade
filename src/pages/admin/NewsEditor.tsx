@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Save, Loader2, Calendar, Cloud, CloudOff, Search, Bot, FileEdit } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Calendar, Cloud, CloudOff, Search, Bot, FileEdit, Smartphone } from "lucide-react";
+import { GenerateStoryButton } from "@/components/admin/GenerateStoryButton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNewsCreation, NewsOrigin } from "@/contexts/NewsCreationContext";
@@ -669,6 +670,28 @@ export default function NewsEditor() {
                   />
                 </div>
               </div>
+
+              {/* WebStory Generation - só mostra se editando notícia existente */}
+              {isEditing && id && (
+                <div className="pt-4 border-t space-y-3">
+                  <p className="text-sm font-medium flex items-center gap-2">
+                    <Smartphone className="h-4 w-4" />
+                    WebStory
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Gere automaticamente um WebStory de 5 slides a partir desta notícia
+                  </p>
+                  <GenerateStoryButton
+                    newsId={id}
+                    newsTitle={formData.title}
+                    newsSummary={formData.excerpt}
+                    newsImage={formData.featured_image_url}
+                    newsSlug={formData.slug}
+                    newsCategory={categories?.find(c => c.id === formData.category_id)?.name}
+                    disabled={!formData.title || !formData.slug}
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
 
