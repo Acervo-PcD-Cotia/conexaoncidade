@@ -33,11 +33,14 @@ export interface NewsItem {
   summary_medium: string | null;
   ai_summary_bullets: string[] | null;
   ai_summary_generated_at: string | null;
-  transcript_text: string | null;
+  transcript_text?: string | null;
   // Podcast fields
-  podcast_enabled: boolean | null;
+  podcast_enabled?: boolean | null;
+  podcast_status?: string | null;
+  podcast_audio_url?: string | null;
+  spotify_url?: string | null;
   // Display updated timestamp
-  updated_at_display: string | null;
+  updated_at_display?: string | null;
   // Meta fields
   meta_title: string | null;
   meta_description: string | null;

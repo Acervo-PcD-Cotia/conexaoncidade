@@ -22,6 +22,8 @@ import AntiFakeNews from "./pages/AntiFakeNews";
 import EditionViewer from "./pages/EditionViewer";
 import StoriesPage from "./pages/StoriesPage";
 import ResetPassword from "./pages/ResetPassword";
+import NewsListPage from "./pages/NewsListPage";
+import SearchPage from "./pages/SearchPage";
 
 // Admin Pages
 import Dashboard from "./pages/admin/Dashboard";
@@ -157,6 +159,8 @@ const App = () => (
                       <Route element={<PublicLayout />}>
                         <Route path="/" element={<Index />} />
                         <Route path="/noticia/:slug" element={<NewsDetail />} />
+                        <Route path="/noticias" element={<NewsListPage />} />
+                        <Route path="/busca" element={<SearchPage />} />
                         <Route path="/categoria/:slug" element={<CategoryPage />} />
                         <Route path="/comunidade" element={<CommunityHub />} />
                         <Route path="/comunidade/desbloquear" element={<CommunityUnlock />} />
