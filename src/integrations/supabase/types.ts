@@ -7394,12 +7394,15 @@ export type Database = {
       }
       web_stories: {
         Row: {
+          audio_type: string | null
+          audio_url: string | null
           author_id: string | null
           cover_image_url: string | null
           created_at: string
           id: string
           meta_description: string | null
           meta_title: string | null
+          news_id: string | null
           published_at: string | null
           slug: string
           status: Database["public"]["Enums"]["story_status"]
@@ -7409,12 +7412,15 @@ export type Database = {
           view_count: number
         }
         Insert: {
+          audio_type?: string | null
+          audio_url?: string | null
           author_id?: string | null
           cover_image_url?: string | null
           created_at?: string
           id?: string
           meta_description?: string | null
           meta_title?: string | null
+          news_id?: string | null
           published_at?: string | null
           slug: string
           status?: Database["public"]["Enums"]["story_status"]
@@ -7424,12 +7430,15 @@ export type Database = {
           view_count?: number
         }
         Update: {
+          audio_type?: string | null
+          audio_url?: string | null
           author_id?: string | null
           cover_image_url?: string | null
           created_at?: string
           id?: string
           meta_description?: string | null
           meta_title?: string | null
+          news_id?: string | null
           published_at?: string | null
           slug?: string
           status?: Database["public"]["Enums"]["story_status"]
@@ -7439,6 +7448,13 @@ export type Database = {
           view_count?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "web_stories_news_id_fkey"
+            columns: ["news_id"]
+            isOneToOne: false
+            referencedRelation: "news"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "web_stories_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -7458,9 +7474,12 @@ export type Database = {
           cta_text: string | null
           cta_url: string | null
           duration_seconds: number | null
+          headline_text: string | null
           id: string
+          slide_audio_url: string | null
           sort_order: number
           story_id: string
+          subheadline_text: string | null
         }
         Insert: {
           animation_type?: string | null
@@ -7471,9 +7490,12 @@ export type Database = {
           cta_text?: string | null
           cta_url?: string | null
           duration_seconds?: number | null
+          headline_text?: string | null
           id?: string
+          slide_audio_url?: string | null
           sort_order?: number
           story_id: string
+          subheadline_text?: string | null
         }
         Update: {
           animation_type?: string | null
@@ -7484,9 +7506,12 @@ export type Database = {
           cta_text?: string | null
           cta_url?: string | null
           duration_seconds?: number | null
+          headline_text?: string | null
           id?: string
+          slide_audio_url?: string | null
           sort_order?: number
           story_id?: string
+          subheadline_text?: string | null
         }
         Relationships: [
           {

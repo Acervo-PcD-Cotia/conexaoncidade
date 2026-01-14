@@ -10,12 +10,17 @@ export interface WebStory {
   published_at: string | null;
   author_id: string | null;
   view_count: number;
+  // New fields for news integration
+  news_id?: string | null;
+  audio_url?: string | null;
+  audio_type?: "ambient" | "narration" | null;
 }
 
 export interface WebStorySlide {
   id: string;
   story_id: string;
-  sort_order: number;
+  slide_order?: number;
+  sort_order?: number; // Legacy field name
   background_image_url: string | null;
   background_color: string | null;
   content_html: string | null;
@@ -23,6 +28,10 @@ export interface WebStorySlide {
   animation_type: string | null;
   cta_text: string | null;
   cta_url: string | null;
+  // New fields
+  slide_audio_url?: string | null;
+  headline_text?: string | null;
+  subheadline_text?: string | null;
 }
 
 export interface WebStoryWithSlides extends WebStory {
@@ -63,7 +72,7 @@ export function useStoryBySlug(slug: string) {
         .from("web_story_slides")
         .select("*")
         .eq("story_id", story.id)
-        .order("sort_order", { ascending: true });
+        .order("slide_order", { ascending: true });
 
       if (slidesError) throw slidesError;
 
@@ -84,7 +93,7 @@ export function useStorySlides(storyId: string) {
         .from("web_story_slides")
         .select("*")
         .eq("story_id", storyId)
-        .order("sort_order", { ascending: true });
+        .order("slide_order", { ascending: true });
 
       if (error) throw error;
       return data as WebStorySlide[];
@@ -94,25 +103,42 @@ export function useStorySlides(storyId: string) {
 }
 
 export async function incrementStoryViewCount(storyId: string) {
-  // Update view count directly instead of using RPC
-  const { error } = await supabase
-    .from("web_stories")
-    .update({ view_count: supabase.rpc ? undefined : undefined })
-    .eq("id", storyId);
-  
-  // Alternative: fetch current count and increment
-  if (error) {
-    const { data } = await supabase
+  try {
+    // First get current count
+    const { data: story, error: fetchError } = await supabase
       .from("web_stories")
       .select("view_count")
       .eq("id", storyId)
       .single();
     
-    if (data) {
-      await supabase
-        .from("web_stories")
-        .update({ view_count: (data.view_count || 0) + 1 })
-        .eq("id", storyId);
-    }
+    if (fetchError || !story) return;
+    
+    // Then increment
+    await supabase
+      .from("web_stories")
+      .update({ view_count: (story.view_count || 0) + 1 })
+      .eq("id", storyId);
+  } catch (error) {
+    console.error("Error incrementing view count:", error);
   }
+}
+
+// Hook to get story by news_id
+export function useStoryByNewsId(newsId: string | null) {
+  return useQuery({
+    queryKey: ["web-story-by-news", newsId],
+    queryFn: async () => {
+      if (!newsId) return null;
+      
+      const { data, error } = await supabase
+        .from("web_stories")
+        .select("id, slug, status")
+        .eq("news_id", newsId)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!newsId,
+  });
 }
