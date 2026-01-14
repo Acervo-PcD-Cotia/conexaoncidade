@@ -5123,6 +5123,102 @@ export type Database = {
           },
         ]
       }
+      news_reading_analytics: {
+        Row: {
+          audio_play_count: number | null
+          audio_played: boolean | null
+          audio_total_listen_seconds: number | null
+          created_at: string | null
+          device_type: string | null
+          id: string
+          news_id: string | null
+          podcast_play_count: number | null
+          podcast_played: boolean | null
+          read_completed: boolean | null
+          referrer: string | null
+          scroll_depth_max: number | null
+          scroll_depth_percent: number | null
+          session_id: string
+          share_platform: string | null
+          shared: boolean | null
+          summary_expanded: boolean | null
+          tenant_id: string | null
+          time_on_page_seconds: number | null
+          toc_clicked: boolean | null
+          updated_at: string | null
+          user_agent: string | null
+          user_id: string | null
+          viewport_width: number | null
+        }
+        Insert: {
+          audio_play_count?: number | null
+          audio_played?: boolean | null
+          audio_total_listen_seconds?: number | null
+          created_at?: string | null
+          device_type?: string | null
+          id?: string
+          news_id?: string | null
+          podcast_play_count?: number | null
+          podcast_played?: boolean | null
+          read_completed?: boolean | null
+          referrer?: string | null
+          scroll_depth_max?: number | null
+          scroll_depth_percent?: number | null
+          session_id: string
+          share_platform?: string | null
+          shared?: boolean | null
+          summary_expanded?: boolean | null
+          tenant_id?: string | null
+          time_on_page_seconds?: number | null
+          toc_clicked?: boolean | null
+          updated_at?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          viewport_width?: number | null
+        }
+        Update: {
+          audio_play_count?: number | null
+          audio_played?: boolean | null
+          audio_total_listen_seconds?: number | null
+          created_at?: string | null
+          device_type?: string | null
+          id?: string
+          news_id?: string | null
+          podcast_play_count?: number | null
+          podcast_played?: boolean | null
+          read_completed?: boolean | null
+          referrer?: string | null
+          scroll_depth_max?: number | null
+          scroll_depth_percent?: number | null
+          session_id?: string
+          share_platform?: string | null
+          shared?: boolean | null
+          summary_expanded?: boolean | null
+          tenant_id?: string | null
+          time_on_page_seconds?: number | null
+          toc_clicked?: boolean | null
+          updated_at?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          viewport_width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_reading_analytics_news_id_fkey"
+            columns: ["news_id"]
+            isOneToOne: false
+            referencedRelation: "news"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "news_reading_analytics_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       news_social_settings: {
         Row: {
           created_at: string
@@ -7328,6 +7424,41 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_push_preferences: {
+        Row: {
+          category_id: string | null
+          created_at: string | null
+          id: string
+          is_enabled: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_push_preferences_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

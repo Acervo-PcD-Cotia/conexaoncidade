@@ -22,6 +22,7 @@ import { SessionsManager } from "@/components/community/SessionsManager";
 import { CommunityLayout } from "@/components/community/CommunityLayout";
 import { ProfileTypeSelector } from "@/components/community/ProfileTypeSelector";
 import { NeighborhoodSelector } from "@/components/community/NeighborhoodSelector";
+import { CategoryPushPreferences } from "@/components/community/CategoryPushPreferences";
 
 const passwordSchema = z.object({
   currentPassword: z.string().min(1, "Senha atual é obrigatória"),
@@ -458,6 +459,9 @@ export default function ProfileSettings() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Push Notifications by Category */}
+              <CategoryPushPreferences />
             </TabsContent>
 
             {/* Security Tab */}

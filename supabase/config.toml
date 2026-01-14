@@ -107,3 +107,9 @@ verify_jwt = false
 
 [functions.notify-favorite-update]
 verify_jwt = false
+
+[functions.track-reading-analytics]
+verify_jwt = false
+
+[functions.notify-new-news]
+verify_jwt = false
