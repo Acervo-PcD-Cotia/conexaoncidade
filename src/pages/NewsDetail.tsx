@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useCallback, useState } from 'react';
+import React, { useEffect, useMemo, useCallback, useState, Component, ErrorInfo, ReactNode } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useNewsBySlug, useRelatedNews } from '@/hooks/useNews';
@@ -13,13 +13,69 @@ import { FactCheckCTA } from '@/components/news/FactCheckCTA';
 import { PrintButton } from '@/components/news/PrintButton';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useReadingTracker } from '@/hooks/useReadingTracker';
 import { useAuth } from '@/contexts/AuthContext';
 import { getNewsHeaderColor } from '@/lib/colorUtils';
+
+// Error Boundary para capturar erros de renderização
+interface ErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class NewsErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('[NewsDetail] Erro de renderização:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="container max-w-4xl py-16 text-center">
+          <h1 className="text-3xl font-bold mb-4 text-foreground">Erro ao carregar notícia</h1>
+          <p className="text-muted-foreground mb-8">
+            Ocorreu um erro inesperado ao exibir esta notícia.
+          </p>
+          <div className="flex justify-center gap-4">
+            <Button
+              onClick={() => window.location.reload()}
+              variant="outline"
+              className="gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Recarregar página
+            </Button>
+            <Link to="/">
+              <Button className="gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                Voltar para home
+              </Button>
+            </Link>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function calculateReadTime(content: string | null): number {
   if (!content) return 1;
@@ -191,7 +247,7 @@ export default function NewsDetail() {
   }
 
   return (
-    <>
+    <NewsErrorBoundary>
       {/* Reading Progress Bar */}
       <ReadingProgressBar isCompleted={isCompleted} showCompletionBadge={!!user} />
 
@@ -449,6 +505,6 @@ export default function NewsDetail() {
           </nav>
         </div>
       </article>
-    </>
+    </NewsErrorBoundary>
   );
 }

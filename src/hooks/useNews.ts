@@ -155,38 +155,59 @@ export function useNewsBySlug(slug: string) {
           category:categories(id, name, slug, color)
         `)
         .eq('slug', slug)
+        .eq('status', 'published')
+        .is('deleted_at', null)
         .maybeSingle();
 
-      if (error) throw error;
-      if (!data) return null;
+      if (error) {
+        console.error('[useNewsBySlug] Erro ao buscar notícia:', error);
+        throw error;
+      }
+      
+      if (!data) {
+        console.warn('[useNewsBySlug] Notícia não encontrada para slug:', slug);
+        return null;
+      }
       
       // Fetch author separately
       let author = null;
       if (data.author_id) {
-        const { data: authorData } = await supabase
+        const { data: authorData, error: authorError } = await supabase
           .from('profiles')
           .select('id, full_name, avatar_url, bio')
           .eq('id', data.author_id)
           .maybeSingle();
+        
+        if (authorError) {
+          console.warn('[useNewsBySlug] Erro ao buscar autor:', authorError);
+        }
         author = authorData;
       }
 
       // Fetch editor separately
       let editor = null;
       if (data.editor_id) {
-        const { data: editorData } = await supabase
+        const { data: editorData, error: editorError } = await supabase
           .from('profiles')
           .select('id, full_name')
           .eq('id', data.editor_id)
           .maybeSingle();
+        
+        if (editorError) {
+          console.warn('[useNewsBySlug] Erro ao buscar editor:', editorError);
+        }
         editor = editorData;
       }
 
       // Fetch tags separately
-      const { data: tagsData } = await supabase
+      const { data: tagsData, error: tagsError } = await supabase
         .from('news_tags')
         .select('tag:tags(id, name, slug)')
         .eq('news_id', data.id);
+
+      if (tagsError) {
+        console.warn('[useNewsBySlug] Erro ao buscar tags:', tagsError);
+      }
 
       const tags = tagsData?.map((t) => t.tag).filter(Boolean) || [];
       return { ...data, author, editor, tags } as NewsItem;
