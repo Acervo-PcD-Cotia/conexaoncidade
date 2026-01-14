@@ -32,12 +32,15 @@ export function useReadingTracker({
   const hasAwardedRef = useRef(false);
   const savedProgressRef = useRef(false);
 
+  // Validate contentId - must be a valid UUID
+  const isValidId = contentId && contentId.length > 0 && contentId !== '';
+
   // Points based on content type
   const pointsForCompletion = contentType === 'news' ? 3 : 5;
 
   // Load existing progress on mount
   useEffect(() => {
-    if (!user) return;
+    if (!user || !isValidId) return;
 
     const loadProgress = async () => {
       const { data } = await supabase
@@ -46,7 +49,7 @@ export function useReadingTracker({
         .eq('user_id', user.id)
         .eq('content_type', contentType)
         .eq('content_id', contentId)
-        .single();
+        .maybeSingle();
 
       if (data) {
         setProgress(data.scroll_percentage || 0);
@@ -58,23 +61,22 @@ export function useReadingTracker({
     };
 
     loadProgress();
-  }, [user, contentType, contentId]);
+  }, [user, contentType, contentId, isValidId]);
 
   // Track time spent
   useEffect(() => {
-    if (!user || isCompleted) return;
+    if (!user || !isValidId || isCompleted) return;
 
     const interval = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
       setTimeSpent(prev => prev + 1);
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [user, isCompleted]);
+  }, [user, isValidId, isCompleted]);
 
   // Save progress periodically
   useEffect(() => {
-    if (!user || savedProgressRef.current) return;
+    if (!user || !isValidId || savedProgressRef.current) return;
 
     const saveProgress = async () => {
       const { error } = await supabase
@@ -95,7 +97,7 @@ export function useReadingTracker({
 
     const debounce = setTimeout(saveProgress, 2000);
     return () => clearTimeout(debounce);
-  }, [user, contentType, contentId, progress, timeSpent]);
+  }, [user, contentType, contentId, progress, timeSpent, isValidId]);
 
   // Check for completion and award points
   const checkCompletion = useCallback(async () => {

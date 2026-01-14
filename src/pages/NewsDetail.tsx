@@ -92,70 +92,7 @@ function countWords(content: string | null): number {
 
 export default function NewsDetail() {
   const { slug } = useParams<{ slug: string }>();
-  const { user } = useAuth();
   const { data: news, isLoading, error } = useNewsBySlug(slug || '');
-  
-  // Client-side URL to avoid hydration mismatch
-  const [currentUrl, setCurrentUrl] = useState('');
-  
-  useEffect(() => {
-    setCurrentUrl(window.location.href);
-  }, []);
-  
-  // Get tag IDs for better related news selection
-  const tagIds = useMemo(() => news?.tags?.map(t => t.id) || [], [news?.tags]);
-  
-  const { data: relatedNews = [] } = useRelatedNews(
-    news?.id || '',
-    news?.category_id || null,
-    6,
-    tagIds
-  );
-
-  // Reading tracker for gamification
-  const { trackScroll, isCompleted } = useReadingTracker({
-    contentType: 'news',
-    contentId: news?.id || '',
-    minimumTimeSeconds: 45,
-    completionThreshold: 85
-  });
-
-  // Analytics tracking for reading behavior
-  const {
-    trackAudioPlay,
-    trackAudioStop,
-    trackPodcastPlay,
-    trackSummaryExpand,
-    trackTocClick,
-    trackShare,
-  } = useNewsAnalytics(news?.id || '');
-
-  // Track scroll progress
-  const handleScroll = useCallback(() => {
-    if (!news?.id) return;
-    const scrollTop = window.scrollY;
-    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-    if (docHeight > 0) {
-      const scrollPercent = (scrollTop / docHeight) * 100;
-      trackScroll(scrollPercent);
-    }
-  }, [news?.id, trackScroll]);
-
-  useEffect(() => {
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [handleScroll]);
-
-  // Increment view count on mount
-  useEffect(() => {
-    if (news?.id) {
-      supabase
-        .from('news')
-        .update({ view_count: (news.view_count || 0) + 1 })
-        .eq('id', news.id)
-        .then(() => {});
-    }
-  }, [news?.id]);
 
   if (isLoading) {
     return (
@@ -197,6 +134,77 @@ export default function NewsDetail() {
       </div>
     );
   }
+
+  // Only render content component when news is loaded
+  return <NewsDetailContent news={news} />;
+}
+
+// Separate component that only mounts when news data is available
+interface NewsDetailContentProps {
+  news: NonNullable<ReturnType<typeof useNewsBySlug>['data']>;
+}
+
+function NewsDetailContent({ news }: NewsDetailContentProps) {
+  const { user } = useAuth();
+  
+  // Client-side URL to avoid hydration mismatch
+  const [currentUrl, setCurrentUrl] = useState('');
+  
+  useEffect(() => {
+    setCurrentUrl(window.location.href);
+  }, []);
+  
+  // Get tag IDs for better related news selection
+  const tagIds = useMemo(() => news.tags?.map(t => t.id) || [], [news.tags]);
+  
+  const { data: relatedNews = [] } = useRelatedNews(
+    news.id,
+    news.category_id || null,
+    6,
+    tagIds
+  );
+
+  // Reading tracker for gamification - now news.id is guaranteed to exist
+  const { trackScroll, isCompleted } = useReadingTracker({
+    contentType: 'news',
+    contentId: news.id,
+    minimumTimeSeconds: 45,
+    completionThreshold: 85
+  });
+
+  // Analytics tracking for reading behavior - now news.id is guaranteed to exist
+  const {
+    trackAudioPlay,
+    trackAudioStop,
+    trackPodcastPlay,
+    trackSummaryExpand,
+    trackTocClick,
+    trackShare,
+  } = useNewsAnalytics(news.id);
+
+  // Track scroll progress
+  const handleScroll = useCallback(() => {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    if (docHeight > 0) {
+      const scrollPercent = (scrollTop / docHeight) * 100;
+      trackScroll(scrollPercent);
+    }
+  }, [trackScroll]);
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
+
+  // Increment view count on mount
+  useEffect(() => {
+    supabase
+      .from('news')
+      .update({ view_count: (news.view_count || 0) + 1 })
+      .eq('id', news.id)
+      .then(() => {});
+  }, [news.id, news.view_count]);
 
   const readTime = calculateReadTime(news.content);
   const wordCount = countWords(news.content);

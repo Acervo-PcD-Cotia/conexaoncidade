@@ -41,6 +41,9 @@ const getDeviceType = (): string => {
 };
 
 export function useNewsAnalytics(newsId: string) {
+  // Validate newsId - must be a non-empty string (UUID)
+  const isValidId = newsId && newsId.length > 0 && newsId !== '';
+
   const [analytics, setAnalytics] = useState<AnalyticsData>({
     newsId,
     sessionId: '',
@@ -62,13 +65,16 @@ export function useNewsAnalytics(newsId: string) {
   const audioStartTimeRef = useRef<number | null>(null);
   const isActiveRef = useRef(true);
 
-  // Initialize session
+  // Initialize session - only if newsId is valid
   useEffect(() => {
+    if (!isValidId) return;
+
     const sessionId = getSessionId();
     
     supabase.auth.getUser().then(({ data }) => {
       setAnalytics(prev => ({
         ...prev,
+        newsId,
         sessionId,
         userId: data.user?.id,
         referrer: document.referrer || undefined,
@@ -81,11 +87,11 @@ export function useNewsAnalytics(newsId: string) {
     return () => {
       isActiveRef.current = false;
     };
-  }, [newsId]);
+  }, [newsId, isValidId]);
 
   // Time tracking
   useEffect(() => {
-    if (!analytics.sessionId) return;
+    if (!isValidId || !analytics.sessionId) return;
 
     const interval = setInterval(() => {
       if (isActiveRef.current && document.visibilityState === 'visible') {
@@ -106,11 +112,11 @@ export function useNewsAnalytics(newsId: string) {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [analytics.sessionId]);
+  }, [isValidId, analytics.sessionId]);
 
   // Scroll tracking
   useEffect(() => {
-    if (!analytics.sessionId) return;
+    if (!isValidId || !analytics.sessionId) return;
 
     let ticking = false;
 
@@ -138,11 +144,11 @@ export function useNewsAnalytics(newsId: string) {
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [analytics.sessionId]);
+  }, [isValidId, analytics.sessionId]);
 
   // Debounced save to database
   useEffect(() => {
-    if (!analytics.sessionId || analytics.timeOnPageSeconds < 3) return;
+    if (!isValidId || !analytics.sessionId || analytics.timeOnPageSeconds < 3) return;
 
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
@@ -157,10 +163,12 @@ export function useNewsAnalytics(newsId: string) {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [analytics]);
+  }, [isValidId, analytics]);
 
   // Save on page unload
   useEffect(() => {
+    if (!isValidId) return;
+
     const handleBeforeUnload = () => {
       if (analytics.sessionId && analytics.timeOnPageSeconds >= 3) {
         saveAnalytics(analytics);
@@ -169,7 +177,7 @@ export function useNewsAnalytics(newsId: string) {
 
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [analytics]);
+  }, [isValidId, analytics]);
 
   const saveAnalytics = async (data: AnalyticsData) => {
     try {
