@@ -1,9 +1,7 @@
 import { useState } from 'react';
-import { FileText, Sparkles, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ChevronDown, ChevronUp, ThumbsUp, ThumbsDown, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 
 interface NewsSummaryBlockProps {
   summaryShort?: string | null;
@@ -26,6 +24,7 @@ export function NewsSummaryBlock({
 }: NewsSummaryBlockProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [hasTrackedExpand, setHasTrackedExpand] = useState(false);
+  const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
 
   const handleToggle = () => {
     const willExpand = !isExpanded;
@@ -36,146 +35,116 @@ export function NewsSummaryBlock({
     }
   };
 
+  const handleFeedback = (type: 'up' | 'down') => {
+    setFeedback(type);
+    // Could track feedback here via analytics
+  };
+
   // Check if any summary content is available
   const hasContent = summaryShort || summaryMedium || (keyPoints && keyPoints.length > 0);
-  const showGenerating = isGenerating && !hasContent;
 
   // Don't render if no content and not generating
-  if (!hasContent && !showGenerating) {
+  if (!hasContent && !isGenerating) {
     return null;
   }
 
-  // Determine default tab
-  const defaultTab = keyPoints && keyPoints.length > 0 
-    ? 'pontos' 
-    : summaryShort 
-      ? 'curto' 
-      : 'medio';
+  // Build summary points to display
+  const displayPoints = keyPoints && keyPoints.length > 0 
+    ? keyPoints 
+    : summaryMedium 
+      ? [summaryMedium]
+      : summaryShort 
+        ? [summaryShort]
+        : [];
 
   return (
     <section
-      className={cn(
-        "border border-border rounded-xl overflow-hidden bg-card",
-        className
-      )}
+      className={cn("", className)}
       aria-label="Resumo da notícia"
     >
-      {/* Header - Toggle Button */}
-      <button
-        onClick={handleToggle}
-        className="w-full flex items-center justify-between p-4 bg-muted/30 hover:bg-muted/50 transition-colors"
-        aria-expanded={isExpanded}
-        aria-controls="summary-content"
-      >
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <FileText className="h-5 w-5 text-primary" />
-          </div>
-          <div className="text-left">
-            <h3 className="font-semibold text-foreground">Resumo da Notícia</h3>
-            <p className="text-xs text-muted-foreground">Entenda o essencial em segundos</p>
-          </div>
-        </div>
-        {isExpanded ? (
-          <ChevronUp className="h-5 w-5 text-muted-foreground" />
-        ) : (
+      {/* Collapsed State - Toggle Button */}
+      {!isExpanded && (
+        <button
+          onClick={handleToggle}
+          className="w-full flex items-center justify-between p-4 border rounded-lg hover:bg-muted/30 transition-colors"
+          aria-expanded={isExpanded}
+          aria-controls="summary-content"
+        >
+          <span className="font-medium text-foreground">Ler resumo da notícia</span>
           <ChevronDown className="h-5 w-5 text-muted-foreground" />
-        )}
-      </button>
+        </button>
+      )}
 
-      {/* Content */}
-      <div
-        id="summary-content"
-        className={cn(
-          "overflow-hidden transition-all duration-300",
-          isExpanded ? "max-h-[500px]" : "max-h-0"
-        )}
-      >
-        <div className="p-4 bg-background">
-          {/* Generating State */}
-          {showGenerating && (
-            <div className="flex items-center gap-3 p-4 bg-muted/30 rounded-lg">
-              <Loader2 className="h-5 w-5 animate-spin text-primary" />
-              <div>
-                <p className="font-medium text-sm">Gerando resumo...</p>
-                <p className="text-xs text-muted-foreground">
-                  O resumo inteligente está sendo processado.
-                </p>
-              </div>
+      {/* Expanded State - Full Content */}
+      {isExpanded && (
+        <div 
+          id="summary-content"
+          className="border border-red-200 dark:border-red-800/50 rounded-lg overflow-hidden"
+        >
+          {/* Header */}
+          <button
+            onClick={handleToggle}
+            className="w-full flex items-center justify-between p-4 bg-muted/20 hover:bg-muted/30 transition-colors"
+            aria-expanded={isExpanded}
+          >
+            <span className="font-semibold text-foreground">Resumo da notícia</span>
+            <ChevronUp className="h-5 w-5 text-muted-foreground" />
+          </button>
+
+          {/* Content */}
+          <div className="p-4 space-y-4">
+            {/* Summary Points - Square bullet markers */}
+            {displayPoints.length > 0 && (
+              <ul className="space-y-3">
+                {displayPoints.map((point, index) => (
+                  <li key={index} className="flex items-start gap-3">
+                    <span 
+                      className="mt-2 h-1.5 w-1.5 bg-foreground shrink-0" 
+                      aria-hidden="true"
+                    />
+                    <span className="text-sm text-foreground leading-relaxed">{point}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {/* Feedback Section */}
+            <div className="flex items-center gap-3 pt-4 border-t">
+              <span className="text-sm text-muted-foreground">Esse resumo foi útil?</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "h-8 w-8",
+                  feedback === 'up' && "text-green-600 bg-green-100 dark:bg-green-900/30"
+                )}
+                onClick={() => handleFeedback('up')}
+                aria-label="Resumo útil"
+              >
+                <ThumbsUp className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "h-8 w-8",
+                  feedback === 'down' && "text-red-600 bg-red-100 dark:bg-red-900/30"
+                )}
+                onClick={() => handleFeedback('down')}
+                aria-label="Resumo não útil"
+              >
+                <ThumbsDown className="h-4 w-4" />
+              </Button>
             </div>
-          )}
 
-          {/* Content Tabs */}
-          {hasContent && (
-            <Tabs defaultValue={defaultTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-3 mb-4">
-                {summaryShort && (
-                  <TabsTrigger value="curto" className="text-xs">
-                    Curto (30s)
-                  </TabsTrigger>
-                )}
-                {summaryMedium && (
-                  <TabsTrigger value="medio" className="text-xs">
-                    Médio (60s)
-                  </TabsTrigger>
-                )}
-                {keyPoints && keyPoints.length > 0 && (
-                  <TabsTrigger value="pontos" className="text-xs">
-                    Pontos-chave
-                  </TabsTrigger>
-                )}
-              </TabsList>
-
-              {summaryShort && (
-                <TabsContent value="curto" className="mt-0">
-                  <p className="text-sm text-foreground leading-relaxed">
-                    {summaryShort}
-                  </p>
-                </TabsContent>
-              )}
-
-              {summaryMedium && (
-                <TabsContent value="medio" className="mt-0">
-                  <p className="text-sm text-foreground leading-relaxed">
-                    {summaryMedium}
-                  </p>
-                </TabsContent>
-              )}
-
-              {keyPoints && keyPoints.length > 0 && (
-                <TabsContent value="pontos" className="mt-0">
-                  <ul className="space-y-3">
-                    {keyPoints.map((point, index) => (
-                      <li key={index} className="flex items-start gap-3">
-                        <span className="shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-sm font-medium flex items-center justify-center mt-0.5">
-                          {index + 1}
-                        </span>
-                        <span className="text-sm text-foreground">{point}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </TabsContent>
-              )}
-            </Tabs>
-          )}
-
-          {/* Footer */}
-          {hasContent && (
-            <div className="flex items-center gap-2 mt-4 pt-4 border-t text-xs text-muted-foreground">
-              <Sparkles className="h-3.5 w-3.5 text-primary" />
-              <span>Resumo gerado por IA editorial</span>
-              {generatedAt && (
-                <>
-                  <span>•</span>
-                  <span>
-                    {format(new Date(generatedAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                  </span>
-                </>
-              )}
-            </div>
-          )}
+            {/* AI Footer */}
+            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <Sparkles className="h-3 w-3" />
+              Resumo gerado por ferramenta de IA treinada pela redação do portal.
+            </p>
+          </div>
         </div>
-      </div>
+      )}
     </section>
   );
 }
