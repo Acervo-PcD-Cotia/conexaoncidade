@@ -11,7 +11,66 @@ interface BatchRequest {
   autoFixLide?: boolean;
 }
 
-async function extractFromUrl(url: string): Promise<{ title: string; content: string; imageUrl?: string }> {
+// Helper: Check if string is an image URL
+function isImageUrl(url?: string): boolean {
+  if (!url) return false;
+  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'];
+  return imageExtensions.some(ext => url.toLowerCase().includes(ext));
+}
+
+// Helper: Sanitize source - remove image URLs
+function sanitizeSource(source?: string): string {
+  if (!source) return '';
+  if (isImageUrl(source)) return '';
+  return source;
+}
+
+// Helper: Remove image URLs and img tags from content
+function sanitizeContent(content: string, sourceUrl?: string): string {
+  let cleaned = content
+    // Remove <img> tags
+    .replace(/<img[^>]*>/gi, '')
+    // Remove raw image URLs in text
+    .replace(/https?:\/\/[^\s<>"]+\.(jpg|jpeg|png|gif|webp|svg|bmp)[^\s<>"]*/gi, '')
+    // Remove empty paragraphs
+    .replace(/<p>\s*<\/p>/gi, '')
+    // Clean up multiple line breaks
+    .replace(/\n\s*\n\s*\n/g, '\n\n')
+    .trim();
+  
+  // Add source link at end if provided
+  if (sourceUrl) {
+    try {
+      const domain = new URL(sourceUrl).hostname.replace('www.', '');
+      const sourceLine = `<p class="source-link"><em>Fonte: <a href="${sourceUrl}" target="_blank" rel="noopener">${domain}</a></em></p>`;
+      cleaned = cleaned + sourceLine;
+    } catch {
+      // Invalid URL, skip source link
+    }
+  }
+  
+  return cleaned;
+}
+
+// Helper: Ensure article has all required fields with fallbacks
+function ensureRequiredFields(article: any, sourceUrl?: string): any {
+  return {
+    ...article,
+    subtitulo: article.subtitulo || article.resumo?.substring(0, 100) || 'Saiba mais sobre esta notícia',
+    chapeu: article.chapeu || article.categoria?.toUpperCase() || 'NOTÍCIAS',
+    editor: article.editor || 'Redação Conexão na Cidade',
+    fonte: sourceUrl || sanitizeSource(article.fonte),
+    conteudo: sanitizeContent(article.conteudo, sourceUrl || article.fonte),
+  };
+}
+
+async function extractFromUrl(url: string): Promise<{ 
+  title: string; 
+  content: string; 
+  imageUrl?: string;
+  allImages: string[];
+  wordCount: number;
+}> {
   try {
     const response = await fetch(url, {
       headers: {
@@ -35,10 +94,58 @@ async function extractFromUrl(url: string): Promise<{ title: string; content: st
       .replace(/\s+/g, ' ')
       .trim();
     
-    const imageMatch = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/i);
-    const imageUrl = imageMatch ? imageMatch[1] : undefined;
+    // Count words for length reference
+    const wordCount = content.split(/\s+/).filter(Boolean).length;
     
-    return { title, content: content.substring(0, 5000), imageUrl };
+    // Extract ALL images from the page
+    const allImages: string[] = [];
+    
+    // Get og:image first (main image)
+    const ogImageMatch = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/i);
+    if (ogImageMatch && ogImageMatch[1]) {
+      allImages.push(ogImageMatch[1]);
+    }
+    
+    // Extract images from content
+    const imageRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
+    let match;
+    while ((match = imageRegex.exec(html)) !== null) {
+      const imgUrl = match[1];
+      // Filter out icons, trackers, logos, small images
+      const isValidImage = imgUrl && 
+        !imgUrl.includes('icon') && 
+        !imgUrl.includes('logo') && 
+        !imgUrl.includes('avatar') &&
+        !imgUrl.includes('pixel') &&
+        !imgUrl.includes('1x1') &&
+        !imgUrl.includes('gravatar') &&
+        !imgUrl.includes('emoji') &&
+        (imgUrl.endsWith('.jpg') || imgUrl.endsWith('.jpeg') || 
+         imgUrl.endsWith('.png') || imgUrl.endsWith('.webp') ||
+         imgUrl.includes('.jpg') || imgUrl.includes('.jpeg') || 
+         imgUrl.includes('.png') || imgUrl.includes('.webp')) &&
+        !allImages.includes(imgUrl);
+      
+      if (isValidImage) {
+        // Convert relative URLs to absolute
+        let absoluteUrl = imgUrl;
+        if (imgUrl.startsWith('/')) {
+          try {
+            const baseUrl = new URL(url);
+            absoluteUrl = `${baseUrl.origin}${imgUrl}`;
+          } catch {}
+        }
+        allImages.push(absoluteUrl);
+      }
+    }
+    
+    return { 
+      title, 
+      content: content.substring(0, 5000), 
+      imageUrl: allImages[0],
+      allImages: allImages.slice(0, 5),
+      wordCount
+    };
   } catch (error) {
     console.error('Error extracting from URL:', error);
     throw new Error(`Falha ao extrair: ${url}`);
@@ -61,36 +168,18 @@ function autoFixFirstParagraph(content: string): string {
   return content;
 }
 
-// Helper: Check if string is an image URL
-function isImageUrl(url?: string): boolean {
-  if (!url) return false;
-  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'];
-  return imageExtensions.some(ext => url.toLowerCase().includes(ext));
-}
-
-// Helper: Sanitize source - remove image URLs
-function sanitizeSource(source?: string): string {
-  if (!source) return '';
-  if (isImageUrl(source)) return '';
-  return source;
-}
-
-// Helper: Ensure article has all required fields with fallbacks
-function ensureRequiredFields(article: any): any {
-  return {
-    ...article,
-    subtitulo: article.subtitulo || article.resumo?.substring(0, 100) || 'Saiba mais sobre esta notícia',
-    chapeu: article.chapeu || article.categoria?.toUpperCase() || 'NOTÍCIAS',
-    editor: article.editor || 'Redação Conexão na Cidade',
-    fonte: sanitizeSource(article.fonte),
-  };
-}
-
 async function generateWithAI(prompt: string): Promise<any> {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
   
   const systemPrompt = `Você é um jornalista experiente seguindo o padrão editorial da Agência Brasil.
+
+REGRAS CRÍTICAS:
+1. REESCREVA mantendo APROXIMADAMENTE O MESMO TAMANHO da matéria original
+2. NÃO INCLUA URLs de imagens no texto - as imagens são tratadas separadamente
+3. NÃO INCLUA tags <img> no conteúdo
+4. NÃO CRIE conteúdo novo ou invente informações
+5. PRESERVE todos os dados factuais: nomes, datas, locais, valores
 
 REGRAS DE FORMATAÇÃO AGÊNCIA BRASIL:
 1. LIDE (1º parágrafo) SEMPRE em <strong>texto completo</strong>
@@ -173,15 +262,21 @@ serve(async (req) => {
         batch.map(async (url) => {
           const extracted = await extractFromUrl(url.trim());
           const article = await generateWithAI(
-            `URL: ${url}\nTítulo: ${extracted.title}\nConteúdo: ${extracted.content}`
+            `URL: ${url}\nTítulo: ${extracted.title}\nConteúdo (${extracted.wordCount} palavras - mantenha tamanho similar): ${extracted.content}\n\nIMPORTANTE: NÃO inclua URLs de imagens no texto. Mantenha aproximadamente ${extracted.wordCount} palavras.`
           );
           
-          // Ensure required fields with fallbacks
-          let enrichedArticle = ensureRequiredFields(article);
-          enrichedArticle.fonte = url.trim(); // Keep original URL as source
-          if (extracted.imageUrl && !enrichedArticle.imagem?.hero) {
-            enrichedArticle.imagem = { ...enrichedArticle.imagem, hero: extracted.imageUrl };
+          // Ensure required fields with fallbacks and add source link
+          let enrichedArticle = ensureRequiredFields(article, url.trim());
+          
+          // Set images with gallery
+          if (extracted.allImages.length > 0) {
+            enrichedArticle.imagem = {
+              ...enrichedArticle.imagem,
+              hero: extracted.allImages[0],
+              galeria: extracted.allImages.slice(1) // Additional images
+            };
           }
+          
           if (autoFixLide && enrichedArticle.conteudo) {
             enrichedArticle.conteudo = autoFixFirstParagraph(enrichedArticle.conteudo);
           }

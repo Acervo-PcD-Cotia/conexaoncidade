@@ -25,6 +25,7 @@ interface NewsArticle {
     card?: string;
     alt: string;
     credito: string;
+    galeria?: string[];
   };
   seo: {
     meta_titulo: string;
@@ -41,7 +42,8 @@ interface NewsArticle {
 function isImageUrl(url?: string): boolean {
   if (!url) return false;
   const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'];
-  return imageExtensions.some(ext => url.toLowerCase().includes(ext));
+  const lowerUrl = url.toLowerCase();
+  return imageExtensions.some(ext => lowerUrl.includes(ext));
 }
 
 // Helper: Sanitize source - remove image URLs
@@ -51,14 +53,42 @@ function sanitizeSource(source?: string): string {
   return source;
 }
 
+// Helper: Remove image URLs and img tags from content
+function sanitizeContent(content: string, sourceUrl?: string): string {
+  let cleaned = content
+    // Remove <img> tags
+    .replace(/<img[^>]*>/gi, '')
+    // Remove raw image URLs in text
+    .replace(/https?:\/\/[^\s<>"]+\.(jpg|jpeg|png|gif|webp|svg|bmp)[^\s<>"]*/gi, '')
+    // Remove empty paragraphs
+    .replace(/<p>\s*<\/p>/gi, '')
+    // Clean up multiple line breaks
+    .replace(/\n\s*\n\s*\n/g, '\n\n')
+    .trim();
+  
+  // Add source link at end if provided
+  if (sourceUrl) {
+    try {
+      const domain = new URL(sourceUrl).hostname.replace('www.', '');
+      const sourceLine = `<p class="source-link"><em>Fonte: <a href="${sourceUrl}" target="_blank" rel="noopener">${domain}</a></em></p>`;
+      cleaned = cleaned + sourceLine;
+    } catch {
+      // Invalid URL, skip source link
+    }
+  }
+  
+  return cleaned;
+}
+
 // Helper: Ensure article has all required fields with fallbacks
-function ensureRequiredFields(article: NewsArticle): NewsArticle {
+function ensureRequiredFields(article: NewsArticle, sourceUrl?: string): NewsArticle {
   return {
     ...article,
     subtitulo: article.subtitulo || article.resumo?.substring(0, 100) || 'Saiba mais sobre esta notícia',
     chapeu: article.chapeu || article.categoria?.toUpperCase() || 'NOTÍCIAS',
     editor: article.editor || 'Redação Conexão na Cidade',
-    fonte: sanitizeSource(article.fonte),
+    fonte: sourceUrl || sanitizeSource(article.fonte),
+    conteudo: sanitizeContent(article.conteudo, sourceUrl || article.fonte),
   };
 }
 
@@ -108,7 +138,13 @@ function autoFixFirstParagraph(content: string): string {
   return content;
 }
 
-async function extractFromUrl(url: string): Promise<{ title: string; content: string; imageUrl?: string }> {
+async function extractFromUrl(url: string): Promise<{ 
+  title: string; 
+  content: string; 
+  imageUrl?: string;
+  allImages: string[];
+  wordCount: number;
+}> {
   try {
     const response = await fetch(url, {
       headers: {
@@ -135,11 +171,58 @@ async function extractFromUrl(url: string): Promise<{ title: string; content: st
       .replace(/\s+/g, ' ')
       .trim();
     
-    // Extract image
-    const imageMatch = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/i);
-    const imageUrl = imageMatch ? imageMatch[1] : undefined;
+    // Count words for length reference
+    const wordCount = content.split(/\s+/).filter(Boolean).length;
     
-    return { title, content, imageUrl };
+    // Extract ALL images from the page
+    const allImages: string[] = [];
+    
+    // Get og:image first (main image)
+    const ogImageMatch = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/i);
+    if (ogImageMatch && ogImageMatch[1]) {
+      allImages.push(ogImageMatch[1]);
+    }
+    
+    // Extract images from content
+    const imageRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
+    let match;
+    while ((match = imageRegex.exec(html)) !== null) {
+      const imgUrl = match[1];
+      // Filter out icons, trackers, logos, small images
+      const isValidImage = imgUrl && 
+        !imgUrl.includes('icon') && 
+        !imgUrl.includes('logo') && 
+        !imgUrl.includes('avatar') &&
+        !imgUrl.includes('pixel') &&
+        !imgUrl.includes('1x1') &&
+        !imgUrl.includes('gravatar') &&
+        !imgUrl.includes('emoji') &&
+        (imgUrl.endsWith('.jpg') || imgUrl.endsWith('.jpeg') || 
+         imgUrl.endsWith('.png') || imgUrl.endsWith('.webp') ||
+         imgUrl.includes('.jpg') || imgUrl.includes('.jpeg') || 
+         imgUrl.includes('.png') || imgUrl.includes('.webp')) &&
+        !allImages.includes(imgUrl);
+      
+      if (isValidImage) {
+        // Convert relative URLs to absolute
+        let absoluteUrl = imgUrl;
+        if (imgUrl.startsWith('/')) {
+          try {
+            const baseUrl = new URL(url);
+            absoluteUrl = `${baseUrl.origin}${imgUrl}`;
+          } catch {}
+        }
+        allImages.push(absoluteUrl);
+      }
+    }
+    
+    return { 
+      title, 
+      content: content.substring(0, 5000), 
+      imageUrl: allImages[0],
+      allImages: allImages.slice(0, 5), // Max 5 images
+      wordCount
+    };
   } catch (error) {
     console.error('Error extracting from URL:', error);
     throw new Error(`Falha ao extrair conteúdo de ${url}`);
@@ -194,6 +277,13 @@ serve(async (req) => {
     
     const systemPrompt = `Você é um jornalista experiente seguindo o padrão editorial da Agência Brasil.
 
+REGRAS CRÍTICAS:
+1. REESCREVA mantendo APROXIMADAMENTE O MESMO TAMANHO da matéria original
+2. NÃO INCLUA URLs de imagens no texto - as imagens são tratadas separadamente
+3. NÃO INCLUA tags <img> no conteúdo
+4. NÃO CRIE conteúdo novo ou invente informações
+5. PRESERVE todos os dados factuais: nomes, datas, locais, valores
+
 REGRAS DE FORMATAÇÃO AGÊNCIA BRASIL:
 1. LIDE (1º parágrafo) SEMPRE em <strong>texto completo do lide</strong>
 2. CITAÇÕES de fontes: "declaração", <strong>afirmou Fulano em entrevista.</strong>
@@ -211,6 +301,8 @@ ESTRUTURA DA NOTÍCIA:
 - Conclusão ou próximos passos
 
 LIMITES:
+- Se a matéria original tem ~500 palavras, a reescrita deve ter ~450-550 palavras
+- Se tem ~1000 palavras, deve ter ~900-1100 palavras
 - Título: max 100 caracteres
 - Resumo/excerpt: max 160 caracteres
 - Meta description: max 160 caracteres
@@ -260,7 +352,7 @@ FORMATO JSON COMPLETO:
             conteudo: `<p>${cleanContent.split('\n').join('</p><p>')}</p>`,
             categoria: 'Cidade',
             fonte: '',
-            imagem: { hero: imageUrl || '', alt: '', credito: '' },
+            imagem: { hero: imageUrl || '', alt: '', credito: '', galeria: [] },
             seo: {
               meta_titulo: cleanContent.split('\n')[0].substring(0, 60),
               meta_descricao: cleanContent.substring(0, 160)
@@ -281,7 +373,7 @@ FORMATO JSON COMPLETO:
           manual: {
             ...article,
             conteudo: autoFixLide ? autoFixFirstParagraph(article.conteudo) : article.conteudo,
-            imagem: { ...article.imagem, hero: imageUrl || article.imagem.hero }
+            imagem: { ...article.imagem, hero: imageUrl || article.imagem.hero, galeria: [] }
           }
         };
         break;
@@ -318,18 +410,24 @@ FORMATO JSON COMPLETO:
         const extracted = await extractFromUrl(url);
         
         const aiResult = await generateWithAI(
-          `URL: ${url}\nTítulo: ${extracted.title}\nConteúdo: ${extracted.content}`,
+          `URL: ${url}\nTítulo: ${extracted.title}\nConteúdo (${extracted.wordCount} palavras - mantenha tamanho similar): ${extracted.content}\n\nIMPORTANTE: NÃO inclua URLs de imagens no texto. Mantenha aproximadamente ${extracted.wordCount} palavras.`,
           systemPrompt
         );
         let parsed = JSON.parse(aiResult.replace(/```json\n?|\n?```/g, ''));
         
         if (parsed.noticias?.[0]) {
-          // Ensure required fields with fallbacks
-          parsed.noticias[0] = ensureRequiredFields(parsed.noticias[0]);
-          parsed.noticias[0].fonte = url; // Keep original URL as source
-          if (extracted.imageUrl && !parsed.noticias[0].imagem?.hero) {
-            parsed.noticias[0].imagem = { ...parsed.noticias[0].imagem, hero: extracted.imageUrl };
+          // Ensure required fields with fallbacks and add source link
+          parsed.noticias[0] = ensureRequiredFields(parsed.noticias[0], url);
+          
+          // Set images with gallery
+          if (extracted.allImages.length > 0) {
+            parsed.noticias[0].imagem = {
+              ...parsed.noticias[0].imagem,
+              hero: extracted.allImages[0],
+              galeria: extracted.allImages.slice(1) // Additional images
+            };
           }
+          
           if (autoFixLide) {
             parsed.noticias[0].conteudo = autoFixFirstParagraph(parsed.noticias[0].conteudo);
           }
@@ -352,18 +450,24 @@ FORMATO JSON COMPLETO:
           try {
             const extracted = await extractFromUrl(url.trim());
             const aiResult = await generateWithAI(
-              `URL: ${url}\nTítulo: ${extracted.title}\nConteúdo: ${extracted.content}`,
+              `URL: ${url}\nTítulo: ${extracted.title}\nConteúdo (${extracted.wordCount} palavras - mantenha tamanho similar): ${extracted.content}\n\nIMPORTANTE: NÃO inclua URLs de imagens no texto. Mantenha aproximadamente ${extracted.wordCount} palavras.`,
               systemPrompt
             );
             let parsed = JSON.parse(aiResult.replace(/```json\n?|\n?```/g, ''));
             
             if (parsed.noticias?.[0]) {
-              // Ensure required fields with fallbacks
-              let article = ensureRequiredFields(parsed.noticias[0]);
-              article.fonte = url.trim(); // Keep original URL as source
-              if (extracted.imageUrl && !article.imagem?.hero) {
-                article.imagem = { ...article.imagem, hero: extracted.imageUrl };
+              // Ensure required fields with fallbacks and add source link
+              let article = ensureRequiredFields(parsed.noticias[0], url.trim());
+              
+              // Set images with gallery
+              if (extracted.allImages.length > 0) {
+                article.imagem = {
+                  ...article.imagem,
+                  hero: extracted.allImages[0],
+                  galeria: extracted.allImages.slice(1) // Additional images
+                };
               }
+              
               if (autoFixLide) {
                 article.conteudo = autoFixFirstParagraph(article.conteudo);
               }

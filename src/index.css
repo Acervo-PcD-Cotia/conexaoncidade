@@ -347,7 +347,14 @@
     font-style: normal;
   }
 
-  /* Dark audio player wrapper for Agência Brasil style */
+  /* Source link at end of article */
+  .prose-news .source-link {
+    @apply mt-8 pt-4 border-t border-muted text-sm text-muted-foreground;
+  }
+
+  .prose-news .source-link a {
+    @apply text-primary hover:underline font-normal;
+  }
   .audio-player-dark,
   .webspeech-dark,
   .transcript-dark {
