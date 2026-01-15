@@ -241,7 +241,7 @@
     @apply h-full bg-white transition-all duration-100 ease-linear;
   }
 
-  /* Prose styling for news content - Agência Brasil Editorial Style */
+  /* Prose styling for news content - Agência Brasil Editorial Style v2 */
   .prose-news {
     @apply text-foreground leading-relaxed;
     max-width: 780px;
@@ -249,10 +249,20 @@
     line-height: 1.9;
   }
 
+  /* Primeiro parágrafo (lide) em negrito */
+  .prose-news > p:first-of-type {
+    @apply font-semibold;
+  }
+
+  .prose-news > p:first-of-type strong {
+    @apply font-semibold;
+  }
+
   .prose-news p {
     @apply mb-5;
   }
 
+  /* H2 - Intertítulo limpo, sem decoração */
   .prose-news h2 {
     @apply text-xl font-bold mt-10 mb-4 text-foreground;
     border: none;
@@ -272,10 +282,11 @@
     @apply mb-2;
   }
 
-  /* Blockquote - Clean style with subtle left border */
+  /* Blockquote - Estilo Agência Brasil: borda sutil, fundo discreto */
   .prose-news blockquote {
-    @apply border-l-4 border-muted-foreground/30 pl-6 py-4 my-8 
-           italic text-lg text-muted-foreground bg-transparent;
+    @apply border-l-4 border-muted-foreground/40 pl-6 py-4 my-8 
+           text-lg text-muted-foreground bg-muted/30;
+    font-style: italic;
   }
 
   .prose-news blockquote::before {
@@ -292,10 +303,18 @@
     border-radius: 0;
   }
 
-  /* Links - Bold and underlined */
+  /* Links - Negrito + Sublinhado (padrão Agência Brasil) */
   .prose-news a {
-    @apply font-semibold text-foreground underline 
+    @apply font-bold text-foreground underline 
            hover:text-primary transition-colors;
+  }
+
+  /* Links de redes sociais mantêm estilo consistente */
+  .prose-news a[href*="twitter.com"],
+  .prose-news a[href*="x.com"],
+  .prose-news a[href*="instagram.com"],
+  .prose-news a[href*="facebook.com"] {
+    @apply font-bold underline;
   }
 
   .prose-news figure {
@@ -306,12 +325,25 @@
     @apply text-sm text-muted-foreground mt-2 italic;
   }
 
+  /* Strong/bold text - usado para citações "afirmou X" */
   .prose-news strong {
     @apply font-semibold text-foreground;
   }
 
+  /* Citação inline com fonte: "declarou X na rede social." */
+  .prose-news p strong:last-child {
+    @apply font-semibold;
+  }
+
   .prose-news hr {
     @apply my-10 border-border;
+  }
+
+  /* Crédito de imagem estilo Agência Brasil */
+  .prose-news .image-credit,
+  .prose-news figcaption {
+    @apply text-xs text-muted-foreground uppercase tracking-wide mt-2;
+    font-style: normal;
   }
 
   /* Dark audio player wrapper for Agência Brasil style */

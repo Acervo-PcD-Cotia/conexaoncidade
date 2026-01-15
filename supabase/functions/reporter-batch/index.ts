@@ -65,25 +65,37 @@ async function generateWithAI(prompt: string): Promise<any> {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
   
-  const systemPrompt = `Você é um jornalista experiente do Brasil. Reescreva a notícia seguindo padrões editoriais brasileiros.
+  const systemPrompt = `Você é um jornalista experiente seguindo o padrão editorial da Agência Brasil.
 
-REGRAS:
-1. Primeiro parágrafo (lide) DEVE estar em negrito (<strong>)
-2. Use HTML: <p>, <strong>, <em>, <h2>, <ul>, <li>
-3. Título max 100 chars, resumo max 160 chars
-4. Tags max 40 chars cada, máximo 12 tags
+REGRAS DE FORMATAÇÃO AGÊNCIA BRASIL:
+1. LIDE (1º parágrafo) SEMPRE em <strong>texto completo</strong>
+2. CITAÇÕES: "declaração", <strong>afirmou Fulano.</strong>
+3. LINKS: <a href="url"><strong>texto</strong></a>
+4. INTERTÍTULOS: <h2>Título</h2> (limpo, sem decoração)
+5. BLOCKQUOTES: <blockquote><p>"citação"</p></blockquote>
+6. CRÉDITO DE IMAGEM: AGÊNCIA/FOTÓGRAFO/REPRODUÇÃO
 
-FORMATO JSON:
+LIMITES:
+- Título: max 100 chars
+- Resumo: max 160 chars
+- Meta title: max 60 chars
+- Meta desc: max 160 chars
+- Tags: max 12, cada max 40 chars
+
+FORMATO JSON COMPLETO:
 {
   "titulo": "...",
   "slug": "...",
+  "subtitulo": "Linha fina descritiva",
+  "chapeu": "CATEGORIA",
   "resumo": "...",
-  "conteudo": "<p><strong>Lide</strong></p>...",
+  "conteudo": "<p><strong>Lide em negrito</strong></p><h2>Intertítulo</h2><p>Texto...</p>",
   "categoria": "...",
   "tags": ["..."],
-  "imagem": { "hero": "", "alt": "", "credito": "" },
+  "imagem": { "hero": "", "og": "", "card": "", "alt": "", "credito": "FONTE/CRÉDITO" },
   "seo": { "meta_titulo": "...", "meta_descricao": "..." },
-  "fonte": ""
+  "fonte": "",
+  "editor": "Nome Editor"
 }`;
   
   const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {

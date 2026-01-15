@@ -19,6 +19,8 @@ interface NewsArticle {
   tags?: string[];
   imagem: {
     hero: string;
+    og?: string;
+    card?: string;
     alt: string;
     credito: string;
   };
@@ -27,6 +29,10 @@ interface NewsArticle {
     meta_descricao: string;
   };
   fonte?: string;
+  subtitulo?: string;
+  chapeu?: string;
+  editor?: string;
+  destaque?: 'none' | 'home' | 'featured' | 'urgent';
 }
 
 interface NoticiasAIJsonTabProps {
@@ -156,39 +162,72 @@ export function NoticiasAIJsonTab({
           <CardTitle className="text-lg">Artigos para Importar</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {data.noticias.map((article, index) => (
-            <div
-              key={index}
-              className="flex items-center gap-4 rounded-lg border p-3 transition-colors hover:bg-accent/50"
-            >
-              {article.imagem?.hero && (
-                <img
-                  src={article.imagem.hero}
-                  alt=""
-                  className="h-16 w-24 rounded object-cover"
-                />
-              )}
-              <div className="flex-1">
-                <h4 className="font-medium line-clamp-1">{article.titulo}</h4>
-                <p className="text-sm text-muted-foreground line-clamp-1">{article.resumo}</p>
-                <div className="mt-1 flex gap-2">
-                  <Badge variant="outline" className="text-xs">{article.categoria}</Badge>
-                  {article.fonte && (
-                    <Badge variant="secondary" className="text-xs">
-                      {new URL(article.fonte).hostname.replace('www.', '')}
-                    </Badge>
-                  )}
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setPreviewIndex(index)}
+          {data.noticias.map((article, index) => {
+            // Validação de campos
+            const missingFields: string[] = [];
+            if (!article.subtitulo) missingFields.push('subtítulo');
+            if (!article.chapeu) missingFields.push('chapéu');
+            if (!article.editor) missingFields.push('editor');
+            if (!article.imagem?.og) missingFields.push('imagem OG');
+            
+            return (
+              <div
+                key={index}
+                className="flex items-center gap-4 rounded-lg border p-3 transition-colors hover:bg-accent/50"
               >
-                <Eye className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
+                {article.imagem?.hero && (
+                  <img
+                    src={article.imagem.hero}
+                    alt=""
+                    className="h-16 w-24 rounded object-cover"
+                  />
+                )}
+                <div className="flex-1 min-w-0">
+                  {article.chapeu && (
+                    <span className="text-xs font-bold text-primary uppercase tracking-wide">
+                      {article.chapeu}
+                    </span>
+                  )}
+                  <h4 className="font-medium line-clamp-1">{article.titulo}</h4>
+                  {article.subtitulo && (
+                    <p className="text-xs text-muted-foreground italic line-clamp-1">{article.subtitulo}</p>
+                  )}
+                  <p className="text-sm text-muted-foreground line-clamp-1">{article.resumo}</p>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    <Badge variant="outline" className="text-xs">{article.categoria}</Badge>
+                    {article.fonte && (
+                      <Badge variant="secondary" className="text-xs">
+                        {(() => {
+                          try {
+                            return new URL(article.fonte).hostname.replace('www.', '');
+                          } catch {
+                            return 'fonte';
+                          }
+                        })()}
+                      </Badge>
+                    )}
+                    {article.editor && (
+                      <Badge variant="outline" className="text-xs text-muted-foreground">
+                        Ed: {article.editor}
+                      </Badge>
+                    )}
+                    {missingFields.length > 0 && (
+                      <Badge variant="outline" className="text-xs text-amber-600 border-amber-300 bg-amber-50">
+                        -{missingFields.length} campos
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setPreviewIndex(index)}
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+              </div>
+            );
+          })}
         </CardContent>
       </Card>
 
