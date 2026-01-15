@@ -38,6 +38,7 @@ interface ManualData {
     alt: string; 
     credito: string;
     galeria?: string[];  // Imagens adicionais da galeria
+    galeriaSelected?: boolean[];  // Seleção de imagens
   };
   seo: { meta_titulo: string; meta_descricao: string };
   fonte?: string;
@@ -229,7 +230,9 @@ export default function NoticiasAI() {
           status: 'published',
           published_at: new Date().toISOString(),
           origin: 'ai',
-          gallery_urls: article.imagem?.galeria || [],
+          gallery_urls: article.imagem?.galeria?.filter((_, idx) => 
+            article.imagem?.galeriaSelected?.[idx] !== false
+          ) || [],
         })
         .select()
         .single();
@@ -528,6 +531,13 @@ export default function NoticiasAI() {
                   onAutoFixChange={setAutoFixEnabled}
                   onImport={handleImport}
                   isImporting={isImporting}
+                  onDataChange={setJsonData}
+                  onArticleUpdate={(index, article) => {
+                    if (!jsonData) return;
+                    const updated = [...jsonData.noticias];
+                    updated[index] = article;
+                    setJsonData({ noticias: updated });
+                  }}
                 />
               </TabsContent>
 
