@@ -180,14 +180,20 @@ export function ImageUploader({
       {value && (
         <div className="space-y-3">
           <div>
-            <Label htmlFor="image-alt" className="text-xs">Texto Alternativo (Alt)</Label>
+            <Label htmlFor="image-alt" className="text-xs flex items-center gap-1">
+              <span className="text-primary">♿</span>
+              Texto Alternativo (Alt) *
+            </Label>
             <Input
               id="image-alt"
               value={alt}
               onChange={(e) => onAltChange?.(e.target.value)}
-              placeholder="Descrição da imagem para acessibilidade"
+              placeholder="Descreva a imagem para pessoas com deficiência visual"
               className="mt-1"
             />
+            <p className="text-xs text-muted-foreground mt-1">
+              💡 Dica: Descreva O QUE aparece na imagem (pessoas, objetos, ações) de forma clara e objetiva para leitores de tela. Ex: "Prefeito João Silva discursa em cerimônia no pátio da Prefeitura."
+            </p>
           </div>
           <div>
             <Label htmlFor="image-credit" className="text-xs">Crédito</Label>

@@ -4824,6 +4824,7 @@ export type Database = {
           audio_voice_id: string | null
           author_id: string | null
           auto_generate_podcast: boolean | null
+          auto_generate_webstory: boolean | null
           auto_publish_podcast: boolean | null
           card_image_url: string | null
           category_id: string | null
@@ -4841,7 +4842,10 @@ export type Database = {
           id: string
           image_alt: string | null
           image_credit: string | null
+          is_featured: boolean | null
+          is_home_highlight: boolean | null
           is_indexable: boolean | null
+          is_urgent: boolean | null
           meta_description: string | null
           meta_keywords: string[] | null
           meta_title: string | null
@@ -4880,6 +4884,7 @@ export type Database = {
           audio_voice_id?: string | null
           author_id?: string | null
           auto_generate_podcast?: boolean | null
+          auto_generate_webstory?: boolean | null
           auto_publish_podcast?: boolean | null
           card_image_url?: string | null
           category_id?: string | null
@@ -4897,7 +4902,10 @@ export type Database = {
           id?: string
           image_alt?: string | null
           image_credit?: string | null
+          is_featured?: boolean | null
+          is_home_highlight?: boolean | null
           is_indexable?: boolean | null
+          is_urgent?: boolean | null
           meta_description?: string | null
           meta_keywords?: string[] | null
           meta_title?: string | null
@@ -4936,6 +4944,7 @@ export type Database = {
           audio_voice_id?: string | null
           author_id?: string | null
           auto_generate_podcast?: boolean | null
+          auto_generate_webstory?: boolean | null
           auto_publish_podcast?: boolean | null
           card_image_url?: string | null
           category_id?: string | null
@@ -4953,7 +4962,10 @@ export type Database = {
           id?: string
           image_alt?: string | null
           image_credit?: string | null
+          is_featured?: boolean | null
+          is_home_highlight?: boolean | null
           is_indexable?: boolean | null
+          is_urgent?: boolean | null
           meta_description?: string | null
           meta_keywords?: string[] | null
           meta_title?: string | null
