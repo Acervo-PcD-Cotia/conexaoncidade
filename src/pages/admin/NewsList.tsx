@@ -298,7 +298,13 @@ export default function NewsList() {
                     />
                   </TableCell>
                   <TableCell>
-                    <div className="font-medium line-clamp-1">{item.title}</div>
+                    <Link 
+                      to={`/noticia/${item.slug}`} 
+                      target="_blank"
+                      className="block hover:text-primary transition-colors"
+                    >
+                      <div className="font-medium line-clamp-1 hover:underline">{item.title}</div>
+                    </Link>
                     <div className="text-sm text-muted-foreground line-clamp-1">
                       /{item.slug}
                     </div>

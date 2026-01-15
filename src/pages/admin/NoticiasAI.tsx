@@ -46,6 +46,10 @@ interface ManualData {
   chapeu?: string;        // Categoria em maiúsculas
   editor?: string;        // Nome do editor
   destaque?: 'none' | 'home' | 'featured' | 'urgent';
+  // New boolean highlight fields
+  is_home_highlight?: boolean;
+  is_urgent?: boolean;
+  is_featured?: boolean;
 }
 
 interface JsonData {
@@ -211,7 +215,7 @@ export default function NoticiasAI() {
       const chapeu = article.chapeu || article.categoria?.toUpperCase() || null;
       const sanitizedSource = sanitizeSource(article.fonte);
 
-      // Insert news with extended fields, fallbacks and gallery
+      // Insert news with extended fields, fallbacks, gallery and boolean highlights
       const { data: news, error: newsError } = await supabase
         .from('news')
         .insert({
@@ -233,6 +237,10 @@ export default function NoticiasAI() {
           author_id: user.id,
           editor_name: editorName,
           highlight: article.destaque || 'none',
+          // Boolean highlight fields
+          is_home_highlight: article.is_home_highlight || false,
+          is_urgent: article.is_urgent || false,
+          is_featured: article.is_featured || false,
           status: 'published',
           published_at: new Date().toISOString(),
           origin: 'ai',
