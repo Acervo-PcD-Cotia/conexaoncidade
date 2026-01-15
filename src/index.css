@@ -249,13 +249,14 @@
     line-height: 1.9;
   }
 
-  /* Primeiro parágrafo (lide) em negrito */
+  /* First paragraph (lead) - normal weight per Agência Brasil */
   .prose-news > p:first-of-type {
-    @apply font-semibold;
+    @apply font-normal;
   }
 
+  /* If lead is wrapped in <strong>, respect it */
   .prose-news > p:first-of-type strong {
-    @apply font-semibold;
+    @apply font-bold;
   }
 
   .prose-news p {
@@ -282,11 +283,14 @@
     @apply mb-2;
   }
 
-  /* Blockquote - Estilo Agência Brasil: borda sutil, fundo discreto */
+  /* Blockquote - Agência Brasil Style (dark blue border) */
   .prose-news blockquote {
-    @apply border-l-4 border-muted-foreground/40 pl-6 py-4 my-8 
-           text-lg text-muted-foreground bg-muted/30;
+    @apply border-l-4 pl-6 py-6 my-10 text-xl;
+    border-color: #1a3c6e;
+    background: hsl(var(--muted) / 0.2);
+    color: hsl(var(--foreground) / 0.9);
     font-style: italic;
+    line-height: 1.6;
   }
 
   .prose-news blockquote::before {
@@ -294,7 +298,8 @@
   }
 
   .prose-news blockquote p {
-    @apply mb-0 text-muted-foreground;
+    @apply mb-0;
+    color: hsl(var(--foreground) / 0.9);
   }
 
   /* Images - No rounded corners for editorial feel */
@@ -303,18 +308,14 @@
     border-radius: 0;
   }
 
-  /* Links - Negrito + Sublinhado (padrão Agência Brasil) */
+  /* Links - Bold + Underline (Agência Brasil style) */
   .prose-news a {
-    @apply font-bold text-foreground underline 
-           hover:text-primary transition-colors;
+    @apply font-bold underline transition-colors;
+    color: hsl(var(--foreground));
   }
 
-  /* Links de redes sociais mantêm estilo consistente */
-  .prose-news a[href*="twitter.com"],
-  .prose-news a[href*="x.com"],
-  .prose-news a[href*="instagram.com"],
-  .prose-news a[href*="facebook.com"] {
-    @apply font-bold underline;
+  .prose-news a:hover {
+    color: hsl(var(--primary));
   }
 
   .prose-news figure {

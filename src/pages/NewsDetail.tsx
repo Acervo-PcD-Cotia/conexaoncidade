@@ -332,12 +332,11 @@ function NewsDetailContent({ news }: NewsDetailContentProps) {
           style={{ backgroundColor: headerBgColor }}
         >
           <div className="container max-w-4xl text-center">
-            {/* Category Badge */}
+            {/* Category Badge - Solid Red (Agência Brasil Style) */}
             {news.category && (
               <Link to={`/categoria/${news.category.slug}`}>
                 <Badge
-                  className="mb-4 bg-white/20 hover:bg-white/30 text-white border-white/30 text-xs uppercase tracking-widest"
-                  variant="outline"
+                  className="mb-4 bg-red-600 hover:bg-red-700 text-white border-0 text-xs uppercase tracking-widest px-3 py-1"
                 >
                   {news.category.name}
                 </Badge>
@@ -365,19 +364,17 @@ function NewsDetailContent({ news }: NewsDetailContentProps) {
         <div className="border-b bg-card">
           <div className="container max-w-4xl py-4">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              {/* Author Info */}
+              {/* Author Info - Agência Brasil Style */}
               <div className="space-y-1">
                 <p className="font-bold text-foreground uppercase tracking-wide text-sm">
                   {news.author?.full_name || 'Redação'}
+                  {news.source && !news.source.startsWith('http') && (
+                    <span className="font-normal"> – {news.source}</span>
+                  )}
                 </p>
                 {news.published_at && (
                   <p className="text-sm text-muted-foreground">
-                    Publicado em {format(new Date(news.published_at), "dd/MM/yyyy '-' HH:mm", { locale: ptBR })}
-                  </p>
-                )}
-                {news.source && (
-                  <p className="text-sm text-muted-foreground">
-                    {news.source}
+                    Publicado em {format(new Date(news.published_at), "dd/MM/yyyy '-' HH:mm", { locale: ptBR })} • Brasília
                   </p>
                 )}
               </div>
