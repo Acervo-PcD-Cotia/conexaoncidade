@@ -266,19 +266,6 @@ export function AdminSidebar() {
           </SidebarGroup>
         )}
       </SidebarContent>
-
-      <SidebarFooter className="border-t p-4">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <NavLink to="/" className="flex items-center gap-2 text-muted-foreground">
-                <Home className="h-4 w-4" />
-                {!collapsed && <span>Voltar ao site</span>}
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
     </Sidebar>
   );
 }

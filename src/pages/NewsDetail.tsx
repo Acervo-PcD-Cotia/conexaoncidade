@@ -6,8 +6,7 @@ import { ShareButtons } from '@/components/news/ShareButtons';
 import { AuthorCard } from '@/components/news/AuthorCard';
 import { RelatedNews } from '@/components/news/RelatedNews';
 import { NewsAudioBlock } from '@/components/news/NewsAudioBlock';
-import { NewsSummaryBlock } from '@/components/news/NewsSummaryBlock';
-import { NewsTableOfContents } from '@/components/news/NewsTableOfContents';
+import { NewsContentNavigator } from '@/components/news/NewsContentNavigator';
 import { ReadingProgressBar } from '@/components/news/ReadingProgressBar';
 import { FactCheckCTA } from '@/components/news/FactCheckCTA';
 import { PrintButton } from '@/components/news/PrintButton';
@@ -453,24 +452,16 @@ function NewsDetailContent({ news }: NewsDetailContentProps) {
             onPodcastPlay={trackPodcastPlay}
           />
 
-          {/* Summary Block */}
-          <NewsSummaryBlock
+          {/* Unified Summary + Table of Contents Navigator */}
+          <NewsContentNavigator
             summaryShort={news.summary_short}
             summaryMedium={news.summary_medium}
             keyPoints={news.ai_summary_bullets}
-            generatedAt={news.ai_summary_generated_at}
+            contentHtml={news.content}
+            onSummaryExpand={trackSummaryExpand}
+            onTocClick={trackTocClick}
             className="mb-8"
-            onExpand={trackSummaryExpand}
           />
-
-          {/* Table of Contents */}
-          {news.content && (
-            <NewsTableOfContents 
-              contentHtml={news.content} 
-              className="mb-8"
-              onItemClick={trackTocClick}
-            />
-          )}
 
           {/* Main Content */}
           <section 

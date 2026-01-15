@@ -1,4 +1,5 @@
-import { Bell, Search, LogOut } from "lucide-react";
+import { Bell, Search, LogOut, ExternalLink } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useRequireRole";
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,20 @@ export function AdminHeader() {
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
+        {/* Voltar ao site */}
+        <Button
+          variant="ghost"
+          size="sm"
+          asChild
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <Link to="/" className="flex items-center gap-2">
+            <ExternalLink className="h-4 w-4" />
+            <span className="hidden md:inline">Voltar ao site</span>
+          </Link>
+        </Button>
+
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
           <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] text-destructive-foreground">
