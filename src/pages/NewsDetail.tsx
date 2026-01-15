@@ -11,12 +11,14 @@ import { NewsTableOfContents } from '@/components/news/NewsTableOfContents';
 import { ReadingProgressBar } from '@/components/news/ReadingProgressBar';
 import { FactCheckCTA } from '@/components/news/FactCheckCTA';
 import { PrintButton } from '@/components/news/PrintButton';
+import { ImageLightbox } from '@/components/ui/image-lightbox';
+import { NewsGallery } from '@/components/news/NewsGallery';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ArrowLeft, RefreshCw } from 'lucide-react';
+import { ArrowLeft, RefreshCw, ZoomIn } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useReadingTracker } from '@/hooks/useReadingTracker';
 import { useNewsAnalytics } from '@/hooks/useNewsAnalytics';
@@ -422,21 +424,12 @@ function NewsDetailContent({ news }: NewsDetailContentProps) {
             </figure>
           )}
 
-          {/* Gallery Images - Additional images from source */}
-          {news.gallery_urls && news.gallery_urls.length > 0 && (
-            <div className="grid grid-cols-2 gap-4 mb-8">
-              {news.gallery_urls.map((imgUrl, idx) => (
-                <figure key={idx} className="relative">
-                  <img 
-                    src={imgUrl} 
-                    alt={`Imagem ${idx + 2} da notícia`}
-                    className="w-full object-cover rounded aspect-video"
-                    loading="lazy"
-                  />
-                </figure>
-              ))}
-            </div>
-          )}
+          {/* Gallery Images - Additional images from source with Lightbox */}
+          <NewsGallery 
+            heroImage={news.featured_image_url}
+            galleryUrls={news.gallery_urls}
+            imageAlt={news.image_alt}
+          />
 
           {/* Audio Block - Dark Style (dois players: leitura + podcast) */}
           <NewsAudioBlock
