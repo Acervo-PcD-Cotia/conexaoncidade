@@ -392,8 +392,7 @@ FORMATO JSON COMPLETO:
       "meta_titulo": "Meta título otimizado (max 60 chars)",
       "meta_descricao": "Meta descrição com palavras-chave (max 160 chars)"
     },
-    "fonte": "URL da fonte original",
-    "editor": "Nome do Editor"
+    "fonte": "URL da fonte original"
   }]
 }`;
     
