@@ -66,14 +66,18 @@ export default function NewsEditor() {
     image_alt: "",
     image_credit: "",
     category_id: "",
-    status: "draft" as "draft" | "published" | "scheduled" | "archived" | "trash" | "review" | "approved",
+    status: "published" as "draft" | "published" | "scheduled" | "archived" | "trash" | "review" | "approved",
     highlight: "none" as "none" | "home" | "urgent" | "featured",
+    is_home_highlight: false,
+    is_urgent: false,
+    is_featured: false,
     meta_title: "",
     meta_description: "",
     scheduled_at: "",
     is_indexable: true,
-    auto_generate_podcast: false,
-    auto_publish_podcast: false,
+    auto_generate_podcast: true,
+    auto_publish_podcast: true,
+    auto_generate_webstory: true,
     editor_name: "",
   });
 
@@ -202,14 +206,18 @@ export default function NewsEditor() {
         image_alt: news.image_alt || "",
         image_credit: news.image_credit || "",
         category_id: news.category_id || "",
-        status: news.status || "draft",
+        status: news.status || "published",
         highlight: news.highlight || "none",
+        is_home_highlight: (news as any).is_home_highlight || false,
+        is_urgent: (news as any).is_urgent || false,
+        is_featured: (news as any).is_featured || false,
         meta_title: news.meta_title || "",
         meta_description: news.meta_description || "",
         scheduled_at: news.scheduled_at || "",
         is_indexable: news.is_indexable !== false,
-        auto_generate_podcast: news.auto_generate_podcast || false,
-        auto_publish_podcast: news.auto_publish_podcast || false,
+        auto_generate_podcast: news.auto_generate_podcast ?? true,
+        auto_publish_podcast: news.auto_publish_podcast ?? true,
+        auto_generate_webstory: (news as any).auto_generate_webstory ?? true,
         editor_name: news.editor_name || "",
       });
       setLastSaved(new Date(news.updated_at));
@@ -619,17 +627,39 @@ export default function NewsEditor() {
                   <Input type="datetime-local" value={formData.scheduled_at?.slice(0, 16) || ""} onChange={(e) => updateField("scheduled_at", e.target.value ? new Date(e.target.value).toISOString() : "")} />
                 </div>
               )}
-              <div>
-                <Label>Destaque</Label>
-                <Select value={formData.highlight} onValueChange={(v) => updateField("highlight", v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhum</SelectItem>
-                    <SelectItem value="home">Home</SelectItem>
-                    <SelectItem value="urgent">Urgente</SelectItem>
-                    <SelectItem value="featured">Manchete</SelectItem>
-                  </SelectContent>
-                </Select>
+              {/* Destaques Individuais */}
+              <div className="pt-4 border-t space-y-3">
+                <p className="text-sm font-medium">⭐ Destaques</p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-sm">Home</Label>
+                    <p className="text-xs text-muted-foreground">Exibir na página inicial</p>
+                  </div>
+                  <Switch
+                    checked={formData.is_home_highlight}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_home_highlight: checked }))}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-sm">Urgente</Label>
+                    <p className="text-xs text-muted-foreground">Marcar como notícia urgente</p>
+                  </div>
+                  <Switch
+                    checked={formData.is_urgent}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_urgent: checked }))}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-sm">Manchete</Label>
+                    <p className="text-xs text-muted-foreground">Destaque principal do dia</p>
+                  </div>
+                  <Switch
+                    checked={formData.is_featured}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_featured: checked }))}
+                  />
+                </div>
               </div>
               <div>
                 <Label>Categoria *</Label>
@@ -671,16 +701,23 @@ export default function NewsEditor() {
                 </div>
               </div>
 
-              {/* WebStory Generation - só mostra se editando notícia existente */}
-              {isEditing && id && (
-                <div className="pt-4 border-t space-y-3">
-                  <p className="text-sm font-medium flex items-center gap-2">
-                    <Smartphone className="h-4 w-4" />
-                    WebStory
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Gere automaticamente um WebStory de 5 slides a partir desta notícia
-                  </p>
+              {/* WebStory Automation */}
+              <div className="pt-4 border-t space-y-3">
+                <p className="text-sm font-medium flex items-center gap-2">
+                  <Smartphone className="h-4 w-4" />
+                  WebStory
+                </p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-sm">Gerar WebStory ao publicar</Label>
+                    <p className="text-xs text-muted-foreground">Cria story de 5 slides automaticamente</p>
+                  </div>
+                  <Switch
+                    checked={formData.auto_generate_webstory}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, auto_generate_webstory: checked }))}
+                  />
+                </div>
+                {isEditing && id && (
                   <GenerateStoryButton
                     newsId={id}
                     newsTitle={formData.title}
@@ -690,8 +727,8 @@ export default function NewsEditor() {
                     newsCategory={categories?.find(c => c.id === formData.category_id)?.name}
                     disabled={!formData.title || !formData.slug}
                   />
-                </div>
-              )}
+                )}
+              </div>
             </CardContent>
           </Card>
 
