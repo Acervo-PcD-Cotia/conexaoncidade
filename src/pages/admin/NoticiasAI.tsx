@@ -171,6 +171,20 @@ export default function NoticiasAI() {
     }
   };
 
+  // Helper: Check if string is an image URL
+  const isImageUrl = (url?: string): boolean => {
+    if (!url) return false;
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'];
+    return imageExtensions.some(ext => url.toLowerCase().includes(ext));
+  };
+
+  // Helper: Sanitize source - remove image URLs
+  const sanitizeSource = (source?: string): string | null => {
+    if (!source) return null;
+    if (isImageUrl(source)) return null;
+    return source;
+  };
+
   // Import single article
   const importArticle = async (article: ManualData): Promise<boolean> => {
     if (!user) return false;
@@ -183,14 +197,20 @@ export default function NoticiasAI() {
         .ilike('name', article.categoria)
         .single();
 
-      // Insert news with extended fields
+      // Fallbacks for required fields
+      const subtitle = article.subtitulo || article.resumo?.substring(0, 100) || null;
+      const editorName = article.editor || 'Redação Conexão na Cidade';
+      const chapeu = article.chapeu || article.categoria?.toUpperCase() || null;
+      const sanitizedSource = sanitizeSource(article.fonte);
+
+      // Insert news with extended fields and fallbacks
       const { data: news, error: newsError } = await supabase
         .from('news')
         .insert({
           title: article.titulo,
           slug: article.slug,
-          subtitle: article.subtitulo || null,
-          hat: article.chapeu || null,
+          subtitle: subtitle,
+          hat: chapeu,
           excerpt: article.resumo,
           content: article.conteudo,
           category_id: category?.id || null,
@@ -201,9 +221,9 @@ export default function NoticiasAI() {
           image_credit: article.imagem?.credito,
           meta_title: article.seo?.meta_titulo,
           meta_description: article.seo?.meta_descricao,
-          source: article.fonte,
+          source: sanitizedSource,
           author_id: user.id,
-          editor_name: article.editor || null,
+          editor_name: editorName,
           highlight: article.destaque || 'none',
           status: 'published',
           published_at: new Date().toISOString(),
