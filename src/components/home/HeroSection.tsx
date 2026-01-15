@@ -96,7 +96,7 @@ export function HeroSection() {
                 {heroNews.hat}
               </Badge>
             )}
-            {heroNews.highlight === "urgent" && (
+            {((heroNews as any).is_urgent || heroNews.highlight === "urgent") && (
               <Badge className="bg-destructive text-destructive-foreground text-xs animate-pulse">
                 URGENTE
               </Badge>

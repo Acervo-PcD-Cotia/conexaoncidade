@@ -378,7 +378,7 @@ export function useFeaturedNews(limit = 5) {
         `)
         .eq('status', 'published')
         .is('deleted_at', null)
-        .in('highlight', ['home', 'featured', 'urgent'])
+        .or('is_home_highlight.eq.true,is_urgent.eq.true,is_featured.eq.true,highlight.in.(home,featured,urgent)')
         .order('published_at', { ascending: false })
         .limit(limit);
 
