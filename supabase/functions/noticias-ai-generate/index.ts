@@ -5,10 +5,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+interface HighlightSettings {
+  is_home_highlight: boolean;
+  is_urgent: boolean;
+  is_featured: boolean;
+}
+
 interface GenerateRequest {
   mode: 'exclusiva' | 'manual' | 'json' | 'url' | 'batch' | 'auto';
   content: string;
-  imageUrl?: string;
+  imageUrls?: string[];
+  highlights?: HighlightSettings;
   autoFixLide?: boolean;
 }
 
@@ -36,6 +43,9 @@ interface NewsArticle {
   chapeu?: string;
   editor?: string;
   destaque?: 'none' | 'home' | 'featured' | 'urgent';
+  is_home_highlight?: boolean;
+  is_urgent?: boolean;
+  is_featured?: boolean;
 }
 
 // Helper: Check if string is an image URL
@@ -266,14 +276,36 @@ serve(async (req) => {
   
   try {
     const body: GenerateRequest = await req.json();
-    let { mode, content, imageUrl, autoFixLide = true } = body;
+    let { mode, content, imageUrls, highlights, autoFixLide = true } = body;
+    
+    // Helper to apply highlights to article
+    const applyHighlights = (article: any) => {
+      if (highlights) {
+        article.is_home_highlight = highlights.is_home_highlight;
+        article.is_urgent = highlights.is_urgent;
+        article.is_featured = highlights.is_featured;
+      }
+      return article;
+    };
+    
+    // Helper to apply images to article
+    const applyImages = (article: any, imgs?: string[]) => {
+      if (imgs && imgs.length > 0) {
+        article.imagem = {
+          ...article.imagem,
+          hero: imgs[0],
+          galeria: imgs.slice(1)
+        };
+      }
+      return article;
+    };
     
     // Auto-detect mode if not specified
     if (mode === 'auto' || !mode) {
       mode = detectMode(content) as GenerateRequest['mode'];
     }
     
-    console.log(`Processing with mode: ${mode}`);
+    console.log(`Processing with mode: ${mode}, images: ${imageUrls?.length || 0}, highlights: ${JSON.stringify(highlights)}`);
     
     const systemPrompt = `Você é um jornalista experiente seguindo o padrão editorial da Agência Brasil.
 
@@ -343,21 +375,23 @@ FORMATO JSON COMPLETO:
       case 'exclusiva': {
         // Preserve original text, just format it
         const cleanContent = content.replace(/^EXCLUSIVA\s*/i, '').trim();
+        let article: any = {
+          titulo: cleanContent.split('\n')[0].substring(0, 100),
+          slug: generateSlug(cleanContent.split('\n')[0]),
+          resumo: cleanContent.substring(0, 160),
+          conteudo: `<p>${cleanContent.split('\n').join('</p><p>')}</p>`,
+          categoria: 'Cidade',
+          fonte: '',
+          imagem: { hero: imageUrls?.[0] || '', alt: '', credito: '', galeria: imageUrls?.slice(1) || [] },
+          seo: {
+            meta_titulo: cleanContent.split('\n')[0].substring(0, 60),
+            meta_descricao: cleanContent.substring(0, 160)
+          }
+        };
+        article = applyHighlights(article);
         result = {
           mode: 'exclusiva',
-          manual: {
-            titulo: cleanContent.split('\n')[0].substring(0, 100),
-            slug: generateSlug(cleanContent.split('\n')[0]),
-            resumo: cleanContent.substring(0, 160),
-            conteudo: `<p>${cleanContent.split('\n').join('</p><p>')}</p>`,
-            categoria: 'Cidade',
-            fonte: '',
-            imagem: { hero: imageUrl || '', alt: '', credito: '', galeria: [] },
-            seo: {
-              meta_titulo: cleanContent.split('\n')[0].substring(0, 60),
-              meta_descricao: cleanContent.substring(0, 160)
-            }
-          }
+          manual: article
         };
         break;
       }
@@ -366,15 +400,15 @@ FORMATO JSON COMPLETO:
         const cleanContent = content.replace(/^CADASTRO MANUAL\s*/i, '').trim();
         const aiResult = await generateWithAI(cleanContent, systemPrompt);
         const parsed = JSON.parse(aiResult.replace(/```json\n?|\n?```/g, ''));
-        const article = parsed.noticias[0];
+        let article = parsed.noticias[0];
+        
+        article = applyImages(article, imageUrls);
+        article = applyHighlights(article);
+        article.conteudo = autoFixLide ? autoFixFirstParagraph(article.conteudo) : article.conteudo;
         
         result = {
           mode: 'manual',
-          manual: {
-            ...article,
-            conteudo: autoFixLide ? autoFixFirstParagraph(article.conteudo) : article.conteudo,
-            imagem: { ...article.imagem, hero: imageUrl || article.imagem.hero, galeria: [] }
-          }
+          manual: article
         };
         break;
       }
@@ -386,12 +420,17 @@ FORMATO JSON COMPLETO:
         
         // Ensure required fields and auto-fix lide
         if (parsed.noticias) {
-          parsed.noticias = parsed.noticias.map((article: NewsArticle) => {
-            const enriched = ensureRequiredFields(article);
-            return {
-              ...enriched,
-              conteudo: autoFixLide ? autoFixFirstParagraph(enriched.conteudo) : enriched.conteudo
-            };
+          parsed.noticias = parsed.noticias.map((article: NewsArticle, idx: number) => {
+            let enriched = ensureRequiredFields(article);
+            enriched.conteudo = autoFixLide ? autoFixFirstParagraph(enriched.conteudo) : enriched.conteudo;
+            
+            // Apply images and highlights to first article only
+            if (idx === 0) {
+              enriched = applyImages(enriched, imageUrls);
+              enriched = applyHighlights(enriched);
+            }
+            
+            return enriched;
           });
         }
         
@@ -424,14 +463,19 @@ FORMATO JSON COMPLETO:
           // Ensure required fields with fallbacks and add source link
           parsed.noticias[0] = ensureRequiredFields(parsed.noticias[0], url);
           
-          // Set images with gallery
-          if (extracted.allImages.length > 0) {
+          // Set images: user-provided or extracted
+          if (imageUrls && imageUrls.length > 0) {
+            parsed.noticias[0] = applyImages(parsed.noticias[0], imageUrls);
+          } else if (extracted.allImages.length > 0) {
             parsed.noticias[0].imagem = {
               ...parsed.noticias[0].imagem,
               hero: extracted.allImages[0],
-              galeria: extracted.allImages.slice(1) // Additional images
+              galeria: extracted.allImages.slice(1)
             };
           }
+          
+          // Apply highlights
+          parsed.noticias[0] = applyHighlights(parsed.noticias[0]);
           
           if (autoFixLide) {
             parsed.noticias[0].conteudo = autoFixFirstParagraph(parsed.noticias[0].conteudo);
@@ -451,7 +495,8 @@ FORMATO JSON COMPLETO:
         const results: any[] = [];
         const errors: string[] = [];
         
-        for (const url of urls) {
+        for (let i = 0; i < urls.length; i++) {
+          const url = urls[i];
           try {
             const extracted = await extractFromUrl(url.trim());
             
@@ -470,12 +515,15 @@ FORMATO JSON COMPLETO:
               // Ensure required fields with fallbacks and add source link
               let article = ensureRequiredFields(parsed.noticias[0], url.trim());
               
-              // Set images with gallery
-              if (extracted.allImages.length > 0) {
+              // Set images: user-provided (only first URL) or extracted
+              if (i === 0 && imageUrls && imageUrls.length > 0) {
+                article = applyImages(article, imageUrls);
+                article = applyHighlights(article);
+              } else if (extracted.allImages.length > 0) {
                 article.imagem = {
                   ...article.imagem,
                   hero: extracted.allImages[0],
-                  galeria: extracted.allImages.slice(1) // Additional images
+                  galeria: extracted.allImages.slice(1)
                 };
               }
               
@@ -503,6 +551,7 @@ FORMATO JSON COMPLETO:
         break;
       }
       
+      
       default: {
         // Auto mode - let AI decide
         const aiResult = await generateWithAI(content, systemPrompt);
@@ -510,12 +559,17 @@ FORMATO JSON COMPLETO:
         
         // Ensure required fields and auto-fix lide
         if (parsed.noticias) {
-          parsed.noticias = parsed.noticias.map((article: NewsArticle) => {
-            const enriched = ensureRequiredFields(article);
-            return {
-              ...enriched,
-              conteudo: autoFixLide ? autoFixFirstParagraph(enriched.conteudo) : enriched.conteudo
-            };
+          parsed.noticias = parsed.noticias.map((article: NewsArticle, idx: number) => {
+            let enriched = ensureRequiredFields(article);
+            enriched.conteudo = autoFixLide ? autoFixFirstParagraph(enriched.conteudo) : enriched.conteudo;
+            
+            // Apply images and highlights to first article only
+            if (idx === 0) {
+              enriched = applyImages(enriched, imageUrls);
+              enriched = applyHighlights(enriched);
+            }
+            
+            return enriched;
           });
         }
         
