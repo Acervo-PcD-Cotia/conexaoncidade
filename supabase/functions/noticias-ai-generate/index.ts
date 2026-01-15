@@ -409,8 +409,13 @@ FORMATO JSON COMPLETO:
         const url = content.trim();
         const extracted = await extractFromUrl(url);
         
+        // Calculate character limits (95%-105% of original)
+        const charCount = extracted.content.length;
+        const minChars = Math.floor(charCount * 0.95);
+        const maxChars = Math.ceil(charCount * 1.05);
+        
         const aiResult = await generateWithAI(
-          `URL: ${url}\nTítulo: ${extracted.title}\nConteúdo (${extracted.wordCount} palavras - mantenha tamanho similar): ${extracted.content}\n\nIMPORTANTE: NÃO inclua URLs de imagens no texto. Mantenha aproximadamente ${extracted.wordCount} palavras.`,
+          `URL: ${url}\nTítulo: ${extracted.title}\nConteúdo Original (${charCount} caracteres, ${extracted.wordCount} palavras):\n${extracted.content}\n\n⚠️ REGRA CRÍTICA DE TAMANHO:\n- A matéria original tem ${charCount} caracteres\n- Sua reescrita DEVE ter entre ${minChars} e ${maxChars} caracteres (95%-105% do original)\n- NÃO encurte a matéria. NÃO omita informações.\n- NÃO inclua URLs de imagens no texto.`,
           systemPrompt
         );
         let parsed = JSON.parse(aiResult.replace(/```json\n?|\n?```/g, ''));
@@ -449,8 +454,14 @@ FORMATO JSON COMPLETO:
         for (const url of urls) {
           try {
             const extracted = await extractFromUrl(url.trim());
+            
+            // Calculate character limits (95%-105% of original)
+            const charCount = extracted.content.length;
+            const minChars = Math.floor(charCount * 0.95);
+            const maxChars = Math.ceil(charCount * 1.05);
+            
             const aiResult = await generateWithAI(
-              `URL: ${url}\nTítulo: ${extracted.title}\nConteúdo (${extracted.wordCount} palavras - mantenha tamanho similar): ${extracted.content}\n\nIMPORTANTE: NÃO inclua URLs de imagens no texto. Mantenha aproximadamente ${extracted.wordCount} palavras.`,
+              `URL: ${url}\nTítulo: ${extracted.title}\nConteúdo Original (${charCount} caracteres, ${extracted.wordCount} palavras):\n${extracted.content}\n\n⚠️ REGRA CRÍTICA DE TAMANHO:\n- A matéria original tem ${charCount} caracteres\n- Sua reescrita DEVE ter entre ${minChars} e ${maxChars} caracteres (95%-105% do original)\n- NÃO encurte a matéria. NÃO omita informações.\n- NÃO inclua URLs de imagens no texto.`,
               systemPrompt
             );
             let parsed = JSON.parse(aiResult.replace(/```json\n?|\n?```/g, ''));

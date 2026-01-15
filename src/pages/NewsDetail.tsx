@@ -152,6 +152,11 @@ function NewsDetailContent({ news }: NewsDetailContentProps) {
   // Client-side URL to avoid hydration mismatch
   const [currentUrl, setCurrentUrl] = useState('');
   
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, []);
+  
   useEffect(() => {
     setCurrentUrl(window.location.href);
   }, []);

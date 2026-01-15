@@ -261,8 +261,14 @@ serve(async (req) => {
       const batchResults = await Promise.allSettled(
         batch.map(async (url) => {
           const extracted = await extractFromUrl(url.trim());
+          
+          // Calculate character limits (95%-105% of original)
+          const charCount = extracted.content.length;
+          const minChars = Math.floor(charCount * 0.95);
+          const maxChars = Math.ceil(charCount * 1.05);
+          
           const article = await generateWithAI(
-            `URL: ${url}\nTítulo: ${extracted.title}\nConteúdo (${extracted.wordCount} palavras - mantenha tamanho similar): ${extracted.content}\n\nIMPORTANTE: NÃO inclua URLs de imagens no texto. Mantenha aproximadamente ${extracted.wordCount} palavras.`
+            `URL: ${url}\nTítulo: ${extracted.title}\nConteúdo Original (${charCount} caracteres, ${extracted.wordCount} palavras):\n${extracted.content}\n\n⚠️ REGRA CRÍTICA DE TAMANHO:\n- A matéria original tem ${charCount} caracteres\n- Sua reescrita DEVE ter entre ${minChars} e ${maxChars} caracteres (95%-105% do original)\n- NÃO encurte a matéria. NÃO omita informações.\n- NÃO inclua URLs de imagens no texto.`
           );
           
           // Ensure required fields with fallbacks and add source link
