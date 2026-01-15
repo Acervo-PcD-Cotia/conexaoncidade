@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, Search, Eye, Edit, Trash2, MoreHorizontal, Copy, Bot, FileEdit } from "lucide-react";
+import { Plus, Search, Eye, Edit, Trash2, MoreHorizontal, Copy, Bot, FileEdit, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -26,9 +27,11 @@ import { useNewsCreationModal } from "@/contexts/NewsCreationModalContext";
 
 export default function NewsList() {
   const [search, setSearch] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const { openModal } = useNewsCreationModal();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+
   const { data: news, isLoading } = useQuery({
     queryKey: ["admin-news", search],
     queryFn: async () => {
@@ -58,6 +61,24 @@ export default function NewsList() {
     },
     onError: () => {
       toast.error("Erro ao excluir notícia");
+    },
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase
+        .from("news")
+        .delete()
+        .in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-news"] });
+      toast.success(`${selectedIds.size} notícia(s) excluída(s) com sucesso`);
+      setSelectedIds(new Set());
+    },
+    onError: () => {
+      toast.error("Erro ao excluir notícias");
     },
   });
 
@@ -126,6 +147,28 @@ export default function NewsList() {
     },
   });
 
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (selectedIds.size === news?.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(news?.map(n => n.id)));
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (confirm(`Tem certeza que deseja excluir ${selectedIds.size} notícia(s)?`)) {
+      bulkDeleteMutation.mutate([...selectedIds]);
+    }
+  };
+
   const statusColors: Record<string, string> = {
     published: "bg-green-100 text-green-700",
     draft: "bg-yellow-100 text-yellow-700",
@@ -172,11 +215,44 @@ export default function NewsList() {
         </div>
       </div>
 
+      {/* Bulk Actions Bar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-4 p-4 bg-muted rounded-lg border">
+          <span className="font-medium">
+            {selectedIds.size} notícia(s) selecionada(s)
+          </span>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleBulkDelete}
+            disabled={bulkDeleteMutation.isPending}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Excluir selecionadas
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelectedIds(new Set())}
+          >
+            <X className="mr-2 h-4 w-4" />
+            Cancelar
+          </Button>
+        </div>
+      )}
+
       {/* Table */}
       <div className="rounded-lg border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[50px]">
+                <Checkbox
+                  checked={news?.length ? selectedIds.size === news.length : false}
+                  onCheckedChange={toggleAll}
+                  aria-label="Selecionar todas"
+                />
+              </TableHead>
               <TableHead className="w-[35%]">Título</TableHead>
               <TableHead>Categoria</TableHead>
               <TableHead>Origem</TableHead>
@@ -189,19 +265,26 @@ export default function NewsList() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
+                <TableCell colSpan={8} className="text-center py-8">
                   Carregando...
                 </TableCell>
               </TableRow>
             ) : news?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
+                <TableCell colSpan={8} className="text-center py-8">
                   Nenhuma notícia encontrada
                 </TableCell>
               </TableRow>
             ) : (
               news?.map((item) => (
-                <TableRow key={item.id}>
+                <TableRow key={item.id} className={selectedIds.has(item.id) ? "bg-muted/50" : ""}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedIds.has(item.id)}
+                      onCheckedChange={() => toggleSelection(item.id)}
+                      aria-label={`Selecionar ${item.title}`}
+                    />
+                  </TableCell>
                   <TableCell>
                     <div className="font-medium line-clamp-1">{item.title}</div>
                     <div className="text-sm text-muted-foreground line-clamp-1">
