@@ -92,11 +92,39 @@ function sanitizeContent(content: string, sourceUrl?: string): string {
 
 // Helper: Ensure article has all required fields with fallbacks
 function ensureRequiredFields(article: NewsArticle, sourceUrl?: string): NewsArticle {
+  // Generate exactly 12 tags if we have fewer
+  let tags = article.tags || [];
+  if (tags.length < 12) {
+    // Pad with category-based tags
+    const categoryTags = [
+      article.categoria || 'Notícias',
+      'Brasil',
+      'Ceará',
+      'Fortaleza',
+      'Atualidades',
+      'Informação',
+      'Destaque',
+      'Cobertura',
+      'Reportagem',
+      'Jornalismo',
+      'Cidade',
+      'Região',
+    ];
+    while (tags.length < 12 && categoryTags.length > 0) {
+      const tag = categoryTags.shift();
+      if (tag && !tags.some(t => t.toLowerCase() === tag.toLowerCase())) {
+        tags.push(tag);
+      }
+    }
+  }
+  
   return {
     ...article,
+    tags: tags.slice(0, 12),
     subtitulo: article.subtitulo || article.resumo?.substring(0, 100) || 'Saiba mais sobre esta notícia',
     chapeu: article.chapeu || article.categoria?.toUpperCase() || 'NOTÍCIAS',
-    editor: article.editor || 'Redação Conexão na Cidade',
+    // ALWAYS force editor to Redação Conexão na Cidade, ignoring AI response
+    editor: 'Redação Conexão na Cidade',
     fonte: sourceUrl || sanitizeSource(article.fonte),
     conteudo: sanitizeContent(article.conteudo, sourceUrl || article.fonte),
   };
@@ -339,7 +367,7 @@ LIMITES:
 - Resumo/excerpt: max 160 caracteres
 - Meta description: max 160 caracteres
 - Meta title: max 60 caracteres
-- Tags: max 40 chars cada, máximo 12 tags
+- Tags: EXATAMENTE 12 tags relevantes (nomes de pessoas, locais, temas, palavras-chave), max 40 chars cada
 - Categorias: Política, Economia, Esportes, Cultura, Tecnologia, Saúde, Educação, Cidade, Brasil, Mundo
 
 FORMATO JSON COMPLETO:
@@ -352,7 +380,7 @@ FORMATO JSON COMPLETO:
     "resumo": "Resumo breve (max 160 chars)",
     "conteudo": "<p><strong>Lide completo em negrito com todas as informações principais.</strong></p><h2>Intertítulo</h2><p>Desenvolvimento...</p><blockquote><p>\\"Citação longa\\"</p></blockquote><p>O ministro <strong>afirmou em entrevista.</strong></p>",
     "categoria": "Nome da categoria",
-    "tags": ["tag1", "tag2"],
+    "tags": ["tag1", "tag2", "tag3", "tag4", "tag5", "tag6", "tag7", "tag8", "tag9", "tag10", "tag11", "tag12"],
     "imagem": {
       "hero": "URL da imagem principal",
       "og": "URL imagem OG 1200x630",

@@ -211,9 +211,36 @@ export default function NoticiasAI() {
 
       // Fallbacks for required fields
       const subtitle = article.subtitulo || article.resumo?.substring(0, 100) || null;
-      const editorName = article.editor || 'Redação Conexão na Cidade';
+      // ALWAYS use Redação Conexão na Cidade, ignoring any editor from source
+      const editorName = 'Redação Conexão na Cidade';
       const chapeu = article.chapeu || article.categoria?.toUpperCase() || null;
       const sanitizedSource = sanitizeSource(article.fonte);
+      
+      // Ensure at least 12 tags
+      let tags = article.tags || [];
+      if (tags.length < 12) {
+        const fallbackTags = [
+          article.categoria || 'Notícias',
+          'Brasil',
+          'Ceará', 
+          'Fortaleza',
+          'Atualidades',
+          'Destaque',
+          'Cobertura',
+          'Reportagem',
+          'Informação',
+          'Cidade',
+          'Região',
+          'Local',
+        ];
+        for (const ft of fallbackTags) {
+          if (tags.length >= 12) break;
+          if (!tags.some(t => t.toLowerCase() === ft.toLowerCase())) {
+            tags.push(ft);
+          }
+        }
+      }
+      tags = tags.slice(0, 12);
 
       // Insert news with extended fields, fallbacks, gallery and boolean highlights
       const { data: news, error: newsError } = await supabase
@@ -279,9 +306,25 @@ export default function NoticiasAI() {
         news_id: news.id,
       });
 
-      // Insert tags if any
-      if (article.tags?.length && news) {
-        for (const tagName of article.tags.slice(0, 12)) {
+      // Trigger automatic WebStory generation if enabled
+      if (news?.auto_generate_webstory) {
+        supabase.functions.invoke('generate-webstory', {
+          body: { newsId: news.id }
+        }).then(() => console.log('WebStory generation triggered for:', news.id))
+          .catch(err => console.error('WebStory generation failed:', err));
+      }
+      
+      // Trigger automatic Podcast generation if enabled
+      if (news?.auto_generate_podcast) {
+        supabase.functions.invoke('generate-podcast', {
+          body: { newsId: news.id, autoPublish: news.auto_publish_podcast }
+        }).then(() => console.log('Podcast generation triggered for:', news.id))
+          .catch(err => console.error('Podcast generation failed:', err));
+      }
+
+      // Insert tags (using our ensured 12-tag array)
+      if (tags.length && news) {
+        for (const tagName of tags) {
           let { data: tag } = await supabase
             .from('tags')
             .select('id')

@@ -478,12 +478,6 @@ function NewsDetailContent({ news }: NewsDetailContentProps) {
 
           {/* Article Footer */}
           <footer className="border-t pt-8 space-y-8 article-footer" aria-label="Informações adicionais">
-            {/* Editor Info */}
-            <div className="text-sm text-muted-foreground">
-              <span className="font-medium">Edição:</span>{' '}
-              {news.editor_name || news.editor?.full_name || news.author?.full_name || 'Redação Conexão na Cidade'}
-            </div>
-
             {/* Tags */}
             {news.tags && news.tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
