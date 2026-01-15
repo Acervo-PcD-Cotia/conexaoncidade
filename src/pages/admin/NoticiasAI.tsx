@@ -31,9 +31,19 @@ interface ManualData {
   conteudo: string;
   categoria: string;
   tags?: string[];
-  imagem: { hero: string; alt: string; credito: string };
+  imagem: { 
+    hero: string; 
+    og?: string;      // Imagem OG/Social 1200x630
+    card?: string;    // Imagem Card 800x450
+    alt: string; 
+    credito: string 
+  };
   seo: { meta_titulo: string; meta_descricao: string };
   fonte?: string;
+  subtitulo?: string;     // Linha fina
+  chapeu?: string;        // Categoria em maiúsculas
+  editor?: string;        // Nome do editor
+  destaque?: 'none' | 'home' | 'featured' | 'urgent';
 }
 
 interface JsonData {
@@ -173,24 +183,31 @@ export default function NoticiasAI() {
         .ilike('name', article.categoria)
         .single();
 
-      // Insert news
+      // Insert news with extended fields
       const { data: news, error: newsError } = await supabase
         .from('news')
         .insert({
           title: article.titulo,
           slug: article.slug,
+          subtitle: article.subtitulo || null,
+          hat: article.chapeu || null,
           excerpt: article.resumo,
           content: article.conteudo,
           category_id: category?.id || null,
           featured_image_url: article.imagem?.hero,
+          og_image_url: article.imagem?.og || article.imagem?.hero || null,
+          card_image_url: article.imagem?.card || article.imagem?.hero || null,
           image_alt: article.imagem?.alt,
           image_credit: article.imagem?.credito,
           meta_title: article.seo?.meta_titulo,
           meta_description: article.seo?.meta_descricao,
           source: article.fonte,
           author_id: user.id,
+          editor_name: article.editor || null,
+          highlight: article.destaque || 'none',
           status: 'published',
           published_at: new Date().toISOString(),
+          origin: 'ai',
         })
         .select()
         .single();

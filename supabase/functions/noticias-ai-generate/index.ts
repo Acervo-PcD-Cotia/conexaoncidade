@@ -21,6 +21,8 @@ interface NewsArticle {
   tags: string[];
   imagem: {
     hero: string;
+    og?: string;
+    card?: string;
     alt: string;
     credito: string;
   };
@@ -29,6 +31,10 @@ interface NewsArticle {
     meta_descricao: string;
   };
   fonte: string;
+  subtitulo?: string;
+  chapeu?: string;
+  editor?: string;
+  destaque?: 'none' | 'home' | 'featured' | 'urgent';
 }
 
 function detectMode(content: string): string {
@@ -161,38 +167,56 @@ serve(async (req) => {
     
     console.log(`Processing with mode: ${mode}`);
     
-    const systemPrompt = `Você é um jornalista experiente do Brasil. Sua tarefa é reescrever e formatar notícias seguindo os padrões editoriais brasileiros.
+    const systemPrompt = `Você é um jornalista experiente seguindo o padrão editorial da Agência Brasil.
 
-REGRAS IMPORTANTES:
-1. O primeiro parágrafo (lide) DEVE estar em negrito usando a tag <strong>
-2. Use HTML semântico para formatação (<p>, <strong>, <em>, <h2>, <ul>, <li>)
-3. Mantenha o texto objetivo e jornalístico
-4. O título deve ter no máximo 100 caracteres
-5. O resumo/excerpt deve ter no máximo 160 caracteres
-6. A meta description deve ter no máximo 160 caracteres
-7. O meta title deve ter no máximo 60 caracteres
-8. Tags devem ter no máximo 40 caracteres cada, máximo 12 tags
-9. Categorias disponíveis: Política, Economia, Esportes, Cultura, Tecnologia, Saúde, Educação, Cidade, Brasil, Mundo
+REGRAS DE FORMATAÇÃO AGÊNCIA BRASIL:
+1. LIDE (1º parágrafo) SEMPRE em <strong>texto completo do lide</strong>
+2. CITAÇÕES de fontes: "declaração", <strong>afirmou Fulano em entrevista.</strong>
+3. LINKS externos: <a href="url"><strong>texto do link</strong></a> (negrito + sublinhado)
+4. INTERTÍTULOS: <h2>Título da Seção</h2> (sem decoração, sem negrito extra)
+5. BLOCKQUOTES para citações longas: <blockquote><p>"citação completa aqui"</p></blockquote>
+6. PARÁGRAFOS separados por <p>...</p>
+7. LISTAS quando apropriado: <ul><li>item</li></ul>
 
-FORMATO DE SAÍDA (JSON):
+ESTRUTURA DA NOTÍCIA:
+- Lide (quem, o quê, quando, onde, como, por quê) - OBRIGATORIAMENTE EM NEGRITO
+- Desenvolvimento com intertítulos H2
+- Citações de especialistas/autoridades
+- Contexto e repercussão
+- Conclusão ou próximos passos
+
+LIMITES:
+- Título: max 100 caracteres
+- Resumo/excerpt: max 160 caracteres
+- Meta description: max 160 caracteres
+- Meta title: max 60 caracteres
+- Tags: max 40 chars cada, máximo 12 tags
+- Categorias: Política, Economia, Esportes, Cultura, Tecnologia, Saúde, Educação, Cidade, Brasil, Mundo
+
+FORMATO JSON COMPLETO:
 {
   "noticias": [{
     "titulo": "Título da notícia (max 100 chars)",
     "slug": "titulo-em-kebab-case",
+    "subtitulo": "Linha fina descritiva que complementa o título",
+    "chapeu": "CATEGORIA EM MAIÚSCULAS",
     "resumo": "Resumo breve (max 160 chars)",
-    "conteudo": "<p><strong>Lide em negrito</strong></p><p>Resto do conteúdo...</p>",
+    "conteudo": "<p><strong>Lide completo em negrito com todas as informações principais.</strong></p><h2>Intertítulo</h2><p>Desenvolvimento...</p><blockquote><p>\\"Citação longa\\"</p></blockquote><p>O ministro <strong>afirmou em entrevista.</strong></p>",
     "categoria": "Nome da categoria",
     "tags": ["tag1", "tag2"],
     "imagem": {
-      "hero": "URL da imagem",
-      "alt": "Texto alternativo",
-      "credito": "Crédito da imagem"
+      "hero": "URL da imagem principal",
+      "og": "URL imagem OG 1200x630",
+      "card": "URL imagem card 800x450",
+      "alt": "Descrição acessível da imagem",
+      "credito": "AGÊNCIA/FOTÓGRAFO/PROIBIDA REPRODUÇÃO"
     },
     "seo": {
-      "meta_titulo": "Meta título (max 60 chars)",
-      "meta_descricao": "Meta descrição (max 160 chars)"
+      "meta_titulo": "Meta título otimizado (max 60 chars)",
+      "meta_descricao": "Meta descrição com palavras-chave (max 160 chars)"
     },
-    "fonte": "URL da fonte original"
+    "fonte": "URL da fonte original",
+    "editor": "Nome do Editor"
   }]
 }`;
     
