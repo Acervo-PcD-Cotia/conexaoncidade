@@ -422,6 +422,22 @@ function NewsDetailContent({ news }: NewsDetailContentProps) {
             </figure>
           )}
 
+          {/* Gallery Images - Additional images from source */}
+          {news.gallery_urls && news.gallery_urls.length > 0 && (
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              {news.gallery_urls.map((imgUrl, idx) => (
+                <figure key={idx} className="relative">
+                  <img 
+                    src={imgUrl} 
+                    alt={`Imagem ${idx + 2} da notícia`}
+                    className="w-full object-cover rounded aspect-video"
+                    loading="lazy"
+                  />
+                </figure>
+              ))}
+            </div>
+          )}
+
           {/* Audio Block - Dark Style (dois players: leitura + podcast) */}
           <NewsAudioBlock
             newsId={news.id}

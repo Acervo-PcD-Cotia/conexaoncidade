@@ -36,7 +36,8 @@ interface ManualData {
     og?: string;      // Imagem OG/Social 1200x630
     card?: string;    // Imagem Card 800x450
     alt: string; 
-    credito: string 
+    credito: string;
+    galeria?: string[];  // Imagens adicionais da galeria
   };
   seo: { meta_titulo: string; meta_descricao: string };
   fonte?: string;
@@ -203,7 +204,7 @@ export default function NoticiasAI() {
       const chapeu = article.chapeu || article.categoria?.toUpperCase() || null;
       const sanitizedSource = sanitizeSource(article.fonte);
 
-      // Insert news with extended fields and fallbacks
+      // Insert news with extended fields, fallbacks and gallery
       const { data: news, error: newsError } = await supabase
         .from('news')
         .insert({
@@ -228,6 +229,7 @@ export default function NoticiasAI() {
           status: 'published',
           published_at: new Date().toISOString(),
           origin: 'ai',
+          gallery_urls: article.imagem?.galeria || [],
         })
         .select()
         .single();

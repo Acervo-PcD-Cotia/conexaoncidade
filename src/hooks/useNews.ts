@@ -45,6 +45,8 @@ export interface NewsItem {
   meta_title: string | null;
   meta_description: string | null;
   og_image_url: string | null;
+  // Gallery images
+  gallery_urls?: string[] | null;
   category?: {
     id: string;
     name: string;
