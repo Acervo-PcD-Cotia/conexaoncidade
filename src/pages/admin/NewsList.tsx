@@ -71,14 +71,26 @@ export default function NewsList() {
         .delete()
         .in("id", ids);
       if (error) throw error;
+
+      // Verificar se as notícias foram realmente excluídas
+      const { data: remaining } = await supabase
+        .from("news")
+        .select("id")
+        .in("id", ids);
+
+      if (remaining && remaining.length > 0) {
+        throw new Error(`${remaining.length} notícia(s) não puderam ser excluídas. Verifique suas permissões.`);
+      }
+
+      return ids.length;
     },
-    onSuccess: () => {
+    onSuccess: (deletedCount) => {
       queryClient.invalidateQueries({ queryKey: ["admin-news"] });
-      toast.success(`${selectedIds.size} notícia(s) excluída(s) com sucesso`);
+      toast.success(`${deletedCount} notícia(s) excluída(s) com sucesso`);
       setSelectedIds(new Set());
     },
-    onError: () => {
-      toast.error("Erro ao excluir notícias");
+    onError: (error: Error) => {
+      toast.error(error.message || "Erro ao excluir notícias");
     },
   });
 
