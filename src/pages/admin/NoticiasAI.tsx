@@ -10,7 +10,7 @@ import { useNoticiasAIProgress } from '@/hooks/useNoticiasAIProgress';
 import { Card } from '@/components/ui/card';
 
 import { NoticiasAIHeader } from '@/components/admin/noticias-ai/NoticiasAIHeader';
-import { NoticiasAIInput } from '@/components/admin/noticias-ai/NoticiasAIInput';
+import { NoticiasAIInput, HighlightSettings } from '@/components/admin/noticias-ai/NoticiasAIInput';
 import { NoticiasAIManualTab } from '@/components/admin/noticias-ai/NoticiasAIManualTab';
 import { NoticiasAIJsonTab } from '@/components/admin/noticias-ai/NoticiasAIJsonTab';
 import { NoticiasAIHistoryTab } from '@/components/admin/noticias-ai/NoticiasAIHistoryTab';
@@ -94,11 +94,17 @@ export default function NoticiasAI() {
     }
   }, [progress, completeMilestone]);
 
-  const handleGenerate = async (content: string, mode: DetectedMode, imageUrl?: string) => {
+  const handleGenerate = async (content: string, mode: DetectedMode, imageUrls?: string[], highlights?: HighlightSettings) => {
     setIsProcessing(true);
     try {
       const response = await supabase.functions.invoke('noticias-ai-generate', {
-        body: { mode, content, imageUrl, autoFixLide: autoFixEnabled },
+        body: { 
+          mode, 
+          content, 
+          imageUrls, 
+          highlights,
+          autoFixLide: autoFixEnabled 
+        },
       });
 
       if (response.error) throw response.error;
