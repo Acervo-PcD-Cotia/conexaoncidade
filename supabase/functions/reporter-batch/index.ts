@@ -61,6 +61,31 @@ function autoFixFirstParagraph(content: string): string {
   return content;
 }
 
+// Helper: Check if string is an image URL
+function isImageUrl(url?: string): boolean {
+  if (!url) return false;
+  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'];
+  return imageExtensions.some(ext => url.toLowerCase().includes(ext));
+}
+
+// Helper: Sanitize source - remove image URLs
+function sanitizeSource(source?: string): string {
+  if (!source) return '';
+  if (isImageUrl(source)) return '';
+  return source;
+}
+
+// Helper: Ensure article has all required fields with fallbacks
+function ensureRequiredFields(article: any): any {
+  return {
+    ...article,
+    subtitulo: article.subtitulo || article.resumo?.substring(0, 100) || 'Saiba mais sobre esta notícia',
+    chapeu: article.chapeu || article.categoria?.toUpperCase() || 'NOTÍCIAS',
+    editor: article.editor || 'Redação Conexão na Cidade',
+    fonte: sanitizeSource(article.fonte),
+  };
+}
+
 async function generateWithAI(prompt: string): Promise<any> {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
@@ -151,15 +176,17 @@ serve(async (req) => {
             `URL: ${url}\nTítulo: ${extracted.title}\nConteúdo: ${extracted.content}`
           );
           
-          article.fonte = url.trim();
-          if (extracted.imageUrl && !article.imagem?.hero) {
-            article.imagem = { ...article.imagem, hero: extracted.imageUrl };
+          // Ensure required fields with fallbacks
+          let enrichedArticle = ensureRequiredFields(article);
+          enrichedArticle.fonte = url.trim(); // Keep original URL as source
+          if (extracted.imageUrl && !enrichedArticle.imagem?.hero) {
+            enrichedArticle.imagem = { ...enrichedArticle.imagem, hero: extracted.imageUrl };
           }
-          if (autoFixLide && article.conteudo) {
-            article.conteudo = autoFixFirstParagraph(article.conteudo);
+          if (autoFixLide && enrichedArticle.conteudo) {
+            enrichedArticle.conteudo = autoFixFirstParagraph(enrichedArticle.conteudo);
           }
           
-          return { url, article };
+          return { url, article: enrichedArticle };
         })
       );
       

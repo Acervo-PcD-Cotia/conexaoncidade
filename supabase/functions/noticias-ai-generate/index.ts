@@ -37,6 +37,31 @@ interface NewsArticle {
   destaque?: 'none' | 'home' | 'featured' | 'urgent';
 }
 
+// Helper: Check if string is an image URL
+function isImageUrl(url?: string): boolean {
+  if (!url) return false;
+  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'];
+  return imageExtensions.some(ext => url.toLowerCase().includes(ext));
+}
+
+// Helper: Sanitize source - remove image URLs
+function sanitizeSource(source?: string): string {
+  if (!source) return '';
+  if (isImageUrl(source)) return '';
+  return source;
+}
+
+// Helper: Ensure article has all required fields with fallbacks
+function ensureRequiredFields(article: NewsArticle): NewsArticle {
+  return {
+    ...article,
+    subtitulo: article.subtitulo || article.resumo?.substring(0, 100) || 'Saiba mais sobre esta notícia',
+    chapeu: article.chapeu || article.categoria?.toUpperCase() || 'NOTÍCIAS',
+    editor: article.editor || 'Redação Conexão na Cidade',
+    fonte: sanitizeSource(article.fonte),
+  };
+}
+
 function detectMode(content: string): string {
   const trimmed = content.trim().toUpperCase();
   
@@ -267,12 +292,15 @@ FORMATO JSON COMPLETO:
         const aiResult = await generateWithAI(cleanContent, systemPrompt);
         let parsed = JSON.parse(aiResult.replace(/```json\n?|\n?```/g, ''));
         
-        // Auto-fix lide if enabled
-        if (autoFixLide && parsed.noticias) {
-          parsed.noticias = parsed.noticias.map((article: NewsArticle) => ({
-            ...article,
-            conteudo: autoFixFirstParagraph(article.conteudo)
-          }));
+        // Ensure required fields and auto-fix lide
+        if (parsed.noticias) {
+          parsed.noticias = parsed.noticias.map((article: NewsArticle) => {
+            const enriched = ensureRequiredFields(article);
+            return {
+              ...enriched,
+              conteudo: autoFixLide ? autoFixFirstParagraph(enriched.conteudo) : enriched.conteudo
+            };
+          });
         }
         
         result = {
@@ -296,9 +324,11 @@ FORMATO JSON COMPLETO:
         let parsed = JSON.parse(aiResult.replace(/```json\n?|\n?```/g, ''));
         
         if (parsed.noticias?.[0]) {
-          parsed.noticias[0].fonte = url;
-          if (extracted.imageUrl && !parsed.noticias[0].imagem.hero) {
-            parsed.noticias[0].imagem.hero = extracted.imageUrl;
+          // Ensure required fields with fallbacks
+          parsed.noticias[0] = ensureRequiredFields(parsed.noticias[0]);
+          parsed.noticias[0].fonte = url; // Keep original URL as source
+          if (extracted.imageUrl && !parsed.noticias[0].imagem?.hero) {
+            parsed.noticias[0].imagem = { ...parsed.noticias[0].imagem, hero: extracted.imageUrl };
           }
           if (autoFixLide) {
             parsed.noticias[0].conteudo = autoFixFirstParagraph(parsed.noticias[0].conteudo);
@@ -328,14 +358,16 @@ FORMATO JSON COMPLETO:
             let parsed = JSON.parse(aiResult.replace(/```json\n?|\n?```/g, ''));
             
             if (parsed.noticias?.[0]) {
-              parsed.noticias[0].fonte = url.trim();
-              if (extracted.imageUrl) {
-                parsed.noticias[0].imagem.hero = extracted.imageUrl;
+              // Ensure required fields with fallbacks
+              let article = ensureRequiredFields(parsed.noticias[0]);
+              article.fonte = url.trim(); // Keep original URL as source
+              if (extracted.imageUrl && !article.imagem?.hero) {
+                article.imagem = { ...article.imagem, hero: extracted.imageUrl };
               }
               if (autoFixLide) {
-                parsed.noticias[0].conteudo = autoFixFirstParagraph(parsed.noticias[0].conteudo);
+                article.conteudo = autoFixFirstParagraph(article.conteudo);
               }
-              results.push(parsed.noticias[0]);
+              results.push(article);
             }
           } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Unknown error';
@@ -361,11 +393,15 @@ FORMATO JSON COMPLETO:
         const aiResult = await generateWithAI(content, systemPrompt);
         let parsed = JSON.parse(aiResult.replace(/```json\n?|\n?```/g, ''));
         
-        if (autoFixLide && parsed.noticias) {
-          parsed.noticias = parsed.noticias.map((article: NewsArticle) => ({
-            ...article,
-            conteudo: autoFixFirstParagraph(article.conteudo)
-          }));
+        // Ensure required fields and auto-fix lide
+        if (parsed.noticias) {
+          parsed.noticias = parsed.noticias.map((article: NewsArticle) => {
+            const enriched = ensureRequiredFields(article);
+            return {
+              ...enriched,
+              conteudo: autoFixLide ? autoFixFirstParagraph(enriched.conteudo) : enriched.conteudo
+            };
+          });
         }
         
         result = {
