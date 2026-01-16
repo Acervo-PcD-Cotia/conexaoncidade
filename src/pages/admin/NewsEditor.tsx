@@ -334,11 +334,45 @@ export default function NewsEditor() {
         return created;
       }
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ["admin-news"] });
       toast.success(isEditing ? "Notícia atualizada!" : "Notícia criada!");
       setLastSaved(new Date());
       hasUnsavedChanges.current = false;
+      
+      // ============================================
+      // AUTOMATIC GENERATION TRIGGERS (on publish)
+      // ============================================
+      if (data.status === "published") {
+        const newsId = data.id;
+        
+        // 1. Generate AI Summary (always)
+        supabase.functions.invoke('generate-news-summary', {
+          body: { newsId }
+        }).catch(err => console.error('[NewsEditor] Summary generation failed:', err));
+
+        // 2. Generate TTS Audio (always)
+        supabase.functions.invoke('generate-news-audio', {
+          body: { newsId, audioType: 'full' }
+        }).catch(err => console.error('[NewsEditor] Audio generation failed:', err));
+
+        // 3. Generate WebStory (if enabled)
+        if (data.auto_generate_webstory) {
+          supabase.functions.invoke('generate-webstory', {
+            body: { newsId }
+          }).catch(err => console.error('[NewsEditor] WebStory generation failed:', err));
+        }
+
+        // 4. Generate Podcast (if enabled)
+        if (data.auto_generate_podcast) {
+          supabase.functions.invoke('generate-podcast', {
+            body: { newsId, autoPublish: data.auto_publish_podcast }
+          }).catch(err => console.error('[NewsEditor] Podcast generation failed:', err));
+        }
+
+        console.log('[NewsEditor] Automated generation triggers fired for newsId:', newsId);
+      }
+      
       if (!isEditing) navigate(`/admin/news/${data.id}/edit`);
     },
     onError: (error) => toast.error("Erro ao salvar: " + (error as Error).message),
@@ -674,49 +708,67 @@ export default function NewsEditor() {
               </div>
               <TagSelector selectedTags={selectedTags} onChange={setSelectedTags} requiredCount={12} />
 
-              {/* Podcast Automation */}
+              {/* 🤖 Automações Section */}
               <div className="pt-4 border-t space-y-3">
                 <p className="text-sm font-medium flex items-center gap-2">
-                  🎙️ Podcast
+                  🤖 Automações
+                  <span className="text-xs font-normal text-muted-foreground">(ao publicar)</span>
                 </p>
+                
+                {/* Gerar resumo */}
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label className="text-sm">Gerar podcast ao publicar</Label>
-                    <p className="text-xs text-muted-foreground">Cria episódio automaticamente</p>
+                    <Label className="text-sm">Gerar resumo da notícia</Label>
+                    <p className="text-xs text-muted-foreground">Resumo com até 4 tópicos via IA</p>
                   </div>
                   <Switch
-                    checked={formData.auto_generate_podcast || false}
-                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, auto_generate_podcast: checked }))}
+                    checked={true}
+                    disabled
+                    className="opacity-70"
                   />
                 </div>
+
+                {/* Gerar áudio */}
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label className="text-sm">Publicar no RSS</Label>
+                    <Label className="text-sm">Gerar áudio da matéria</Label>
+                    <p className="text-xs text-muted-foreground">Versão narrada pelo TTS</p>
+                  </div>
+                  <Switch
+                    checked={true}
+                    disabled
+                    className="opacity-70"
+                  />
+                </div>
+
+                {/* Podcast */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-sm">Publicar no Podcast/RSS</Label>
                     <p className="text-xs text-muted-foreground">Disponibiliza nas plataformas</p>
                   </div>
                   <Switch
-                    checked={formData.auto_publish_podcast || false}
-                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, auto_publish_podcast: checked }))}
+                    checked={formData.auto_generate_podcast && formData.auto_publish_podcast}
+                    onCheckedChange={(checked) => setFormData(prev => ({ 
+                      ...prev, 
+                      auto_generate_podcast: checked,
+                      auto_publish_podcast: checked 
+                    }))}
                   />
                 </div>
-              </div>
 
-              {/* WebStory Automation */}
-              <div className="pt-4 border-t space-y-3">
-                <p className="text-sm font-medium flex items-center gap-2">
-                  <Smartphone className="h-4 w-4" />
-                  WebStory
-                </p>
+                {/* WebStory */}
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label className="text-sm">Gerar WebStory ao publicar</Label>
-                    <p className="text-xs text-muted-foreground">Cria story de 5 slides automaticamente</p>
+                    <Label className="text-sm">Gerar WebStory</Label>
+                    <p className="text-xs text-muted-foreground">Story de 5 slides automático</p>
                   </div>
                   <Switch
                     checked={formData.auto_generate_webstory}
                     onCheckedChange={(checked) => setFormData(prev => ({ ...prev, auto_generate_webstory: checked }))}
                   />
                 </div>
+
                 {isEditing && id && (
                   <GenerateStoryButton
                     newsId={id}
