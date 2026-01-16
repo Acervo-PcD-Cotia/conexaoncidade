@@ -254,6 +254,264 @@ const domainSelectors: Record<string, { content: string[]; excludeFromContent: s
   }
 };
 
+// Extract content using Firecrawl API (primary method)
+async function extractWithFirecrawl(url: string): Promise<{
+  title: string;
+  content: string;
+  allImages: string[];
+  wordCount: number;
+} | null> {
+  const FIRECRAWL_API_KEY = Deno.env.get('FIRECRAWL_API_KEY');
+  if (!FIRECRAWL_API_KEY) {
+    console.log('FIRECRAWL_API_KEY not configured, using fallback extraction');
+    return null;
+  }
+
+  try {
+    console.log(`Extracting with Firecrawl: ${url}`);
+    
+    const response = await fetch('https://api.firecrawl.dev/v1/scrape', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${FIRECRAWL_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url,
+        formats: ['markdown', 'html'],
+        onlyMainContent: true, // Removes headers, footers, navs automatically
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Firecrawl API error:', response.status, errorText);
+      return null;
+    }
+
+    const data = await response.json();
+    
+    if (!data.success || !data.data) {
+      console.error('Firecrawl returned unsuccessful response:', data);
+      return null;
+    }
+
+    const scraped = data.data;
+    const title = scraped.metadata?.title || scraped.metadata?.ogTitle || 'Sem título';
+    const content = scraped.markdown || '';
+    
+    console.log(`Firecrawl extracted: title="${title}", content length=${content.length}`);
+
+    // Extract images from HTML response
+    const allImages: string[] = [];
+    const seenNormalized = new Set<string>();
+    
+    // Get og:image first
+    if (scraped.metadata?.ogImage && isValidImageUrl(scraped.metadata.ogImage)) {
+      allImages.push(scraped.metadata.ogImage);
+      seenNormalized.add(normalizeImageUrl(scraped.metadata.ogImage));
+    }
+    
+    // Extract images from HTML
+    if (scraped.html) {
+      const imageRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
+      let match;
+      while ((match = imageRegex.exec(scraped.html)) !== null) {
+        let imgUrl = match[1];
+        
+        // Convert relative URLs to absolute
+        if (imgUrl.startsWith('/')) {
+          try {
+            const baseUrl = new URL(url);
+            imgUrl = `${baseUrl.origin}${imgUrl}`;
+          } catch {}
+        } else if (!imgUrl.startsWith('http')) {
+          continue;
+        }
+        
+        if (isValidImageUrl(imgUrl)) {
+          const normalized = normalizeImageUrl(imgUrl);
+          if (!seenNormalized.has(normalized)) {
+            seenNormalized.add(normalized);
+            allImages.push(imgUrl);
+          }
+        }
+      }
+    }
+
+    const wordCount = content.split(/\s+/).filter(Boolean).length;
+    
+    console.log(`Firecrawl found ${allImages.length} images, ${wordCount} words`);
+
+    return {
+      title,
+      content: content.substring(0, 10000),
+      allImages: allImages.slice(0, 5),
+      wordCount
+    };
+  } catch (error) {
+    console.error('Firecrawl extraction error:', error);
+    return null;
+  }
+}
+
+// Fallback extraction using manual HTML parsing
+async function extractWithFallback(url: string): Promise<{
+  title: string;
+  content: string;
+  allImages: string[];
+  wordCount: number;
+}> {
+  const response = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8'
+    }
+  });
+  const html = await response.text();
+  
+  console.log(`Fallback: Fetched ${url}, HTML length: ${html.length}`);
+  
+  // Extract title
+  const titleMatch = html.match(/<meta[^>]*property="og:title"[^>]*content="([^"]+)"/i) ||
+                     html.match(/<title[^>]*>([^<]+)<\/title>/i);
+  const title = titleMatch ? titleMatch[1].trim() : 'Sem título';
+  
+  // Determine domain for specific selectors
+  let hostname = '';
+  try {
+    hostname = new URL(url).hostname.replace('www.', '');
+  } catch {}
+  
+  let content = '';
+  
+  // Try domain-specific selectors first
+  const domainConfig = domainSelectors[hostname];
+  if (domainConfig) {
+    console.log(`Using domain-specific selectors for: ${hostname}`);
+    
+    for (const selector of domainConfig.content) {
+      const selectorParts = selector.split(/\s+/);
+      const lastPart = selectorParts[selectorParts.length - 1];
+      
+      if (lastPart.startsWith('.')) {
+        const className = lastPart.substring(1);
+        const pattern = new RegExp(`<div[^>]*class="[^"]*${className.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^"]*"[^>]*>([\\s\\S]*?)(?=<div[^>]*class="|<\\/article>|<footer|$)`, 'i');
+        const match = html.match(pattern);
+        if (match && match[1] && match[1].length > 200) {
+          content = match[1];
+          console.log(`Found content with selector: ${selector}, length: ${content.length}`);
+          break;
+        }
+      }
+    }
+  }
+  
+  // Fallback: Try generic selectors
+  if (!content || content.length < 200) {
+    const genericSelectors = [
+      /<article[^>]*class="[^"]*noticia[^"]*"[^>]*>([\s\S]*?)<\/article>/i,
+      /<div[^>]*class="[^"]*post-content[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+      /<div[^>]*class="[^"]*entry-content[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+      /<div[^>]*class="[^"]*article-body[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+      /<main[^>]*>([\s\S]*?)<\/main>/i,
+      /<article[^>]*>([\s\S]*?)<\/article>/i,
+    ];
+    
+    for (const pattern of genericSelectors) {
+      const match = html.match(pattern);
+      if (match && match[1] && match[1].length > content.length) {
+        content = match[1];
+        break;
+      }
+    }
+  }
+  
+  // Extract paragraphs from content area
+  if (content) {
+    const paragraphs: string[] = [];
+    const pRegex = /<p[^>]*>([^<]+(?:<[^\/p][^>]*>[^<]*<\/[^>]+>[^<]*)*)<\/p>/gi;
+    let pMatch;
+    while ((pMatch = pRegex.exec(content)) !== null) {
+      const text = pMatch[1]
+        .replace(/<[^>]+>/g, '')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .trim();
+      if (text.length > 20) {
+        paragraphs.push(text);
+      }
+    }
+    
+    if (paragraphs.length > 0) {
+      content = paragraphs.join('\n\n');
+    } else {
+      content = content
+        .replace(/<script[\s\S]*?<\/script>/gi, '')
+        .replace(/<style[\s\S]*?<\/style>/gi, '')
+        .replace(/<nav[\s\S]*?<\/nav>/gi, '')
+        .replace(/<footer[\s\S]*?<\/footer>/gi, '')
+        .replace(/<aside[\s\S]*?<\/aside>/gi, '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+  }
+  
+  console.log(`Fallback extracted content length: ${content.length}`);
+  
+  const wordCount = content.split(/\s+/).filter(Boolean).length;
+  
+  // Extract images
+  const allImages: string[] = [];
+  const seenNormalized = new Set<string>();
+  
+  const ogImageMatch = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/i);
+  if (ogImageMatch && ogImageMatch[1]) {
+    const ogImage = ogImageMatch[1];
+    if (isValidImageUrl(ogImage)) {
+      allImages.push(ogImage);
+      seenNormalized.add(normalizeImageUrl(ogImage));
+    }
+  }
+  
+  const contentArea = content || html;
+  const imageRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
+  let match;
+  while ((match = imageRegex.exec(contentArea)) !== null) {
+    let imgUrl = match[1];
+    
+    if (imgUrl.startsWith('/')) {
+      try {
+        const baseUrl = new URL(url);
+        imgUrl = `${baseUrl.origin}${imgUrl}`;
+      } catch {}
+    } else if (!imgUrl.startsWith('http')) {
+      continue;
+    }
+    
+    if (isValidImageUrl(imgUrl)) {
+      const normalized = normalizeImageUrl(imgUrl);
+      if (!seenNormalized.has(normalized)) {
+        seenNormalized.add(normalized);
+        allImages.push(imgUrl);
+      }
+    }
+  }
+  
+  return {
+    title,
+    content: content.substring(0, 8000),
+    allImages: allImages.slice(0, 5),
+    wordCount
+  };
+}
+
+// Main extraction function - tries Firecrawl first, then fallback
 async function extractFromUrl(url: string): Promise<{ 
   title: string; 
   content: string; 
@@ -262,164 +520,23 @@ async function extractFromUrl(url: string): Promise<{
   wordCount: number;
 }> {
   try {
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8'
-      }
-    });
-    const html = await response.text();
+    // Try Firecrawl first (best quality)
+    const firecrawlResult = await extractWithFirecrawl(url);
     
-    console.log(`Fetched ${url}, HTML length: ${html.length}`);
-    
-    // Extract title
-    const titleMatch = html.match(/<meta[^>]*property="og:title"[^>]*content="([^"]+)"/i) ||
-                       html.match(/<title[^>]*>([^<]+)<\/title>/i);
-    const title = titleMatch ? titleMatch[1].trim() : 'Sem título';
-    
-    // Determine domain for specific selectors
-    let hostname = '';
-    try {
-      hostname = new URL(url).hostname.replace('www.', '');
-    } catch {}
-    
-    let content = '';
-    
-    // Try domain-specific selectors first
-    const domainConfig = domainSelectors[hostname];
-    if (domainConfig) {
-      console.log(`Using domain-specific selectors for: ${hostname}`);
-      
-      for (const selector of domainConfig.content) {
-        // Convert CSS selector to regex pattern
-        const selectorParts = selector.split(/\s+/);
-        const lastPart = selectorParts[selectorParts.length - 1];
-        
-        // Handle class selectors like .field--name-body
-        if (lastPart.startsWith('.')) {
-          const className = lastPart.substring(1).replace(/--/g, '--');
-          const pattern = new RegExp(`<div[^>]*class="[^"]*${className.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^"]*"[^>]*>([\\s\\S]*?)(?=<div[^>]*class="|<\\/article>|<footer|$)`, 'i');
-          const match = html.match(pattern);
-          if (match && match[1] && match[1].length > 200) {
-            content = match[1];
-            console.log(`Found content with selector: ${selector}, length: ${content.length}`);
-            break;
-          }
-        }
-      }
+    if (firecrawlResult && firecrawlResult.content.length > 100) {
+      return {
+        ...firecrawlResult,
+        imageUrl: firecrawlResult.allImages[0]
+      };
     }
     
-    // Fallback: Try generic selectors
-    if (!content || content.length < 200) {
-      const genericSelectors = [
-        /<article[^>]*class="[^"]*noticia[^"]*"[^>]*>([\s\S]*?)<\/article>/i,
-        /<div[^>]*class="[^"]*post-content[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
-        /<div[^>]*class="[^"]*entry-content[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
-        /<div[^>]*class="[^"]*article-body[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
-        /<main[^>]*>([\s\S]*?)<\/main>/i,
-        /<article[^>]*>([\s\S]*?)<\/article>/i,
-      ];
-      
-      for (const pattern of genericSelectors) {
-        const match = html.match(pattern);
-        if (match && match[1] && match[1].length > content.length) {
-          content = match[1];
-          console.log(`Found content with generic pattern, length: ${content.length}`);
-          break;
-        }
-      }
-    }
+    // Fallback to manual extraction
+    console.log('Using fallback extraction method');
+    const fallbackResult = await extractWithFallback(url);
     
-    // Extract paragraphs from content area
-    if (content) {
-      const paragraphs: string[] = [];
-      const pRegex = /<p[^>]*>([^<]+(?:<[^\/p][^>]*>[^<]*<\/[^>]+>[^<]*)*)<\/p>/gi;
-      let pMatch;
-      while ((pMatch = pRegex.exec(content)) !== null) {
-        const text = pMatch[1]
-          .replace(/<[^>]+>/g, '')
-          .replace(/&nbsp;/g, ' ')
-          .replace(/&amp;/g, '&')
-          .replace(/&lt;/g, '<')
-          .replace(/&gt;/g, '>')
-          .replace(/&quot;/g, '"')
-          .trim();
-        if (text.length > 20) {
-          paragraphs.push(text);
-        }
-      }
-      
-      if (paragraphs.length > 0) {
-        content = paragraphs.join('\n\n');
-      } else {
-        // Clean HTML if no paragraphs extracted
-        content = content
-          .replace(/<script[\s\S]*?<\/script>/gi, '')
-          .replace(/<style[\s\S]*?<\/style>/gi, '')
-          .replace(/<nav[\s\S]*?<\/nav>/gi, '')
-          .replace(/<footer[\s\S]*?<\/footer>/gi, '')
-          .replace(/<aside[\s\S]*?<\/aside>/gi, '')
-          .replace(/<[^>]+>/g, ' ')
-          .replace(/\s+/g, ' ')
-          .trim();
-      }
-    }
-    
-    console.log(`Extracted content length: ${content.length}`);
-    
-    // Count words for length reference
-    const wordCount = content.split(/\s+/).filter(Boolean).length;
-    
-    // Extract ALL valid images from the page
-    const allImages: string[] = [];
-    const seenNormalized = new Set<string>();
-    
-    // Get og:image first (main image) - this is usually the best hero image
-    const ogImageMatch = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/i);
-    if (ogImageMatch && ogImageMatch[1]) {
-      const ogImage = ogImageMatch[1];
-      if (isValidImageUrl(ogImage)) {
-        allImages.push(ogImage);
-        seenNormalized.add(normalizeImageUrl(ogImage));
-      }
-    }
-    
-    // Extract images from content area only (avoid nav, footer, sidebar images)
-    const contentArea = content || html;
-    const imageRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
-    let match;
-    while ((match = imageRegex.exec(contentArea)) !== null) {
-      let imgUrl = match[1];
-      
-      // Convert relative URLs to absolute
-      if (imgUrl.startsWith('/')) {
-        try {
-          const baseUrl = new URL(url);
-          imgUrl = `${baseUrl.origin}${imgUrl}`;
-        } catch {}
-      } else if (!imgUrl.startsWith('http')) {
-        continue; // Skip data: URLs and invalid URLs
-      }
-      
-      // Check if valid and not duplicate
-      if (isValidImageUrl(imgUrl)) {
-        const normalized = normalizeImageUrl(imgUrl);
-        if (!seenNormalized.has(normalized)) {
-          seenNormalized.add(normalized);
-          allImages.push(imgUrl);
-        }
-      }
-    }
-    
-    console.log(`Found ${allImages.length} valid images`);
-    
-    return { 
-      title, 
-      content: content.substring(0, 8000), // Increased limit for longer articles
-      imageUrl: allImages[0],
-      allImages: allImages.slice(0, 5), // Max 5 images
-      wordCount
+    return {
+      ...fallbackResult,
+      imageUrl: fallbackResult.allImages[0]
     };
   } catch (error) {
     console.error('Error extracting from URL:', error);
