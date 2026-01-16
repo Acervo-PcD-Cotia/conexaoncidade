@@ -403,9 +403,9 @@ function NewsDetailContent({ news }: NewsDetailContentProps) {
 
         {/* Main Content Area */}
         <div className="container max-w-4xl py-8">
-          {/* Hero Image - No Rounded Corners */}
+          {/* 1. Hero Image - No Rounded Corners */}
           {news.featured_image_url && (
-            <figure className="mb-8 relative">
+            <figure className="mb-6 relative">
               <img
                 src={news.featured_image_url}
                 alt={news.image_alt || `Imagem da notícia: ${news.title}`}
@@ -428,14 +428,7 @@ function NewsDetailContent({ news }: NewsDetailContentProps) {
             </figure>
           )}
 
-          {/* Gallery Images - Additional images from source with Lightbox */}
-          <NewsGallery 
-            heroImage={news.featured_image_url}
-            galleryUrls={news.gallery_urls}
-            imageAlt={news.image_alt}
-          />
-
-          {/* Audio Block - Dark Style (dois players: leitura + podcast) */}
+          {/* 2. Audio Block - UOL/Trinity Audio Style (BEFORE summary) */}
           <NewsAudioBlock
             newsId={news.id}
             audioUrl={news.audio_url}
@@ -446,13 +439,13 @@ function NewsDetailContent({ news }: NewsDetailContentProps) {
             spotifyUrl={news.spotify_url}
             podcastStatus={news.podcast_status}
             podcastAudioUrl={news.podcast_audio_url}
-            className="mb-8"
+            className="mb-6"
             onAudioPlay={trackAudioPlay}
             onAudioStop={trackAudioStop}
             onPodcastPlay={trackPodcastPlay}
           />
 
-          {/* Unified Summary + Table of Contents Navigator */}
+          {/* 3. Summary Block - UOL Style (AFTER audio, BEFORE content) */}
           <NewsContentNavigator
             summaryShort={news.summary_short}
             summaryMedium={news.summary_medium}
@@ -461,6 +454,13 @@ function NewsDetailContent({ news }: NewsDetailContentProps) {
             onSummaryExpand={trackSummaryExpand}
             onTocClick={trackTocClick}
             className="mb-8"
+          />
+
+          {/* 4. Gallery Images - Additional images from source with Lightbox */}
+          <NewsGallery 
+            heroImage={news.featured_image_url}
+            galleryUrls={news.gallery_urls}
+            imageAlt={news.image_alt}
           />
 
           {/* Main Content */}
