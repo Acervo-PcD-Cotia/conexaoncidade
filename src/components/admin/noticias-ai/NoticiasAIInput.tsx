@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { Upload, Sparkles, Trash2, Loader2, FileText, Link, Layers, Zap, X, Star, Home, AlertTriangle, Newspaper } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,6 +39,7 @@ const MODE_CONFIG: Record<DetectedMode, { label: string; color: string; icon: Re
 export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUseBatch }: NoticiasAIInputProps) {
   const [content, setContent] = useState('');
   const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [imageUrlInput, setImageUrlInput] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
   const [batchProgress, setBatchProgress] = useState(0);
   const [highlights, setHighlights] = useState<HighlightSettings>({
@@ -47,6 +49,27 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  const handleAddImageUrl = () => {
+    const url = imageUrlInput.trim();
+    if (!url) return;
+
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      toast({
+        title: 'URL inválida',
+        description: 'A URL deve começar com http:// ou https://',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setImageUrls(prev => [...prev, url]);
+    setImageUrlInput('');
+    toast({
+      title: 'Imagem adicionada',
+      description: 'URL da imagem foi anexada',
+    });
+  };
 
   const detectMode = (text: string): DetectedMode => {
     const trimmed = text.trim().toUpperCase();
@@ -249,6 +272,25 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
               )}
               {uploadingImage ? 'Enviando...' : 'Enviar Imagens'}
             </Button>
+
+            {/* Input para URL de Imagem */}
+            <div className="flex gap-2">
+              <Input
+                placeholder="https://exemplo.com/imagem.jpg"
+                value={imageUrlInput}
+                onChange={(e) => setImageUrlInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddImageUrl()}
+                className="flex-1 text-xs"
+              />
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleAddImageUrl}
+                disabled={!imageUrlInput.trim()}
+              >
+                <Link className="h-4 w-4" />
+              </Button>
+            </div>
             
             {/* Image Thumbnails */}
             {imageUrls.length > 0 && (
