@@ -176,6 +176,84 @@ function autoFixFirstParagraph(content: string): string {
   return content;
 }
 
+// Helper: Check if image URL is valid (not logo, icon, small, etc.)
+function isValidImageUrl(imgUrl: string): boolean {
+  if (!imgUrl) return false;
+  
+  const lowerUrl = imgUrl.toLowerCase();
+  
+  // Exclude patterns for logos, icons, and junk images
+  const excludePatterns = [
+    'icon', 'logo', 'avatar', 'pixel', '1x1', 'gravatar', 'emoji',
+    'transparencia', 'ebc.png', 'sprite', 'button', 'banner-ad',
+    '/themes/', '/modules/', '/misc/', 'widget', 'tracking',
+    'spinner', 'loading', 'placeholder', 'blank', 'spacer',
+    'social-', 'share-', 'print-', 'download-', 'arrow-',
+    '.svg', 'data:image', '/favicon', 'badge', 'selo-'
+  ];
+  
+  for (const pattern of excludePatterns) {
+    if (lowerUrl.includes(pattern)) return false;
+  }
+  
+  // Exclude small dimension patterns like /50x50/, /100x100/
+  if (/\/\d{1,3}x\d{1,3}[\/\.]/i.test(imgUrl)) return false;
+  
+  // Must be a valid image extension
+  const hasValidExtension = /\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i.test(imgUrl) ||
+    lowerUrl.includes('.jpg') || lowerUrl.includes('.jpeg') ||
+    lowerUrl.includes('.png') || lowerUrl.includes('.webp');
+  
+  return hasValidExtension;
+}
+
+// Helper: Normalize URL for comparison (remove query params, size variations)
+function normalizeImageUrl(url: string): string {
+  try {
+    const urlObj = new URL(url);
+    // Remove query parameters
+    urlObj.search = '';
+    // Remove common size patterns from path
+    let path = urlObj.pathname
+      .replace(/\/\d+x\d+\//gi, '/')
+      .replace(/_\d+x\d+\./gi, '.')
+      .replace(/-\d+x\d+\./gi, '.');
+    return `${urlObj.origin}${path}`;
+  } catch {
+    return url.replace(/\?.*$/, '').replace(/\/\d+x\d+\//gi, '/');
+  }
+}
+
+// Domain-specific content selectors for known sites
+const domainSelectors: Record<string, { content: string[]; excludeFromContent: string[] }> = {
+  'agenciabrasil.ebc.com.br': {
+    content: [
+      'div.field--name-body',
+      'div.node__content',
+      'div.field--type-text-with-summary',
+      'article.node--type-noticia .field--name-body',
+    ],
+    excludeFromContent: ['div.share-buttons', 'div.related', 'div.tags', 'footer']
+  },
+  'gov.br': {
+    content: [
+      'div.content-area',
+      'main.main-content',
+      'div#content-core',
+      'div.documentContent'
+    ],
+    excludeFromContent: ['nav', 'aside', 'footer', 'div.share']
+  },
+  'g1.globo.com': {
+    content: [
+      'article.content',
+      'div.mc-article-body',
+      'div.content-text'
+    ],
+    excludeFromContent: ['div.entities', 'div.related']
+  }
+};
+
 async function extractFromUrl(url: string): Promise<{ 
   title: string; 
   content: string; 
@@ -186,77 +264,159 @@ async function extractFromUrl(url: string): Promise<{
   try {
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8'
       }
     });
     const html = await response.text();
     
+    console.log(`Fetched ${url}, HTML length: ${html.length}`);
+    
     // Extract title
-    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i) ||
-                       html.match(/<meta[^>]*property="og:title"[^>]*content="([^"]+)"/i);
+    const titleMatch = html.match(/<meta[^>]*property="og:title"[^>]*content="([^"]+)"/i) ||
+                       html.match(/<title[^>]*>([^<]+)<\/title>/i);
     const title = titleMatch ? titleMatch[1].trim() : 'Sem título';
     
-    // Extract main content (simplified - real implementation would be more robust)
-    const articleMatch = html.match(/<article[^>]*>([\s\S]*?)<\/article>/i) ||
-                         html.match(/<div[^>]*class="[^"]*content[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
-    let content = articleMatch ? articleMatch[1] : '';
+    // Determine domain for specific selectors
+    let hostname = '';
+    try {
+      hostname = new URL(url).hostname.replace('www.', '');
+    } catch {}
     
-    // Clean HTML tags but keep paragraphs
-    content = content
-      .replace(/<script[\s\S]*?<\/script>/gi, '')
-      .replace(/<style[\s\S]*?<\/style>/gi, '')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
+    let content = '';
+    
+    // Try domain-specific selectors first
+    const domainConfig = domainSelectors[hostname];
+    if (domainConfig) {
+      console.log(`Using domain-specific selectors for: ${hostname}`);
+      
+      for (const selector of domainConfig.content) {
+        // Convert CSS selector to regex pattern
+        const selectorParts = selector.split(/\s+/);
+        const lastPart = selectorParts[selectorParts.length - 1];
+        
+        // Handle class selectors like .field--name-body
+        if (lastPart.startsWith('.')) {
+          const className = lastPart.substring(1).replace(/--/g, '--');
+          const pattern = new RegExp(`<div[^>]*class="[^"]*${className.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^"]*"[^>]*>([\\s\\S]*?)(?=<div[^>]*class="|<\\/article>|<footer|$)`, 'i');
+          const match = html.match(pattern);
+          if (match && match[1] && match[1].length > 200) {
+            content = match[1];
+            console.log(`Found content with selector: ${selector}, length: ${content.length}`);
+            break;
+          }
+        }
+      }
+    }
+    
+    // Fallback: Try generic selectors
+    if (!content || content.length < 200) {
+      const genericSelectors = [
+        /<article[^>]*class="[^"]*noticia[^"]*"[^>]*>([\s\S]*?)<\/article>/i,
+        /<div[^>]*class="[^"]*post-content[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+        /<div[^>]*class="[^"]*entry-content[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+        /<div[^>]*class="[^"]*article-body[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+        /<main[^>]*>([\s\S]*?)<\/main>/i,
+        /<article[^>]*>([\s\S]*?)<\/article>/i,
+      ];
+      
+      for (const pattern of genericSelectors) {
+        const match = html.match(pattern);
+        if (match && match[1] && match[1].length > content.length) {
+          content = match[1];
+          console.log(`Found content with generic pattern, length: ${content.length}`);
+          break;
+        }
+      }
+    }
+    
+    // Extract paragraphs from content area
+    if (content) {
+      const paragraphs: string[] = [];
+      const pRegex = /<p[^>]*>([^<]+(?:<[^\/p][^>]*>[^<]*<\/[^>]+>[^<]*)*)<\/p>/gi;
+      let pMatch;
+      while ((pMatch = pRegex.exec(content)) !== null) {
+        const text = pMatch[1]
+          .replace(/<[^>]+>/g, '')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .trim();
+        if (text.length > 20) {
+          paragraphs.push(text);
+        }
+      }
+      
+      if (paragraphs.length > 0) {
+        content = paragraphs.join('\n\n');
+      } else {
+        // Clean HTML if no paragraphs extracted
+        content = content
+          .replace(/<script[\s\S]*?<\/script>/gi, '')
+          .replace(/<style[\s\S]*?<\/style>/gi, '')
+          .replace(/<nav[\s\S]*?<\/nav>/gi, '')
+          .replace(/<footer[\s\S]*?<\/footer>/gi, '')
+          .replace(/<aside[\s\S]*?<\/aside>/gi, '')
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+    }
+    
+    console.log(`Extracted content length: ${content.length}`);
     
     // Count words for length reference
     const wordCount = content.split(/\s+/).filter(Boolean).length;
     
-    // Extract ALL images from the page
+    // Extract ALL valid images from the page
     const allImages: string[] = [];
+    const seenNormalized = new Set<string>();
     
-    // Get og:image first (main image)
+    // Get og:image first (main image) - this is usually the best hero image
     const ogImageMatch = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/i);
     if (ogImageMatch && ogImageMatch[1]) {
-      allImages.push(ogImageMatch[1]);
-    }
-    
-    // Extract images from content
-    const imageRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
-    let match;
-    while ((match = imageRegex.exec(html)) !== null) {
-      const imgUrl = match[1];
-      // Filter out icons, trackers, logos, small images
-      const isValidImage = imgUrl && 
-        !imgUrl.includes('icon') && 
-        !imgUrl.includes('logo') && 
-        !imgUrl.includes('avatar') &&
-        !imgUrl.includes('pixel') &&
-        !imgUrl.includes('1x1') &&
-        !imgUrl.includes('gravatar') &&
-        !imgUrl.includes('emoji') &&
-        (imgUrl.endsWith('.jpg') || imgUrl.endsWith('.jpeg') || 
-         imgUrl.endsWith('.png') || imgUrl.endsWith('.webp') ||
-         imgUrl.includes('.jpg') || imgUrl.includes('.jpeg') || 
-         imgUrl.includes('.png') || imgUrl.includes('.webp')) &&
-        !allImages.includes(imgUrl);
-      
-      if (isValidImage) {
-        // Convert relative URLs to absolute
-        let absoluteUrl = imgUrl;
-        if (imgUrl.startsWith('/')) {
-          try {
-            const baseUrl = new URL(url);
-            absoluteUrl = `${baseUrl.origin}${imgUrl}`;
-          } catch {}
-        }
-        allImages.push(absoluteUrl);
+      const ogImage = ogImageMatch[1];
+      if (isValidImageUrl(ogImage)) {
+        allImages.push(ogImage);
+        seenNormalized.add(normalizeImageUrl(ogImage));
       }
     }
     
+    // Extract images from content area only (avoid nav, footer, sidebar images)
+    const contentArea = content || html;
+    const imageRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
+    let match;
+    while ((match = imageRegex.exec(contentArea)) !== null) {
+      let imgUrl = match[1];
+      
+      // Convert relative URLs to absolute
+      if (imgUrl.startsWith('/')) {
+        try {
+          const baseUrl = new URL(url);
+          imgUrl = `${baseUrl.origin}${imgUrl}`;
+        } catch {}
+      } else if (!imgUrl.startsWith('http')) {
+        continue; // Skip data: URLs and invalid URLs
+      }
+      
+      // Check if valid and not duplicate
+      if (isValidImageUrl(imgUrl)) {
+        const normalized = normalizeImageUrl(imgUrl);
+        if (!seenNormalized.has(normalized)) {
+          seenNormalized.add(normalized);
+          allImages.push(imgUrl);
+        }
+      }
+    }
+    
+    console.log(`Found ${allImages.length} valid images`);
+    
     return { 
       title, 
-      content: content.substring(0, 5000), 
+      content: content.substring(0, 8000), // Increased limit for longer articles
       imageUrl: allImages[0],
       allImages: allImages.slice(0, 5), // Max 5 images
       wordCount
@@ -494,10 +654,19 @@ FORMATO JSON COMPLETO:
           if (imageUrls && imageUrls.length > 0) {
             parsed.noticias[0] = applyImages(parsed.noticias[0], imageUrls);
           } else if (extracted.allImages.length > 0) {
+            const heroUrl = extracted.allImages[0];
+            const heroNormalized = normalizeImageUrl(heroUrl);
+            
+            // Filter gallery to exclude duplicates of hero image
+            const galeria = extracted.allImages.slice(1).filter(img => {
+              const imgNormalized = normalizeImageUrl(img);
+              return imgNormalized !== heroNormalized;
+            });
+            
             parsed.noticias[0].imagem = {
               ...parsed.noticias[0].imagem,
-              hero: extracted.allImages[0],
-              galeria: extracted.allImages.slice(1)
+              hero: heroUrl,
+              galeria: galeria
             };
           }
           
@@ -547,10 +716,19 @@ FORMATO JSON COMPLETO:
                 article = applyImages(article, imageUrls);
                 article = applyHighlights(article);
               } else if (extracted.allImages.length > 0) {
+                const heroUrl = extracted.allImages[0];
+                const heroNormalized = normalizeImageUrl(heroUrl);
+                
+                // Filter gallery to exclude duplicates of hero image
+                const galeria = extracted.allImages.slice(1).filter(img => {
+                  const imgNormalized = normalizeImageUrl(img);
+                  return imgNormalized !== heroNormalized;
+                });
+                
                 article.imagem = {
                   ...article.imagem,
-                  hero: extracted.allImages[0],
-                  galeria: extracted.allImages.slice(1)
+                  hero: heroUrl,
+                  galeria: galeria
                 };
               }
               
