@@ -5143,6 +5143,9 @@ export type Database = {
           show_audio_player: boolean | null
           show_summary_button: boolean | null
           slug: string
+          social_image_1x1: string | null
+          social_image_9x16: string | null
+          social_images_generated_at: string | null
           source: string | null
           status: Database["public"]["Enums"]["news_status"]
           subtitle: string | null
@@ -5203,6 +5206,9 @@ export type Database = {
           show_audio_player?: boolean | null
           show_summary_button?: boolean | null
           slug: string
+          social_image_1x1?: string | null
+          social_image_9x16?: string | null
+          social_images_generated_at?: string | null
           source?: string | null
           status?: Database["public"]["Enums"]["news_status"]
           subtitle?: string | null
@@ -5263,6 +5269,9 @@ export type Database = {
           show_audio_player?: boolean | null
           show_summary_button?: boolean | null
           slug?: string
+          social_image_1x1?: string | null
+          social_image_9x16?: string | null
+          social_images_generated_at?: string | null
           source?: string | null
           status?: Database["public"]["Enums"]["news_status"]
           subtitle?: string | null
