@@ -287,6 +287,10 @@ const App = () => (
                         {/* Censo PcD Admin Routes */}
                         <Route path="censo-pcd" element={<CensoPcdDashboard />} />
                         <Route path="censo-pcd/respostas" element={<CensoPcdRespostas />} />
+                        
+                        {/* Classifieds & Jobs Admin */}
+                        <Route path="classifieds" element={<ClassifiedsAdmin />} />
+                        <Route path="jobs" element={<JobsAdmin />} />
                       </Route>
 
                       <Route path="*" element={<NotFound />} />
