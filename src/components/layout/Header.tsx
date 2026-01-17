@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Search, Sun, Moon, LogOut, LayoutDashboard, Newspaper, FolderOpen, Megaphone, Settings, ShieldCheck, Bus, MapPin, Accessibility, Users, Package, Briefcase } from "lucide-react";
+import { Menu, X, Search, Sun, Moon, LogOut, LayoutDashboard, Newspaper, FolderOpen, Megaphone, Settings, ShieldCheck, Bus, MapPin, Accessibility, Users, Package, Briefcase, ChevronDown, Sparkles, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTheme } from "@/hooks/useTheme";
@@ -254,58 +254,78 @@ export function Header() {
           </div>
         )}
 
-        {/* Special Services Bar - Below search, above categories */}
+        {/* Services Bar - Reorganized with dropdown */}
         <div className="hidden border-t bg-muted/50 lg:block">
-          <div className="container flex items-center justify-center gap-4 py-2">
-            <Link
-              to="/google-maps"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-500 bg-blue-50 dark:bg-blue-950/50 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
-            >
-              <MapPin className="h-4 w-4" />
-              Apareça no Google
-            </Link>
-            <Link
-              to="/censo-pcd"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-purple-600 dark:text-purple-500 bg-purple-50 dark:bg-purple-950/50 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors"
-            >
-              <Accessibility className="h-4 w-4" />
-              Censo PcD Cotia
-            </Link>
-            <Link
-              to="/comunidade"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-pink-600 dark:text-pink-500 bg-pink-50 dark:bg-pink-950/50 rounded-full hover:bg-pink-100 dark:hover:bg-pink-900/50 transition-colors"
-            >
-              <Users className="h-4 w-4" />
-              Comunidade
-            </Link>
-            <Link
-              to="/anti-fake-news"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-green-600 dark:text-green-500 bg-green-50 dark:bg-green-950/50 rounded-full hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors"
-            >
-              <ShieldCheck className="h-4 w-4" />
-              Check Fake News
-            </Link>
-            <Link
-              to="/transporte-escolar"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-orange-600 dark:text-orange-500 bg-orange-50 dark:bg-orange-950/50 rounded-full hover:bg-orange-100 dark:hover:bg-orange-900/50 transition-colors"
-            >
-              <Bus className="h-4 w-4" />
-              Transporte Escolar
-            </Link>
+          <div className="container flex items-center justify-center gap-3 py-2">
+            {/* Main links - visible */}
             <Link
               to="/classificados"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-cyan-600 dark:text-cyan-500 bg-cyan-50 dark:bg-cyan-950/50 rounded-full hover:bg-cyan-100 dark:hover:bg-cyan-900/50 transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-cyan-700 dark:text-cyan-400 bg-cyan-100 dark:bg-cyan-950/60 rounded-full hover:bg-cyan-200 dark:hover:bg-cyan-900/60 transition-colors border border-cyan-200 dark:border-cyan-800"
             >
               <Package className="h-4 w-4" />
               Classificados
             </Link>
             <Link
               to="/empregos"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-indigo-600 dark:text-indigo-500 bg-indigo-50 dark:bg-indigo-950/50 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-indigo-700 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-950/60 rounded-full hover:bg-indigo-200 dark:hover:bg-indigo-900/60 transition-colors border border-indigo-200 dark:border-indigo-800"
             >
               <Briefcase className="h-4 w-4" />
               Empregos
             </Link>
+            <Link
+              to="/comunidade/guia"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 rounded-full hover:bg-amber-200 dark:hover:bg-amber-900/60 transition-colors border border-amber-200 dark:border-amber-800"
+            >
+              <Store className="h-4 w-4" />
+              Guia Comercial
+            </Link>
+            
+            {/* Projetos Especiais Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Projetos Especiais
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center" className="w-56">
+                <DropdownMenuItem asChild>
+                  <Link to="/google-maps" className="flex items-center gap-2 cursor-pointer">
+                    <MapPin className="h-4 w-4 text-blue-600" />
+                    <span>Apareça no Google</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/censo-pcd" className="flex items-center gap-2 cursor-pointer">
+                    <Accessibility className="h-4 w-4 text-purple-600" />
+                    <span>Censo PcD Cotia</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/comunidade" className="flex items-center gap-2 cursor-pointer">
+                    <Users className="h-4 w-4 text-pink-600" />
+                    <span>Comunidade</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/anti-fake-news" className="flex items-center gap-2 cursor-pointer">
+                    <ShieldCheck className="h-4 w-4 text-green-600" />
+                    <span>Check Fake News</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/transporte-escolar" className="flex items-center gap-2 cursor-pointer">
+                    <Bus className="h-4 w-4 text-orange-600" />
+                    <span>Transporte Escolar</span>
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
