@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Search, Sun, Moon, LogOut, LayoutDashboard, Newspaper, FolderOpen, Megaphone, Settings, ShieldCheck, Bus, MapPin, Accessibility, Users } from "lucide-react";
+import { Menu, X, Search, Sun, Moon, LogOut, LayoutDashboard, Newspaper, FolderOpen, Megaphone, Settings, ShieldCheck, Bus, MapPin, Accessibility, Users, Package, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTheme } from "@/hooks/useTheme";
@@ -291,6 +291,20 @@ export function Header() {
             >
               <Bus className="h-4 w-4" />
               Transporte Escolar
+            </Link>
+            <Link
+              to="/classificados"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-cyan-600 dark:text-cyan-500 bg-cyan-50 dark:bg-cyan-950/50 rounded-full hover:bg-cyan-100 dark:hover:bg-cyan-900/50 transition-colors"
+            >
+              <Package className="h-4 w-4" />
+              Classificados
+            </Link>
+            <Link
+              to="/empregos"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-indigo-600 dark:text-indigo-500 bg-indigo-50 dark:bg-indigo-950/50 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
+            >
+              <Briefcase className="h-4 w-4" />
+              Empregos
             </Link>
           </div>
         </div>

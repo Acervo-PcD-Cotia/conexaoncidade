@@ -2256,6 +2256,113 @@ export type Database = {
         }
         Relationships: []
       }
+      classified_favorites: {
+        Row: {
+          classified_id: string | null
+          created_at: string | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          classified_id?: string | null
+          created_at?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          classified_id?: string | null
+          created_at?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classified_favorites_classified_id_fkey"
+            columns: ["classified_id"]
+            isOneToOne: false
+            referencedRelation: "classifieds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      classifieds: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          category: string
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          contact_whatsapp: string | null
+          created_at: string | null
+          description: string
+          expires_at: string | null
+          favorites_count: number | null
+          id: string
+          images: string[] | null
+          is_negotiable: boolean | null
+          location: string | null
+          neighborhood: string | null
+          price: number | null
+          rejection_reason: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+          user_id: string | null
+          views_count: number | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          category: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          contact_whatsapp?: string | null
+          created_at?: string | null
+          description: string
+          expires_at?: string | null
+          favorites_count?: number | null
+          id?: string
+          images?: string[] | null
+          is_negotiable?: boolean | null
+          location?: string | null
+          neighborhood?: string | null
+          price?: number | null
+          rejection_reason?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+          user_id?: string | null
+          views_count?: number | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          category?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          contact_whatsapp?: string | null
+          created_at?: string | null
+          description?: string
+          expires_at?: string | null
+          favorites_count?: number | null
+          id?: string
+          images?: string[] | null
+          is_negotiable?: boolean | null
+          location?: string | null
+          neighborhood?: string | null
+          price?: number | null
+          rejection_reason?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string | null
+          views_count?: number | null
+        }
+        Relationships: []
+      }
       click_events: {
         Row: {
           bio_button_id: string | null
@@ -4544,6 +4651,181 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      job_applications: {
+        Row: {
+          cover_letter: string | null
+          created_at: string | null
+          email: string
+          full_name: string
+          id: string
+          job_id: string | null
+          linkedin_url: string | null
+          notes: string | null
+          phone: string | null
+          resume_url: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          cover_letter?: string | null
+          created_at?: string | null
+          email: string
+          full_name: string
+          id?: string
+          job_id?: string | null
+          linkedin_url?: string | null
+          notes?: string | null
+          phone?: string | null
+          resume_url?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          cover_letter?: string | null
+          created_at?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          job_id?: string | null
+          linkedin_url?: string | null
+          notes?: string | null
+          phone?: string | null
+          resume_url?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_applications_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_saves: {
+        Row: {
+          created_at: string | null
+          id: string
+          job_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          job_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          job_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_saves_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jobs: {
+        Row: {
+          application_link: string | null
+          applications_count: number | null
+          benefits: string | null
+          category: string
+          company_logo: string | null
+          company_name: string
+          company_website: string | null
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string | null
+          description: string
+          expires_at: string | null
+          id: string
+          is_featured: boolean | null
+          job_type: string
+          location: string | null
+          neighborhood: string | null
+          requirements: string | null
+          salary_max: number | null
+          salary_min: number | null
+          salary_type: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+          user_id: string | null
+          views_count: number | null
+          work_mode: string | null
+        }
+        Insert: {
+          application_link?: string | null
+          applications_count?: number | null
+          benefits?: string | null
+          category: string
+          company_logo?: string | null
+          company_name: string
+          company_website?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string | null
+          description: string
+          expires_at?: string | null
+          id?: string
+          is_featured?: boolean | null
+          job_type: string
+          location?: string | null
+          neighborhood?: string | null
+          requirements?: string | null
+          salary_max?: number | null
+          salary_min?: number | null
+          salary_type?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+          user_id?: string | null
+          views_count?: number | null
+          work_mode?: string | null
+        }
+        Update: {
+          application_link?: string | null
+          applications_count?: number | null
+          benefits?: string | null
+          category?: string
+          company_logo?: string | null
+          company_name?: string
+          company_website?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string | null
+          description?: string
+          expires_at?: string | null
+          id?: string
+          is_featured?: boolean | null
+          job_type?: string
+          location?: string | null
+          neighborhood?: string | null
+          requirements?: string | null
+          salary_max?: number | null
+          salary_min?: number | null
+          salary_type?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string | null
+          views_count?: number | null
+          work_mode?: string | null
+        }
+        Relationships: []
       }
       journalist_style_profiles: {
         Row: {
@@ -7745,6 +8027,8 @@ export type Database = {
         Args: { p_button_id: string }
         Returns: undefined
       }
+      increment_classified_views: { Args: { p_id: string }; Returns: undefined }
+      increment_job_views: { Args: { p_id: string }; Returns: undefined }
       increment_link_clicks: { Args: { p_link_id: string }; Returns: undefined }
       is_admin_or_editor: { Args: { _user_id: string }; Returns: boolean }
       is_site_admin: {
