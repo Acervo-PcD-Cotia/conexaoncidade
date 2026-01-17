@@ -116,3 +116,6 @@ verify_jwt = false
 
 [functions.generate-webstory]
 verify_jwt = false
+
+[functions.generate-social-image]
+verify_jwt = false
