@@ -141,6 +141,17 @@ import CensoPcdConclusao from "./pages/censo-pcd/CensoPcdConclusao";
 import CensoPcdDashboard from "./pages/admin/censo-pcd/CensoPcdDashboard";
 import CensoPcdRespostas from "./pages/admin/censo-pcd/CensoPcdRespostas";
 
+// Classifieds Pages
+import ClassifiedsPage from "./pages/classifieds/ClassifiedsPage";
+import ClassifiedDetailPage from "./pages/classifieds/ClassifiedDetailPage";
+import ClassifiedNewPage from "./pages/classifieds/ClassifiedNewPage";
+import ClassifiedsAdmin from "./pages/admin/ClassifiedsAdmin";
+
+// Jobs Pages
+import JobsPage from "./pages/jobs/JobsPage";
+import JobDetailPage from "./pages/jobs/JobDetailPage";
+import JobsAdmin from "./pages/admin/JobsAdmin";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -190,6 +201,15 @@ const App = () => (
                         <Route path="/censo-pcd/participar" element={<CensoPcdQuiz />} />
                         <Route path="/censo-pcd/concluido" element={<CensoPcdConclusao />} />
                         <Route path="/stories" element={<StoriesPage />} />
+                        
+                        {/* Classifieds Routes */}
+                        <Route path="/classificados" element={<ClassifiedsPage />} />
+                        <Route path="/classificados/novo" element={<ClassifiedNewPage />} />
+                        <Route path="/classificados/:id" element={<ClassifiedDetailPage />} />
+                        
+                        {/* Jobs Routes */}
+                        <Route path="/empregos" element={<JobsPage />} />
+                        <Route path="/empregos/:id" element={<JobDetailPage />} />
                       </Route>
                       <Route path="/story/:slug" element={<StoryViewer />} />
                       <Route path="/evento/:slug" element={<EventDetail />} />
