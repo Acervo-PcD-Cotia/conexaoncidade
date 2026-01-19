@@ -14,6 +14,9 @@ import {
   Sparkles,
   ShieldCheck,
   Bus,
+  Package,
+  Briefcase,
+  Store,
 } from "lucide-react";
 import { CommunityErrorBoundary } from "./CommunityErrorBoundary";
 import { CommunityChatButton } from "./CommunityChatButton";
@@ -40,6 +43,14 @@ const communityNavItems: { section: string; items: NavItem[] }[] = [
       { label: "Feed", href: "/comunidade", icon: Home, description: "Início" },
       { label: "Guia", href: "/comunidade/guia", icon: MapPin, description: "Locais" },
       { label: "Grupos", href: "/comunidade/grupos", icon: Users, description: "Participe" },
+    ],
+  },
+  {
+    section: "Marketplace",
+    items: [
+      { label: "Classificados", href: "/classificados", icon: Package, description: "Compra e venda" },
+      { label: "Empregos", href: "/empregos", icon: Briefcase, description: "Vagas locais" },
+      { label: "Guia Comercial", href: "/comunidade/guia", icon: Store, description: "Negócios" },
     ],
   },
   {
