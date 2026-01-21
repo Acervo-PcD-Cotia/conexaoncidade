@@ -448,3 +448,119 @@ export function useCurrentLive(channelType: "radio" | "tv") {
     refetchInterval: 15000,
   });
 }
+
+// Admin: Pin/unpin chat message
+export function usePinMessage() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ messageId, isPinned }: { messageId: string; isPinned: boolean }) => {
+      const { error } = await supabase
+        .from("broadcast_chat_messages")
+        .update({ is_pinned: isPinned })
+        .eq("id", messageId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["broadcast-chat"] });
+      toast.success("Mensagem atualizada");
+    },
+    onError: () => {
+      toast.error("Erro ao atualizar mensagem");
+    },
+  });
+}
+
+// Admin: Delete chat message (soft delete)
+export function useDeleteChatMessage() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (messageId: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { error } = await supabase
+        .from("broadcast_chat_messages")
+        .update({ 
+          is_deleted: true,
+          deleted_by: user?.id 
+        })
+        .eq("id", messageId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["broadcast-chat"] });
+      toast.success("Mensagem removida");
+    },
+    onError: () => {
+      toast.error("Erro ao remover mensagem");
+    },
+  });
+}
+
+// Fetch all broadcasts for admin list
+export function useAllBroadcasts(status?: string) {
+  return useQuery({
+    queryKey: ["broadcasts-admin", status],
+    queryFn: async () => {
+      let query = supabase
+        .from("broadcasts")
+        .select("*, program:broadcast_programs(*), channel:broadcast_channels(*)")
+        .order("created_at", { ascending: false });
+      
+      if (status && status !== "all") {
+        query = query.eq("status", status);
+      }
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      return data as Broadcast[];
+    },
+  });
+}
+
+// Fetch broadcast by ID
+export function useBroadcastById(id: string | undefined) {
+  return useQuery({
+    queryKey: ["broadcast-by-id", id],
+    queryFn: async () => {
+      if (!id) return null;
+      
+      const { data, error } = await supabase
+        .from("broadcasts")
+        .select("*, program:broadcast_programs(*), channel:broadcast_channels(*)")
+        .eq("id", id)
+        .single();
+      
+      if (error) throw error;
+      return data as Broadcast;
+    },
+    enabled: !!id,
+  });
+}
+
+// Delete broadcast
+export function useDeleteBroadcast() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("broadcasts")
+        .delete()
+        .eq("id", id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["broadcasts"] });
+      queryClient.invalidateQueries({ queryKey: ["broadcasts-admin"] });
+      toast.success("Transmissão excluída");
+    },
+    onError: () => {
+      toast.error("Erro ao excluir transmissão");
+    },
+  });
+}
