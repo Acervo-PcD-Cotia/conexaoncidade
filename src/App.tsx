@@ -152,6 +152,10 @@ import JobsPage from "./pages/jobs/JobsPage";
 import JobDetailPage from "./pages/jobs/JobDetailPage";
 import JobsAdmin from "./pages/admin/JobsAdmin";
 
+// Broadcast Pages
+import BroadcastHub from "./pages/broadcast/BroadcastHub";
+import BroadcastDashboard from "./pages/admin/broadcast/BroadcastDashboard";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -311,10 +315,16 @@ const App = () => (
                         <Route path="censo-pcd" element={<CensoPcdDashboard />} />
                         <Route path="censo-pcd/respostas" element={<CensoPcdRespostas />} />
                         
+                        {/* Broadcast Admin Routes */}
+                        <Route path="broadcast" element={<BroadcastDashboard />} />
+                        
                         {/* Classifieds & Jobs Admin */}
                         <Route path="classifieds" element={<ClassifiedsAdmin />} />
                         <Route path="jobs" element={<JobsAdmin />} />
                       </Route>
+                      
+                      {/* Broadcast Public Routes */}
+                      <Route path="/ao-vivo" element={<BroadcastHub />} />
 
                       <Route path="*" element={<NotFound />} />
                     </Routes>
