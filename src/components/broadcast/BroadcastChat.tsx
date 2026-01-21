@@ -1,15 +1,24 @@
 import { useState, useEffect, useRef } from "react";
-import { Send, Pin, Trash2 } from "lucide-react";
+import { Send, Pin, PinOff, Trash2, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useBroadcastChat, useSendChatMessage, BroadcastChatMessage } from "@/hooks/useBroadcast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useBroadcastChat, useSendChatMessage, usePinMessage, useDeleteChatMessage, BroadcastChatMessage } from "@/hooks/useBroadcast";
+import { useUserRole } from "@/hooks/useRequireRole";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
 interface BroadcastChatProps {
   broadcastId: string;
@@ -19,12 +28,17 @@ interface BroadcastChatProps {
 
 export default function BroadcastChat({ broadcastId, isLive = true, className }: BroadcastChatProps) {
   const { user } = useAuth();
+  const { isAdmin, isSuperAdmin, isEditor } = useUserRole();
+  const canModerate = isAdmin || isSuperAdmin || isEditor;
+  
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<BroadcastChatMessage[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   
   const { data: initialMessages } = useBroadcastChat(broadcastId);
   const sendMessage = useSendChatMessage();
+  const pinMessage = usePinMessage();
+  const deleteMessage = useDeleteChatMessage();
 
   // Initialize messages
   useEffect(() => {
@@ -96,7 +110,26 @@ export default function BroadcastChat({ broadcastId, isLive = true, className }:
     setMessage("");
   };
 
+  const handlePin = async (messageId: string, currentlyPinned: boolean) => {
+    try {
+      await pinMessage.mutateAsync({ messageId, isPinned: !currentlyPinned });
+      toast.success(currentlyPinned ? "Mensagem desafixada" : "Mensagem fixada");
+    } catch {
+      toast.error("Erro ao atualizar mensagem");
+    }
+  };
+
+  const handleDelete = async (messageId: string) => {
+    try {
+      await deleteMessage.mutateAsync(messageId);
+      toast.success("Mensagem excluída");
+    } catch {
+      toast.error("Erro ao excluir mensagem");
+    }
+  };
+
   const pinnedMessages = messages.filter((msg) => msg.is_pinned);
+  const regularMessages = messages.filter((m) => !m.is_pinned && !m.is_deleted);
 
   return (
     <div className={cn("flex flex-col bg-card rounded-lg border h-full", className)}>
@@ -115,14 +148,29 @@ export default function BroadcastChat({ broadcastId, isLive = true, className }:
 
       {/* Pinned messages */}
       {pinnedMessages.length > 0 && (
-        <div className="p-2 bg-primary/10 border-b">
+        <div className="p-2 bg-primary/10 border-b space-y-1">
           {pinnedMessages.map((msg) => (
-            <div key={msg.id} className="flex items-start gap-2 text-sm">
+            <div key={msg.id} className="flex items-start gap-2 text-sm group">
               <Pin className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-              <div>
+              <div className="flex-1 min-w-0">
                 <span className="font-medium text-primary">{msg.user_name}:</span>{" "}
-                <span>{msg.message}</span>
+                <span className="break-words">{msg.message}</span>
               </div>
+              {canModerate && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => handlePin(msg.id, true)}
+                    >
+                      <PinOff className="h-3 w-3" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Desafixar</TooltipContent>
+                </Tooltip>
+              )}
             </div>
           ))}
         </div>
@@ -131,8 +179,8 @@ export default function BroadcastChat({ broadcastId, isLive = true, className }:
       {/* Messages */}
       <ScrollArea ref={scrollRef} className="flex-1 p-4">
         <div className="space-y-4">
-          {messages.filter((m) => !m.is_pinned).map((msg) => (
-            <div key={msg.id} className="flex items-start gap-2">
+          {regularMessages.map((msg) => (
+            <div key={msg.id} className="flex items-start gap-2 group">
               <Avatar className="w-8 h-8">
                 <AvatarImage src={msg.user_avatar_url || undefined} />
                 <AvatarFallback className="text-xs">
@@ -151,10 +199,38 @@ export default function BroadcastChat({ broadcastId, isLive = true, className }:
                 </div>
                 <p className="text-sm break-words">{msg.message}</p>
               </div>
+              
+              {/* Moderation controls - admin only */}
+              {canModerate && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <MoreVertical className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handlePin(msg.id, false)}>
+                      <Pin className="h-4 w-4 mr-2" />
+                      Fixar mensagem
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onClick={() => handleDelete(msg.id)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Excluir mensagem
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
           ))}
 
-          {messages.length === 0 && (
+          {regularMessages.length === 0 && pinnedMessages.length === 0 && (
             <div className="text-center text-muted-foreground py-8">
               <p>Nenhuma mensagem ainda.</p>
               <p className="text-sm">Seja o primeiro a comentar!</p>
