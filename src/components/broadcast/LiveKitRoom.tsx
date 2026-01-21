@@ -323,3 +323,52 @@ export function AudioOnlyLayout({
     </div>
   );
 }
+
+// Wrapper component for easy layout switching
+interface LiveKitRoomProps {
+  participants: LiveKitParticipant[];
+  localParticipant?: LiveKitParticipant | null;
+  layout?: "grid" | "spotlight" | "audio";
+  spotlightIdentity?: string;
+  coverImage?: string;
+  className?: string;
+}
+
+export function LiveKitRoom({
+  participants,
+  localParticipant,
+  layout = "grid",
+  spotlightIdentity,
+  coverImage,
+  className,
+}: LiveKitRoomProps) {
+  if (layout === "spotlight") {
+    return (
+      <SpotlightLayout
+        participants={participants}
+        localParticipant={localParticipant}
+        spotlightIdentity={spotlightIdentity}
+        className={className}
+      />
+    );
+  }
+
+  if (layout === "audio") {
+    return (
+      <AudioOnlyLayout
+        participants={participants}
+        localParticipant={localParticipant}
+        coverImage={coverImage}
+        className={className}
+      />
+    );
+  }
+
+  return (
+    <GridLayout
+      participants={participants}
+      localParticipant={localParticipant}
+      className={className}
+    />
+  );
+}
