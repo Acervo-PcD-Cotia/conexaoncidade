@@ -13,7 +13,7 @@ import { StudioControls, LayoutType } from "@/components/broadcast/studio/Studio
 import { LowerThird } from "@/components/broadcast/studio/LowerThird";
 import { InviteGuestModal } from "@/components/broadcast/studio/InviteGuestModal";
 import { GridLayout, SpotlightLayout } from "@/components/broadcast/LiveKitRoom";
-import { BroadcastChat } from "@/components/broadcast/BroadcastChat";
+import BroadcastChat from "@/components/broadcast/BroadcastChat";
 import { ArrowLeft, Users, Settings, AlertCircle } from "lucide-react";
 
 export default function BroadcastStudio() {
