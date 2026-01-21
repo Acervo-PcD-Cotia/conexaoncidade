@@ -134,3 +134,6 @@ verify_jwt = false
 
 [functions.broadcast-end]
 verify_jwt = false
+
+[functions.broadcast-transcribe]
+verify_jwt = false

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useBroadcastBySlug, useUpdateBroadcast } from "@/hooks/useBroadcast";
 import { useLiveKit, LiveKitParticipant } from "@/hooks/useLiveKit";
+import { useAudioTranscription } from "@/hooks/useAudioTranscription";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,7 @@ export default function BroadcastStudio() {
   const updateBroadcast = useUpdateBroadcast();
 
   const [layout, setLayout] = useState<LayoutType>("grid");
-  const [captionsEnabled, setCaptionsEnabled] = useState(true);
+  const [captionsEnabled, setCaptionsEnabled] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [chatEnabled, setChatEnabled] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -56,6 +57,37 @@ export default function BroadcastStudio() {
     onConnected: () => toast.success("Conectado ao estúdio!"),
     onDisconnected: () => toast.info("Desconectado do estúdio"),
   });
+
+  // Audio transcription for captions
+  const {
+    isTranscribing,
+    error: transcriptionError,
+    startTranscription,
+    stopTranscription,
+  } = useAudioTranscription({
+    broadcastId: broadcast?.id || "",
+    speakerName: "Apresentador",
+    onTranscript: (text) => {
+      console.log("Transcript:", text);
+    },
+  });
+
+  // Handle captions toggle
+  useEffect(() => {
+    if (captionsEnabled && isLive && !isTranscribing) {
+      startTranscription();
+    } else if (!captionsEnabled && isTranscribing) {
+      stopTranscription();
+    }
+  }, [captionsEnabled, isLive, isTranscribing, startTranscription, stopTranscription]);
+
+  // Show transcription errors
+  useEffect(() => {
+    if (transcriptionError) {
+      toast.error(transcriptionError);
+      setCaptionsEnabled(false);
+    }
+  }, [transcriptionError]);
 
   // Duration timer
   useEffect(() => {
