@@ -125,3 +125,12 @@ verify_jwt = false
 
 [functions.notify-job-matches]
 verify_jwt = false
+
+[functions.livekit-token]
+verify_jwt = false
+
+[functions.broadcast-start]
+verify_jwt = false
+
+[functions.broadcast-end]
+verify_jwt = false
