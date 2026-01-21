@@ -72,22 +72,22 @@ export const SALARY_TYPES = [
 ];
 
 export const JOB_CATEGORIES = [
-  'Administração',
-  'Atendimento',
-  'Comercial/Vendas',
-  'Comunicação',
-  'Construção',
-  'Educação',
-  'Engenharia',
-  'Finanças',
-  'Gastronomia',
-  'Indústria',
-  'Logística',
-  'Marketing',
-  'Saúde',
-  'Serviços Gerais',
-  'Tecnologia',
-  'Outros',
+  { value: 'administracao', label: 'Administração' },
+  { value: 'atendimento', label: 'Atendimento' },
+  { value: 'comercial', label: 'Comercial/Vendas' },
+  { value: 'comunicacao', label: 'Comunicação' },
+  { value: 'construcao', label: 'Construção' },
+  { value: 'educacao', label: 'Educação' },
+  { value: 'engenharia', label: 'Engenharia' },
+  { value: 'financas', label: 'Finanças' },
+  { value: 'gastronomia', label: 'Gastronomia' },
+  { value: 'industria', label: 'Indústria' },
+  { value: 'logistica', label: 'Logística' },
+  { value: 'marketing', label: 'Marketing' },
+  { value: 'saude', label: 'Saúde' },
+  { value: 'servicos', label: 'Serviços Gerais' },
+  { value: 'tecnologia', label: 'Tecnologia' },
+  { value: 'outros', label: 'Outros' },
 ];
 
 interface JobFilters {

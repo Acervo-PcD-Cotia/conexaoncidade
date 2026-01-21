@@ -2285,6 +2285,44 @@ export type Database = {
           },
         ]
       }
+      classified_interest_clicks: {
+        Row: {
+          classified_id: string
+          click_type: string
+          clicked_at: string
+          id: string
+          ip_hash: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          classified_id: string
+          click_type: string
+          clicked_at?: string
+          id?: string
+          ip_hash?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          classified_id?: string
+          click_type?: string
+          clicked_at?: string
+          id?: string
+          ip_hash?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classified_interest_clicks_classified_id_fkey"
+            columns: ["classified_id"]
+            isOneToOne: false
+            referencedRelation: "classifieds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       classifieds: {
         Row: {
           approved_at: string | null
@@ -2296,13 +2334,17 @@ export type Database = {
           contact_whatsapp: string | null
           created_at: string | null
           description: string
+          email_clicks: number | null
           expires_at: string | null
           favorites_count: number | null
+          featured_until: string | null
           id: string
           images: string[] | null
+          is_featured: boolean | null
           is_negotiable: boolean | null
           location: string | null
           neighborhood: string | null
+          phone_clicks: number | null
           price: number | null
           rejection_reason: string | null
           status: string | null
@@ -2310,6 +2352,7 @@ export type Database = {
           updated_at: string | null
           user_id: string | null
           views_count: number | null
+          whatsapp_clicks: number | null
         }
         Insert: {
           approved_at?: string | null
@@ -2321,13 +2364,17 @@ export type Database = {
           contact_whatsapp?: string | null
           created_at?: string | null
           description: string
+          email_clicks?: number | null
           expires_at?: string | null
           favorites_count?: number | null
+          featured_until?: string | null
           id?: string
           images?: string[] | null
+          is_featured?: boolean | null
           is_negotiable?: boolean | null
           location?: string | null
           neighborhood?: string | null
+          phone_clicks?: number | null
           price?: number | null
           rejection_reason?: string | null
           status?: string | null
@@ -2335,6 +2382,7 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
           views_count?: number | null
+          whatsapp_clicks?: number | null
         }
         Update: {
           approved_at?: string | null
@@ -2346,13 +2394,17 @@ export type Database = {
           contact_whatsapp?: string | null
           created_at?: string | null
           description?: string
+          email_clicks?: number | null
           expires_at?: string | null
           favorites_count?: number | null
+          featured_until?: string | null
           id?: string
           images?: string[] | null
+          is_featured?: boolean | null
           is_negotiable?: boolean | null
           location?: string | null
           neighborhood?: string | null
+          phone_clicks?: number | null
           price?: number | null
           rejection_reason?: string | null
           status?: string | null
@@ -2360,6 +2412,7 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
           views_count?: number | null
+          whatsapp_clicks?: number | null
         }
         Relationships: []
       }
@@ -4652,6 +4705,48 @@ export type Database = {
           },
         ]
       }
+      job_alert_preferences: {
+        Row: {
+          categories: string[] | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          job_types: string[] | null
+          keywords: string | null
+          min_salary: number | null
+          neighborhoods: string[] | null
+          updated_at: string
+          user_id: string
+          work_modes: string[] | null
+        }
+        Insert: {
+          categories?: string[] | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          job_types?: string[] | null
+          keywords?: string | null
+          min_salary?: number | null
+          neighborhoods?: string[] | null
+          updated_at?: string
+          user_id: string
+          work_modes?: string[] | null
+        }
+        Update: {
+          categories?: string[] | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          job_types?: string[] | null
+          keywords?: string | null
+          min_salary?: number | null
+          neighborhoods?: string[] | null
+          updated_at?: string
+          user_id?: string
+          work_modes?: string[] | null
+        }
+        Relationships: []
+      }
       job_applications: {
         Row: {
           cover_letter: string | null
@@ -4739,6 +4834,7 @@ export type Database = {
       }
       jobs: {
         Row: {
+          application_clicks: number | null
           application_link: string | null
           applications_count: number | null
           benefits: string | null
@@ -4751,6 +4847,7 @@ export type Database = {
           created_at: string | null
           description: string
           expires_at: string | null
+          featured_until: string | null
           id: string
           is_featured: boolean | null
           job_type: string
@@ -4768,6 +4865,7 @@ export type Database = {
           work_mode: string | null
         }
         Insert: {
+          application_clicks?: number | null
           application_link?: string | null
           applications_count?: number | null
           benefits?: string | null
@@ -4780,6 +4878,7 @@ export type Database = {
           created_at?: string | null
           description: string
           expires_at?: string | null
+          featured_until?: string | null
           id?: string
           is_featured?: boolean | null
           job_type: string
@@ -4797,6 +4896,7 @@ export type Database = {
           work_mode?: string | null
         }
         Update: {
+          application_clicks?: number | null
           application_link?: string | null
           applications_count?: number | null
           benefits?: string | null
@@ -4809,6 +4909,7 @@ export type Database = {
           created_at?: string | null
           description?: string
           expires_at?: string | null
+          featured_until?: string | null
           id?: string
           is_featured?: boolean | null
           job_type?: string
@@ -5862,6 +5963,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      paid_highlights: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          duration_days: number
+          entity_id: string
+          entity_type: string
+          expires_at: string | null
+          id: string
+          paid_at: string | null
+          starts_at: string | null
+          status: string
+          stripe_checkout_session_id: string | null
+          stripe_payment_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          duration_days: number
+          entity_id: string
+          entity_type: string
+          expires_at?: string | null
+          id?: string
+          paid_at?: string | null
+          starts_at?: string | null
+          status?: string
+          stripe_checkout_session_id?: string | null
+          stripe_payment_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          duration_days?: number
+          entity_id?: string
+          entity_type?: string
+          expires_at?: string | null
+          id?: string
+          paid_at?: string | null
+          starts_at?: string | null
+          status?: string
+          stripe_checkout_session_id?: string | null
+          stripe_payment_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       partner_relationships: {
         Row: {
@@ -8036,6 +8185,10 @@ export type Database = {
         Args: { p_button_id: string }
         Returns: undefined
       }
+      increment_classified_interest: {
+        Args: { p_classified_id: string; p_click_type: string }
+        Returns: undefined
+      }
       increment_classified_views: { Args: { p_id: string }; Returns: undefined }
       increment_job_views: { Args: { p_id: string }; Returns: undefined }
       increment_link_clicks: { Args: { p_link_id: string }; Returns: undefined }
@@ -8054,6 +8207,10 @@ export type Database = {
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       normalize_title_fingerprint: { Args: { title: string }; Returns: string }
+      should_notify_classified_interest: {
+        Args: { p_classified_id: string }
+        Returns: boolean
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       tenant_has_feature: {

@@ -49,8 +49,8 @@ export function JobFilters({
           <SelectContent>
             <SelectItem value="all">Todas as áreas</SelectItem>
             {JOB_CATEGORIES.map((cat) => (
-              <SelectItem key={cat} value={cat}>
-                {cat}
+              <SelectItem key={cat.value} value={cat.value}>
+                {cat.label}
               </SelectItem>
             ))}
           </SelectContent>

@@ -6,16 +6,26 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
   ArrowLeft, MapPin, Eye, Clock, Phone, Mail, MessageCircle,
-  Share2, Heart, AlertTriangle
+  Share2, Heart, AlertTriangle, Star
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useClassifiedById, CLASSIFIED_CATEGORIES } from "@/hooks/useClassifieds";
-
+import { useTrackClassifiedInterest } from "@/hooks/useClassifiedInterest";
+import { useAuth } from "@/contexts/AuthContext";
 export default function ClassifiedDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
   const { data: classified, isLoading, error } = useClassifiedById(id);
+  const trackInterest = useTrackClassifiedInterest();
 
+  const isOwner = user && classified?.user_id === user.id;
+
+  const handleContactClick = (clickType: 'whatsapp' | 'phone' | 'email') => {
+    if (id) {
+      trackInterest.mutate({ classifiedId: id, clickType });
+    }
+  };
   if (isLoading) {
     return (
       <div className="container py-8">
@@ -190,7 +200,7 @@ export default function ClassifiedDetailPage() {
                 )}
 
                 {classified.contact_whatsapp && (
-                  <Button className="w-full" asChild>
+                  <Button className="w-full" asChild onClick={() => handleContactClick('whatsapp')}>
                     <a
                       href={`https://wa.me/55${classified.contact_whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Olá! Vi seu anúncio "${classified.title}" no Conexão na Cidade e tenho interesse.`)}`}
                       target="_blank"
@@ -203,7 +213,7 @@ export default function ClassifiedDetailPage() {
                 )}
 
                 {classified.contact_phone && (
-                  <Button variant="outline" className="w-full" asChild>
+                  <Button variant="outline" className="w-full" asChild onClick={() => handleContactClick('phone')}>
                     <a href={`tel:${classified.contact_phone}`}>
                       <Phone className="h-4 w-4 mr-2" />
                       {classified.contact_phone}
@@ -212,12 +222,30 @@ export default function ClassifiedDetailPage() {
                 )}
 
                 {classified.contact_email && (
-                  <Button variant="outline" className="w-full" asChild>
+                  <Button variant="outline" className="w-full" asChild onClick={() => handleContactClick('email')}>
                     <a href={`mailto:${classified.contact_email}?subject=Interesse: ${classified.title}`}>
                       <Mail className="h-4 w-4 mr-2" />
                       Enviar e-mail
                     </a>
                   </Button>
+                )}
+
+                {isOwner && !classified.is_featured && (
+                  <div className="pt-4 border-t">
+                    <Button variant="secondary" className="w-full" asChild>
+                      <Link to={`/classificados/${id}/destacar`}>
+                        <Star className="h-4 w-4 mr-2" />
+                        Destacar Anúncio
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+
+                {classified.is_featured && (
+                  <Badge className="w-full justify-center py-2 bg-amber-500 hover:bg-amber-600">
+                    <Star className="h-4 w-4 mr-2 fill-current" />
+                    Anúncio em Destaque
+                  </Badge>
                 )}
 
                 <p className="text-xs text-muted-foreground text-center pt-4 border-t">
