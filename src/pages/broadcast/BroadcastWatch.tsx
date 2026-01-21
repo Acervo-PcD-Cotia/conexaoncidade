@@ -7,8 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBroadcastBySlug, useTrackViewer, useUpcomingBroadcasts } from "@/hooks/useBroadcast";
 import BroadcastChat from "@/components/broadcast/BroadcastChat";
-import { LiveKitRoom } from "@/components/broadcast/LiveKitRoom";
-import { useLiveKit } from "@/hooks/useLiveKit";
+import BroadcastPlayer from "@/components/broadcast/BroadcastPlayer";
 import { formatDistanceToNow, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -19,20 +18,6 @@ export default function BroadcastWatch() {
   const { data: upcomingBroadcasts } = useUpcomingBroadcasts(5);
   const trackViewer = useTrackViewer();
   const [analyticsId, setAnalyticsId] = useState<string | null>(null);
-  const [shouldConnect, setShouldConnect] = useState(false);
-
-  const {
-    connect,
-    disconnect,
-    isConnected,
-    participants,
-    localParticipant,
-    connectionState,
-  } = useLiveKit({
-    broadcastId: broadcast?.id || "",
-    role: "viewer",
-    displayName: "Espectador",
-  });
 
   // Track viewer when joining
   useEffect(() => {
@@ -49,21 +34,8 @@ export default function BroadcastWatch() {
           setAnalyticsId(result.id);
         }
       });
-
-      setShouldConnect(true);
     }
   }, [broadcast?.id, broadcast?.status]);
-
-  // Connect to LiveKit when ready
-  useEffect(() => {
-    if (shouldConnect && broadcast?.id) {
-      connect();
-    }
-
-    return () => {
-      disconnect();
-    };
-  }, [shouldConnect, broadcast?.id]);
 
   const handleShare = async () => {
     const url = window.location.href;
@@ -107,6 +79,7 @@ export default function BroadcastWatch() {
   }
 
   const isLive = broadcast.status === "live";
+  const isRadio = broadcast.channel?.type === "radio";
 
   return (
     <>
@@ -147,37 +120,13 @@ export default function BroadcastWatch() {
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Video/Audio Player */}
             <div className="lg:col-span-2 space-y-4">
-              {/* Player */}
-              <div className="rounded-lg overflow-hidden bg-black aspect-video relative">
-                {isLive && isConnected ? (
-                  <LiveKitRoom
-                    participants={participants}
-                    localParticipant={localParticipant}
-                    layout="spotlight"
-                    className="w-full h-full"
-                  />
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    {broadcast.channel?.type === "radio" ? (
-                      <div className="text-center text-white">
-                        <Radio className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                        <p className="text-lg">
-                          {isLive ? "Transmissão de Áudio" : "Transmissão Encerrada"}
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="text-center text-white">
-                        <Tv className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                        <p className="text-lg">
-                          {broadcast.status === "scheduled"
-                            ? "Transmissão em breve"
-                            : "Transmissão Encerrada"}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+              {/* Player with real LiveKit integration */}
+              <BroadcastPlayer
+                broadcast={broadcast}
+                autoConnect={isLive}
+                isAudioOnly={isRadio}
+                showCaptions={true}
+              />
 
               {/* Broadcast Info */}
               <div className="space-y-4">
