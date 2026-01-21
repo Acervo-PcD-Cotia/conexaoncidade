@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Eye, Heart, Clock } from "lucide-react";
+import { MapPin, Eye, Heart, Clock, Star } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Classified, CLASSIFIED_CATEGORIES } from "@/hooks/useClassifieds";
@@ -23,7 +23,7 @@ export function ClassifiedCard({ classified }: ClassifiedCardProps) {
 
   return (
     <Link to={`/classificados/${classified.id}`}>
-      <Card className="group overflow-hidden hover:shadow-lg transition-shadow">
+      <Card className={`group overflow-hidden hover:shadow-lg transition-shadow ${classified.is_featured ? 'ring-2 ring-amber-500 bg-amber-50/50 dark:bg-amber-950/20' : ''}`}>
         <div className="relative aspect-[4/3] bg-muted">
           {classified.images?.[0] ? (
             <img
@@ -39,6 +39,12 @@ export function ClassifiedCard({ classified }: ClassifiedCardProps) {
           <Badge className="absolute top-2 left-2" variant="secondary">
             {categoryLabel}
           </Badge>
+          {classified.is_featured && (
+            <Badge className="absolute top-2 right-2 bg-amber-500 hover:bg-amber-600">
+              <Star className="h-3 w-3 mr-1 fill-current" />
+              Destaque
+            </Badge>
+          )}
         </div>
         
         <CardContent className="p-4 space-y-2">

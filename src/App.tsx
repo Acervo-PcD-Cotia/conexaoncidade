@@ -112,7 +112,7 @@ import PhoneImportAssisted from "./pages/admin/community/PhoneImportAssisted";
 
 // Community Benefit Pages
 import PhoneChooserPage from "./pages/community/PhoneChooserPage";
-
+import JobAlertsPage from "./pages/community/JobAlertsPage";
 // Campaign Pages
 import GoogleMapsCampaign from "./pages/campaigns/GoogleMapsCampaign";
 import GoogleMapsLeads from "./pages/admin/campaigns/GoogleMapsLeads";
@@ -210,6 +210,9 @@ const App = () => (
                         {/* Jobs Routes */}
                         <Route path="/empregos" element={<JobsPage />} />
                         <Route path="/empregos/:id" element={<JobDetailPage />} />
+                        
+                        {/* Job Alerts */}
+                        <Route path="/comunidade/alertas-vagas" element={<JobAlertsPage />} />
                       </Route>
                       <Route path="/story/:slug" element={<StoryViewer />} />
                       <Route path="/evento/:slug" element={<EventDetail />} />

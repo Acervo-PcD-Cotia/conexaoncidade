@@ -22,6 +22,11 @@ export interface Classified {
   rejection_reason: string | null;
   views_count: number;
   favorites_count: number;
+  whatsapp_clicks: number;
+  phone_clicks: number;
+  email_clicks: number;
+  is_featured: boolean;
+  featured_until: string | null;
   expires_at: string;
   approved_at: string | null;
   approved_by: string | null;

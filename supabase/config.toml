@@ -119,3 +119,9 @@ verify_jwt = false
 
 [functions.generate-social-image]
 verify_jwt = false
+
+[functions.track-classified-interest]
+verify_jwt = false
+
+[functions.notify-job-matches]
+verify_jwt = false
