@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Radio, Tv, Play, Calendar, Users, Plus, Clock, Eye } from "lucide-react";
+import { Radio, Tv, Play, Calendar, Users, Plus, Clock, Eye, List, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,14 +23,72 @@ export default function BroadcastDashboard() {
           <h1 className="text-2xl font-bold">Conexão Ao Vivo</h1>
           <p className="text-muted-foreground">Gerencie transmissões e canais</p>
         </div>
-        <Button asChild>
-          <Link to="/ao-vivo">
-            <Play className="w-4 h-4 mr-2" />
-            Ver Ao Vivo
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link to="/ao-vivo">
+              <Play className="w-4 h-4 mr-2" />
+              Ver Ao Vivo
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link to="/admin/broadcast/new">
+              <Plus className="w-4 h-4 mr-2" />
+              Nova Transmissão
+            </Link>
+          </Button>
+        </div>
       </div>
 
+      {/* Quick Actions */}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Link to="/admin/broadcast/list">
+          <Card className="hover:border-primary/50 transition-colors cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Transmissões</CardTitle>
+              <List className="w-4 h-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">Gerenciar transmissões</p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link to="/admin/broadcast/channels">
+          <Card className="hover:border-primary/50 transition-colors cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Canais</CardTitle>
+              <Tv className="w-4 h-4 text-purple-500" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">{channels?.length || 0} canais ativos</p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link to="/admin/broadcast/programs">
+          <Card className="hover:border-primary/50 transition-colors cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Programas</CardTitle>
+              <Calendar className="w-4 h-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">{programs?.length || 0} programas</p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Espectadores</CardTitle>
+            <Users className="w-4 h-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalViewers}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Stats Cards */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -44,17 +102,7 @@ export default function BroadcastDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Espectadores</CardTitle>
-            <Users className="w-4 h-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalViewers}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Canais</CardTitle>
+            <CardTitle className="text-sm font-medium">Canais Ativos</CardTitle>
             <Tv className="w-4 h-4 text-purple-500" />
           </CardHeader>
           <CardContent>
@@ -69,6 +117,18 @@ export default function BroadcastDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{programs?.length || 0}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Pico de Espectadores</CardTitle>
+            <Eye className="w-4 h-4 text-orange-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {liveBroadcasts?.reduce((max, b) => Math.max(max, b.peak_viewers || 0), 0) || 0}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -91,11 +151,19 @@ export default function BroadcastDashboard() {
                     <div className="w-10 h-10 rounded bg-primary/10 flex items-center justify-center">
                       {broadcast.channel?.type === "radio" ? <Radio className="w-5 h-5" /> : <Tv className="w-5 h-5" />}
                     </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium">{broadcast.title}</h4>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium truncate">{broadcast.title}</h4>
                       <p className="text-sm text-muted-foreground">{broadcast.channel?.name}</p>
                     </div>
-                    <Badge variant="destructive">LIVE</Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="destructive">LIVE</Badge>
+                      <Button size="sm" variant="outline" asChild>
+                        <Link to={`/admin/broadcast/studio/${broadcast.id}`}>
+                          <Settings2 className="w-3 h-3 mr-1" />
+                          Estúdio
+                        </Link>
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>

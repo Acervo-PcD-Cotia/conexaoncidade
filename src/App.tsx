@@ -154,7 +154,16 @@ import JobsAdmin from "./pages/admin/JobsAdmin";
 
 // Broadcast Pages
 import BroadcastHub from "./pages/broadcast/BroadcastHub";
+import BroadcastWatch from "./pages/broadcast/BroadcastWatch";
+import BroadcastSchedule from "./pages/broadcast/BroadcastSchedule";
+import BroadcastArchive from "./pages/broadcast/BroadcastArchive";
+import GuestJoin from "./pages/broadcast/GuestJoin";
 import BroadcastDashboard from "./pages/admin/broadcast/BroadcastDashboard";
+import BroadcastList from "./pages/admin/broadcast/BroadcastList";
+import BroadcastForm from "./pages/admin/broadcast/BroadcastForm";
+import BroadcastChannels from "./pages/admin/broadcast/BroadcastChannels";
+import BroadcastPrograms from "./pages/admin/broadcast/BroadcastPrograms";
+import BroadcastStudio from "./pages/admin/broadcast/BroadcastStudio";
 
 const queryClient = new QueryClient();
 
@@ -317,6 +326,12 @@ const App = () => (
                         
                         {/* Broadcast Admin Routes */}
                         <Route path="broadcast" element={<BroadcastDashboard />} />
+                        <Route path="broadcast/list" element={<BroadcastList />} />
+                        <Route path="broadcast/new" element={<BroadcastForm />} />
+                        <Route path="broadcast/:id/edit" element={<BroadcastForm />} />
+                        <Route path="broadcast/channels" element={<BroadcastChannels />} />
+                        <Route path="broadcast/programs" element={<BroadcastPrograms />} />
+                        <Route path="broadcast/studio/:id" element={<BroadcastStudio />} />
                         
                         {/* Classifieds & Jobs Admin */}
                         <Route path="classifieds" element={<ClassifiedsAdmin />} />
@@ -325,6 +340,10 @@ const App = () => (
                       
                       {/* Broadcast Public Routes */}
                       <Route path="/ao-vivo" element={<BroadcastHub />} />
+                      <Route path="/ao-vivo/programacao" element={<BroadcastSchedule />} />
+                      <Route path="/ao-vivo/arquivo" element={<BroadcastArchive />} />
+                      <Route path="/ao-vivo/:slug" element={<BroadcastWatch />} />
+                      <Route path="/join/:inviteToken" element={<GuestJoin />} />
 
                       <Route path="*" element={<NotFound />} />
                     </Routes>
