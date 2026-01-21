@@ -1848,6 +1848,590 @@ export type Database = {
           },
         ]
       }
+      broadcast_analytics: {
+        Row: {
+          broadcast_id: string | null
+          city: string | null
+          country_code: string | null
+          device_type: string | null
+          id: string
+          joined_at: string | null
+          left_at: string | null
+          platform: string | null
+          region_code: string | null
+          session_id: string | null
+          user_id: string | null
+          watch_duration_seconds: number | null
+        }
+        Insert: {
+          broadcast_id?: string | null
+          city?: string | null
+          country_code?: string | null
+          device_type?: string | null
+          id?: string
+          joined_at?: string | null
+          left_at?: string | null
+          platform?: string | null
+          region_code?: string | null
+          session_id?: string | null
+          user_id?: string | null
+          watch_duration_seconds?: number | null
+        }
+        Update: {
+          broadcast_id?: string | null
+          city?: string | null
+          country_code?: string | null
+          device_type?: string | null
+          id?: string
+          joined_at?: string | null
+          left_at?: string | null
+          platform?: string | null
+          region_code?: string | null
+          session_id?: string | null
+          user_id?: string | null
+          watch_duration_seconds?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_analytics_broadcast_id_fkey"
+            columns: ["broadcast_id"]
+            isOneToOne: false
+            referencedRelation: "broadcasts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      broadcast_channels: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          slug: string
+          tenant_id: string | null
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          slug: string
+          tenant_id?: string | null
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          slug?: string
+          tenant_id?: string | null
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_channels_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      broadcast_chat_messages: {
+        Row: {
+          broadcast_id: string | null
+          created_at: string | null
+          deleted_by: string | null
+          id: string
+          is_deleted: boolean | null
+          is_pinned: boolean | null
+          message: string
+          user_avatar_url: string | null
+          user_id: string | null
+          user_name: string
+        }
+        Insert: {
+          broadcast_id?: string | null
+          created_at?: string | null
+          deleted_by?: string | null
+          id?: string
+          is_deleted?: boolean | null
+          is_pinned?: boolean | null
+          message: string
+          user_avatar_url?: string | null
+          user_id?: string | null
+          user_name: string
+        }
+        Update: {
+          broadcast_id?: string | null
+          created_at?: string | null
+          deleted_by?: string | null
+          id?: string
+          is_deleted?: boolean | null
+          is_pinned?: boolean | null
+          message?: string
+          user_avatar_url?: string | null
+          user_id?: string | null
+          user_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_chat_messages_broadcast_id_fkey"
+            columns: ["broadcast_id"]
+            isOneToOne: false
+            referencedRelation: "broadcasts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      broadcast_participants: {
+        Row: {
+          avatar_url: string | null
+          broadcast_id: string | null
+          created_at: string | null
+          display_name: string
+          id: string
+          invite_expires_at: string | null
+          invite_token: string | null
+          is_camera_on: boolean | null
+          is_highlighted: boolean | null
+          is_mic_on: boolean | null
+          is_screen_sharing: boolean | null
+          joined_at: string | null
+          left_at: string | null
+          role: string
+          title_label: string | null
+          user_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          broadcast_id?: string | null
+          created_at?: string | null
+          display_name: string
+          id?: string
+          invite_expires_at?: string | null
+          invite_token?: string | null
+          is_camera_on?: boolean | null
+          is_highlighted?: boolean | null
+          is_mic_on?: boolean | null
+          is_screen_sharing?: boolean | null
+          joined_at?: string | null
+          left_at?: string | null
+          role: string
+          title_label?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          broadcast_id?: string | null
+          created_at?: string | null
+          display_name?: string
+          id?: string
+          invite_expires_at?: string | null
+          invite_token?: string | null
+          is_camera_on?: boolean | null
+          is_highlighted?: boolean | null
+          is_mic_on?: boolean | null
+          is_screen_sharing?: boolean | null
+          joined_at?: string | null
+          left_at?: string | null
+          role?: string
+          title_label?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_participants_broadcast_id_fkey"
+            columns: ["broadcast_id"]
+            isOneToOne: false
+            referencedRelation: "broadcasts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      broadcast_playlist_items: {
+        Row: {
+          artist: string | null
+          audio_url: string
+          channel_id: string | null
+          created_at: string | null
+          duration_seconds: number | null
+          id: string
+          is_active: boolean | null
+          sort_order: number | null
+          title: string
+        }
+        Insert: {
+          artist?: string | null
+          audio_url: string
+          channel_id?: string | null
+          created_at?: string | null
+          duration_seconds?: number | null
+          id?: string
+          is_active?: boolean | null
+          sort_order?: number | null
+          title: string
+        }
+        Update: {
+          artist?: string | null
+          audio_url?: string
+          channel_id?: string | null
+          created_at?: string | null
+          duration_seconds?: number | null
+          id?: string
+          is_active?: boolean | null
+          sort_order?: number | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_playlist_items_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "broadcast_channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      broadcast_programs: {
+        Row: {
+          category: string | null
+          channel_id: string | null
+          cover_image_url: string | null
+          created_at: string | null
+          default_day_of_week: number | null
+          default_duration_minutes: number | null
+          default_start_time: string | null
+          description: string | null
+          host_name: string | null
+          host_user_id: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          slug: string
+          tenant_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          channel_id?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          default_day_of_week?: number | null
+          default_duration_minutes?: number | null
+          default_start_time?: string | null
+          description?: string | null
+          host_name?: string | null
+          host_user_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          slug: string
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          channel_id?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          default_day_of_week?: number | null
+          default_duration_minutes?: number | null
+          default_start_time?: string | null
+          description?: string | null
+          host_name?: string | null
+          host_user_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          slug?: string
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_programs_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "broadcast_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "broadcast_programs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      broadcast_schedule: {
+        Row: {
+          channel_id: string | null
+          created_at: string | null
+          day_of_week: number
+          end_time: string
+          fallback_content_type: string | null
+          fallback_content_url: string | null
+          id: string
+          is_live: boolean | null
+          is_recurring: boolean | null
+          program_id: string | null
+          start_time: string
+          tenant_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          channel_id?: string | null
+          created_at?: string | null
+          day_of_week: number
+          end_time: string
+          fallback_content_type?: string | null
+          fallback_content_url?: string | null
+          id?: string
+          is_live?: boolean | null
+          is_recurring?: boolean | null
+          program_id?: string | null
+          start_time: string
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          channel_id?: string | null
+          created_at?: string | null
+          day_of_week?: number
+          end_time?: string
+          fallback_content_type?: string | null
+          fallback_content_url?: string | null
+          id?: string
+          is_live?: boolean | null
+          is_recurring?: boolean | null
+          program_id?: string | null
+          start_time?: string
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_schedule_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "broadcast_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "broadcast_schedule_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "broadcast_programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "broadcast_schedule_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      broadcast_transcripts: {
+        Row: {
+          broadcast_id: string | null
+          created_at: string | null
+          id: string
+          is_final: boolean | null
+          language: string | null
+          speaker_id: string | null
+          speaker_name: string | null
+          text: string
+          timestamp_ms: number
+        }
+        Insert: {
+          broadcast_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_final?: boolean | null
+          language?: string | null
+          speaker_id?: string | null
+          speaker_name?: string | null
+          text: string
+          timestamp_ms: number
+        }
+        Update: {
+          broadcast_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_final?: boolean | null
+          language?: string | null
+          speaker_id?: string | null
+          speaker_name?: string | null
+          text?: string
+          timestamp_ms?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_transcripts_broadcast_id_fkey"
+            columns: ["broadcast_id"]
+            isOneToOne: false
+            referencedRelation: "broadcasts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "broadcast_transcripts_speaker_id_fkey"
+            columns: ["speaker_id"]
+            isOneToOne: false
+            referencedRelation: "broadcast_participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      broadcasts: {
+        Row: {
+          actual_end: string | null
+          actual_start: string | null
+          allow_chat: boolean | null
+          category_id: string | null
+          channel_id: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          has_captions: boolean | null
+          id: string
+          is_featured: boolean | null
+          is_public: boolean | null
+          livekit_room_id: string | null
+          livekit_room_name: string | null
+          news_id: string | null
+          peak_viewers: number | null
+          podcast_url: string | null
+          program_id: string | null
+          recording_url: string | null
+          scheduled_end: string | null
+          scheduled_start: string | null
+          slug: string
+          status: string | null
+          tenant_id: string | null
+          thumbnail_url: string | null
+          title: string
+          total_views: number | null
+          type: string
+          updated_at: string | null
+          viewer_count: number | null
+        }
+        Insert: {
+          actual_end?: string | null
+          actual_start?: string | null
+          allow_chat?: boolean | null
+          category_id?: string | null
+          channel_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          has_captions?: boolean | null
+          id?: string
+          is_featured?: boolean | null
+          is_public?: boolean | null
+          livekit_room_id?: string | null
+          livekit_room_name?: string | null
+          news_id?: string | null
+          peak_viewers?: number | null
+          podcast_url?: string | null
+          program_id?: string | null
+          recording_url?: string | null
+          scheduled_end?: string | null
+          scheduled_start?: string | null
+          slug: string
+          status?: string | null
+          tenant_id?: string | null
+          thumbnail_url?: string | null
+          title: string
+          total_views?: number | null
+          type?: string
+          updated_at?: string | null
+          viewer_count?: number | null
+        }
+        Update: {
+          actual_end?: string | null
+          actual_start?: string | null
+          allow_chat?: boolean | null
+          category_id?: string | null
+          channel_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          has_captions?: boolean | null
+          id?: string
+          is_featured?: boolean | null
+          is_public?: boolean | null
+          livekit_room_id?: string | null
+          livekit_room_name?: string | null
+          news_id?: string | null
+          peak_viewers?: number | null
+          podcast_url?: string | null
+          program_id?: string | null
+          recording_url?: string | null
+          scheduled_end?: string | null
+          scheduled_start?: string | null
+          slug?: string
+          status?: string | null
+          tenant_id?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          total_views?: number | null
+          type?: string
+          updated_at?: string | null
+          viewer_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcasts_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "broadcasts_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "broadcast_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "broadcasts_news_id_fkey"
+            columns: ["news_id"]
+            isOneToOne: false
+            referencedRelation: "news"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "broadcasts_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "broadcast_programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "broadcasts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_lead_photos: {
         Row: {
           file_name: string | null
