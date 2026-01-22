@@ -28,6 +28,7 @@ import {
   BarChart3,
   PanelLeft,
   PanelLeftClose,
+  Medal,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -360,7 +361,7 @@ export default function Dashboard() {
     <TooltipProvider>
       <div className="h-[calc(100vh-80px)] flex flex-col gap-0 overflow-hidden">
         {/* Header do Dashboard */}
-        <header className="h-20 shrink-0 flex items-center justify-between px-6 border-b bg-background rounded-t-lg">
+        <header className="h-24 shrink-0 flex items-center justify-between px-8 dashboard-header-premium rounded-t-lg">
           {/* Left: Logo + Título */}
           <div className="flex items-center gap-4">
             <img src={logoFull} alt="Logo" className="h-12 w-auto hidden lg:block" />
@@ -499,17 +500,22 @@ export default function Dashboard() {
         </header>
 
         {/* Stats Grid */}
-        <section className="shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-4 px-6 py-4 bg-muted/20">
+        <section className="shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-6 px-8 py-6 bg-muted/20">
           {statsCards.map((stat) => (
-            <Card key={stat.title} className="relative overflow-hidden border-0 shadow-sm dashboard-card">
-              <div className={cn("absolute inset-0 bg-gradient-to-br opacity-50", stat.gradient)} />
-              <CardContent className="relative p-5">
+            <Card key={stat.title} className={cn(
+              "relative overflow-hidden dashboard-card-glass dashboard-card-glow",
+              stat.title.includes("Publicadas") && "dashboard-gradient-emerald",
+              stat.title.includes("Total") && "dashboard-gradient-blue",
+              stat.title.includes("Stories") && "dashboard-gradient-purple",
+              stat.title.includes("Visualizações") && "dashboard-gradient-orange"
+            )}>
+              <CardContent className="relative p-6">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       {stat.title}
                     </p>
-                    <p className="text-3xl font-bold mt-1 tracking-tight">
+                    <p className="dashboard-stat-xl mt-2">
                       {typeof stat.value === "number" 
                         ? stat.value >= 1000 
                           ? `${(stat.value / 1000).toFixed(1)}K`
@@ -519,7 +525,7 @@ export default function Dashboard() {
                     </p>
                   </div>
                   <div className={cn("p-3 rounded-xl", stat.bgColor)}>
-                    <stat.icon className={cn("h-5 w-5", stat.color)} />
+                    <stat.icon className={cn("h-6 w-6", stat.color)} />
                   </div>
                 </div>
               </CardContent>
@@ -528,42 +534,42 @@ export default function Dashboard() {
         </section>
 
         {/* Main Content Grid */}
-        <main className="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-4 px-6 py-4 min-h-0 overflow-hidden">
+        <main className="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-6 px-8 py-6 min-h-0 overflow-hidden">
           {/* Ações Rápidas - 3 columns */}
-          <div className="lg:col-span-3 flex flex-col gap-4 min-h-0">
-            <Card className="flex-1 flex flex-col overflow-hidden dashboard-card">
-              <div className="p-4 border-b shrink-0">
+          <div className="lg:col-span-3 flex flex-col gap-6 min-h-0">
+            <Card className="flex-1 flex flex-col overflow-hidden dashboard-card-glass">
+              <div className="p-5 border-b shrink-0">
                 <h3 className="font-semibold text-lg flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-primary" />
                   Ações Rápidas
                 </h3>
               </div>
-              <div className="flex-1 p-4 grid grid-cols-2 md:grid-cols-3 gap-3 content-start overflow-auto">
+              <div className="flex-1 p-5 grid grid-cols-2 md:grid-cols-3 gap-4 content-start overflow-auto">
                 {quickActions.map((action) => (
                   action.href ? (
                     <Link key={action.title} to={action.href}>
-                      <Card className="group cursor-pointer hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 h-full dashboard-card">
-                        <CardContent className="p-4">
-                          <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center mb-3", action.bgColor)}>
-                            <action.icon className={cn("h-5 w-5", action.color)} />
+                      <Card className="group cursor-pointer dashboard-card-glass dashboard-card-glow dashboard-hover-lift h-full">
+                        <CardContent className="p-5">
+                          <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center mb-4", action.bgColor)}>
+                            <action.icon className={cn("h-6 w-6", action.color)} />
                           </div>
-                          <h4 className="font-semibold text-sm">{action.title}</h4>
-                          <p className="text-xs text-muted-foreground mt-1">{action.description}</p>
+                          <h4 className="font-semibold">{action.title}</h4>
+                          <p className="text-sm text-muted-foreground mt-1">{action.description}</p>
                         </CardContent>
                       </Card>
                     </Link>
                   ) : (
                     <Card 
                       key={action.title} 
-                      className="group cursor-pointer hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 dashboard-card"
+                      className="group cursor-pointer dashboard-card-glass dashboard-card-glow dashboard-hover-lift"
                       onClick={action.onClick}
                     >
-                      <CardContent className="p-4">
-                        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center mb-3", action.bgColor)}>
-                          <action.icon className={cn("h-5 w-5", action.color)} />
+                      <CardContent className="p-5">
+                        <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center mb-4", action.bgColor)}>
+                          <action.icon className={cn("h-6 w-6", action.color)} />
                         </div>
-                        <h4 className="font-semibold text-sm">{action.title}</h4>
-                        <p className="text-xs text-muted-foreground mt-1">{action.description}</p>
+                        <h4 className="font-semibold">{action.title}</h4>
+                        <p className="text-sm text-muted-foreground mt-1">{action.description}</p>
                       </CardContent>
                     </Card>
                   )
@@ -573,10 +579,10 @@ export default function Dashboard() {
           </div>
 
           {/* Sidebar - 2 columns */}
-          <div className="lg:col-span-2 flex flex-col gap-4 min-h-0">
+          <div className="lg:col-span-2 flex flex-col gap-6 min-h-0">
             {/* Últimas Atualizações */}
-            <Card className="flex-1 flex flex-col overflow-hidden min-h-0 dashboard-card">
-              <div className="p-4 border-b shrink-0 flex items-center justify-between">
+            <Card className="flex-1 flex flex-col overflow-hidden min-h-0 dashboard-card-glass">
+              <div className="p-5 border-b shrink-0 flex items-center justify-between">
                 <h3 className="font-semibold flex items-center gap-2">
                   <Clock className="h-4 w-4" />
                   Últimas Atualizações
@@ -585,11 +591,11 @@ export default function Dashboard() {
                   <Link to="/admin/news">Ver todas</Link>
                 </Button>
               </div>
-              <div className="flex-1 p-3 space-y-2 overflow-auto">
+              <div className="flex-1 p-4 space-y-2 overflow-auto">
                 {recentNews?.map((news) => (
                   <div
                     key={news.id}
-                    className="flex items-center justify-between rounded-lg border p-2 hover:bg-muted/50 transition-colors"
+                    className="flex items-center justify-between rounded-lg border border-border/50 p-3 hover:bg-muted/50 transition-colors"
                   >
                     <div className="flex-1 min-w-0">
                       <Link
@@ -623,32 +629,35 @@ export default function Dashboard() {
             </Card>
 
             {/* Mais Lidas */}
-            <Card className="flex-1 flex flex-col overflow-hidden min-h-0 dashboard-card">
-              <div className="p-4 border-b shrink-0">
+            <Card className="flex-1 flex flex-col overflow-hidden min-h-0 dashboard-card-glass">
+              <div className="p-5 border-b shrink-0">
                 <h3 className="font-semibold flex items-center gap-2">
                   <TrendingUp className="h-4 w-4 text-orange-500" />
                   Mais Lidas
                 </h3>
               </div>
-              <div className="flex-1 p-3 space-y-1 overflow-auto">
+              <div className="flex-1 p-4 space-y-2 overflow-auto">
                 {mostRead?.map((news, index) => (
-                  <div key={news.id} className="flex items-center gap-3 py-2 hover:bg-muted/30 rounded-lg px-2 transition-colors">
-                    <span className={cn(
-                      "flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold shrink-0",
-                      index === 0 && "bg-yellow-500 text-yellow-950",
-                      index === 1 && "bg-slate-300 text-slate-700",
-                      index === 2 && "bg-amber-600 text-amber-50",
-                      index > 2 && "bg-muted text-muted-foreground"
-                    )}>
-                      {index + 1}
-                    </span>
+                  <div key={news.id} className="flex items-center gap-3 py-2.5 hover:bg-muted/30 rounded-lg px-3 transition-colors">
+                    {index < 3 ? (
+                      <Medal className={cn(
+                        "h-5 w-5 shrink-0",
+                        index === 0 && "medal-gold",
+                        index === 1 && "medal-silver",
+                        index === 2 && "medal-bronze"
+                      )} />
+                    ) : (
+                      <span className="flex h-5 w-5 items-center justify-center text-xs text-muted-foreground font-medium">
+                        {index + 1}
+                      </span>
+                    )}
                     <Link
                       to={`/admin/news/${news.id}/edit`}
                       className="flex-1 text-sm hover:text-primary line-clamp-1"
                     >
                       {news.title}
                     </Link>
-                    <span className="text-xs text-muted-foreground shrink-0 font-medium">
+                    <span className="text-xs text-muted-foreground shrink-0 font-semibold tabular-nums">
                       {news.view_count?.toLocaleString('pt-BR')}
                     </span>
                   </div>
