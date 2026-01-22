@@ -31,8 +31,8 @@ export default function CensoPcdQuiz() {
   return (
     <>
       <Helmet>
-        <title>Participar do Censo PcD Cotia</title>
-        <meta name="description" content="Responda o questionário do Censo PcD Cotia e contribua para políticas públicas mais inclusivas." />
+        <title>Participar do Censo PcD</title>
+        <meta name="description" content="Responda o questionário do Censo PcD e contribua para políticas públicas mais inclusivas." />
       </Helmet>
 
       <CensoPcdConsentModal
@@ -45,7 +45,7 @@ export default function CensoPcdQuiz() {
         <div className="container">
           <div className="flex items-center justify-center gap-2 mb-8">
             <Accessibility className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold">Censo PcD Cotia</h1>
+            <h1 className="text-2xl font-bold">Censo PcD</h1>
           </div>
 
           {consentAccepted && (

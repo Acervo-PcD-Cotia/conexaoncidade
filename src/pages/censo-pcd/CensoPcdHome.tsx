@@ -8,8 +8,8 @@ export default function CensoPcdHome() {
   return (
     <>
       <Helmet>
-        <title>Censo PcD Cotia - Mapeando a Inclusão</title>
-        <meta name="description" content="Participe do Censo PcD Cotia e ajude a mapear as necessidades das Pessoas com Deficiência em nossa cidade." />
+        <title>Censo PcD - Mapeando a Inclusão</title>
+        <meta name="description" content="Participe do Censo PcD e ajude a mapear as necessidades das Pessoas com Deficiência em nossa cidade." />
       </Helmet>
 
       <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background">
@@ -22,11 +22,11 @@ export default function CensoPcdHome() {
             </div>
             
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-              Censo PcD <span className="text-primary">Cotia</span>
+              Censo <span className="text-primary">PcD</span>
             </h1>
             
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Ajude a mapear as necessidades das Pessoas com Deficiência e TEA em Cotia. 
+              Ajude a mapear as necessidades das Pessoas com Deficiência e TEA. 
               Sua participação é fundamental para construir políticas públicas mais inclusivas.
             </p>
 
@@ -91,7 +91,7 @@ export default function CensoPcdHome() {
                 <h3 className="text-2xl font-bold mb-2">eBook Gratuito</h3>
                 <p className="opacity-90">
                   Ao concluir o censo, você recebe automaticamente o eBook oficial com informações 
-                  sobre direitos, recursos e contatos úteis para PcD em Cotia.
+                  sobre direitos, recursos e contatos úteis para PcD.
                 </p>
               </div>
             </CardContent>

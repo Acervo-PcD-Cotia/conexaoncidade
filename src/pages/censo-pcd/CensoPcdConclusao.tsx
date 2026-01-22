@@ -32,8 +32,8 @@ export default function CensoPcdConclusao() {
     
     const ebookUrl = `${window.location.origin}/censo-pcd`;
     const message = encodeURIComponent(
-      `📘 *Censo PcD Cotia*\n\n` +
-      `Obrigado por participar do Censo PcD Cotia!\n\n` +
+      `📘 *Censo PcD*\n\n` +
+      `Obrigado por participar do Censo PcD!\n\n` +
       `Acesse e baixe seu eBook oficial:\n${ebookUrl}\n\n` +
       `Juntos pela inclusão! 💙`
     );
@@ -45,7 +45,7 @@ export default function CensoPcdConclusao() {
   return (
     <>
       <Helmet>
-        <title>Obrigado! - Censo PcD Cotia</title>
+        <title>Obrigado! - Censo PcD</title>
       </Helmet>
 
       <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background py-12">
@@ -66,7 +66,7 @@ export default function CensoPcdConclusao() {
                 <Accessibility className="h-12 w-12 text-primary mx-auto mb-4" />
                 <h2 className="text-xl font-semibold mb-2">Baixe seu eBook</h2>
                 <p className="text-sm text-muted-foreground mb-4">
-                  O eBook contém informações sobre direitos, recursos e contatos úteis para PcD em Cotia.
+                  O eBook contém informações sobre direitos, recursos e contatos úteis para PcD.
                 </p>
                 <Button 
                   onClick={handleDownloadEbook} 

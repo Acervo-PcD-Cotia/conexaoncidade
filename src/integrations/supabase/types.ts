@@ -8333,6 +8333,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           last_activity_at: string | null
+          profile_status: string | null
           updated_at: string
         }
         Insert: {
@@ -8344,6 +8345,7 @@ export type Database = {
           id: string
           is_active?: boolean | null
           last_activity_at?: string | null
+          profile_status?: string | null
           updated_at?: string
         }
         Update: {
@@ -8355,6 +8357,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           last_activity_at?: string | null
+          profile_status?: string | null
           updated_at?: string
         }
         Relationships: []

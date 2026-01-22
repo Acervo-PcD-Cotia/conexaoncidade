@@ -1,16 +1,12 @@
 import { TrendingUp, TrendingDown, Cloud, DollarSign, MapPin, Calendar, Bitcoin } from "lucide-react";
 import { useCryptoTicker } from "@/hooks/useCryptoTicker";
-
-// Mock data for fiat currencies - will be replaced with real API data
-const marketData = {
-  dolar: { value: 5.38, change: 0.5 },
-  euro: { value: 6.28, change: 0.2 },
-  bovespa: { value: 128500, change: 1.2 },
-  weather: { temp: 24, description: "Parcialmente nublado", city: "São Paulo" },
-};
+import { useMarketData } from "@/hooks/useMarketData";
+import { useWeather } from "@/hooks/useWeather";
 
 export function MarketDataBar() {
   const { bitcoin, ethereum, isLoading: cryptoLoading } = useCryptoTicker();
+  const { data: marketData, isLoading: marketLoading } = useMarketData();
+  const { data: weather, isLoading: weatherLoading } = useWeather();
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -28,10 +24,6 @@ export function MarketDataBar() {
     }).format(value);
   };
 
-  const formatNumber = (value: number) => {
-    return new Intl.NumberFormat("pt-BR").format(value);
-  };
-
   const today = new Date().toLocaleDateString("pt-BR", {
     weekday: "long",
     day: "numeric",
@@ -39,8 +31,8 @@ export function MarketDataBar() {
     year: "numeric",
   });
 
-  const renderChange = (change: number | null) => {
-    if (change === null) return <span className="text-muted-foreground">—</span>;
+  const renderChange = (change: number | null | undefined) => {
+    if (change === null || change === undefined) return <span className="text-muted-foreground">—</span>;
     
     return (
       <span
@@ -58,13 +50,19 @@ export function MarketDataBar() {
     );
   };
 
+  // Fallback values
+  const dolar = marketData?.dolar || { value: 5.38, change: 0 };
+  const euro = marketData?.euro || { value: 6.28, change: 0 };
+  const weatherData = weather || { temp: 24, description: "Parcialmente nublado", city: "Cotia" };
+
   return (
     <div className="border-b bg-card">
       <div className="container flex items-center justify-between py-2 text-xs">
         {/* Left: Location + Date */}
         <div className="flex shrink-0 items-center gap-3">
-          <span className="flex items-center text-muted-foreground">
+          <span className="flex items-center gap-1 text-muted-foreground">
             <MapPin className="h-3 w-3" />
+            <span className="hidden sm:inline">{weatherData.city}</span>
           </span>
           <span className="hidden items-center gap-1 text-muted-foreground md:flex">
             <Calendar className="h-3 w-3" />
@@ -78,55 +76,19 @@ export function MarketDataBar() {
           <div className="flex shrink-0 items-center gap-1.5">
             <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
             <span className="font-medium">Dólar</span>
-            <span className="font-semibold">{formatCurrency(marketData.dolar.value)}</span>
-            <span
-              className={`flex items-center gap-0.5 ${
-                marketData.dolar.change >= 0 ? "text-market-up" : "text-market-down"
-              }`}
-            >
-              {marketData.dolar.change >= 0 ? (
-                <TrendingUp className="h-3 w-3" />
-              ) : (
-                <TrendingDown className="h-3 w-3" />
-              )}
-              {Math.abs(marketData.dolar.change).toFixed(2)}%
+            <span className="font-semibold">
+              {marketLoading ? "..." : formatCurrency(dolar.value)}
             </span>
+            {!marketLoading && renderChange(dolar.change)}
           </div>
 
           {/* Euro */}
           <div className="hidden shrink-0 items-center gap-1.5 sm:flex">
             <span className="font-medium">Euro</span>
-            <span className="font-semibold">{formatCurrency(marketData.euro.value)}</span>
-            <span
-              className={`flex items-center gap-0.5 ${
-                marketData.euro.change >= 0 ? "text-market-up" : "text-market-down"
-              }`}
-            >
-              {marketData.euro.change >= 0 ? (
-                <TrendingUp className="h-3 w-3" />
-              ) : (
-                <TrendingDown className="h-3 w-3" />
-              )}
-              {Math.abs(marketData.euro.change).toFixed(2)}%
+            <span className="font-semibold">
+              {marketLoading ? "..." : formatCurrency(euro.value)}
             </span>
-          </div>
-
-          {/* Bovespa */}
-          <div className="hidden shrink-0 items-center gap-1.5 xl:flex">
-            <span className="font-medium">Bovespa</span>
-            <span className="font-semibold">{formatNumber(marketData.bovespa.value)}</span>
-            <span
-              className={`flex items-center gap-0.5 ${
-                marketData.bovespa.change >= 0 ? "text-market-up" : "text-market-down"
-              }`}
-            >
-              {marketData.bovespa.change >= 0 ? (
-                <TrendingUp className="h-3 w-3" />
-              ) : (
-                <TrendingDown className="h-3 w-3" />
-              )}
-              {Math.abs(marketData.bovespa.change).toFixed(2)}%
-            </span>
+            {!marketLoading && renderChange(euro.change)}
           </div>
 
           {/* Bitcoin */}
@@ -153,9 +115,11 @@ export function MarketDataBar() {
         {/* Weather */}
         <div className="flex shrink-0 items-center gap-2">
           <Cloud className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="font-semibold">{marketData.weather.temp}°C</span>
+          <span className="font-semibold">
+            {weatherLoading ? "..." : `${weatherData.temp}°C`}
+          </span>
           <span className="hidden text-muted-foreground lg:inline">
-            {marketData.weather.description}
+            {weatherLoading ? "..." : weatherData.description}
           </span>
         </div>
       </div>

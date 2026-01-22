@@ -1,5 +1,6 @@
 import { MarketDataBar } from "@/components/home/MarketDataBar";
 import { SuperBanner } from "@/components/home/SuperBanner";
+import { HomeVideoBlock } from "@/components/home/HomeVideoBlock";
 import { TopWebStoriesBar } from "@/components/home/TopWebStoriesBar";
 import { HeroSection } from "@/components/home/HeroSection";
 import { LiveBroadcastWidget } from "@/components/home/LiveBroadcastWidget";
@@ -20,7 +21,10 @@ const Index = () => {
       {/* 2. SuperBanner - após cotações, antes do hero */}
       <SuperBanner />
       
-      {/* 3. WebStories - Instagram-style carousel */}
+      {/* 3. Video Block - após SuperBanner */}
+      <HomeVideoBlock />
+      
+      {/* 4. WebStories - Instagram-style carousel */}
       <TopWebStoriesBar />
       
       {/* 4. Ad Slot: Home Top - 728x90 */}
