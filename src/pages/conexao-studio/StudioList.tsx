@@ -118,9 +118,9 @@ export default function StudioList() {
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
                       <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                        {studio.thumbnail_url ? (
+                        {studio.cover_image_url ? (
                           <img
-                            src={studio.thumbnail_url}
+                            src={studio.cover_image_url}
                             alt={studio.name}
                             className="h-full w-full object-cover rounded-xl"
                           />

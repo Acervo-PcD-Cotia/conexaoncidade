@@ -114,10 +114,10 @@ export default function Destinations() {
         .insert({
           team_id: teamMember.team_id,
           name: destination.name,
-          platform: destination.platform,
+          type: destination.platform,
           rtmp_url: destination.rtmp_url || null,
           stream_key_encrypted: destination.stream_key || null,
-          is_active: true,
+          is_enabled: true,
         });
       
       if (error) throw error;
@@ -134,10 +134,10 @@ export default function Destinations() {
   });
 
   const toggleDestination = useMutation({
-    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
+    mutationFn: async ({ id, is_enabled }: { id: string; is_enabled: boolean }) => {
       const { error } = await supabase
         .from("illumina_destinations")
-        .update({ is_active })
+        .update({ is_enabled })
         .eq("id", id);
       
       if (error) throw error;
@@ -331,11 +331,11 @@ export default function Destinations() {
       ) : destinations && destinations.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {destinations.map((dest) => {
-            const PlatformIcon = platformIcons[dest.platform] || Radio;
-            const platformColor = platformColors[dest.platform] || "text-muted-foreground";
+            const PlatformIcon = platformIcons[dest.type] || Radio;
+            const platformColor = platformColors[dest.type] || "text-muted-foreground";
             
             return (
-              <Card key={dest.id} className={`${!dest.is_active ? "opacity-60" : ""}`}>
+              <Card key={dest.id} className={`${!dest.is_enabled ? "opacity-60" : ""}`}>
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
@@ -344,7 +344,7 @@ export default function Destinations() {
                       </div>
                       <div>
                         <CardTitle className="text-base">{dest.name}</CardTitle>
-                        <CardDescription className="capitalize">{dest.platform}</CardDescription>
+                        <CardDescription className="capitalize">{dest.type}</CardDescription>
                       </div>
                     </div>
                     <DropdownMenu>
@@ -415,7 +415,7 @@ export default function Destinations() {
 
                     <div className="flex items-center justify-between pt-2 border-t">
                       <div className="flex items-center gap-2">
-                        {dest.connection_status === "connected" ? (
+                        {dest.is_connected ? (
                           <Badge variant="default" className="gap-1">
                             <CheckCircle2 className="h-3 w-3" />
                             Conectado
@@ -427,9 +427,9 @@ export default function Destinations() {
                         )}
                       </div>
                       <Switch
-                        checked={dest.is_active}
+                        checked={dest.is_enabled}
                         onCheckedChange={(checked) => 
-                          toggleDestination.mutate({ id: dest.id, is_active: checked })
+                          toggleDestination.mutate({ id: dest.id, is_enabled: checked })
                         }
                       />
                     </div>

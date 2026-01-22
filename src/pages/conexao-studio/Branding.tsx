@@ -58,10 +58,23 @@ export default function Branding() {
     enabled: !!user?.id,
   });
 
-  const logos = brandingAssets?.filter((a) => a.asset_type === "logo") || [];
-  const overlays = brandingAssets?.filter((a) => a.asset_type === "overlay") || [];
-  const lowerThirds = brandingAssets?.filter((a) => a.asset_type === "lower_third") || [];
-  const backgrounds = brandingAssets?.filter((a) => a.asset_type === "background") || [];
+  // Parse JSON fields from branding to extract assets
+  const logos = brandingAssets?.flatMap((b) => {
+    const logosJson = b.logos as any[];
+    return Array.isArray(logosJson) ? logosJson.map(l => ({ ...l, branding_id: b.id })) : [];
+  }) || [];
+  const overlays = brandingAssets?.flatMap((b) => {
+    const overlaysJson = b.overlays as any[];
+    return Array.isArray(overlaysJson) ? overlaysJson.map(o => ({ ...o, branding_id: b.id })) : [];
+  }) || [];
+  const lowerThirds = brandingAssets?.flatMap((b) => {
+    const ltJson = b.lower_thirds_presets as any[];
+    return Array.isArray(ltJson) ? ltJson.map(lt => ({ ...lt, branding_id: b.id })) : [];
+  }) || [];
+  const backgrounds = brandingAssets?.flatMap((b) => {
+    const bgJson = b.backgrounds as any[];
+    return Array.isArray(bgJson) ? bgJson.map(bg => ({ ...bg, branding_id: b.id })) : [];
+  }) || [];
 
   const [colors, setColors] = useState({
     primary: "#3B82F6",
