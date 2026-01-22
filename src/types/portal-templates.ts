@@ -159,6 +159,7 @@ export type VocabularyMap = Partial<Record<VocabularyKey, string>>;
 
 // Default vocabulary (Portuguese - Brazil)
 export const DEFAULT_VOCABULARY: VocabularyMap = {
+  // Navigation
   home: 'Início',
   news: 'Notícias',
   radio: 'Rádio',
@@ -170,6 +171,8 @@ export const DEFAULT_VOCABULARY: VocabularyMap = {
   about: 'Sobre',
   contact: 'Contato',
   search: 'Buscar',
+  
+  // Content labels
   latest: 'Últimas',
   featured: 'Destaque',
   breaking: 'Urgente',
@@ -183,10 +186,32 @@ export const DEFAULT_VOCABULARY: VocabularyMap = {
   prayer: 'Oração',
   events: 'Eventos',
   shop: 'Loja',
-  community: 'Comunidade',
+  community: 'Conexões',
   reports: 'Relatórios',
   training: 'Treinamentos',
   hr: 'RH',
+  
+  // UI & Navigation labels
+  services: 'Serviços',
+  admin: 'Administração',
+  dashboard: 'Dashboard',
+  webradiotv: 'WebRádioTV',
+  manage_news: 'Cadastrar Notícia',
+  
+  // Service links (Header bar)
+  google_maps_cta: 'Apareça no Google',
+  fake_news: 'Fake News',
+  school_transport: 'Transporte Escolar',
+  pcd_census: 'Censo PcD',
+  civil_defense: 'Defesa Civil',
+  accessibility: 'Acessibilidade',
+  notifications: 'Notificações',
+  
+  // Actions
+  login: 'Entrar / Cadastrar',
+  logout: 'Sair',
+  profile: 'Perfil',
+  settings: 'Configurações',
 };
 
 // ============================================
