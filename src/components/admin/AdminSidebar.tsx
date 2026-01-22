@@ -39,6 +39,7 @@ import {
   Play,
   Tv,
   Calendar,
+  Music,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useUserRole } from "@/hooks/useRequireRole";
@@ -94,6 +95,7 @@ const broadcastItems: MenuItem[] = [
   { title: "Transmissões", url: "/admin/broadcast/list", icon: Play },
   { title: "Canais", url: "/admin/broadcast/channels", icon: Tv },
   { title: "Programas", url: "/admin/broadcast/programs", icon: Calendar },
+  { title: "Playlist", url: "/admin/broadcast/playlist", icon: Music },
 ];
 
 const businessItems = [

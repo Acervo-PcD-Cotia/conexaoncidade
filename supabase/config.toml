@@ -137,3 +137,6 @@ verify_jwt = false
 
 [functions.broadcast-transcribe]
 verify_jwt = false
+
+[functions.autodj-stream]
+verify_jwt = false

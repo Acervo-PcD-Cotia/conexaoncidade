@@ -1901,6 +1901,50 @@ export type Database = {
           },
         ]
       }
+      broadcast_autodj_settings: {
+        Row: {
+          channel_id: string | null
+          created_at: string | null
+          crossfade_seconds: number | null
+          fallback_enabled: boolean | null
+          id: string
+          is_enabled: boolean | null
+          shuffle_mode: boolean | null
+          updated_at: string | null
+          volume_level: number | null
+        }
+        Insert: {
+          channel_id?: string | null
+          created_at?: string | null
+          crossfade_seconds?: number | null
+          fallback_enabled?: boolean | null
+          id?: string
+          is_enabled?: boolean | null
+          shuffle_mode?: boolean | null
+          updated_at?: string | null
+          volume_level?: number | null
+        }
+        Update: {
+          channel_id?: string | null
+          created_at?: string | null
+          crossfade_seconds?: number | null
+          fallback_enabled?: boolean | null
+          id?: string
+          is_enabled?: boolean | null
+          shuffle_mode?: boolean | null
+          updated_at?: string | null
+          volume_level?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_autodj_settings_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: true
+            referencedRelation: "broadcast_channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       broadcast_channels: {
         Row: {
           cover_image_url: string | null
@@ -2064,33 +2108,48 @@ export type Database = {
         Row: {
           artist: string | null
           audio_url: string
+          bpm: number | null
           channel_id: string | null
+          cover_image_url: string | null
           created_at: string | null
           duration_seconds: number | null
+          genre: string | null
           id: string
           is_active: boolean | null
+          last_played_at: string | null
+          played_count: number | null
           sort_order: number | null
           title: string
         }
         Insert: {
           artist?: string | null
           audio_url: string
+          bpm?: number | null
           channel_id?: string | null
+          cover_image_url?: string | null
           created_at?: string | null
           duration_seconds?: number | null
+          genre?: string | null
           id?: string
           is_active?: boolean | null
+          last_played_at?: string | null
+          played_count?: number | null
           sort_order?: number | null
           title: string
         }
         Update: {
           artist?: string | null
           audio_url?: string
+          bpm?: number | null
           channel_id?: string | null
+          cover_image_url?: string | null
           created_at?: string | null
           duration_seconds?: number | null
+          genre?: string | null
           id?: string
           is_active?: boolean | null
+          last_played_at?: string | null
+          played_count?: number | null
           sort_order?: number | null
           title?: string
         }
