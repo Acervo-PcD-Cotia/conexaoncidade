@@ -55,12 +55,12 @@ export function AdminLayout() {
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <div className="flex min-h-screen w-full">
         <AdminSidebar />
-        <div className="flex flex-1 flex-col">
+        <div className="flex flex-1 flex-col overflow-hidden">
           <AdminHeader />
-          <main className="flex-1 overflow-auto bg-muted/30 p-6">
+          <main className="flex-1 overflow-hidden bg-muted/30 p-4">
             <Breadcrumb />
             <AdminErrorBoundary>
               <Outlet />
