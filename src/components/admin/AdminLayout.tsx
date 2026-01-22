@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState, createContext, useContext } from "react";
 import { Outlet } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AdminSidebar } from "./AdminSidebar";
@@ -9,6 +9,17 @@ import { NewsCreationModal } from "./NewsCreationModal";
 import { useNewsCreationModal } from "@/contexts/NewsCreationModalContext";
 import { AccessDeniedScreen } from "@/components/auth/AccessDeniedScreen";
 import { AdminErrorBoundary } from "./AdminErrorBoundary";
+import { cn } from "@/lib/utils";
+
+// Focus Mode Context
+interface FocusModeContextType {
+  focusMode: boolean;
+  toggleFocusMode: () => void;
+}
+
+const FocusModeContext = createContext<FocusModeContextType>({ focusMode: false, toggleFocusMode: () => {} });
+
+export const useFocusMode = () => useContext(FocusModeContext);
 
 export function AdminLayout() {
   const { hasAccess, checkingRole, showDenied, redirectCountdown } = useRequireRole([
@@ -22,14 +33,33 @@ export function AdminLayout() {
   ]);
 
   const { isOpen, openModal, closeModal } = useNewsCreationModal();
+  const [focusMode, setFocusMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('admin-focus-mode') === 'true';
+    }
+    return false;
+  });
 
-  // Keyboard shortcut: Ctrl+N or Cmd+N to open news creation modal
+  const toggleFocusMode = () => {
+    setFocusMode(prev => {
+      const newValue = !prev;
+      localStorage.setItem('admin-focus-mode', String(newValue));
+      return newValue;
+    });
+  };
+
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Check for Ctrl+N (Windows/Linux) or Cmd+N (Mac)
+      // Ctrl+N for news modal
       if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
         e.preventDefault();
         openModal();
+      }
+      // Ctrl+Shift+F for focus mode
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        toggleFocusMode();
       }
     };
 
@@ -45,7 +75,6 @@ export function AdminLayout() {
     );
   }
 
-  // Show access denied screen with countdown
   if (showDenied) {
     return <AccessDeniedScreen type={showDenied} redirectCountdown={redirectCountdown} />;
   }
@@ -55,20 +84,25 @@ export function AdminLayout() {
   }
 
   return (
-    <SidebarProvider defaultOpen={false}>
-      <div className="flex min-h-screen w-full">
-        <AdminSidebar />
-        <div className="flex flex-1 flex-col overflow-hidden">
-          <AdminHeader />
-          <main className="flex-1 overflow-hidden bg-muted/30 p-4">
-            <Breadcrumb />
-            <AdminErrorBoundary>
-              <Outlet />
-            </AdminErrorBoundary>
-          </main>
+    <FocusModeContext.Provider value={{ focusMode, toggleFocusMode }}>
+      <SidebarProvider defaultOpen={false}>
+        <div className={cn(
+          "flex min-h-screen w-full transition-all duration-300",
+          focusMode && "focus-mode-active"
+        )}>
+          <AdminSidebar />
+          <div className="flex flex-1 flex-col overflow-hidden">
+            <AdminHeader />
+            <main className="flex-1 overflow-hidden bg-muted/30 p-4">
+              <Breadcrumb />
+              <AdminErrorBoundary>
+                <Outlet />
+              </AdminErrorBoundary>
+            </main>
+          </div>
         </div>
-      </div>
-      <NewsCreationModal open={isOpen} onOpenChange={(open) => !open && closeModal()} />
-    </SidebarProvider>
+        <NewsCreationModal open={isOpen} onOpenChange={(open) => !open && closeModal()} />
+      </SidebarProvider>
+    </FocusModeContext.Provider>
   );
 }
