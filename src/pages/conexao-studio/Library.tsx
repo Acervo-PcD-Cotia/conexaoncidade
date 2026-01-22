@@ -69,7 +69,7 @@ export default function Library() {
   const filteredRecordings = recordings?.filter((rec) => {
     const matchesSearch = rec.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       rec.illumina_sessions?.title?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = filterType === "all" || rec.recording_type === filterType;
+    const matchesType = filterType === "all" || rec.type === filterType;
     return matchesSearch && matchesType;
   });
 
@@ -199,7 +199,7 @@ export default function Library() {
                   {/* Type badge */}
                   <div className="absolute top-2 left-2">
                     <Badge variant="secondary" className="text-xs capitalize">
-                      {recording.recording_type || "Cloud"}
+                      {recording.type || "main"}
                     </Badge>
                   </div>
                 </div>
@@ -250,7 +250,7 @@ export default function Library() {
                     </span>
                     <span className="flex items-center gap-1">
                       <HardDrive className="h-3 w-3" />
-                      {formatBytes(recording.file_size_bytes)}
+                      {formatBytes(recording.size_bytes)}
                     </span>
                   </div>
                 </CardContent>
@@ -289,10 +289,10 @@ export default function Library() {
                     </p>
                     <div className="flex items-center gap-2 mt-2">
                       <Badge variant="secondary" className="text-xs capitalize">
-                        {recording.recording_type || "Cloud"}
+                        {recording.type || "main"}
                       </Badge>
                       <span className="text-xs text-muted-foreground">
-                        {formatBytes(recording.file_size_bytes)}
+                        {formatBytes(recording.size_bytes)}
                       </span>
                     </div>
                   </div>

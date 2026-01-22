@@ -256,9 +256,6 @@ export default function Team() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <Avatar className="h-12 w-12">
-                  {teamData.team.logo_url ? (
-                    <AvatarImage src={teamData.team.logo_url} />
-                  ) : null}
                   <AvatarFallback>
                     {teamData.team.name?.charAt(0).toUpperCase()}
                   </AvatarFallback>
@@ -266,7 +263,7 @@ export default function Team() {
                 <div>
                   <h3 className="font-semibold">{teamData.team.name}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {teamData.members?.length || 0} membros • Plano {teamData.team.plan_type}
+                    {teamData.members?.length || 0} membros • Plano {teamData.team.plan}
                   </p>
                 </div>
               </div>

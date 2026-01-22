@@ -47,7 +47,7 @@ export default function Webinars() {
           *,
           illumina_webinar_registrations (count)
         `)
-        .order("scheduled_at", { ascending: true });
+        .order("scheduled_start_at", { ascending: true });
       
       if (error) throw error;
       return data || [];
@@ -56,11 +56,11 @@ export default function Webinars() {
   });
 
   const upcomingWebinars = webinars?.filter((w) => 
-    w.scheduled_at && isFuture(new Date(w.scheduled_at))
+    w.scheduled_start_at && isFuture(new Date(w.scheduled_start_at))
   );
   
   const pastWebinars = webinars?.filter((w) => 
-    w.scheduled_at && isPast(new Date(w.scheduled_at))
+    w.scheduled_start_at && isPast(new Date(w.scheduled_start_at))
   );
 
   const copyLink = (slug: string) => {
@@ -71,7 +71,7 @@ export default function Webinars() {
 
   const WebinarCard = ({ webinar }: { webinar: any }) => {
     const isLive = webinar.status === "live";
-    const isPastEvent = webinar.scheduled_at && isPast(new Date(webinar.scheduled_at));
+    const isPastEvent = webinar.scheduled_start_at && isPast(new Date(webinar.scheduled_start_at));
     const registrationCount = webinar.illumina_webinar_registrations?.[0]?.count || 0;
 
     return (
@@ -154,10 +154,10 @@ export default function Webinars() {
             </div>
 
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
-              {webinar.scheduled_at && (
+              {webinar.scheduled_start_at && (
                 <span className="flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
-                  {format(new Date(webinar.scheduled_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                  {format(new Date(webinar.scheduled_start_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                 </span>
               )}
               <span className="flex items-center gap-1">

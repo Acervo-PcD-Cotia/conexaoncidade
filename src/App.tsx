@@ -169,6 +169,16 @@ import BroadcastStudio from "./pages/admin/broadcast/BroadcastStudio";
 import BroadcastPlaylist from "./pages/admin/broadcast/BroadcastPlaylist";
 import BroadcastVideoPlaylist from "./pages/admin/broadcast/BroadcastVideoPlaylist";
 
+// Conexão Studio Pages
+import ConexaoStudioDashboard from "./pages/conexao-studio/Dashboard";
+import ConexaoStudioList from "./pages/conexao-studio/StudioList";
+import ConexaoStudioCreate from "./pages/conexao-studio/StudioCreate";
+import ConexaoStudioLibrary from "./pages/conexao-studio/Library";
+import ConexaoStudioDestinations from "./pages/conexao-studio/Destinations";
+import ConexaoStudioWebinars from "./pages/conexao-studio/Webinars";
+import ConexaoStudioBranding from "./pages/conexao-studio/Branding";
+import ConexaoStudioTeam from "./pages/conexao-studio/Team";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -339,6 +349,16 @@ const App = () => (
                         <Route path="broadcast/playlist" element={<BroadcastPlaylist />} />
                         <Route path="broadcast/videos" element={<BroadcastVideoPlaylist />} />
                         <Route path="broadcast/studio/:id" element={<BroadcastStudio />} />
+                        
+                        {/* Conexão Studio Admin Routes */}
+                        <Route path="conexao-studio" element={<ConexaoStudioDashboard />} />
+                        <Route path="conexao-studio/studios" element={<ConexaoStudioList />} />
+                        <Route path="conexao-studio/studios/new" element={<ConexaoStudioCreate />} />
+                        <Route path="conexao-studio/library" element={<ConexaoStudioLibrary />} />
+                        <Route path="conexao-studio/destinations" element={<ConexaoStudioDestinations />} />
+                        <Route path="conexao-studio/webinars" element={<ConexaoStudioWebinars />} />
+                        <Route path="conexao-studio/branding" element={<ConexaoStudioBranding />} />
+                        <Route path="conexao-studio/team" element={<ConexaoStudioTeam />} />
                         
                         {/* Classifieds & Jobs Admin */}
                         <Route path="classifieds" element={<ClassifiedsAdmin />} />
