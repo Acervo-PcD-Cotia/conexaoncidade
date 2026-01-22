@@ -155,17 +155,17 @@ export function AdminSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b p-4">
-        <NavLink to="/admin" className="flex items-center gap-2">
+      <SidebarHeader className="border-b p-3">
+        <NavLink to="/admin" className="flex items-center justify-center">
           {collapsed ? (
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <Newspaper className="h-4 w-4" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg">
+              <Newspaper className="h-5 w-5" />
             </div>
           ) : (
             <img 
               src={logoFull} 
               alt="Conexão na Cidade" 
-              className="h-16 w-auto"
+              className="h-20 w-auto transition-all duration-200"
             />
           )}
         </NavLink>
