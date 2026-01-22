@@ -8203,6 +8203,7 @@ export type Database = {
           apple_url: string | null
           author_id: string | null
           category_id: string | null
+          copyright: string | null
           cover_image_url: string | null
           created_at: string | null
           deezer_url: string | null
@@ -8213,7 +8214,12 @@ export type Database = {
           google_url: string | null
           id: string
           is_active: boolean | null
+          itunes_category: string | null
+          itunes_explicit: boolean | null
+          itunes_subcategory: string | null
           language: string | null
+          owner_email: string | null
+          owner_name: string | null
           spotify_url: string | null
           tenant_id: string | null
           title: string
@@ -8224,6 +8230,7 @@ export type Database = {
           apple_url?: string | null
           author_id?: string | null
           category_id?: string | null
+          copyright?: string | null
           cover_image_url?: string | null
           created_at?: string | null
           deezer_url?: string | null
@@ -8234,7 +8241,12 @@ export type Database = {
           google_url?: string | null
           id?: string
           is_active?: boolean | null
+          itunes_category?: string | null
+          itunes_explicit?: boolean | null
+          itunes_subcategory?: string | null
           language?: string | null
+          owner_email?: string | null
+          owner_name?: string | null
           spotify_url?: string | null
           tenant_id?: string | null
           title: string
@@ -8245,6 +8257,7 @@ export type Database = {
           apple_url?: string | null
           author_id?: string | null
           category_id?: string | null
+          copyright?: string | null
           cover_image_url?: string | null
           created_at?: string | null
           deezer_url?: string | null
@@ -8255,7 +8268,12 @@ export type Database = {
           google_url?: string | null
           id?: string
           is_active?: boolean | null
+          itunes_category?: string | null
+          itunes_explicit?: boolean | null
+          itunes_subcategory?: string | null
           language?: string | null
+          owner_email?: string | null
+          owner_name?: string | null
           spotify_url?: string | null
           tenant_id?: string | null
           title?: string
@@ -8316,6 +8334,78 @@ export type Database = {
           },
           {
             foreignKeyName: "podcast_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      podcast_manual_episodes: {
+        Row: {
+          audio_url: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          duration_seconds: number | null
+          episode_number: number | null
+          episode_type: string | null
+          feed_id: string
+          file_size_bytes: number | null
+          id: string
+          is_published: boolean | null
+          published_at: string | null
+          season_number: number | null
+          tenant_id: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          audio_url: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          duration_seconds?: number | null
+          episode_number?: number | null
+          episode_type?: string | null
+          feed_id: string
+          file_size_bytes?: number | null
+          id?: string
+          is_published?: boolean | null
+          published_at?: string | null
+          season_number?: number | null
+          tenant_id?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          audio_url?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          duration_seconds?: number | null
+          episode_number?: number | null
+          episode_type?: string | null
+          feed_id?: string
+          file_size_bytes?: number | null
+          id?: string
+          is_published?: boolean | null
+          published_at?: string | null
+          season_number?: number | null
+          tenant_id?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "podcast_manual_episodes_feed_id_fkey"
+            columns: ["feed_id"]
+            isOneToOne: false
+            referencedRelation: "podcast_feeds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "podcast_manual_episodes_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "sites"
@@ -9184,6 +9274,157 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "super_banners_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      syndication_inbox: {
+        Row: {
+          author_name: string | null
+          content_html: string | null
+          created_at: string | null
+          excerpt: string | null
+          external_id: string
+          featured_image_url: string | null
+          id: string
+          original_url: string
+          pub_date: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source_id: string
+          status: string | null
+          target_news_id: string | null
+          tenant_id: string | null
+          title: string
+        }
+        Insert: {
+          author_name?: string | null
+          content_html?: string | null
+          created_at?: string | null
+          excerpt?: string | null
+          external_id: string
+          featured_image_url?: string | null
+          id?: string
+          original_url: string
+          pub_date?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_id: string
+          status?: string | null
+          target_news_id?: string | null
+          tenant_id?: string | null
+          title: string
+        }
+        Update: {
+          author_name?: string | null
+          content_html?: string | null
+          created_at?: string | null
+          excerpt?: string | null
+          external_id?: string
+          featured_image_url?: string | null
+          id?: string
+          original_url?: string
+          pub_date?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_id?: string
+          status?: string | null
+          target_news_id?: string | null
+          tenant_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndication_inbox_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "syndication_sources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "syndication_inbox_target_news_id_fkey"
+            columns: ["target_news_id"]
+            isOneToOne: false
+            referencedRelation: "news"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "syndication_inbox_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      syndication_sources: {
+        Row: {
+          auto_import: boolean | null
+          category_mapping: Json | null
+          created_at: string | null
+          default_category_id: string | null
+          error_count: number | null
+          feed_type: string | null
+          feed_url: string
+          id: string
+          is_active: boolean | null
+          last_error: string | null
+          last_fetched_at: string | null
+          last_item_count: number | null
+          name: string
+          require_approval: boolean | null
+          tenant_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          auto_import?: boolean | null
+          category_mapping?: Json | null
+          created_at?: string | null
+          default_category_id?: string | null
+          error_count?: number | null
+          feed_type?: string | null
+          feed_url: string
+          id?: string
+          is_active?: boolean | null
+          last_error?: string | null
+          last_fetched_at?: string | null
+          last_item_count?: number | null
+          name: string
+          require_approval?: boolean | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          auto_import?: boolean | null
+          category_mapping?: Json | null
+          created_at?: string | null
+          default_category_id?: string | null
+          error_count?: number | null
+          feed_type?: string | null
+          feed_url?: string
+          id?: string
+          is_active?: boolean | null
+          last_error?: string | null
+          last_fetched_at?: string | null
+          last_item_count?: number | null
+          name?: string
+          require_approval?: boolean | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndication_sources_default_category_id_fkey"
+            columns: ["default_category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "syndication_sources_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "sites"
