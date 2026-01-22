@@ -12,6 +12,7 @@ import { NewsCreationModalProvider } from "@/contexts/NewsCreationModalContext";
 import { MiniPlayerProvider } from "@/contexts/MiniPlayerContext";
 import { SiteThemeProvider } from "@/providers/SiteThemeProvider";
 import { MaintenanceGuard } from "@/components/maintenance/MaintenanceGuard";
+import { RouteModuleGuard } from "@/components/guards/RouteModuleGuard";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import Index from "./pages/Index";
@@ -380,13 +381,37 @@ const App = () => (
                         <Route path="jobs" element={<JobsAdmin />} />
                       </Route>
                       
-                      {/* Broadcast Public Routes */}
-                      <Route path="/ao-vivo" element={<BroadcastHub />} />
-                      <Route path="/ao-vivo/acesso" element={<WebRadioTVAccess />} />
-                      <Route path="/ao-vivo/studio" element={<LiveStudioPromo />} />
-                      <Route path="/ao-vivo/programacao" element={<BroadcastSchedule />} />
-                      <Route path="/ao-vivo/arquivo" element={<BroadcastArchive />} />
-                      <Route path="/ao-vivo/:slug" element={<BroadcastWatch />} />
+                      {/* Broadcast Public Routes - Protected by Module Guard */}
+                      <Route path="/ao-vivo" element={
+                        <RouteModuleGuard module="lives">
+                          <BroadcastHub />
+                        </RouteModuleGuard>
+                      } />
+                      <Route path="/ao-vivo/acesso" element={
+                        <RouteModuleGuard module="lives">
+                          <WebRadioTVAccess />
+                        </RouteModuleGuard>
+                      } />
+                      <Route path="/ao-vivo/studio" element={
+                        <RouteModuleGuard module="lives">
+                          <LiveStudioPromo />
+                        </RouteModuleGuard>
+                      } />
+                      <Route path="/ao-vivo/programacao" element={
+                        <RouteModuleGuard module="schedule">
+                          <BroadcastSchedule />
+                        </RouteModuleGuard>
+                      } />
+                      <Route path="/ao-vivo/arquivo" element={
+                        <RouteModuleGuard module="vod">
+                          <BroadcastArchive />
+                        </RouteModuleGuard>
+                      } />
+                      <Route path="/ao-vivo/:slug" element={
+                        <RouteModuleGuard module="lives">
+                          <BroadcastWatch />
+                        </RouteModuleGuard>
+                      } />
                       <Route path="/join/:inviteToken" element={<GuestJoin />} />
 
                       <Route path="*" element={<NotFound />} />

@@ -14,6 +14,7 @@ export interface PortalTemplate {
   language_style: string | null;
   is_active: boolean;
   sort_order: number;
+  home_sections: HomeSectionConfig[];
   created_at: string;
   updated_at: string;
 }
@@ -36,6 +37,10 @@ export interface ThemeConfig {
   background?: string;
   foreground?: string;
   muted?: string;
+  card?: string;
+  border?: string;
+  ring?: string;
+  radius?: string;
   typography?: 'editorial' | 'warm' | 'modern' | 'professional' | 'corporate';
 }
 
@@ -46,6 +51,7 @@ export interface SiteTemplateConfig {
   theme_overrides: Record<string, string>;
   vocabulary_overrides: VocabularyMap;
   modules_overrides: Record<string, boolean>;
+  home_sections_overrides?: HomeSectionConfig[];
   branding: SiteBranding;
   radio_config: RadioConfig;
   tv_config: TVConfig;
@@ -96,6 +102,44 @@ export interface TVConfig {
   cta_url?: string;
 }
 
+// ============================================
+// HOME SECTIONS - Dynamic Home Page Structure
+// ============================================
+
+export type HomeSectionType = 
+  | 'market_data'
+  | 'super_banner'
+  | 'video_block'
+  | 'stories_bar'
+  | 'ad_slot_top'
+  | 'hero_headlines'
+  | 'live_broadcast'
+  | 'agora_na_cidade'
+  | 'latest_news'
+  | 'quick_notes'
+  | 'most_read'
+  | 'category_section'
+  | 'radio_player'
+  | 'tv_featured'
+  | 'vod_library'
+  | 'programs_grid'
+  | 'social_embed'
+  | 'newsletter_cta'
+  | 'donations_cta'
+  | 'members_cta';
+
+export interface HomeSectionConfig {
+  type: HomeSectionType;
+  enabled: boolean;
+  order: number;
+  moduleKey?: ModuleKey;
+  props?: Record<string, unknown>;
+}
+
+// ============================================
+// VOCABULARY - Dynamic Labels/Translations
+// ============================================
+
 // Vocabulary keys that can be translated per template
 export type VocabularyKey = 
   | 'home' | 'news' | 'radio' | 'tv' | 'lives' | 'programs' 
@@ -145,6 +189,10 @@ export const DEFAULT_VOCABULARY: VocabularyMap = {
   hr: 'RH',
 };
 
+// ============================================
+// MODULES - Feature Toggles
+// ============================================
+
 // Module keys that can be toggled on/off
 export type ModuleKey = 
   | 'news_cms' | 'lives' | 'scheduling' | 'podcast' | 'audio_article'
@@ -182,4 +230,23 @@ export const MODULE_METADATA: Record<ModuleKey, { label: string; description: st
   internal_content: { label: 'Conteúdo Interno', description: 'Conteúdo restrito a equipe', icon: 'Shield' },
   reports: { label: 'Relatórios', description: 'Relatórios e analytics', icon: 'BarChart3' },
   player: { label: 'Player Unificado', description: 'Player de áudio/vídeo', icon: 'Play' },
+};
+
+// ============================================
+// ROUTE MODULE MAPPING
+// ============================================
+
+// Maps public routes to their required modules
+export const ROUTE_MODULE_MAP: Record<string, ModuleKey> = {
+  '/ao-vivo': 'lives',
+  '/radio': 'web_radio',
+  '/tv': 'web_tv',
+  '/podcast': 'podcast',
+  '/podcasts': 'podcast',
+  '/membros': 'members',
+  '/members': 'members',
+  '/contribua': 'donations',
+  '/doacoes': 'donations',
+  '/vod': 'vod',
+  '/videos': 'vod',
 };
