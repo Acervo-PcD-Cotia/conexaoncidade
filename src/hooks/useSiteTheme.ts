@@ -3,24 +3,23 @@ import { useSiteTemplateConfig } from "./useSiteTemplateConfig";
 import { usePortalTemplate } from "./usePortalTemplates";
 import type { ThemeConfig } from "@/types/portal-templates";
 
-const DEFAULT_THEME: ThemeConfig = {
-  primary: "25 95% 53%",
-  secondary: "220 20% 20%",
-  accent: "30 90% 50%",
-  background: "220 20% 10%",
-  foreground: "0 0% 98%",
-  muted: "220 15% 20%",
-  typography: "modern",
-};
-
 export function useSiteTheme() {
   const { data: siteConfig, isLoading: configLoading } = useSiteTemplateConfig();
   const { data: template, isLoading: templateLoading } = usePortalTemplate(siteConfig?.template_id);
 
   const theme = useMemo(() => {
-    const merged: ThemeConfig = { ...DEFAULT_THEME };
+    // Only apply dynamic theme if there's a template or site overrides configured
+    const hasTemplateTheme = template?.theme && Object.keys(template.theme).length > 0;
+    const hasSiteOverrides = siteConfig?.theme_overrides && Object.keys(siteConfig.theme_overrides).length > 0;
 
-    // Layer 2: Template theme
+    // Return null to preserve index.css defaults when no custom theme is configured
+    if (!hasTemplateTheme && !hasSiteOverrides) {
+      return null;
+    }
+
+    const merged: ThemeConfig = {};
+
+    // Layer 1: Template theme
     if (template?.theme) {
       const templateTheme = template.theme as ThemeConfig;
       Object.keys(templateTheme).forEach((key) => {
@@ -31,7 +30,7 @@ export function useSiteTheme() {
       });
     }
 
-    // Layer 3: Site-level overrides
+    // Layer 2: Site-level overrides (highest priority)
     if (siteConfig?.theme_overrides) {
       const overrides = siteConfig.theme_overrides as ThemeConfig;
       Object.keys(overrides).forEach((key) => {
@@ -52,16 +51,19 @@ export function useSiteTheme() {
 
 /**
  * Applies theme CSS variables to the document root
+ * Only applies when a custom theme is configured, preserving index.css defaults otherwise
  */
 export function useApplyTheme() {
   const { theme, isLoading } = useSiteTheme();
 
   useEffect(() => {
-    if (isLoading) return;
+    // Don't apply anything while loading or if no custom theme is configured
+    // This preserves the original index.css colors
+    if (isLoading || theme === null) return;
 
     const root = document.documentElement;
 
-    // Apply color variables
+    // Apply color variables only if they exist in the custom theme
     if (theme.primary) {
       root.style.setProperty("--primary", theme.primary);
     }
@@ -93,16 +95,18 @@ export function useApplyTheme() {
       root.style.setProperty("--font-body", "'Inter', sans-serif");
     }
 
-    // Cleanup on unmount
+    // Cleanup on unmount - only remove properties that were set
     return () => {
-      root.style.removeProperty("--primary");
-      root.style.removeProperty("--secondary");
-      root.style.removeProperty("--accent");
-      root.style.removeProperty("--background");
-      root.style.removeProperty("--foreground");
-      root.style.removeProperty("--muted");
-      root.style.removeProperty("--font-heading");
-      root.style.removeProperty("--font-body");
+      if (theme.primary) root.style.removeProperty("--primary");
+      if (theme.secondary) root.style.removeProperty("--secondary");
+      if (theme.accent) root.style.removeProperty("--accent");
+      if (theme.background) root.style.removeProperty("--background");
+      if (theme.foreground) root.style.removeProperty("--foreground");
+      if (theme.muted) root.style.removeProperty("--muted");
+      if (theme.typography) {
+        root.style.removeProperty("--font-heading");
+        root.style.removeProperty("--font-body");
+      }
     };
   }, [theme, isLoading]);
 }
