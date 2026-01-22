@@ -22,10 +22,10 @@ export function OnboardingWelcomeModal({ open, onContinue }: OnboardingWelcomeMo
             <Users className="h-8 w-8 text-primary" />
           </div>
           <DialogTitle className="text-xl">
-            Bem-vindo à Comunidade Conexão na Cidade!
+            Bem-vindo às Conexões!
           </DialogTitle>
           <DialogDescription className="text-base">
-            Você está entrando em um espaço exclusivo para cidadãos engajados.
+            Você está entrando no espaço exclusivo de cidadãos engajados do Conexão na Cidade.
           </DialogDescription>
         </DialogHeader>
 

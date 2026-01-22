@@ -159,6 +159,7 @@ import BroadcastWatch from "./pages/broadcast/BroadcastWatch";
 import BroadcastSchedule from "./pages/broadcast/BroadcastSchedule";
 import BroadcastArchive from "./pages/broadcast/BroadcastArchive";
 import GuestJoin from "./pages/broadcast/GuestJoin";
+import LiveStudioPromo from "./pages/broadcast/LiveStudioPromo";
 import BroadcastDashboard from "./pages/admin/broadcast/BroadcastDashboard";
 import BroadcastList from "./pages/admin/broadcast/BroadcastList";
 import BroadcastForm from "./pages/admin/broadcast/BroadcastForm";
@@ -346,6 +347,7 @@ const App = () => (
                       
                       {/* Broadcast Public Routes */}
                       <Route path="/ao-vivo" element={<BroadcastHub />} />
+                      <Route path="/ao-vivo/studio" element={<LiveStudioPromo />} />
                       <Route path="/ao-vivo/programacao" element={<BroadcastSchedule />} />
                       <Route path="/ao-vivo/arquivo" element={<BroadcastArchive />} />
                       <Route path="/ao-vivo/:slug" element={<BroadcastWatch />} />

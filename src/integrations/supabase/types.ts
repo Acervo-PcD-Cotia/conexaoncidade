@@ -2039,6 +2039,47 @@ export type Database = {
           },
         ]
       }
+      broadcast_hosts: {
+        Row: {
+          channel_id: string | null
+          created_at: string | null
+          granted_at: string | null
+          granted_by: string | null
+          id: string
+          is_active: boolean | null
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          channel_id?: string | null
+          created_at?: string | null
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          channel_id?: string | null
+          created_at?: string | null
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_hosts_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "broadcast_channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       broadcast_participants: {
         Row: {
           avatar_url: string | null
