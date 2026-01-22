@@ -388,8 +388,49 @@
            [&_.bg-background]:bg-transparent
            [&_.border]:border-white/20;
   }
-}
 
+  /* Focus Mode - Hide sidebar completely */
+  .focus-mode-active [data-sidebar="sidebar"] {
+    @apply w-0 min-w-0 opacity-0 pointer-events-none overflow-hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .focus-mode-active [data-sidebar="rail"] {
+    @apply opacity-0 pointer-events-none;
+  }
+
+  /* Premium Dashboard Styles */
+  .dashboard-card-glass {
+    @apply backdrop-blur-sm border border-white/10;
+    background: linear-gradient(145deg, hsl(var(--card) / 0.9), hsl(var(--card) / 0.7));
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  }
+
+  .dashboard-gradient-emerald {
+    background: linear-gradient(135deg, hsl(142 76% 36% / 0.12) 0%, transparent 70%);
+  }
+
+  .dashboard-gradient-blue {
+    background: linear-gradient(135deg, hsl(217 91% 50% / 0.12) 0%, transparent 70%);
+  }
+
+  .dashboard-gradient-purple {
+    background: linear-gradient(135deg, hsl(280 68% 50% / 0.12) 0%, transparent 70%);
+  }
+
+  .dashboard-gradient-orange {
+    background: linear-gradient(135deg, hsl(25 95% 53% / 0.12) 0%, transparent 70%);
+  }
+
+  .dashboard-card-glow:hover {
+    box-shadow: 0 0 24px hsl(var(--primary) / 0.15), 0 8px 32px rgba(0, 0, 0, 0.1);
+  }
+
+  .dashboard-stat-xl {
+    @apply text-4xl lg:text-5xl font-bold tracking-tighter;
+    font-feature-settings: "tnum" 1, "ss01" 1;
+  }
+}
 @layer utilities {
   .line-clamp-2 {
     display: -webkit-box;

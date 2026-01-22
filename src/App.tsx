@@ -178,6 +178,7 @@ import ConexaoStudioDestinations from "./pages/conexao-studio/Destinations";
 import ConexaoStudioWebinars from "./pages/conexao-studio/Webinars";
 import ConexaoStudioBranding from "./pages/conexao-studio/Branding";
 import ConexaoStudioTeam from "./pages/conexao-studio/Team";
+import ConexaoStudioSession from "./pages/conexao-studio/StudioSession";
 
 const queryClient = new QueryClient();
 
@@ -354,6 +355,7 @@ const App = () => (
                         <Route path="conexao-studio" element={<ConexaoStudioDashboard />} />
                         <Route path="conexao-studio/studios" element={<ConexaoStudioList />} />
                         <Route path="conexao-studio/studios/new" element={<ConexaoStudioCreate />} />
+                        <Route path="conexao-studio/studios/:slug/session" element={<ConexaoStudioSession />} />
                         <Route path="conexao-studio/library" element={<ConexaoStudioLibrary />} />
                         <Route path="conexao-studio/destinations" element={<ConexaoStudioDestinations />} />
                         <Route path="conexao-studio/webinars" element={<ConexaoStudioWebinars />} />
