@@ -165,6 +165,7 @@ import BroadcastForm from "./pages/admin/broadcast/BroadcastForm";
 import BroadcastChannels from "./pages/admin/broadcast/BroadcastChannels";
 import BroadcastPrograms from "./pages/admin/broadcast/BroadcastPrograms";
 import BroadcastStudio from "./pages/admin/broadcast/BroadcastStudio";
+import BroadcastPlaylist from "./pages/admin/broadcast/BroadcastPlaylist";
 
 const queryClient = new QueryClient();
 
@@ -333,6 +334,7 @@ const App = () => (
                         <Route path="broadcast/:id/edit" element={<BroadcastForm />} />
                         <Route path="broadcast/channels" element={<BroadcastChannels />} />
                         <Route path="broadcast/programs" element={<BroadcastPrograms />} />
+                        <Route path="broadcast/playlist" element={<BroadcastPlaylist />} />
                         <Route path="broadcast/studio/:id" element={<BroadcastStudio />} />
                         
                         {/* Classifieds & Jobs Admin */}
