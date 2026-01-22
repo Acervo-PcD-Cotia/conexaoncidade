@@ -35,6 +35,10 @@ import {
   Package,
   Briefcase,
   LucideIcon,
+  Radio,
+  Play,
+  Tv,
+  Calendar,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useUserRole } from "@/hooks/useRequireRole";
@@ -83,6 +87,13 @@ const editorialItems = [
   { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
   { title: "Edição Digital", url: "/admin/editions", icon: BookOpen },
   { title: "Podcasts", url: "/admin/podcasts", icon: Mic },
+];
+
+const broadcastItems: MenuItem[] = [
+  { title: "Dashboard", url: "/admin/broadcast", icon: Radio },
+  { title: "Transmissões", url: "/admin/broadcast/list", icon: Play },
+  { title: "Canais", url: "/admin/broadcast/channels", icon: Tv },
+  { title: "Programas", url: "/admin/broadcast/programs", icon: Calendar },
 ];
 
 const businessItems = [
@@ -200,7 +211,30 @@ export function AdminSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Negócios</SidebarGroupLabel>
+          <SidebarGroupLabel>Conexão Ao Vivo</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {broadcastItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to={item.url}
+                      end={item.url === "/admin/broadcast"}
+                      className="flex items-center gap-2"
+                      activeClassName="bg-primary/10 text-primary"
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {!collapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+          <SidebarGroup>
+            <SidebarGroupLabel>Negócios</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {businessItems.map((item) => (

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Search, Sun, Moon, LogOut, LayoutDashboard, Newspaper, FolderOpen, Megaphone, Settings, ShieldCheck, Bus, MapPin, Accessibility, Users } from "lucide-react";
+import { Menu, X, Search, Sun, Moon, LogOut, LayoutDashboard, Newspaper, FolderOpen, Megaphone, Settings, ShieldCheck, Bus, MapPin, Accessibility, Users, Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTheme } from "@/hooks/useTheme";
@@ -89,7 +89,14 @@ export function Header() {
                     className="flex items-center gap-2 text-pink-600 dark:text-pink-500 hover:underline"
                   >
                     <Users className="h-4 w-4" />
-                    Comunidade
+                    Conexões
+                  </Link>
+                  <Link
+                    to="/ao-vivo"
+                    className="flex items-center gap-2 text-red-600 dark:text-red-500 hover:underline"
+                  >
+                    <Radio className="h-4 w-4" />
+                    Live Studio
                   </Link>
                   <Link
                     to="/anti-fake-news"
@@ -276,7 +283,14 @@ export function Header() {
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-pink-700 dark:text-pink-400 bg-pink-100 dark:bg-pink-950/60 rounded-full hover:bg-pink-200 dark:hover:bg-pink-900/60 transition-colors border border-pink-200 dark:border-pink-800"
             >
               <Users className="h-4 w-4" />
-              Comunidade
+              Conexões
+            </Link>
+            <Link
+              to="/ao-vivo"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-950/60 rounded-full hover:bg-red-200 dark:hover:bg-red-900/60 transition-colors border border-red-200 dark:border-red-800"
+            >
+              <Radio className="h-4 w-4" />
+              Live Studio
             </Link>
             <Link
               to="/anti-fake-news"
