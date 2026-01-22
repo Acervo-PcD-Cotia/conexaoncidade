@@ -82,7 +82,7 @@ export function Header() {
                     className="flex items-center gap-2 text-purple-600 dark:text-purple-500 hover:underline"
                   >
                     <Accessibility className="h-4 w-4" />
-                    Censo PcD Cotia
+                    Censo PcD
                   </Link>
                   <Link
                     to="/comunidade"
@@ -103,7 +103,7 @@ export function Header() {
                     className="flex items-center gap-2 text-green-600 dark:text-green-500 hover:underline"
                   >
                     <ShieldCheck className="h-4 w-4" />
-                    Check Fake News
+                    Fake News
                   </Link>
                   <Link
                     to="/transporte-escolar"
@@ -276,7 +276,7 @@ export function Header() {
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-purple-700 dark:text-purple-400 bg-purple-100 dark:bg-purple-950/60 rounded-full hover:bg-purple-200 dark:hover:bg-purple-900/60 transition-colors border border-purple-200 dark:border-purple-800"
             >
               <Accessibility className="h-4 w-4" />
-              Censo PcD Cotia
+              Censo PcD
             </Link>
             <Link
               to="/comunidade"
@@ -297,7 +297,7 @@ export function Header() {
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-950/60 rounded-full hover:bg-green-200 dark:hover:bg-green-900/60 transition-colors border border-green-200 dark:border-green-800"
             >
               <ShieldCheck className="h-4 w-4" />
-              Check Fake News
+              Fake News
             </Link>
             <Link
               to="/transporte-escolar"

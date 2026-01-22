@@ -19,7 +19,7 @@ export function CommunityChatButton() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Olá! 👋 Sou a IA da Comunidade Conexão na Cidade. Posso te ajudar com informações sobre notícias do portal, serviços da cidade, direitos PcD, eventos e campanhas. Como posso ajudar?",
+      content: "Olá! 👋 Sou a IA do Conexão na Cidade. Posso te ajudar com informações sobre notícias do portal, serviços da cidade, direitos PcD, eventos e campanhas. Como posso ajudar?",
     },
   ]);
   const [input, setInput] = useState("");
@@ -113,7 +113,7 @@ export function CommunityChatButton() {
                 </Avatar>
                 <div>
                   <h3 className="font-semibold">IA Conexão na Cidade</h3>
-                  <p className="text-xs text-white/80">Assistente da Comunidade</p>
+                  <p className="text-xs text-white/80">Assistente das Conexões</p>
                 </div>
               </div>
             </div>

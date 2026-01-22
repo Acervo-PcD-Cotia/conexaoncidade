@@ -28,7 +28,7 @@ export function CommunityButton() {
       disabled={isLoading}
     >
       <Users className="h-4 w-4" />
-      <span className="hidden sm:inline">Comunidade</span>
+      <span className="hidden sm:inline">Conexões</span>
       {user && !hasAccess && shareProgress > 0 && (
         <Badge 
           variant="secondary" 
