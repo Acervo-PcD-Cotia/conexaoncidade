@@ -8323,6 +8323,60 @@ export type Database = {
           },
         ]
       }
+      portal_templates: {
+        Row: {
+          created_at: string | null
+          default_modules: Json | null
+          description: string | null
+          icon: string | null
+          id: string
+          initial_content: Json | null
+          is_active: boolean | null
+          key: string
+          language_style: string | null
+          name: string
+          preview_image: string | null
+          sort_order: number | null
+          theme: Json | null
+          updated_at: string | null
+          vocabulary: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          default_modules?: Json | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          initial_content?: Json | null
+          is_active?: boolean | null
+          key: string
+          language_style?: string | null
+          name: string
+          preview_image?: string | null
+          sort_order?: number | null
+          theme?: Json | null
+          updated_at?: string | null
+          vocabulary?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          default_modules?: Json | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          initial_content?: Json | null
+          is_active?: boolean | null
+          key?: string
+          language_style?: string | null
+          name?: string
+          preview_image?: string | null
+          sort_order?: number | null
+          theme?: Json | null
+          updated_at?: string | null
+          vocabulary?: Json | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -8716,6 +8770,66 @@ export type Database = {
           },
         ]
       }
+      site_template_config: {
+        Row: {
+          applied_at: string | null
+          branding: Json | null
+          created_at: string | null
+          id: string
+          modules_overrides: Json | null
+          radio_config: Json | null
+          site_id: string | null
+          template_id: string | null
+          theme_overrides: Json | null
+          tv_config: Json | null
+          updated_at: string | null
+          vocabulary_overrides: Json | null
+        }
+        Insert: {
+          applied_at?: string | null
+          branding?: Json | null
+          created_at?: string | null
+          id?: string
+          modules_overrides?: Json | null
+          radio_config?: Json | null
+          site_id?: string | null
+          template_id?: string | null
+          theme_overrides?: Json | null
+          tv_config?: Json | null
+          updated_at?: string | null
+          vocabulary_overrides?: Json | null
+        }
+        Update: {
+          applied_at?: string | null
+          branding?: Json | null
+          created_at?: string | null
+          id?: string
+          modules_overrides?: Json | null
+          radio_config?: Json | null
+          site_id?: string | null
+          template_id?: string | null
+          theme_overrides?: Json | null
+          tv_config?: Json | null
+          updated_at?: string | null
+          vocabulary_overrides?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_template_config_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: true
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_template_config_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "portal_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_users: {
         Row: {
           created_at: string
@@ -8761,12 +8875,15 @@ export type Database = {
         Row: {
           base_url: string
           created_at: string
+          current_template_id: string | null
           default_utm_medium_map: Json | null
           default_utm_source: string | null
           id: string
+          is_white_label: boolean | null
           name: string
           news_path_prefix: string | null
           owner_id: string | null
+          plan_tier: string | null
           primary_domain: string
           share_enabled: boolean | null
           short_domain: string | null
@@ -8775,12 +8892,15 @@ export type Database = {
         Insert: {
           base_url: string
           created_at?: string
+          current_template_id?: string | null
           default_utm_medium_map?: Json | null
           default_utm_source?: string | null
           id?: string
+          is_white_label?: boolean | null
           name: string
           news_path_prefix?: string | null
           owner_id?: string | null
+          plan_tier?: string | null
           primary_domain: string
           share_enabled?: boolean | null
           short_domain?: string | null
@@ -8789,18 +8909,29 @@ export type Database = {
         Update: {
           base_url?: string
           created_at?: string
+          current_template_id?: string | null
           default_utm_medium_map?: Json | null
           default_utm_source?: string | null
           id?: string
+          is_white_label?: boolean | null
           name?: string
           news_path_prefix?: string | null
           owner_id?: string | null
+          plan_tier?: string | null
           primary_domain?: string
           share_enabled?: boolean | null
           short_domain?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "sites_current_template_id_fkey"
+            columns: ["current_template_id"]
+            isOneToOne: false
+            referencedRelation: "portal_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       social_accounts: {
         Row: {
