@@ -96,7 +96,7 @@ export function Header() {
                     className="flex items-center gap-2 text-red-600 dark:text-red-500 hover:underline"
                   >
                     <Radio className="h-4 w-4" />
-                    Live Studio
+                    WebRádioTV
                   </Link>
                   <Link
                     to="/anti-fake-news"
@@ -290,7 +290,7 @@ export function Header() {
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-950/60 rounded-full hover:bg-red-200 dark:hover:bg-red-900/60 transition-colors border border-red-200 dark:border-red-800"
             >
               <Radio className="h-4 w-4" />
-              Live Studio
+              WebRádioTV
             </Link>
             <Link
               to="/anti-fake-news"

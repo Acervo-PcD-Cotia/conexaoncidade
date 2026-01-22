@@ -40,6 +40,10 @@ import {
   Tv,
   Calendar,
   Music,
+  Video,
+  FolderOpen,
+  Presentation,
+  Palette,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useUserRole } from "@/hooks/useRequireRole";
@@ -97,6 +101,16 @@ const broadcastItems: MenuItem[] = [
   { title: "Programas", url: "/admin/broadcast/programs", icon: Calendar },
   { title: "Playlist Rádio", url: "/admin/broadcast/playlist", icon: Music },
   { title: "Grade de Vídeos", url: "/admin/broadcast/videos", icon: Tv },
+];
+
+const conexaoStudioItems: MenuItem[] = [
+  { title: "Dashboard", url: "/admin/conexao-studio", icon: Video },
+  { title: "Estúdios", url: "/admin/conexao-studio/studios", icon: Tv },
+  { title: "Biblioteca", url: "/admin/conexao-studio/library", icon: FolderOpen },
+  { title: "Destinos", url: "/admin/conexao-studio/destinations", icon: Share2 },
+  { title: "Webinários", url: "/admin/conexao-studio/webinars", icon: Presentation },
+  { title: "Branding", url: "/admin/conexao-studio/branding", icon: Palette },
+  { title: "Equipe", url: "/admin/conexao-studio/team", icon: Users },
 ];
 
 const businessItems = [
@@ -236,7 +250,30 @@ export function AdminSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-          <SidebarGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel>Conexão Studio</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {conexaoStudioItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to={item.url}
+                      end={item.url === "/admin/conexao-studio"}
+                      className="flex items-center gap-2"
+                      activeClassName="bg-primary/10 text-primary"
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {!collapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
             <SidebarGroupLabel>Negócios</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
