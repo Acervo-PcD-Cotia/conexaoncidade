@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const livekitApiKey = Deno.env.get("LIVEKIT_API_KEY");
     const livekitApiSecret = Deno.env.get("LIVEKIT_API_SECRET");
-    const livekitWsUrl = Deno.env.get("LIVEKIT_WS_URL");
+    const livekitWsUrl = Deno.env.get("LIVEKIT_URL");
 
     if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error("Missing Supabase configuration");

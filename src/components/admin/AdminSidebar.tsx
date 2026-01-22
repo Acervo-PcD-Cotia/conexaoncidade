@@ -95,7 +95,8 @@ const broadcastItems: MenuItem[] = [
   { title: "Transmissões", url: "/admin/broadcast/list", icon: Play },
   { title: "Canais", url: "/admin/broadcast/channels", icon: Tv },
   { title: "Programas", url: "/admin/broadcast/programs", icon: Calendar },
-  { title: "Playlist", url: "/admin/broadcast/playlist", icon: Music },
+  { title: "Playlist Rádio", url: "/admin/broadcast/playlist", icon: Music },
+  { title: "Grade de Vídeos", url: "/admin/broadcast/videos", icon: Tv },
 ];
 
 const businessItems = [
