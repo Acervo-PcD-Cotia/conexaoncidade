@@ -142,9 +142,41 @@
   .dashboard-card {
     @apply border-0 shadow-sm hover:shadow-md transition-shadow duration-200;
   }
+  
+  /* Glassmorphism effect for premium cards */
+  .dashboard-card-glass {
+    @apply backdrop-blur-sm border border-white/10;
+    background: hsl(var(--card) / 0.8);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Category-specific gradients */
+  .dashboard-gradient-emerald {
+    background: linear-gradient(135deg, hsl(142 76% 36% / 0.15) 0%, transparent 60%);
+  }
+  .dashboard-gradient-blue {
+    background: linear-gradient(135deg, hsl(217 91% 50% / 0.15) 0%, transparent 60%);
+  }
+  .dashboard-gradient-purple {
+    background: linear-gradient(135deg, hsl(280 68% 50% / 0.15) 0%, transparent 60%);
+  }
+  .dashboard-gradient-orange {
+    background: linear-gradient(135deg, hsl(25 95% 53% / 0.15) 0%, transparent 60%);
+  }
+  
+  /* Hover glow effect */
+  .dashboard-card-glow:hover {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.15);
+  }
 
   .dashboard-stat-value {
     @apply text-4xl font-bold tracking-tight;
+    font-feature-settings: "tnum" 1;
+  }
+  
+  /* Extra large stats for premium dashboard */
+  .dashboard-stat-xl {
+    @apply text-4xl lg:text-5xl font-bold tracking-tighter;
     font-feature-settings: "tnum" 1;
   }
 
@@ -158,6 +190,22 @@
 
   .dashboard-hover-lift {
     @apply hover:-translate-y-0.5 hover:shadow-md transition-all duration-200;
+  }
+  
+  /* Premium header gradient */
+  .dashboard-header-premium {
+    background: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--muted) / 0.3) 100%);
+  }
+  
+  /* Medal colors for rankings */
+  .medal-gold {
+    @apply text-yellow-500;
+  }
+  .medal-silver {
+    @apply text-slate-400;
+  }
+  .medal-bronze {
+    @apply text-amber-700;
   }
 
   /* News card hover effects */

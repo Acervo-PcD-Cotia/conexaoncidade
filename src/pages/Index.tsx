@@ -2,6 +2,7 @@ import { MarketDataBar } from "@/components/home/MarketDataBar";
 import { SuperBanner } from "@/components/home/SuperBanner";
 import { TopWebStoriesBar } from "@/components/home/TopWebStoriesBar";
 import { HeroSection } from "@/components/home/HeroSection";
+import { LiveBroadcastWidget } from "@/components/home/LiveBroadcastWidget";
 import { AgoraNaCidade } from "@/components/home/AgoraNaCidade";
 import { LatestNewsList } from "@/components/home/LatestNewsList";
 import { QuickNotes } from "@/components/home/QuickNotes";
@@ -30,7 +31,10 @@ const Index = () => {
       {/* 5. Main hero - dominant headline */}
       <HeroSection />
       
-      {/* 6. Real-time city updates */}
+      {/* 6. Live Broadcast Widget - Web Radio/TV */}
+      <LiveBroadcastWidget />
+      
+      {/* 7. Real-time city updates */}
       <AgoraNaCidade />
       
       {/* 7. Dense latest news list */}

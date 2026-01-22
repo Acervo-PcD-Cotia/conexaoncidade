@@ -140,3 +140,21 @@ verify_jwt = false
 
 [functions.autodj-stream]
 verify_jwt = false
+
+[functions.conexao-session-start]
+verify_jwt = false
+
+[functions.conexao-session-end]
+verify_jwt = false
+
+[functions.conexao-recording-start]
+verify_jwt = false
+
+[functions.conexao-recording-stop]
+verify_jwt = false
+
+[functions.conexao-stream-start]
+verify_jwt = false
+
+[functions.conexao-stream-stop]
+verify_jwt = false
