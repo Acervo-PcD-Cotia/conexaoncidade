@@ -10,6 +10,7 @@ import { AccessibilityProvider } from "@/contexts/AccessibilityContext";
 import { NewsCreationProvider } from "@/contexts/NewsCreationContext";
 import { NewsCreationModalProvider } from "@/contexts/NewsCreationModalContext";
 import { MiniPlayerProvider } from "@/contexts/MiniPlayerContext";
+import { SiteThemeProvider } from "@/providers/SiteThemeProvider";
 import { MaintenanceGuard } from "@/components/maintenance/MaintenanceGuard";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { AdminLayout } from "@/components/admin/AdminLayout";
@@ -194,11 +195,12 @@ const App = () => (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TenantProvider>
-          <AccessibilityProvider>
-            <NewsCreationProvider>
-              <NewsCreationModalProvider>
-                <MiniPlayerProvider>
-                  <TooltipProvider>
+          <SiteThemeProvider>
+            <AccessibilityProvider>
+              <NewsCreationProvider>
+                <NewsCreationModalProvider>
+                  <MiniPlayerProvider>
+                    <TooltipProvider>
                     <Toaster />
                     <Sonner />
                 <BrowserRouter>
@@ -391,14 +393,15 @@ const App = () => (
                     </Routes>
                   </MaintenanceGuard>
                 </BrowserRouter>
-              </TooltipProvider>
-            </MiniPlayerProvider>
-          </NewsCreationModalProvider>
-        </NewsCreationProvider>
-      </AccessibilityProvider>
-    </TenantProvider>
-  </AuthProvider>
-</QueryClientProvider>
+                  </TooltipProvider>
+                </MiniPlayerProvider>
+              </NewsCreationModalProvider>
+            </NewsCreationProvider>
+          </AccessibilityProvider>
+        </SiteThemeProvider>
+      </TenantProvider>
+    </AuthProvider>
+  </QueryClientProvider>
 </HelmetProvider>
 );
 

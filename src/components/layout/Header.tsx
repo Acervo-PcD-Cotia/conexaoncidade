@@ -20,6 +20,8 @@ import logoFull from "@/assets/logo-full.png";
 import { AccessibilityMenuButton } from "@/components/accessibility/AccessibilityMenuButton";
 import { CommunityButton } from "@/components/community/CommunityButton";
 import { NotificationBell } from "@/components/community/NotificationBell";
+import { VocabText } from "@/components/ui/VocabText";
+import { ModuleGuard } from "@/components/guards/ModuleGuard";
 
 export function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -53,7 +55,7 @@ export function Header() {
             <SheetContent side="left" className="w-72">
               <nav className="mt-8 flex flex-col gap-4">
                 <Link to="/" className="text-lg font-semibold text-primary">
-                  Início
+                  <VocabText term="home" fallback="Início" />
                 </Link>
                 {categories?.map((cat) => (
                   <Link
@@ -68,49 +70,51 @@ export function Header() {
                 {/* Special Links for Mobile */}
                 <div className="mt-4 border-t pt-4 space-y-3">
                   <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                    Serviços
+                    <VocabText term="services" fallback="Serviços" />
                   </p>
                   <Link
                     to="/google-maps"
                     className="flex items-center gap-2 text-blue-600 dark:text-blue-500 hover:underline"
                   >
                     <MapPin className="h-4 w-4" />
-                    Apareça no Google
+                    <VocabText term="google_maps_cta" fallback="Apareça no Google" />
                   </Link>
                   <Link
                     to="/censo-pcd"
                     className="flex items-center gap-2 text-purple-600 dark:text-purple-500 hover:underline"
                   >
                     <Accessibility className="h-4 w-4" />
-                    Censo PcD
+                    <VocabText term="pcd_census" fallback="Censo PcD" />
                   </Link>
                   <Link
                     to="/comunidade"
                     className="flex items-center gap-2 text-pink-600 dark:text-pink-500 hover:underline"
                   >
                     <Users className="h-4 w-4" />
-                    Conexões
+                    <VocabText term="community" fallback="Conexões" />
                   </Link>
-                  <Link
-                    to="/ao-vivo"
-                    className="flex items-center gap-2 text-red-600 dark:text-red-500 hover:underline"
-                  >
-                    <Radio className="h-4 w-4" />
-                    WebRádioTV
-                  </Link>
+                  <ModuleGuard module="web_radio">
+                    <Link
+                      to="/ao-vivo"
+                      className="flex items-center gap-2 text-red-600 dark:text-red-500 hover:underline"
+                    >
+                      <Radio className="h-4 w-4" />
+                      <VocabText term="webradiotv" fallback="WebRádioTV" />
+                    </Link>
+                  </ModuleGuard>
                   <Link
                     to="/anti-fake-news"
                     className="flex items-center gap-2 text-green-600 dark:text-green-500 hover:underline"
                   >
                     <ShieldCheck className="h-4 w-4" />
-                    Fake News
+                    <VocabText term="fake_news" fallback="Fake News" />
                   </Link>
                   <Link
                     to="/transporte-escolar"
                     className="flex items-center gap-2 text-orange-600 dark:text-orange-500 hover:underline"
                   >
                     <Bus className="h-4 w-4" />
-                    Transporte Escolar
+                    <VocabText term="school_transport" fallback="Transporte Escolar" />
                   </Link>
                 </div>
                 
@@ -118,21 +122,21 @@ export function Header() {
                 {hasAdminAccess && (
                   <div className="mt-4 border-t pt-4 space-y-3">
                     <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                      Administração
+                      <VocabText term="admin" fallback="Administração" />
                     </p>
                     <Link
                       to="/admin"
                       className="flex items-center gap-2 text-primary hover:underline"
                     >
                       <LayoutDashboard className="h-4 w-4" />
-                      Dashboard
+                      <VocabText term="dashboard" fallback="Dashboard" />
                     </Link>
                     <Link
                       to="/admin/news"
                       className="flex items-center gap-2 text-muted-foreground hover:text-primary"
                     >
                       <Newspaper className="h-4 w-4" />
-                      Gerenciar Notícias
+                      <VocabText term="manage_news" fallback="Gerenciar Notícias" />
                     </Link>
                     <Link
                       to="/admin/categories"
@@ -147,7 +151,7 @@ export function Header() {
                 {!user && (
                   <div className="mt-4 border-t pt-4">
                     <Link to="/auth" className="text-primary hover:underline">
-                      Entrar / Cadastrar
+                      <VocabText term="login" fallback="Entrar / Cadastrar" />
                     </Link>
                   </div>
                 )}
@@ -206,13 +210,13 @@ export function Header() {
                       <DropdownMenuItem asChild>
                         <Link to="/admin">
                           <LayoutDashboard className="h-4 w-4 mr-2" />
-                          Dashboard
+                          <VocabText term="dashboard" fallback="Dashboard" />
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link to="/admin/news">
                           <Newspaper className="h-4 w-4 mr-2" />
-                          Gerenciar Notícias
+                          <VocabText term="manage_news" fallback="Gerenciar Notícias" />
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
@@ -230,7 +234,7 @@ export function Header() {
                       <DropdownMenuItem asChild>
                         <Link to="/admin/settings">
                           <Settings className="h-4 w-4 mr-2" />
-                          Configurações
+                          <VocabText term="settings" fallback="Configurações" />
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
@@ -238,7 +242,7 @@ export function Header() {
                   )}
                   <DropdownMenuItem onClick={() => signOut()}>
                     <LogOut className="h-4 w-4 mr-2" />
-                    Sair
+                    <VocabText term="logout" fallback="Sair" />
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -269,42 +273,44 @@ export function Header() {
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-blue-700 dark:text-blue-400 bg-blue-100 dark:bg-blue-950/60 rounded-full hover:bg-blue-200 dark:hover:bg-blue-900/60 transition-colors border border-blue-200 dark:border-blue-800"
             >
               <MapPin className="h-4 w-4" />
-              Apareça no Google
+              <VocabText term="google_maps_cta" fallback="Apareça no Google" />
             </Link>
             <Link
               to="/censo-pcd"
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-purple-700 dark:text-purple-400 bg-purple-100 dark:bg-purple-950/60 rounded-full hover:bg-purple-200 dark:hover:bg-purple-900/60 transition-colors border border-purple-200 dark:border-purple-800"
             >
               <Accessibility className="h-4 w-4" />
-              Censo PcD
+              <VocabText term="pcd_census" fallback="Censo PcD" />
             </Link>
             <Link
               to="/comunidade"
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-pink-700 dark:text-pink-400 bg-pink-100 dark:bg-pink-950/60 rounded-full hover:bg-pink-200 dark:hover:bg-pink-900/60 transition-colors border border-pink-200 dark:border-pink-800"
             >
               <Users className="h-4 w-4" />
-              Conexões
+              <VocabText term="community" fallback="Conexões" />
             </Link>
-            <Link
-              to="/ao-vivo"
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-950/60 rounded-full hover:bg-red-200 dark:hover:bg-red-900/60 transition-colors border border-red-200 dark:border-red-800"
-            >
-              <Radio className="h-4 w-4" />
-              WebRádioTV
-            </Link>
+            <ModuleGuard module="web_radio">
+              <Link
+                to="/ao-vivo"
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-950/60 rounded-full hover:bg-red-200 dark:hover:bg-red-900/60 transition-colors border border-red-200 dark:border-red-800"
+              >
+                <Radio className="h-4 w-4" />
+                <VocabText term="webradiotv" fallback="WebRádioTV" />
+              </Link>
+            </ModuleGuard>
             <Link
               to="/anti-fake-news"
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-950/60 rounded-full hover:bg-green-200 dark:hover:bg-green-900/60 transition-colors border border-green-200 dark:border-green-800"
             >
               <ShieldCheck className="h-4 w-4" />
-              Fake News
+              <VocabText term="fake_news" fallback="Fake News" />
             </Link>
             <Link
               to="/transporte-escolar"
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-orange-700 dark:text-orange-400 bg-orange-100 dark:bg-orange-950/60 rounded-full hover:bg-orange-200 dark:hover:bg-orange-900/60 transition-colors border border-orange-200 dark:border-orange-800"
             >
               <Bus className="h-4 w-4" />
-              Transporte Escolar
+              <VocabText term="school_transport" fallback="Transporte Escolar" />
             </Link>
           </div>
         </div>
