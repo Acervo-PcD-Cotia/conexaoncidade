@@ -28,6 +28,17 @@ export interface TemplateTheme {
   [key: string]: string | undefined;
 }
 
+// Theme configuration for dynamic CSS variables
+export interface ThemeConfig {
+  primary?: string;
+  secondary?: string;
+  accent?: string;
+  background?: string;
+  foreground?: string;
+  muted?: string;
+  typography?: 'editorial' | 'warm' | 'modern' | 'professional' | 'corporate';
+}
+
 export interface SiteTemplateConfig {
   id: string;
   site_id: string;
@@ -91,7 +102,14 @@ export type VocabularyKey =
   | 'schedule' | 'podcast' | 'about' | 'contact' | 'search' 
   | 'latest' | 'featured' | 'breaking' | 'donate' | 'members'
   | 'exclusive' | 'internal' | 'opinion' | 'editorial' | 'devotional'
-  | 'prayer' | 'events' | 'shop' | 'community' | 'reports' | 'training' | 'hr';
+  | 'prayer' | 'events' | 'shop' | 'community' | 'reports' | 'training' | 'hr'
+  // Navigation & UI
+  | 'services' | 'admin' | 'dashboard' | 'webradiotv' | 'manage_news'
+  // Service links
+  | 'google_maps_cta' | 'fake_news' | 'school_transport' | 'pcd_census' 
+  | 'civil_defense' | 'accessibility' | 'notifications'
+  // Actions
+  | 'login' | 'logout' | 'profile' | 'settings';
 
 export type VocabularyMap = Partial<Record<VocabularyKey, string>>;
 
