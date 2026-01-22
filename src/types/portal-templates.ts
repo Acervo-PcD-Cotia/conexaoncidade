@@ -70,6 +70,9 @@ export interface RadioConfig {
   name?: string;
   description?: string;
   enabled?: boolean;
+  status_label?: string;
+  fallback_message?: string;
+  default_volume?: number;
 }
 
 export interface TVConfig {
@@ -77,6 +80,9 @@ export interface TVConfig {
   channel_id?: string;
   title?: string;
   enabled?: boolean;
+  status_label?: string;
+  cta_text?: string;
+  cta_url?: string;
 }
 
 // Vocabulary keys that can be translated per template

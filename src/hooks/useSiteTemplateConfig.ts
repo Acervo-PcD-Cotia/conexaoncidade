@@ -18,7 +18,7 @@ export function useSiteTemplateConfig() {
         .maybeSingle();
 
       if (error) throw error;
-      return data as SiteTemplateConfig | null;
+      return data as unknown as SiteTemplateConfig | null;
     },
     enabled: !!currentTenantId,
   });

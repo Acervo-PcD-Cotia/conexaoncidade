@@ -1,5 +1,6 @@
 import { useGlobalRadio } from "@/contexts/GlobalRadioContext";
 import { RADIO_CONFIG } from "@/config/radio";
+import { useRadioConfig } from "@/hooks/useBroadcastConfig";
 import { Play, Pause, Volume2, VolumeX, Radio, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -17,6 +18,14 @@ export function TopAudioPlayer() {
     setVolume,
     toggleMute,
   } = useGlobalRadio();
+  
+  const dynamicConfig = useRadioConfig();
+  
+  // Merge static defaults with dynamic config
+  const config = {
+    name: dynamicConfig?.name || RADIO_CONFIG.NAME,
+    statusLabel: dynamicConfig?.status_label || RADIO_CONFIG.STATUS_LABEL,
+  };
 
   return (
     <div className="sticky top-0 z-50 h-12 bg-gradient-to-r from-primary via-primary/95 to-primary border-b border-primary-foreground/10 shadow-md">
@@ -29,14 +38,14 @@ export function TopAudioPlayer() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
             </span>
-            {RADIO_CONFIG.STATUS_LABEL}
+            {config.statusLabel}
           </div>
           
           {/* Radio Icon + Name */}
           <div className="flex items-center gap-1.5 text-primary-foreground truncate">
             <Radio className="h-4 w-4 shrink-0" />
             <span className="font-semibold text-sm truncate hidden sm:inline">
-              {RADIO_CONFIG.NAME}
+              {config.name}
             </span>
           </div>
           
