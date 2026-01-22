@@ -1,11 +1,13 @@
 import { Outlet, useLocation } from "react-router-dom";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
+import { TopAudioPlayer } from "./TopAudioPlayer";
 import { AccessibilityPanel } from "@/components/accessibility/AccessibilityPanel";
 import { PushPermissionBanner } from "@/components/PushPermissionBanner";
 import { useKeyboardNavigation } from "@/hooks/useKeyboardNavigation";
 import MiniPlayer from "@/components/broadcast/MiniPlayer";
 import { useMiniPlayer } from "@/contexts/MiniPlayerContext";
+import { GlobalRadioProvider } from "@/contexts/GlobalRadioContext";
 
 export function PublicLayout() {
   useKeyboardNavigation();
@@ -17,12 +19,16 @@ export function PublicLayout() {
   const shouldShowMiniPlayer = isVisible && broadcast && !isOnWatchPage;
 
   return (
+    <GlobalRadioProvider>
     <div className="flex min-h-screen flex-col">
+
+      {/* Sticky Audio Player at the very top */}
+      <TopAudioPlayer />
 
       {/* Skip link for keyboard navigation */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-16 focus:left-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
       >
         Pular para conteúdo principal
       </a>
@@ -50,5 +56,6 @@ export function PublicLayout() {
         />
       )}
     </div>
+    </GlobalRadioProvider>
   );
 }
