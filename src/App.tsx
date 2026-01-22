@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { TenantProvider } from "@/contexts/TenantContext";
 import { AccessibilityProvider } from "@/contexts/AccessibilityContext";
 import { NewsCreationProvider } from "@/contexts/NewsCreationContext";
 import { NewsCreationModalProvider } from "@/contexts/NewsCreationModalContext";
@@ -181,19 +182,25 @@ import ConexaoStudioBranding from "./pages/conexao-studio/Branding";
 import ConexaoStudioTeam from "./pages/conexao-studio/Team";
 import ConexaoStudioSession from "./pages/conexao-studio/StudioSession";
 
+// Template Settings Pages
+import TemplateSelector from "./pages/admin/settings/TemplateSelector";
+import VocabularyEditor from "./pages/admin/settings/VocabularyEditor";
+import ModulesManager from "./pages/admin/settings/ModulesManager";
+
 const queryClient = new QueryClient();
 
 const App = () => (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AccessibilityProvider>
-          <NewsCreationProvider>
-            <NewsCreationModalProvider>
-              <MiniPlayerProvider>
-                <TooltipProvider>
-                  <Toaster />
-                <Sonner />
+        <TenantProvider>
+          <AccessibilityProvider>
+            <NewsCreationProvider>
+              <NewsCreationModalProvider>
+                <MiniPlayerProvider>
+                  <TooltipProvider>
+                    <Toaster />
+                    <Sonner />
                 <BrowserRouter>
                   <MaintenanceGuard>
                     <Routes>
@@ -284,6 +291,9 @@ const App = () => (
                         <Route path="links/reports" element={<LinksReports />} />
                         <Route path="logs" element={<AuditLogs />} />
                         <Route path="settings" element={<Settings />} />
+                        <Route path="settings/template" element={<TemplateSelector />} />
+                        <Route path="settings/vocabulary" element={<VocabularyEditor />} />
+                        <Route path="settings/modules" element={<ModulesManager />} />
                         <Route path="solutions" element={<Solutions />} />
                         <Route path="events" element={<EventsList />} />
                         <Route path="editions" element={<EditionsList />} />
@@ -381,14 +391,15 @@ const App = () => (
                     </Routes>
                   </MaintenanceGuard>
                 </BrowserRouter>
-                </TooltipProvider>
-              </MiniPlayerProvider>
-            </NewsCreationModalProvider>
-          </NewsCreationProvider>
-        </AccessibilityProvider>
-      </AuthProvider>
-    </QueryClientProvider>
-  </HelmetProvider>
+              </TooltipProvider>
+            </MiniPlayerProvider>
+          </NewsCreationModalProvider>
+        </NewsCreationProvider>
+      </AccessibilityProvider>
+    </TenantProvider>
+  </AuthProvider>
+</QueryClientProvider>
+</HelmetProvider>
 );
 
 export default App;

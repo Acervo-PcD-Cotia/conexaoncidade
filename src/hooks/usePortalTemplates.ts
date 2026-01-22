@@ -13,7 +13,7 @@ export function usePortalTemplates() {
         .order("sort_order", { ascending: true });
 
       if (error) throw error;
-      return (data || []) as PortalTemplate[];
+      return (data || []) as unknown as PortalTemplate[];
     },
   });
 }
@@ -31,7 +31,7 @@ export function usePortalTemplate(templateId: string | null | undefined) {
         .single();
 
       if (error) throw error;
-      return data as PortalTemplate;
+      return data as unknown as PortalTemplate;
     },
     enabled: !!templateId,
   });
@@ -50,7 +50,7 @@ export function usePortalTemplateByKey(key: string | null | undefined) {
         .single();
 
       if (error) throw error;
-      return data as PortalTemplate;
+      return data as unknown as PortalTemplate;
     },
     enabled: !!key,
   });

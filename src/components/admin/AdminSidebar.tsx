@@ -44,6 +44,8 @@ import {
   FolderOpen,
   Presentation,
   Palette,
+  Languages,
+  ToggleLeft,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useUserRole } from "@/hooks/useRequireRole";
@@ -129,6 +131,12 @@ const transporteEscolarItems = [
   { title: "Transportadores", url: "/admin/transporte-escolar/transportadores", icon: Bus },
   { title: "Leads", url: "/admin/transporte-escolar/leads", icon: Users },
   { title: "Denúncias", url: "/admin/transporte-escolar/reports", icon: AlertTriangle },
+];
+
+const templateSettingsItems: MenuItem[] = [
+  { title: "Modelo do Portal", url: "/admin/settings/template", icon: Palette },
+  { title: "Vocabulário", url: "/admin/settings/vocabulary", icon: Languages },
+  { title: "Módulos", url: "/admin/settings/modules", icon: ToggleLeft },
 ];
 
 const adminOnlyItems = [
@@ -319,27 +327,51 @@ export function AdminSidebar() {
         </SidebarGroup>
 
         {isAdmin && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Administração</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {adminOnlyItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <NavLink
-                        to={item.url}
-                        className="flex items-center gap-2"
-                        activeClassName="bg-primary/10 text-primary"
-                      >
-                        <item.icon className="h-4 w-4" />
-                        {!collapsed && <span>{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          <>
+            <SidebarGroup>
+              <SidebarGroupLabel>Configurações do Portal</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {templateSettingsItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild>
+                        <NavLink
+                          to={item.url}
+                          className="flex items-center gap-2"
+                          activeClassName="bg-primary/10 text-primary"
+                        >
+                          <item.icon className="h-4 w-4" />
+                          {!collapsed && <span>{item.title}</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            <SidebarGroup>
+              <SidebarGroupLabel>Administração</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {adminOnlyItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild>
+                        <NavLink
+                          to={item.url}
+                          className="flex items-center gap-2"
+                          activeClassName="bg-primary/10 text-primary"
+                        >
+                          <item.icon className="h-4 w-4" />
+                          {!collapsed && <span>{item.title}</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
         )}
       </SidebarContent>
     </Sidebar>
