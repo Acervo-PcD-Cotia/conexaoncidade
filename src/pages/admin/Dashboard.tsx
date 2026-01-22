@@ -26,6 +26,8 @@ import {
   Shield,
   Bot,
   BarChart3,
+  PanelLeft,
+  PanelLeftClose,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,6 +37,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNewsCreationModal } from "@/contexts/NewsCreationModalContext";
+import { useFocusMode } from "@/components/admin/AdminLayout";
 import { cn } from "@/lib/utils";
 import {
   Tooltip,
@@ -59,6 +62,7 @@ import logoFull from "@/assets/logo-full.png";
 
 export default function Dashboard() {
   const { openModal } = useNewsCreationModal();
+  const { focusMode, toggleFocusMode } = useFocusMode();
   const navigate = useNavigate();
   
   const [searchOpen, setSearchOpen] = useState(false);
@@ -367,8 +371,33 @@ export default function Dashboard() {
             </div>
           </div>
           
-          {/* Right: Alertas + Busca + Ações */}
+          {/* Right: Modo Foco + Alertas + Busca + Ações */}
           <div className="flex items-center gap-3">
+            {/* Modo Foco */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={toggleFocusMode}
+                  className={cn(
+                    "h-9 w-9 p-0",
+                    focusMode && "bg-primary/10 text-primary"
+                  )}
+                >
+                  {focusMode ? (
+                    <PanelLeft className="h-4 w-4" />
+                  ) : (
+                    <PanelLeftClose className="h-4 w-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>{focusMode ? "Mostrar menu" : "Modo foco"}</p>
+                <p className="text-[10px] text-muted-foreground">Ctrl+Shift+F</p>
+              </TooltipContent>
+            </Tooltip>
+
             {/* Alertas Badge */}
             <Popover>
               <PopoverTrigger asChild>
