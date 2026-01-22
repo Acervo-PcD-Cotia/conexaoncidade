@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { ArrowLeft, Share2, Users, Clock, Calendar, Radio, Tv } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import BroadcastPlayer from "@/components/broadcast/BroadcastPlayer";
 import { formatDistanceToNow, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { useMiniPlayer } from "@/contexts/MiniPlayerContext";
 
 export default function BroadcastWatch() {
   const { slug } = useParams();
@@ -18,6 +19,22 @@ export default function BroadcastWatch() {
   const { data: upcomingBroadcasts } = useUpcomingBroadcasts(5);
   const trackViewer = useTrackViewer();
   const [analyticsId, setAnalyticsId] = useState<string | null>(null);
+  const { showMiniPlayer, hideMiniPlayer } = useMiniPlayer();
+
+  // Show mini player when user navigates away from a live broadcast
+  useEffect(() => {
+    if (broadcast?.status === "live") {
+      return () => {
+        // Activate mini player when leaving the page
+        showMiniPlayer(broadcast);
+      };
+    }
+  }, [broadcast, showMiniPlayer]);
+  
+  // Hide mini player when arriving at this page
+  useEffect(() => {
+    hideMiniPlayer();
+  }, [slug, hideMiniPlayer]);
 
   // Track viewer when joining
   useEffect(() => {

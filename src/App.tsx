@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { AccessibilityProvider } from "@/contexts/AccessibilityContext";
 import { NewsCreationProvider } from "@/contexts/NewsCreationContext";
 import { NewsCreationModalProvider } from "@/contexts/NewsCreationModalContext";
+import { MiniPlayerProvider } from "@/contexts/MiniPlayerContext";
 import { MaintenanceGuard } from "@/components/maintenance/MaintenanceGuard";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { AdminLayout } from "@/components/admin/AdminLayout";
@@ -174,8 +175,9 @@ const App = () => (
         <AccessibilityProvider>
           <NewsCreationProvider>
             <NewsCreationModalProvider>
-              <TooltipProvider>
-                <Toaster />
+              <MiniPlayerProvider>
+                <TooltipProvider>
+                  <Toaster />
                 <Sonner />
                 <BrowserRouter>
                   <MaintenanceGuard>
@@ -349,7 +351,8 @@ const App = () => (
                     </Routes>
                   </MaintenanceGuard>
                 </BrowserRouter>
-              </TooltipProvider>
+                </TooltipProvider>
+              </MiniPlayerProvider>
             </NewsCreationModalProvider>
           </NewsCreationProvider>
         </AccessibilityProvider>

@@ -1,12 +1,20 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { AccessibilityPanel } from "@/components/accessibility/AccessibilityPanel";
 import { PushPermissionBanner } from "@/components/PushPermissionBanner";
 import { useKeyboardNavigation } from "@/hooks/useKeyboardNavigation";
+import MiniPlayer from "@/components/broadcast/MiniPlayer";
+import { useMiniPlayer } from "@/contexts/MiniPlayerContext";
 
 export function PublicLayout() {
   useKeyboardNavigation();
+  const location = useLocation();
+  const { isVisible, broadcast, hideMiniPlayer } = useMiniPlayer();
+  
+  // Don't show miniplayer on the watch page for the same broadcast
+  const isOnWatchPage = location.pathname.startsWith("/ao-vivo/");
+  const shouldShowMiniPlayer = isVisible && broadcast && !isOnWatchPage;
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -32,6 +40,15 @@ export function PublicLayout() {
       
       {/* Push notification permission banner */}
       <PushPermissionBanner />
+      
+      {/* Persistent Mini Player for live broadcasts */}
+      {shouldShowMiniPlayer && broadcast && (
+        <MiniPlayer
+          broadcast={broadcast}
+          onClose={hideMiniPlayer}
+          onExpand={hideMiniPlayer}
+        />
+      )}
     </div>
   );
 }
