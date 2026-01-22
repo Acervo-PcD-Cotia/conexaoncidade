@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { Radio, Tv, Calendar, Archive, Headphones, Newspaper, Users, ChevronRight } from "lucide-react";
+import { Radio, Tv, Calendar, Archive, Headphones, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import BroadcastPlayer from "@/components/broadcast/BroadcastPlayer";
 import BroadcastChat from "@/components/broadcast/BroadcastChat";
+import { AutoDJPlayer } from "@/components/broadcast/AutoDJPlayer";
 import { useLiveBroadcasts, useUpcomingBroadcasts, useChannels, Broadcast } from "@/hooks/useBroadcast";
-import { formatDistanceToNow, format } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export default function BroadcastHub() {
@@ -23,6 +24,7 @@ export default function BroadcastHub() {
 
   const tvLive = liveBroadcasts?.find((b) => b.channel?.type === "tv");
   const radioLive = liveBroadcasts?.find((b) => b.channel?.type === "radio");
+  const radioChannel = channels?.find((c) => c.type === "radio" && c.is_active);
   const currentLive = activeTab === "tv" ? tvLive : radioLive;
 
   // Set initial selected broadcast
@@ -190,6 +192,12 @@ export default function BroadcastHub() {
                       </p>
                     </div>
                   </>
+                ) : radioChannel ? (
+                  <AutoDJPlayer
+                    channelId={radioChannel.id}
+                    channelName={radioChannel.name}
+                    autoPlay={false}
+                  />
                 ) : (
                   <Card>
                     <CardContent className="flex flex-col items-center justify-center py-16">
