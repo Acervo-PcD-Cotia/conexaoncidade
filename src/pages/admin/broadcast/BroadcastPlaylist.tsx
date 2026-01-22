@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   Music,
@@ -27,6 +28,7 @@ import {
   Shuffle,
   RotateCcw,
   Clock,
+  Link,
 } from "lucide-react";
 import {
   DndContext,
@@ -176,6 +178,8 @@ export default function BroadcastPlaylist() {
   const [formArtist, setFormArtist] = useState("");
   const [formGenre, setFormGenre] = useState("");
   const [formFile, setFormFile] = useState<File | null>(null);
+  const [formAudioUrl, setFormAudioUrl] = useState("");
+  const [inputMethod, setInputMethod] = useState<"file" | "url">("file");
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -197,12 +201,12 @@ export default function BroadcastPlaylist() {
     },
   });
 
-  // Set default channel
-  useState(() => {
+  // Set default channel when channels load
+  useEffect(() => {
     if (channels && channels.length > 0 && !selectedChannelId) {
       setSelectedChannelId(channels[0].id);
     }
-  });
+  }, [channels, selectedChannelId]);
 
   // Fetch playlist items for selected channel
   const { data: playlistItems, isLoading: isLoadingPlaylist } = useQuery({
@@ -377,6 +381,8 @@ export default function BroadcastPlaylist() {
     setFormArtist("");
     setFormGenre("");
     setFormFile(null);
+    setFormAudioUrl("");
+    setInputMethod("file");
     setEditingTrack(null);
     setShowAddDialog(false);
     setIsUploading(false);
@@ -395,21 +401,33 @@ export default function BroadcastPlaylist() {
       toast.error("Título é obrigatório");
       return;
     }
-    if (!editingTrack && !formFile) {
+    if (!selectedChannelId) {
+      toast.error("Selecione um canal primeiro");
+      return;
+    }
+    if (!editingTrack && inputMethod === "file" && !formFile) {
       toast.error("Arquivo de áudio é obrigatório");
+      return;
+    }
+    if (!editingTrack && inputMethod === "url" && !formAudioUrl) {
+      toast.error("URL do áudio é obrigatória");
       return;
     }
 
     setIsUploading(true);
+    
+    // Determine audio URL based on input method
+    const audioUrlToUse = inputMethod === "url" ? formAudioUrl : editingTrack?.audio_url || "";
+    
     saveMutation.mutate({
       track: {
         id: editingTrack?.id,
         title: formTitle,
         artist: formArtist || null,
         genre: formGenre || null,
-        audio_url: editingTrack?.audio_url || "",
+        audio_url: audioUrlToUse,
       },
-      file: formFile || undefined,
+      file: inputMethod === "file" ? (formFile || undefined) : undefined,
     });
   };
 
@@ -695,22 +713,42 @@ export default function BroadcastPlaylist() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="audio">Arquivo de Áudio {!editingTrack && "*"}</Label>
-              <div className="flex gap-2">
-                <Input
-                  ref={fileInputRef}
-                  id="audio"
-                  type="file"
-                  accept="audio/*"
-                  onChange={(e) => setFormFile(e.target.files?.[0] || null)}
-                  className="flex-1"
-                />
-              </div>
-              {editingTrack && (
-                <p className="text-xs text-muted-foreground">
-                  Deixe vazio para manter o áudio atual
-                </p>
-              )}
+              <Label>Fonte do Áudio {!editingTrack && "*"}</Label>
+              <Tabs value={inputMethod} onValueChange={(v) => setInputMethod(v as "file" | "url")}>
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="file" className="gap-2">
+                    <Upload className="h-4 w-4" />
+                    Upload
+                  </TabsTrigger>
+                  <TabsTrigger value="url" className="gap-2">
+                    <Link className="h-4 w-4" />
+                    Link Externo
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="file" className="mt-3">
+                  <Input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="audio/*"
+                    onChange={(e) => setFormFile(e.target.files?.[0] || null)}
+                  />
+                  {editingTrack && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Deixe vazio para manter o áudio atual
+                    </p>
+                  )}
+                </TabsContent>
+                <TabsContent value="url" className="mt-3">
+                  <Input
+                    placeholder="https://exemplo.com/audio.mp3"
+                    value={formAudioUrl}
+                    onChange={(e) => setFormAudioUrl(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Cole a URL direta do arquivo MP3
+                  </p>
+                </TabsContent>
+              </Tabs>
             </div>
           </div>
 

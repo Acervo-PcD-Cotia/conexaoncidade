@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Play, Edit, Trash2, Radio, Tv, Eye, Calendar, Search } from "lucide-react";
+import { Plus, Play, Edit, Trash2, Radio, Tv, Eye, Search, PlayCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,11 +36,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { ReplayModal } from "@/components/broadcast/ReplayModal";
 import type { Broadcast } from "@/hooks/useBroadcast";
 
 export default function BroadcastList() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const [replayBroadcast, setReplayBroadcast] = useState<Broadcast | null>(null);
   const queryClient = useQueryClient();
 
   const { data: broadcasts, isLoading } = useQuery({
@@ -147,7 +149,7 @@ export default function BroadcastList() {
                   <TableHead>Status</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead className="text-right">Espectadores</TableHead>
-                  <TableHead className="w-[120px]">Ações</TableHead>
+                  <TableHead className="w-[150px]">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -197,6 +199,16 @@ export default function BroadcastList() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
+                          {broadcast.status === "ended" && broadcast.recording_url && (
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => setReplayBroadcast(broadcast)}
+                              title="Ver Gravação"
+                            >
+                              <PlayCircle className="w-4 h-4 text-primary" />
+                            </Button>
+                          )}
                           {broadcast.status !== "ended" && (
                             <Button variant="ghost" size="icon" asChild>
                               <Link to={`/admin/broadcast/studio/${broadcast.id}`}>
@@ -242,6 +254,17 @@ export default function BroadcastList() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Replay Modal */}
+      {replayBroadcast && (
+        <ReplayModal
+          open={!!replayBroadcast}
+          onOpenChange={(open) => !open && setReplayBroadcast(null)}
+          title={replayBroadcast.title}
+          recordingUrl={replayBroadcast.recording_url || ""}
+          thumbnailUrl={replayBroadcast.thumbnail_url}
+        />
+      )}
     </div>
   );
 }

@@ -2043,6 +2043,8 @@ export type Database = {
         Row: {
           avatar_url: string | null
           broadcast_id: string | null
+          can_publish: boolean | null
+          can_subscribe: boolean | null
           created_at: string | null
           display_name: string
           id: string
@@ -2061,6 +2063,8 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           broadcast_id?: string | null
+          can_publish?: boolean | null
+          can_subscribe?: boolean | null
           created_at?: string | null
           display_name: string
           id?: string
@@ -2079,6 +2083,8 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           broadcast_id?: string | null
+          can_publish?: boolean | null
+          can_subscribe?: boolean | null
           created_at?: string | null
           display_name?: string
           id?: string
@@ -2352,6 +2358,59 @@ export type Database = {
             columns: ["speaker_id"]
             isOneToOne: false
             referencedRelation: "broadcast_participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      broadcast_video_items: {
+        Row: {
+          channel_id: string | null
+          created_at: string | null
+          duration_seconds: number | null
+          id: string
+          is_active: boolean | null
+          sort_order: number | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string | null
+          video_type: string
+          video_url: string
+          youtube_id: string | null
+        }
+        Insert: {
+          channel_id?: string | null
+          created_at?: string | null
+          duration_seconds?: number | null
+          id?: string
+          is_active?: boolean | null
+          sort_order?: number | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string | null
+          video_type: string
+          video_url: string
+          youtube_id?: string | null
+        }
+        Update: {
+          channel_id?: string | null
+          created_at?: string | null
+          duration_seconds?: number | null
+          id?: string
+          is_active?: boolean | null
+          sort_order?: number | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string | null
+          video_type?: string
+          video_url?: string
+          youtube_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_video_items_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "broadcast_channels"
             referencedColumns: ["id"]
           },
         ]
