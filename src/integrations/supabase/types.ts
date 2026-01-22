@@ -5241,6 +5241,1073 @@ export type Database = {
           },
         ]
       }
+      illumina_audit_logs: {
+        Row: {
+          action: string
+          actor_email: string | null
+          actor_user_id: string | null
+          created_at: string | null
+          entity_id: string | null
+          entity_name: string | null
+          entity_type: string
+          id: string
+          ip_address: unknown
+          payload_json: Json | null
+          team_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          actor_user_id?: string | null
+          created_at?: string | null
+          entity_id?: string | null
+          entity_name?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: unknown
+          payload_json?: Json | null
+          team_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          actor_user_id?: string | null
+          created_at?: string | null
+          entity_id?: string | null
+          entity_name?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: unknown
+          payload_json?: Json | null
+          team_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "illumina_audit_logs_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "illumina_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      illumina_branding: {
+        Row: {
+          backgrounds: Json | null
+          created_at: string | null
+          fonts_json: Json | null
+          id: string
+          is_default: boolean | null
+          logos: Json | null
+          lower_thirds_presets: Json | null
+          name: string | null
+          overlays: Json | null
+          palettes: Json | null
+          team_id: string
+          tickers_presets: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          backgrounds?: Json | null
+          created_at?: string | null
+          fonts_json?: Json | null
+          id?: string
+          is_default?: boolean | null
+          logos?: Json | null
+          lower_thirds_presets?: Json | null
+          name?: string | null
+          overlays?: Json | null
+          palettes?: Json | null
+          team_id: string
+          tickers_presets?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          backgrounds?: Json | null
+          created_at?: string | null
+          fonts_json?: Json | null
+          id?: string
+          is_default?: boolean | null
+          logos?: Json | null
+          lower_thirds_presets?: Json | null
+          name?: string | null
+          overlays?: Json | null
+          palettes?: Json | null
+          team_id?: string
+          tickers_presets?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "illumina_branding_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "illumina_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      illumina_chat_messages: {
+        Row: {
+          created_at: string | null
+          deleted_by: string | null
+          external_id: string | null
+          id: string
+          is_deleted: boolean | null
+          is_held: boolean | null
+          is_pinned: boolean | null
+          message: string
+          moderation_status: string | null
+          platform: string | null
+          session_id: string | null
+          user_avatar_url: string | null
+          user_id: string | null
+          user_name: string
+          webinar_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          deleted_by?: string | null
+          external_id?: string | null
+          id?: string
+          is_deleted?: boolean | null
+          is_held?: boolean | null
+          is_pinned?: boolean | null
+          message: string
+          moderation_status?: string | null
+          platform?: string | null
+          session_id?: string | null
+          user_avatar_url?: string | null
+          user_id?: string | null
+          user_name: string
+          webinar_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          deleted_by?: string | null
+          external_id?: string | null
+          id?: string
+          is_deleted?: boolean | null
+          is_held?: boolean | null
+          is_pinned?: boolean | null
+          message?: string
+          moderation_status?: string | null
+          platform?: string | null
+          session_id?: string | null
+          user_avatar_url?: string | null
+          user_id?: string | null
+          user_name?: string
+          webinar_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "illumina_chat_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "illumina_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "illumina_chat_messages_webinar_id_fkey"
+            columns: ["webinar_id"]
+            isOneToOne: false
+            referencedRelation: "illumina_webinars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      illumina_clips: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          duration_seconds: number | null
+          focus_position: Json | null
+          id: string
+          in_point_seconds: number
+          metadata_json: Json | null
+          out_point_seconds: number
+          recording_id: string
+          status: string | null
+          subtitles_url: string | null
+          team_id: string
+          thumbnail_url: string | null
+          title: string
+          type: string | null
+          url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          duration_seconds?: number | null
+          focus_position?: Json | null
+          id?: string
+          in_point_seconds: number
+          metadata_json?: Json | null
+          out_point_seconds: number
+          recording_id: string
+          status?: string | null
+          subtitles_url?: string | null
+          team_id: string
+          thumbnail_url?: string | null
+          title: string
+          type?: string | null
+          url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          duration_seconds?: number | null
+          focus_position?: Json | null
+          id?: string
+          in_point_seconds?: number
+          metadata_json?: Json | null
+          out_point_seconds?: number
+          recording_id?: string
+          status?: string | null
+          subtitles_url?: string | null
+          team_id?: string
+          thumbnail_url?: string | null
+          title?: string
+          type?: string | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "illumina_clips_recording_id_fkey"
+            columns: ["recording_id"]
+            isOneToOne: false
+            referencedRelation: "illumina_recordings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "illumina_clips_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "illumina_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      illumina_destinations: {
+        Row: {
+          connection_status: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_connected: boolean | null
+          is_enabled: boolean | null
+          last_used_at: string | null
+          metadata_json: Json | null
+          name: string
+          oauth_expires_at: string | null
+          oauth_refresh_token_encrypted: string | null
+          oauth_tokens_encrypted: string | null
+          rtmp_url: string | null
+          stream_key_encrypted: string | null
+          team_id: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          connection_status?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_connected?: boolean | null
+          is_enabled?: boolean | null
+          last_used_at?: string | null
+          metadata_json?: Json | null
+          name: string
+          oauth_expires_at?: string | null
+          oauth_refresh_token_encrypted?: string | null
+          oauth_tokens_encrypted?: string | null
+          rtmp_url?: string | null
+          stream_key_encrypted?: string | null
+          team_id: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          connection_status?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_connected?: boolean | null
+          is_enabled?: boolean | null
+          last_used_at?: string | null
+          metadata_json?: Json | null
+          name?: string
+          oauth_expires_at?: string | null
+          oauth_refresh_token_encrypted?: string | null
+          oauth_tokens_encrypted?: string | null
+          rtmp_url?: string | null
+          stream_key_encrypted?: string | null
+          team_id?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "illumina_destinations_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "illumina_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      illumina_recordings: {
+        Row: {
+          created_at: string | null
+          download_count: number | null
+          duration_seconds: number | null
+          format: string | null
+          id: string
+          metadata_json: Json | null
+          participants_json: Json | null
+          resolution: string | null
+          session_id: string
+          size_bytes: number | null
+          status: string | null
+          storage_path: string | null
+          tags: string[] | null
+          team_id: string
+          thumbnail_url: string | null
+          title: string | null
+          type: string | null
+          updated_at: string | null
+          url_main: string | null
+          urls_tracks: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          download_count?: number | null
+          duration_seconds?: number | null
+          format?: string | null
+          id?: string
+          metadata_json?: Json | null
+          participants_json?: Json | null
+          resolution?: string | null
+          session_id: string
+          size_bytes?: number | null
+          status?: string | null
+          storage_path?: string | null
+          tags?: string[] | null
+          team_id: string
+          thumbnail_url?: string | null
+          title?: string | null
+          type?: string | null
+          updated_at?: string | null
+          url_main?: string | null
+          urls_tracks?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          download_count?: number | null
+          duration_seconds?: number | null
+          format?: string | null
+          id?: string
+          metadata_json?: Json | null
+          participants_json?: Json | null
+          resolution?: string | null
+          session_id?: string
+          size_bytes?: number | null
+          status?: string | null
+          storage_path?: string | null
+          tags?: string[] | null
+          team_id?: string
+          thumbnail_url?: string | null
+          title?: string | null
+          type?: string | null
+          updated_at?: string | null
+          url_main?: string | null
+          urls_tracks?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "illumina_recordings_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "illumina_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "illumina_recordings_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "illumina_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      illumina_referrals: {
+        Row: {
+          converted_at: string | null
+          created_at: string | null
+          id: string
+          referral_code: string
+          referred_team_id: string | null
+          reward_type: string | null
+          reward_value: number | null
+          rewarded_at: string | null
+          status: string | null
+          team_id: string
+        }
+        Insert: {
+          converted_at?: string | null
+          created_at?: string | null
+          id?: string
+          referral_code?: string
+          referred_team_id?: string | null
+          reward_type?: string | null
+          reward_value?: number | null
+          rewarded_at?: string | null
+          status?: string | null
+          team_id: string
+        }
+        Update: {
+          converted_at?: string | null
+          created_at?: string | null
+          id?: string
+          referral_code?: string
+          referred_team_id?: string | null
+          reward_type?: string | null
+          reward_value?: number | null
+          rewarded_at?: string | null
+          status?: string | null
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "illumina_referrals_referred_team_id_fkey"
+            columns: ["referred_team_id"]
+            isOneToOne: false
+            referencedRelation: "illumina_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "illumina_referrals_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "illumina_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      illumina_scenes: {
+        Row: {
+          background_color: string | null
+          background_type: string | null
+          background_url: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          layout: string | null
+          layout_config: Json | null
+          lower_thirds: Json | null
+          name: string
+          overlays: Json | null
+          sort_order: number | null
+          studio_id: string
+          team_id: string
+          tickers: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          background_color?: string | null
+          background_type?: string | null
+          background_url?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          layout?: string | null
+          layout_config?: Json | null
+          lower_thirds?: Json | null
+          name: string
+          overlays?: Json | null
+          sort_order?: number | null
+          studio_id: string
+          team_id: string
+          tickers?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          background_color?: string | null
+          background_type?: string | null
+          background_url?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          layout?: string | null
+          layout_config?: Json | null
+          lower_thirds?: Json | null
+          name?: string
+          overlays?: Json | null
+          sort_order?: number | null
+          studio_id?: string
+          team_id?: string
+          tickers?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "illumina_scenes_studio_id_fkey"
+            columns: ["studio_id"]
+            isOneToOne: false
+            referencedRelation: "illumina_studios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "illumina_scenes_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "illumina_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      illumina_schedules: {
+        Row: {
+          content_id: string
+          content_type: string
+          created_at: string | null
+          created_by: string | null
+          destinations_selected: string[] | null
+          end_at: string | null
+          error_message: string | null
+          executed_at: string | null
+          id: string
+          run_at: string
+          status: string | null
+          team_id: string
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          created_at?: string | null
+          created_by?: string | null
+          destinations_selected?: string[] | null
+          end_at?: string | null
+          error_message?: string | null
+          executed_at?: string | null
+          id?: string
+          run_at: string
+          status?: string | null
+          team_id: string
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          created_at?: string | null
+          created_by?: string | null
+          destinations_selected?: string[] | null
+          end_at?: string | null
+          error_message?: string | null
+          executed_at?: string | null
+          id?: string
+          run_at?: string
+          status?: string | null
+          team_id?: string
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "illumina_schedules_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "illumina_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      illumina_session_participants: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          display_name: string
+          id: string
+          invite_expires_at: string | null
+          invite_token: string | null
+          is_camera_off: boolean | null
+          is_muted: boolean | null
+          is_on_stage: boolean | null
+          is_screen_sharing: boolean | null
+          joined_at: string | null
+          left_at: string | null
+          lower_third_style: Json | null
+          lower_third_text: string | null
+          role: string | null
+          session_id: string
+          status: string | null
+          user_id: string | null
+          volume_level: number | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          display_name: string
+          id?: string
+          invite_expires_at?: string | null
+          invite_token?: string | null
+          is_camera_off?: boolean | null
+          is_muted?: boolean | null
+          is_on_stage?: boolean | null
+          is_screen_sharing?: boolean | null
+          joined_at?: string | null
+          left_at?: string | null
+          lower_third_style?: Json | null
+          lower_third_text?: string | null
+          role?: string | null
+          session_id: string
+          status?: string | null
+          user_id?: string | null
+          volume_level?: number | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          display_name?: string
+          id?: string
+          invite_expires_at?: string | null
+          invite_token?: string | null
+          is_camera_off?: boolean | null
+          is_muted?: boolean | null
+          is_on_stage?: boolean | null
+          is_screen_sharing?: boolean | null
+          joined_at?: string | null
+          left_at?: string | null
+          lower_third_style?: Json | null
+          lower_third_text?: string | null
+          role?: string | null
+          session_id?: string
+          status?: string | null
+          user_id?: string | null
+          volume_level?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "illumina_session_participants_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "illumina_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      illumina_sessions: {
+        Row: {
+          actual_start_at: string | null
+          created_at: string | null
+          created_by: string | null
+          destinations_selected: string[] | null
+          end_at: string | null
+          id: string
+          livekit_room_id: string | null
+          livekit_room_name: string | null
+          metadata_json: Json | null
+          recording_enabled: boolean | null
+          recording_type: string | null
+          scheduled_start_at: string | null
+          session_type: string
+          status: string | null
+          studio_id: string
+          team_id: string
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          actual_start_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          destinations_selected?: string[] | null
+          end_at?: string | null
+          id?: string
+          livekit_room_id?: string | null
+          livekit_room_name?: string | null
+          metadata_json?: Json | null
+          recording_enabled?: boolean | null
+          recording_type?: string | null
+          scheduled_start_at?: string | null
+          session_type: string
+          status?: string | null
+          studio_id: string
+          team_id: string
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          actual_start_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          destinations_selected?: string[] | null
+          end_at?: string | null
+          id?: string
+          livekit_room_id?: string | null
+          livekit_room_name?: string | null
+          metadata_json?: Json | null
+          recording_enabled?: boolean | null
+          recording_type?: string | null
+          scheduled_start_at?: string | null
+          session_type?: string
+          status?: string | null
+          studio_id?: string
+          team_id?: string
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "illumina_sessions_studio_id_fkey"
+            columns: ["studio_id"]
+            isOneToOne: false
+            referencedRelation: "illumina_studios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "illumina_sessions_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "illumina_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      illumina_studios: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string | null
+          defaults_json: Json | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          logo_url: string | null
+          max_participants: number | null
+          name: string
+          permanent_link: string | null
+          slug: string
+          team_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string | null
+          defaults_json?: Json | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          max_participants?: number | null
+          name: string
+          permanent_link?: string | null
+          slug: string
+          team_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string | null
+          defaults_json?: Json | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          max_participants?: number | null
+          name?: string
+          permanent_link?: string | null
+          slug?: string
+          team_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "illumina_studios_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "illumina_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      illumina_system_status: {
+        Row: {
+          component: string
+          id: string
+          incident_url: string | null
+          last_check_at: string | null
+          message: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          component: string
+          id?: string
+          incident_url?: string | null
+          last_check_at?: string | null
+          message?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          component?: string
+          id?: string
+          incident_url?: string | null
+          last_check_at?: string | null
+          message?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      illumina_team_members: {
+        Row: {
+          created_at: string | null
+          id: string
+          invite_expires_at: string | null
+          invite_token: string | null
+          invited_email: string | null
+          role: string | null
+          status: string | null
+          team_id: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          invite_expires_at?: string | null
+          invite_token?: string | null
+          invited_email?: string | null
+          role?: string | null
+          status?: string | null
+          team_id: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          invite_expires_at?: string | null
+          invite_token?: string | null
+          invited_email?: string | null
+          role?: string | null
+          status?: string | null
+          team_id?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "illumina_team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "illumina_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      illumina_teams: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          owner_id: string
+          plan: string | null
+          seats_total: number | null
+          seats_used: number | null
+          storage_limit_mb: number | null
+          storage_used_mb: number | null
+          two_factor_required: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          owner_id: string
+          plan?: string | null
+          seats_total?: number | null
+          seats_used?: number | null
+          storage_limit_mb?: number | null
+          storage_used_mb?: number | null
+          two_factor_required?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          owner_id?: string
+          plan?: string | null
+          seats_total?: number | null
+          seats_used?: number | null
+          storage_limit_mb?: number | null
+          storage_used_mb?: number | null
+          two_factor_required?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      illumina_webinar_registrations: {
+        Row: {
+          access_token: string | null
+          attended: boolean | null
+          attended_at: string | null
+          created_at: string | null
+          email: string
+          extra_fields_json: Json | null
+          id: string
+          name: string
+          watch_duration_seconds: number | null
+          webinar_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          attended?: boolean | null
+          attended_at?: string | null
+          created_at?: string | null
+          email: string
+          extra_fields_json?: Json | null
+          id?: string
+          name: string
+          watch_duration_seconds?: number | null
+          webinar_id: string
+        }
+        Update: {
+          access_token?: string | null
+          attended?: boolean | null
+          attended_at?: string | null
+          created_at?: string | null
+          email?: string
+          extra_fields_json?: Json | null
+          id?: string
+          name?: string
+          watch_duration_seconds?: number | null
+          webinar_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "illumina_webinar_registrations_webinar_id_fkey"
+            columns: ["webinar_id"]
+            isOneToOne: false
+            referencedRelation: "illumina_webinars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      illumina_webinars: {
+        Row: {
+          actual_end_at: string | null
+          actual_start_at: string | null
+          allow_reactions: boolean | null
+          allow_simulcast: boolean | null
+          chat_closes_minutes_after: number | null
+          chat_opens_minutes_before: number | null
+          cover_image_url: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          embed_settings_json: Json | null
+          id: string
+          mode: string | null
+          recording_id: string | null
+          require_signup: boolean | null
+          scheduled_end_at: string | null
+          scheduled_start_at: string | null
+          signup_fields_json: Json | null
+          simulcast_destinations: string[] | null
+          slug: string
+          status: string | null
+          studio_id: string | null
+          team_id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          actual_end_at?: string | null
+          actual_start_at?: string | null
+          allow_reactions?: boolean | null
+          allow_simulcast?: boolean | null
+          chat_closes_minutes_after?: number | null
+          chat_opens_minutes_before?: number | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          embed_settings_json?: Json | null
+          id?: string
+          mode?: string | null
+          recording_id?: string | null
+          require_signup?: boolean | null
+          scheduled_end_at?: string | null
+          scheduled_start_at?: string | null
+          signup_fields_json?: Json | null
+          simulcast_destinations?: string[] | null
+          slug: string
+          status?: string | null
+          studio_id?: string | null
+          team_id: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          actual_end_at?: string | null
+          actual_start_at?: string | null
+          allow_reactions?: boolean | null
+          allow_simulcast?: boolean | null
+          chat_closes_minutes_after?: number | null
+          chat_opens_minutes_before?: number | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          embed_settings_json?: Json | null
+          id?: string
+          mode?: string | null
+          recording_id?: string | null
+          require_signup?: boolean | null
+          scheduled_end_at?: string | null
+          scheduled_start_at?: string | null
+          signup_fields_json?: Json | null
+          simulcast_destinations?: string[] | null
+          slug?: string
+          status?: string | null
+          studio_id?: string | null
+          team_id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "illumina_webinars_recording_id_fkey"
+            columns: ["recording_id"]
+            isOneToOne: false
+            referencedRelation: "illumina_recordings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "illumina_webinars_studio_id_fkey"
+            columns: ["studio_id"]
+            isOneToOne: false
+            referencedRelation: "illumina_studios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "illumina_webinars_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "illumina_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       import_subscriptions: {
         Row: {
           allowed_hours: Json | null
@@ -8936,6 +10003,14 @@ export type Database = {
       increment_job_views: { Args: { p_id: string }; Returns: undefined }
       increment_link_clicks: { Args: { p_link_id: string }; Returns: undefined }
       is_admin_or_editor: { Args: { _user_id: string }; Returns: boolean }
+      is_illumina_team_admin: {
+        Args: { p_team_id: string; p_user_id?: string }
+        Returns: boolean
+      }
+      is_illumina_team_member: {
+        Args: { p_team_id: string; p_user_id?: string }
+        Returns: boolean
+      }
       is_site_admin: {
         Args: { _site_id: string; _user_id: string }
         Returns: boolean
