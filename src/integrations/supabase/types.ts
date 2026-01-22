@@ -8328,6 +8328,7 @@ export type Database = {
           created_at: string | null
           default_modules: Json | null
           description: string | null
+          home_sections: Json | null
           icon: string | null
           id: string
           initial_content: Json | null
@@ -8345,6 +8346,7 @@ export type Database = {
           created_at?: string | null
           default_modules?: Json | null
           description?: string | null
+          home_sections?: Json | null
           icon?: string | null
           id?: string
           initial_content?: Json | null
@@ -8362,6 +8364,7 @@ export type Database = {
           created_at?: string | null
           default_modules?: Json | null
           description?: string | null
+          home_sections?: Json | null
           icon?: string | null
           id?: string
           initial_content?: Json | null
