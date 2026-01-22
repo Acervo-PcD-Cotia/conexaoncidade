@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useBroadcastBySlug, useUpdateBroadcast } from "@/hooks/useBroadcast";
+import { useBroadcastById, useUpdateBroadcast } from "@/hooks/useBroadcast";
 import { useLiveKit, LiveKitParticipant } from "@/hooks/useLiveKit";
 import { useAudioTranscription } from "@/hooks/useAudioTranscription";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +21,7 @@ export default function BroadcastStudio() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
-  const { data: broadcast, isLoading } = useBroadcastBySlug(id);
+  const { data: broadcast, isLoading } = useBroadcastById(id);
   const updateBroadcast = useUpdateBroadcast();
 
   const [layout, setLayout] = useState<LayoutType>("grid");
