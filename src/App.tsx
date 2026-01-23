@@ -184,6 +184,28 @@ import ConexaoStudioBranding from "./pages/conexao-studio/Branding";
 import ConexaoStudioTeam from "./pages/conexao-studio/Team";
 import ConexaoStudioSession from "./pages/conexao-studio/StudioSession";
 
+// Rádio Web Pages
+import {
+  RadioOverview,
+  RadioStatus,
+  RadioEncoder,
+  RadioAutoDJ,
+  RadioLibrary,
+  RadioStats,
+  RadioPlayers,
+} from "./modules/radio/pages";
+
+// TV Web Pages
+import {
+  TvOverview,
+  TvLive,
+  TvSchedule,
+  TvVod,
+  TvUploads,
+  TvStats,
+  TvPlayers,
+} from "./modules/tv/pages";
+
 // Template Settings Pages
 import TemplateSelector from "./pages/admin/settings/TemplateSelector";
 import VocabularyEditor from "./pages/admin/settings/VocabularyEditor";
@@ -375,6 +397,24 @@ const App = () => (
                         <Route path="conexao-studio/webinars" element={<ConexaoStudioWebinars />} />
                         <Route path="conexao-studio/branding" element={<ConexaoStudioBranding />} />
                         <Route path="conexao-studio/team" element={<ConexaoStudioTeam />} />
+                        
+                        {/* Rádio Web Admin Routes */}
+                        <Route path="radio" element={<RadioOverview />} />
+                        <Route path="radio/status" element={<RadioStatus />} />
+                        <Route path="radio/encoder" element={<RadioEncoder />} />
+                        <Route path="radio/autodj" element={<RadioAutoDJ />} />
+                        <Route path="radio/library" element={<RadioLibrary />} />
+                        <Route path="radio/stats" element={<RadioStats />} />
+                        <Route path="radio/players" element={<RadioPlayers />} />
+                        
+                        {/* TV Web Admin Routes */}
+                        <Route path="tv" element={<TvOverview />} />
+                        <Route path="tv/live" element={<TvLive />} />
+                        <Route path="tv/schedule" element={<TvSchedule />} />
+                        <Route path="tv/vod" element={<TvVod />} />
+                        <Route path="tv/uploads" element={<TvUploads />} />
+                        <Route path="tv/stats" element={<TvStats />} />
+                        <Route path="tv/players" element={<TvPlayers />} />
                         
                         {/* Classifieds & Jobs Admin */}
                         <Route path="classifieds" element={<ClassifiedsAdmin />} />

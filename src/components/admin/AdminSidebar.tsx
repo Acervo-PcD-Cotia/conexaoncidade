@@ -310,6 +310,52 @@ export function AdminSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
+          <SidebarGroupLabel>Rádio Web</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {radioWebItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to={item.url}
+                      end={item.url === "/admin/radio"}
+                      className="flex items-center gap-2"
+                      activeClassName="bg-primary/10 text-primary"
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {!collapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>TV Web</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {tvWebItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to={item.url}
+                      end={item.url === "/admin/tv"}
+                      className="flex items-center gap-2"
+                      activeClassName="bg-primary/10 text-primary"
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {!collapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
             <SidebarGroupLabel>Negócios</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
