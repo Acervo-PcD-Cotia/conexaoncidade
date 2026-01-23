@@ -46,6 +46,14 @@ import {
   Palette,
   Languages,
   ToggleLeft,
+  Activity,
+  Key,
+  ListMusic,
+  Layout,
+  Film,
+  Upload,
+  Satellite,
+  CalendarDays,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useUserRole } from "@/hooks/useRequireRole";
@@ -113,6 +121,26 @@ const conexaoStudioItems: MenuItem[] = [
   { title: "Webinários", url: "/admin/conexao-studio/webinars", icon: Presentation },
   { title: "Branding", url: "/admin/conexao-studio/branding", icon: Palette },
   { title: "Equipe", url: "/admin/conexao-studio/team", icon: Users },
+];
+
+const radioWebItems: MenuItem[] = [
+  { title: "Visão Geral", url: "/admin/radio", icon: Radio },
+  { title: "Status do Stream", url: "/admin/radio/status", icon: Activity },
+  { title: "Encoder/Chaves", url: "/admin/radio/encoder", icon: Key },
+  { title: "AutoDJ Avançado", url: "/admin/radio/autodj", icon: ListMusic },
+  { title: "Biblioteca", url: "/admin/radio/library", icon: Music },
+  { title: "Estatísticas", url: "/admin/radio/stats", icon: BarChart3 },
+  { title: "Players", url: "/admin/radio/players", icon: Layout },
+];
+
+const tvWebItems: MenuItem[] = [
+  { title: "Visão Geral", url: "/admin/tv", icon: Tv },
+  { title: "Live (RTMP/SRT)", url: "/admin/tv/live", icon: Satellite },
+  { title: "Grade Linear", url: "/admin/tv/schedule", icon: CalendarDays },
+  { title: "VOD", url: "/admin/tv/vod", icon: Film },
+  { title: "Uploads", url: "/admin/tv/uploads", icon: Upload },
+  { title: "Estatísticas", url: "/admin/tv/stats", icon: BarChart3 },
+  { title: "Players", url: "/admin/tv/players", icon: Layout },
 ];
 
 const businessItems = [
