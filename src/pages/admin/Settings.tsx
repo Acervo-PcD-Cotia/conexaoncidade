@@ -7,7 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMaintenanceMode, useAdminNotificationPreferences } from "@/hooks/useMaintenanceMode";
+import { useSiteSecuritySettings, useUpdateSecuritySetting } from "@/hooks/useSiteSecuritySettings";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -29,6 +31,9 @@ export default function Settings() {
     isUpdating: preferencesUpdating
   } = useAdminNotificationPreferences();
 
+  const { data: securitySettings, isLoading: securityLoading } = useSiteSecuritySettings();
+  const updateSecurity = useUpdateSecuritySetting();
+
   const [localMessage, setLocalMessage] = useState(message);
   const [localEstimatedEnd, setLocalEstimatedEnd] = useState(estimatedEnd || '');
 
@@ -43,6 +48,10 @@ export default function Settings() {
       message: localMessage,
       estimated_end: localEstimatedEnd || null
     });
+  };
+
+  const handleSecurityChange = (key: "require_email_verification" | "admin_auth_required" | "session_timeout_minutes", value: boolean | number) => {
+    updateSecurity.mutate({ key, value });
   };
 
   return (
@@ -215,24 +224,65 @@ export default function Settings() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Autenticação obrigatória</Label>
-                <p className="text-xs text-muted-foreground">
-                  Exigir login para acessar o admin
-                </p>
+            {securityLoading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
               </div>
-              <Switch defaultChecked disabled />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Verificação de email</Label>
-                <p className="text-xs text-muted-foreground">
-                  Usuários devem verificar email
-                </p>
-              </div>
-              <Switch />
-            </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Autenticação obrigatória</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Exigir login para acessar o admin
+                    </p>
+                  </div>
+                  <Switch 
+                    checked={securitySettings?.admin_auth_required ?? true}
+                    onCheckedChange={(checked) => handleSecurityChange("admin_auth_required", checked)}
+                    disabled={updateSecurity.isPending}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Verificação de email</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Usuários devem verificar email
+                    </p>
+                  </div>
+                  <Switch 
+                    checked={securitySettings?.require_email_verification ?? false}
+                    onCheckedChange={(checked) => handleSecurityChange("require_email_verification", checked)}
+                    disabled={updateSecurity.isPending}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Timeout da sessão</Label>
+                  <Select 
+                    value={String(securitySettings?.session_timeout_minutes ?? 60)}
+                    onValueChange={(value) => handleSecurityChange("session_timeout_minutes", parseInt(value))}
+                    disabled={updateSecurity.isPending}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o timeout" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="15">15 minutos</SelectItem>
+                      <SelectItem value="30">30 minutos</SelectItem>
+                      <SelectItem value="60">1 hora</SelectItem>
+                      <SelectItem value="120">2 horas</SelectItem>
+                      <SelectItem value="480">8 horas</SelectItem>
+                      <SelectItem value="1440">24 horas</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Tempo de inatividade antes de exigir novo login
+                  </p>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 

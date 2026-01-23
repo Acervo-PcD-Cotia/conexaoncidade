@@ -7,7 +7,7 @@ export interface StudioBrandingAsset {
   id: string;
   name: string;
   type: "logo" | "overlay" | "background" | "lower_third";
-  url: string;
+  storage_path: string; // Changed from url to storage_path for private bucket
   isActive: boolean;
 }
 
@@ -102,7 +102,7 @@ export function useUploadBrandingAsset() {
       teamId: string;
       name: string;
     }) => {
-      // Upload file to storage
+      // Upload file to storage (bucket is now private)
       const fileExt = file.name.split(".").pop();
       const fileName = `${teamId}/${type}/${Date.now()}.${fileExt}`;
 
@@ -115,16 +115,12 @@ export function useUploadBrandingAsset() {
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
-      const { data: publicUrlData } = supabase.storage
-        .from("studio-branding")
-        .getPublicUrl(fileName);
-
+      // Store only the storage path (not URL) since bucket is private
       const newAsset: StudioBrandingAsset = {
         id: crypto.randomUUID(),
         name,
         type,
-        url: publicUrlData.publicUrl,
+        storage_path: fileName, // Store path, not URL
         isActive: true,
       };
 
@@ -153,6 +149,22 @@ export function useUploadBrandingAsset() {
           .eq("id", existingBranding.id);
 
         if (updateError) throw updateError;
+      } else {
+        // Create new branding record if it doesn't exist
+        const columnName = type === "logo" ? "logos" : 
+                          type === "overlay" ? "overlays" : 
+                          type === "background" ? "backgrounds" : "overlays";
+        
+        const { error: insertError } = await supabase
+          .from("illumina_branding")
+          .insert([{
+            team_id: teamId,
+            name: "Default",
+            is_default: true,
+            [columnName]: [newAsset] as unknown as Json,
+          }]);
+
+        if (insertError) throw insertError;
       }
 
       return newAsset;
@@ -176,11 +188,18 @@ export function useDeleteBrandingAsset() {
       assetId,
       type,
       teamId,
+      storagePath,
     }: {
       assetId: string;
       type: "logo" | "overlay" | "background" | "lower_third";
       teamId: string;
+      storagePath?: string;
     }) => {
+      // Delete from storage if path provided
+      if (storagePath) {
+        await supabase.storage.from("studio-branding").remove([storagePath]);
+      }
+
       const { data: existingBranding } = await supabase
         .from("illumina_branding")
         .select("*")
@@ -266,5 +285,38 @@ export function useSaveBrandingPalette() {
       console.error("Error saving palette:", error);
       toast.error("Erro ao salvar paleta");
     },
+  });
+}
+
+// Helper hook to get signed URL for an asset
+export function useGetBrandingAssetUrl(storagePath: string | null | undefined) {
+  return useQuery({
+    queryKey: ["branding-asset-url", storagePath],
+    queryFn: async () => {
+      if (!storagePath) return null;
+      
+      // Try edge function first for signed URL
+      const { data, error } = await supabase.functions.invoke("create-signed-url", {
+        body: { bucket: "studio-branding", path: storagePath, expiresIn: 3600 },
+      });
+
+      if (error || !data?.signedUrl) {
+        // Fallback to direct signed URL creation
+        const { data: signedData, error: signedError } = await supabase.storage
+          .from("studio-branding")
+          .createSignedUrl(storagePath, 3600);
+
+        if (signedError) {
+          console.error("Error creating signed URL:", signedError);
+          return null;
+        }
+
+        return signedData?.signedUrl || null;
+      }
+
+      return data.signedUrl;
+    },
+    enabled: !!storagePath,
+    staleTime: 30 * 60 * 1000, // 30 minutes cache
   });
 }
