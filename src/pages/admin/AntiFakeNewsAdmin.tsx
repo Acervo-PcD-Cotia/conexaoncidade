@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { ShieldCheck, List, AlertTriangle, Database, Settings } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,11 +8,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Slider } from '@/components/ui/slider';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 import { VerdictBadge } from '@/components/factcheck/VerdictBadge';
 import { useAdminFactChecks, useUpdateFactCheck, type FactCheck, type FactCheckStatus, type FactCheckVerdict } from '@/hooks/useFactCheck';
 import { useTrustedSources, useCreateTrustedSource, useUpdateTrustedSource, useDeleteTrustedSource, type TrustedSource, type TrustedSourceType } from '@/hooks/useTrustedSources';
+import { useFactCheckSettings, useSaveFactCheckSettings } from '@/hooks/useFactCheckSettings';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -32,6 +36,37 @@ export default function AntiFakeNewsAdmin() {
   const updateSource = useUpdateTrustedSource();
   const deleteSource = useDeleteTrustedSource();
   const updateFactCheck = useUpdateFactCheck();
+
+  // FactCheck Settings
+  const { data: factCheckSettings, isLoading: settingsLoading } = useFactCheckSettings();
+  const saveSettings = useSaveFactCheckSettings();
+
+  const [threshold, setThreshold] = useState(70);
+  const [expirationDays, setExpirationDays] = useState(30);
+  const [externalApiEnabled, setExternalApiEnabled] = useState(false);
+  const [apiKey, setApiKey] = useState("");
+  const [autoPublish, setAutoPublish] = useState(false);
+
+  // Sync local state with fetched settings
+  useEffect(() => {
+    if (factCheckSettings) {
+      setThreshold(factCheckSettings.auto_score_threshold);
+      setExpirationDays(factCheckSettings.expiration_days);
+      setExternalApiEnabled(factCheckSettings.external_api_enabled);
+      setApiKey(factCheckSettings.external_api_key);
+      setAutoPublish(factCheckSettings.auto_publish);
+    }
+  }, [factCheckSettings]);
+
+  const handleSaveSettings = () => {
+    saveSettings.mutate({
+      auto_score_threshold: threshold,
+      expiration_days: expirationDays,
+      external_api_enabled: externalApiEnabled,
+      external_api_key: apiKey,
+      auto_publish: autoPublish,
+    });
+  };
 
   const [newSource, setNewSource] = useState({
     domain: '',
@@ -403,19 +438,117 @@ export default function AntiFakeNewsAdmin() {
             </Card>
           </TabsContent>
 
-          {/* Settings Tab */}
-          <TabsContent value="settings">
+          {/* Settings Tab - FULLY IMPLEMENTED */}
+          <TabsContent value="settings" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Configurações</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="h-5 w-5" />
+                  Configurações do Sistema
+                </CardTitle>
                 <CardDescription>
-                  Ajuste os pesos e textos padrão do sistema de verificação
+                  Ajuste os parâmetros de verificação automática e publicação
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Em breve: configurações avançadas de scoring e textos de metodologia.
-                </p>
+              <CardContent className="space-y-6">
+                {settingsLoading ? (
+                  <div className="space-y-4">
+                    <Skeleton className="h-16 w-full" />
+                    <Skeleton className="h-16 w-full" />
+                    <Skeleton className="h-16 w-full" />
+                  </div>
+                ) : (
+                  <>
+                    {/* Auto Score Threshold */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-base">Score mínimo para aprovação automática</Label>
+                        <Badge variant="outline" className="text-lg font-bold">{threshold}%</Badge>
+                      </div>
+                      <Slider 
+                        value={[threshold]} 
+                        onValueChange={([v]) => setThreshold(v)} 
+                        min={0} 
+                        max={100} 
+                        step={5}
+                        className="w-full"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Verificações com score acima deste valor serão aprovadas automaticamente
+                      </p>
+                    </div>
+
+                    {/* Expiration Days */}
+                    <div className="space-y-2">
+                      <Label className="text-base">Validade das verificações (dias)</Label>
+                      <div className="flex items-center gap-3">
+                        <Input 
+                          type="number" 
+                          value={expirationDays} 
+                          onChange={(e) => setExpirationDays(parseInt(e.target.value) || 30)}
+                          min={1}
+                          max={365}
+                          className="w-32"
+                        />
+                        <span className="text-sm text-muted-foreground">dias</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Após este período, verificações antigas podem ser reavaliadas
+                      </p>
+                    </div>
+
+                    {/* External API */}
+                    <div className="space-y-3 p-4 border rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label className="text-base">Usar API externa de fact-checking</Label>
+                          <p className="text-xs text-muted-foreground">
+                            Integrar com serviços externos de verificação
+                          </p>
+                        </div>
+                        <Switch 
+                          checked={externalApiEnabled} 
+                          onCheckedChange={setExternalApiEnabled} 
+                        />
+                      </div>
+                      
+                      {externalApiEnabled && (
+                        <div className="space-y-2 pt-2">
+                          <Label>API Key</Label>
+                          <Input 
+                            type="password" 
+                            placeholder="Insira sua API Key" 
+                            value={apiKey} 
+                            onChange={(e) => setApiKey(e.target.value)} 
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Auto Publish */}
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <Label className="text-base">Auto-publicar verificações aprovadas</Label>
+                        <p className="text-xs text-muted-foreground">
+                          Publicar automaticamente verificações que atingirem o score mínimo
+                        </p>
+                      </div>
+                      <Switch 
+                        checked={autoPublish} 
+                        onCheckedChange={setAutoPublish} 
+                      />
+                    </div>
+
+                    {/* Save Button */}
+                    <Button 
+                      onClick={handleSaveSettings} 
+                      disabled={saveSettings.isPending}
+                      className="w-full sm:w-auto"
+                    >
+                      {saveSettings.isPending ? "Salvando..." : "Salvar Configurações"}
+                    </Button>
+                  </>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

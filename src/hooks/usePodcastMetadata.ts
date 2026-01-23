@@ -166,12 +166,8 @@ export function useUploadPodcastEpisode() {
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
-      const { data: publicUrlData } = supabase.storage
-        .from("podcast-audio")
-        .getPublicUrl(fileName);
-
-      // Create episode record
+      // Store storage path (not public URL) since bucket is now private
+      // Create episode record with storage path
       const { data: user } = await supabase.auth.getUser();
 
       const { data, error: insertError } = await supabase
@@ -180,7 +176,7 @@ export function useUploadPodcastEpisode() {
           feed_id: feedId,
           title,
           description: description || null,
-          audio_url: publicUrlData.publicUrl,
+          audio_url: fileName, // Store the storage path, not public URL
           file_size_bytes: file.size,
           episode_number: episodeNumber || null,
           season_number: seasonNumber || null,

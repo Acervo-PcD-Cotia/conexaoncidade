@@ -78,18 +78,35 @@ export function useUpdateSecuritySetting() {
         ? { enabled: value }
         : { value };
 
-      // Upsert the setting
-      const { error } = await supabase
+      // Check if setting exists
+      const { data: existing } = await supabase
         .from("site_settings")
-        .upsert({
-          key: dbKey,
-          value: dbValue,
-          updated_at: new Date().toISOString(),
-        }, {
-          onConflict: "tenant_id,key",
-        });
+        .select("id")
+        .eq("key", dbKey)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (existing) {
+        // Update existing
+        const { error } = await supabase
+          .from("site_settings")
+          .update({
+            value: dbValue,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", existing.id);
+
+        if (error) throw error;
+      } else {
+        // Insert new
+        const { error } = await supabase
+          .from("site_settings")
+          .insert([{
+            key: dbKey,
+            value: dbValue,
+          }]);
+
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["site-security-settings"] });
