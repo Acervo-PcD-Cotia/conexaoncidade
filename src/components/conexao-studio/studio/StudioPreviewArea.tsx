@@ -11,7 +11,7 @@ import { LayoutGrid, Rows, Square, PictureInPicture2, User, MicOff } from "lucid
 import { AnimatePresence } from "framer-motion";
 import { OverlayRenderer } from "@/components/conexao-studio/overlays/OverlayRenderer";
 import { useStudioOverlays } from "@/hooks/useStudioOverlays";
-import type { VideoTrack, AudioTrack } from "livekit-client";
+import { Track } from "livekit-client";
 
 type LayoutType = 'grid' | 'spotlight' | 'pip' | 'side-by-side';
 
@@ -24,8 +24,8 @@ interface Participant {
   isCameraOn: boolean;
   isScreenSharing: boolean;
   isOnStage: boolean;
-  videoTrack?: VideoTrack;
-  audioTrack?: AudioTrack;
+  videoTrack?: Track;
+  audioTrack?: Track;
 }
 
 interface StudioPreviewAreaProps {
@@ -37,7 +37,7 @@ interface StudioPreviewAreaProps {
 }
 
 // Component to render a video track
-function VideoRenderer({ track, className }: { track: VideoTrack; className?: string }) {
+function VideoRenderer({ track, className }: { track: Track; className?: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {

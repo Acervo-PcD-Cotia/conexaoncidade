@@ -204,7 +204,12 @@ export function UnifiedChatPanel({ sessionId }: UnifiedChatPanelProps) {
   };
 
   const handleHighlight = (msg: ChatMessage) => {
-    showCommentHighlight(msg.author, msg.message, msg.platform, msg.avatarUrl);
+    showCommentHighlight({
+      author: msg.author,
+      message: msg.message,
+      platform: msg.platform,
+      avatarUrl: msg.avatarUrl,
+    }, 8000);
     toast.success("Comentário destacado na tela!");
   };
 

@@ -49,7 +49,11 @@ export function BrandingPanel({ sessionId }: BrandingPanelProps) {
       toast.error("Digite um nome para o lower third");
       return;
     }
-    showLowerThird(lowerThirdName, lowerThirdTitle, lowerThirdVariant);
+    showLowerThird({
+      name: lowerThirdName,
+      title: lowerThirdTitle,
+      subtitle: lowerThirdVariant === 'accent' ? 'Destaque' : undefined,
+    }, 8000);
     toast.success("Lower Third exibido!");
   };
 
@@ -59,7 +63,12 @@ export function BrandingPanel({ sessionId }: BrandingPanelProps) {
         toast.error("Digite um texto para o ticker");
         return;
       }
-      showTicker(tickerText, tickerSpeed, tickerVariant);
+      const speedMap = { slow: 50, normal: 100, fast: 150 };
+      showTicker({
+        text: tickerText,
+        speed: speedMap[tickerSpeed],
+        loop: true,
+      });
       setIsTickerActive(true);
       toast.success("Ticker ativado!");
     } else {

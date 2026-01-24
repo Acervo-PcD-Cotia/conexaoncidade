@@ -69,8 +69,8 @@ export default function StudioSession() {
     enabled: !!slug
   });
 
-  // Get session ID - use current_session_id or studio id as fallback
-  const sessionId = studio?.current_session_id || studio?.id;
+  // Get session ID - use studio id
+  const sessionId = studio?.id;
 
   // Conexao Session Hook - real LiveKit integration
   const {
@@ -118,7 +118,7 @@ export default function StudioSession() {
         name: p.name || p.identity,
         avatarUrl: undefined,
         role: p.role === 'host' ? 'host' as const : 'guest' as const,
-        isMicOn: !p.isMuted,
+        isMicOn: p.isMicrophoneEnabled,
         isCameraOn: p.isCameraEnabled,
         isScreenSharing: p.isScreenShareEnabled,
         isOnStage: p.isOnStage,
@@ -145,7 +145,7 @@ export default function StudioSession() {
       name: p.name || p.identity,
       avatarUrl: undefined,
       role: p.role === 'host' ? 'host' as const : 'guest' as const,
-      isMicOn: !p.isMuted,
+      isMicOn: p.isMicrophoneEnabled,
       isCameraOn: p.isCameraEnabled,
       isScreenSharing: p.isScreenShareEnabled,
       isOnStage: p.isOnStage,
