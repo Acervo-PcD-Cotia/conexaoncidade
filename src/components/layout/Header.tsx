@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Search, Sun, Moon, LogOut, LayoutDashboard, Newspaper, FolderOpen, Megaphone, Settings, ShieldCheck, Bus, MapPin, Accessibility, Users, Radio } from "lucide-react";
+import { Menu, X, Search, Sun, Moon, LogOut, LayoutDashboard, Newspaper, FolderOpen, Megaphone, Settings, ShieldCheck, Bus, MapPin, Accessibility, Users, Radio, Tv } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTheme } from "@/hooks/useTheme";
@@ -93,15 +93,14 @@ export function Header() {
                     <Users className="h-4 w-4" />
                     <VocabText term="community" fallback="Conexões" />
                   </Link>
-                  <ModuleGuard module="web_radio">
-                    <Link
-                      to="/ao-vivo"
-                      className="flex items-center gap-2 text-red-600 dark:text-red-500 hover:underline"
-                    >
-                      <Radio className="h-4 w-4" />
-                      <VocabText term="webradiotv" fallback="WebRádioTV" />
-                    </Link>
-                  </ModuleGuard>
+                  <Link
+                    to="/web-radio-tv"
+                    className="flex items-center gap-2 text-red-600 dark:text-red-500 hover:underline font-semibold"
+                  >
+                    <Radio className="h-4 w-4" />
+                    <Tv className="h-4 w-4 -ml-2" />
+                    Web Rádio / TV
+                  </Link>
                   <Link
                     to="/anti-fake-news"
                     className="flex items-center gap-2 text-green-600 dark:text-green-500 hover:underline"
@@ -289,15 +288,14 @@ export function Header() {
               <Users className="h-4 w-4" />
               <VocabText term="community" fallback="Conexões" />
             </Link>
-            <ModuleGuard module="web_radio">
-              <Link
-                to="/ao-vivo"
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-950/60 rounded-full hover:bg-red-200 dark:hover:bg-red-900/60 transition-colors border border-red-200 dark:border-red-800"
-              >
-                <Radio className="h-4 w-4" />
-                <VocabText term="webradiotv" fallback="WebRádioTV" />
-              </Link>
-            </ModuleGuard>
+            <Link
+              to="/web-radio-tv"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-950/60 rounded-full hover:bg-red-200 dark:hover:bg-red-900/60 transition-colors border border-red-200 dark:border-red-800 animate-pulse"
+            >
+              <Radio className="h-4 w-4" />
+              <Tv className="h-4 w-4 -ml-1" />
+              Web Rádio / TV
+            </Link>
             <Link
               to="/anti-fake-news"
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-950/60 rounded-full hover:bg-green-200 dark:hover:bg-green-900/60 transition-colors border border-green-200 dark:border-green-800"
