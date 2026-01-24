@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 import {
   Share2,
   Plus,
@@ -72,6 +73,7 @@ const platformColors: Record<string, string> = {
 
 export default function Destinations() {
   const { user } = useAuth();
+  const { isSuperAdmin, isAdmin } = useUserPermissions();
   const queryClient = useQueryClient();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [showStreamKey, setShowStreamKey] = useState<string | null>(null);
@@ -299,22 +301,37 @@ export default function Destinations() {
         </Dialog>
       </div>
 
-      {/* Plan info */}
-      <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium">Plano Atual: Free</p>
+      {/* Plan info - Hidden for super_admin/admin */}
+      {!isSuperAdmin && !isAdmin ? (
+        <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">Plano Atual: Free</p>
+                <p className="text-sm text-muted-foreground">
+                  1 destino simultâneo • Faça upgrade para transmitir para mais plataformas
+                </p>
+              </div>
+              <Button variant="outline" size="sm">
+                Ver Planos
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/20">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <Badge className="bg-green-500 text-white hover:bg-green-600">
+                Acesso Ilimitado
+              </Badge>
               <p className="text-sm text-muted-foreground">
-                1 destino simultâneo • Faça upgrade para transmitir para mais plataformas
+                Como {isSuperAdmin ? 'Super Admin' : 'Admin'}, você tem acesso a todos os recursos sem limitações.
               </p>
             </div>
-            <Button variant="outline" size="sm">
-              Ver Planos
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
