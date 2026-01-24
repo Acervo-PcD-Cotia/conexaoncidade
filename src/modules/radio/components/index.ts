@@ -8,3 +8,5 @@ export { PlayerPreviewCard } from "./PlayerPreviewCard";
 export { UploadTrackDialog } from "./UploadTrackDialog";
 export { CreatePlaylistDialog } from "./CreatePlaylistDialog";
 export { CreatePlayerDialog } from "./CreatePlayerDialog";
+export { EditPlaylistDialog } from "./EditPlaylistDialog";
+export { EditTrackDialog } from "./EditTrackDialog";

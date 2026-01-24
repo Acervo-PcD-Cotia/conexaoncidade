@@ -1,19 +1,42 @@
+import { useState } from "react";
 import { Music2, Play, SkipForward, Power } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { PlaylistCard, CreatePlaylistDialog } from "../components";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { PlaylistCard, CreatePlaylistDialog, EditPlaylistDialog } from "../components";
 import { useRadioAutoDJ, useToggleRadioAutoDJ } from "../hooks/useRadioAutoDJ";
-import { useRadioPlaylists, useUpdateRadioPlaylist } from "../hooks/useRadioPlaylists";
+import { 
+  useRadioPlaylists, 
+  useCreateRadioPlaylist, 
+  useUpdateRadioPlaylist, 
+  useDeleteRadioPlaylist 
+} from "../hooks/useRadioPlaylists";
+import { RadioPlaylist } from "../types";
+import { toast } from "sonner";
 
 export default function RadioAutoDJ() {
   const { data: autoDJ, isLoading: loadingAutoDJ } = useRadioAutoDJ();
   const { data: playlists, isLoading: loadingPlaylists } = useRadioPlaylists();
   const toggleAutoDJ = useToggleRadioAutoDJ();
+  const createPlaylist = useCreateRadioPlaylist();
   const updatePlaylist = useUpdateRadioPlaylist();
+  const deletePlaylist = useDeleteRadioPlaylist();
+
+  const [playlistToEdit, setPlaylistToEdit] = useState<RadioPlaylist | null>(null);
+  const [playlistToDelete, setPlaylistToDelete] = useState<RadioPlaylist | null>(null);
 
   const isLoading = loadingAutoDJ || loadingPlaylists;
 
@@ -37,8 +60,42 @@ export default function RadioAutoDJ() {
     : 0;
 
   const handleCreatePlaylist = async (data: any) => {
-    // Mock - seria uma chamada ao createPlaylist
-    console.log("Create playlist:", data);
+    try {
+      await createPlaylist.mutateAsync({
+        name: data.name,
+        description: data.description,
+        schedule: data.schedule,
+        rules: data.rules,
+        enabled: true,
+        trackCount: 0,
+      });
+      toast.success("Playlist criada com sucesso!");
+    } catch {
+      toast.error("Erro ao criar playlist");
+      throw new Error("Failed to create playlist");
+    }
+  };
+
+  const handleEditPlaylist = async (data: Partial<RadioPlaylist>) => {
+    if (!playlistToEdit) return;
+    try {
+      await updatePlaylist.mutateAsync({ id: playlistToEdit.id, data });
+      toast.success("Playlist atualizada com sucesso!");
+      setPlaylistToEdit(null);
+    } catch {
+      toast.error("Erro ao atualizar playlist");
+    }
+  };
+
+  const handleDeletePlaylist = async () => {
+    if (!playlistToDelete) return;
+    try {
+      await deletePlaylist.mutateAsync(playlistToDelete.id);
+      toast.success("Playlist excluída com sucesso!");
+      setPlaylistToDelete(null);
+    } catch {
+      toast.error("Erro ao excluir playlist");
+    }
   };
 
   const handleTogglePlaylist = (id: string, enabled: boolean) => {
@@ -162,7 +219,10 @@ export default function RadioAutoDJ() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Playlists Programadas</h2>
-          <CreatePlaylistDialog onSubmit={handleCreatePlaylist} />
+          <CreatePlaylistDialog 
+            onSubmit={handleCreatePlaylist} 
+            isSubmitting={createPlaylist.isPending}
+          />
         </div>
 
         {playlists && playlists.length > 0 ? (
@@ -172,6 +232,8 @@ export default function RadioAutoDJ() {
                 key={playlist.id}
                 playlist={playlist}
                 onToggle={(enabled) => handleTogglePlaylist(playlist.id, enabled)}
+                onEdit={() => setPlaylistToEdit(playlist)}
+                onDelete={() => setPlaylistToDelete(playlist)}
                 isUpdating={updatePlaylist.isPending}
               />
             ))}
@@ -184,11 +246,45 @@ export default function RadioAutoDJ() {
               <p className="text-sm text-muted-foreground mb-4">
                 Crie playlists para programar a reprodução automática
               </p>
-              <CreatePlaylistDialog onSubmit={handleCreatePlaylist} />
+              <CreatePlaylistDialog 
+                onSubmit={handleCreatePlaylist}
+                isSubmitting={createPlaylist.isPending}
+              />
             </CardContent>
           </Card>
         )}
       </div>
+
+      {/* Edit Dialog */}
+      <EditPlaylistDialog
+        open={!!playlistToEdit}
+        onOpenChange={(open) => !open && setPlaylistToEdit(null)}
+        playlist={playlistToEdit}
+        onSubmit={handleEditPlaylist}
+        isSubmitting={updatePlaylist.isPending}
+      />
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!playlistToDelete} onOpenChange={(open) => !open && setPlaylistToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Playlist</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a playlist "{playlistToDelete?.name}"? 
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeletePlaylist}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deletePlaylist.isPending ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

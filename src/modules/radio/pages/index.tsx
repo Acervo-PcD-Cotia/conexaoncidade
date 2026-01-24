@@ -5,3 +5,4 @@ export { default as RadioAutoDJ } from "./RadioAutoDJ";
 export { default as RadioLibrary } from "./RadioLibrary";
 export { default as RadioStats } from "./RadioStats";
 export { default as RadioPlayers } from "./RadioPlayers";
+export { default as RadioSettings } from "./RadioSettings";

@@ -12,3 +12,6 @@ export { UploadVideoDialog } from "./UploadVideoDialog";
 export type { VideoUploadData } from "./UploadVideoDialog";
 export { CreatePlayerDialog } from "./CreatePlayerDialog";
 export type { PlayerFormData } from "./CreatePlayerDialog";
+export { EditScheduleDialog } from "./EditScheduleDialog";
+export { VideoPlayerModal } from "./VideoPlayerModal";
+export { EditVodDialog } from "./EditVodDialog";
