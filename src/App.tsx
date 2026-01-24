@@ -119,6 +119,7 @@ import PhoneChooserPage from "./pages/community/PhoneChooserPage";
 import JobAlertsPage from "./pages/community/JobAlertsPage";
 // Campaign Pages
 import GoogleMapsCampaign from "./pages/campaigns/GoogleMapsCampaign";
+import WebRadioTVCampaign from "./pages/campaigns/WebRadioTVCampaign";
 import GoogleMapsLeads from "./pages/admin/campaigns/GoogleMapsLeads";
 
 // Transporte Escolar Pages
@@ -256,6 +257,8 @@ const App = () => (
                         <Route path="/anti-fake-news" element={<AntiFakeNews />} />
                         <Route path="/campanha/google-maps" element={<GoogleMapsCampaign />} />
                         <Route path="/google-maps" element={<GoogleMapsCampaign />} />
+                        <Route path="/web-radio-tv" element={<WebRadioTVCampaign />} />
+                        <Route path="/campanha/radio-tv" element={<WebRadioTVCampaign />} />
                         <Route path="/transporte-escolar" element={<TransporteEscolarHome />} />
                         <Route path="/transporte-escolar/encontrar" element={<TransporteEscolarEncontrar />} />
                         <Route path="/transporte-escolar/cadastrar" element={<TransporteEscolarCadastrar />} />
