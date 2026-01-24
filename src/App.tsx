@@ -183,6 +183,7 @@ import ConexaoStudioWebinars from "./pages/conexao-studio/Webinars";
 import ConexaoStudioBranding from "./pages/conexao-studio/Branding";
 import ConexaoStudioTeam from "./pages/conexao-studio/Team";
 import ConexaoStudioSession from "./pages/conexao-studio/StudioSession";
+import ConexaoStudioGuestEntry from "./pages/conexao-studio/GuestEntry";
 
 // Rádio Web Pages
 import {
@@ -286,6 +287,9 @@ const App = () => (
                       <Route path="/reset-password" element={<ResetPassword />} />
                       <Route path="/login" element={<Navigate to="/auth" replace />} />
                       <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
+                      
+                      {/* Studio Guest Entry */}
+                      <Route path="/studio/join/:token" element={<ConexaoStudioGuestEntry />} />
 
                       {/* Admin Routes */}
                       <Route path="/admin" element={<AdminLayout />}>
