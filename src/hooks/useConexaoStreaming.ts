@@ -22,37 +22,56 @@ export interface StreamDestination {
 
 export interface UseConexaoStreamingOptions {
   sessionId: string;
+  teamId?: string;
   onStreamStart?: (destinations: string[]) => void;
   onStreamStop?: () => void;
   onError?: (error: string) => void;
 }
 
 export function useConexaoStreaming(options: UseConexaoStreamingOptions) {
-  const { sessionId, onStreamStart, onStreamStop, onError } = options;
+  const { sessionId, teamId, onStreamStart, onStreamStop, onError } = options;
   const queryClient = useQueryClient();
   
   const [destinationStatus, setDestinationStatus] = useState<Record<string, StreamStatus>>({});
 
-  // Fetch configured destinations
-  const { data: destinations, isLoading } = useQuery({
-    queryKey: ["streaming-destinations", sessionId],
-    queryFn: async () => {
-      // For now, we'll use a simple structure - in production this would come from a database
-      // You would create an illumina_streaming_destinations table
-      const { data, error } = await supabase
-        .from("broadcast_participants")
-        .select("*")
-        .eq("broadcast_id", sessionId)
-        .eq("role", "streaming_destination");
-      
-      if (error && error.code !== "PGRST116") {
-        console.error("[Streaming] Fetch error:", error);
+  // Fetch configured destinations from illumina_destinations table
+  const { data: destinations, isLoading, refetch } = useQuery({
+    queryKey: ["streaming-destinations", sessionId, teamId],
+    queryFn: async (): Promise<StreamDestination[]> => {
+      // If no teamId, return empty array
+      if (!teamId) {
+        return [];
       }
       
-      // Return mock destinations for now - will be replaced with actual DB data
-      return [] as StreamDestination[];
+      // Query illumina_destinations table with proper filters
+      const { data, error } = await supabase
+        .from("illumina_destinations")
+        .select("*")
+        .eq("team_id", teamId)
+        .eq("is_enabled", true);
+      
+      if (error) {
+        console.error("[Streaming] Fetch destinations error:", error);
+        throw error;
+      }
+      
+      // Map database records to StreamDestination interface
+      return (data || []).map((d) => ({
+        id: d.id,
+        platform: d.type as StreamPlatform,
+        name: d.name || d.type,
+        rtmp_url: d.rtmp_url || "",
+        stream_key: d.stream_key_encrypted || "",
+        is_enabled: d.is_enabled ?? true,
+        status: destinationStatus[d.id] || "idle",
+        egress_id: undefined,
+        viewers: 0,
+        started_at: undefined,
+        error_message: undefined,
+      }));
     },
     refetchInterval: 10000,
+    enabled: !!teamId,
   });
 
   // Active destinations (enabled ones)
@@ -96,7 +115,7 @@ export function useConexaoStreaming(options: UseConexaoStreamingOptions) {
       toast.success(`Streaming iniciado em ${destinationIds.length} destino(s)`);
       onStreamStart?.(destinationIds);
       
-      queryClient.invalidateQueries({ queryKey: ["streaming-destinations", sessionId] });
+      queryClient.invalidateQueries({ queryKey: ["streaming-destinations", sessionId, teamId] });
     },
     onError: (error, destinationIds) => {
       console.error("[Streaming] Start error:", error);
@@ -141,7 +160,7 @@ export function useConexaoStreaming(options: UseConexaoStreamingOptions) {
       toast.success("Streaming encerrado");
       onStreamStop?.();
       
-      queryClient.invalidateQueries({ queryKey: ["streaming-destinations", sessionId] });
+      queryClient.invalidateQueries({ queryKey: ["streaming-destinations", sessionId, teamId] });
     },
     onError: (error) => {
       console.error("[Streaming] Stop error:", error);
@@ -158,12 +177,38 @@ export function useConexaoStreaming(options: UseConexaoStreamingOptions) {
       rtmp_url: string;
       stream_key: string;
     }) => {
-      // Would insert into illumina_streaming_destinations table
+      if (!teamId) {
+        throw new Error("Team ID is required to add destination");
+      }
+      
+      const { data, error } = await supabase
+        .from("illumina_destinations")
+        .insert({
+          team_id: teamId,
+          type: destination.platform,
+          name: destination.name,
+          rtmp_url: destination.rtmp_url,
+          stream_key_encrypted: destination.stream_key,
+          is_enabled: true,
+          is_connected: false,
+          connection_status: "disconnected",
+        })
+        .select()
+        .single();
+      
+      if (error) {
+        console.error("[Streaming] Add destination error:", error);
+        throw error;
+      }
+      
       toast.success(`Destino "${destination.name}" adicionado`);
-      return destination;
+      return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["streaming-destinations", sessionId] });
+      queryClient.invalidateQueries({ queryKey: ["streaming-destinations", sessionId, teamId] });
+    },
+    onError: () => {
+      toast.error("Erro ao adicionar destino");
     },
   });
 
@@ -175,20 +220,40 @@ export function useConexaoStreaming(options: UseConexaoStreamingOptions) {
         await stopMutation.mutateAsync([destinationId]);
       }
       
-      // Would delete from illumina_streaming_destinations table
+      // Soft delete by disabling
+      const { error } = await supabase
+        .from("illumina_destinations")
+        .update({ is_enabled: false })
+        .eq("id", destinationId);
+      
+      if (error) {
+        console.error("[Streaming] Remove destination error:", error);
+        throw error;
+      }
+      
       toast.success("Destino removido");
       return destinationId;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["streaming-destinations", sessionId] });
+      queryClient.invalidateQueries({ queryKey: ["streaming-destinations", sessionId, teamId] });
     },
   });
 
   // Toggle destination enabled state
   const toggleDestination = useCallback(async (destinationId: string, enabled: boolean) => {
-    // Would update in illumina_streaming_destinations table
-    queryClient.invalidateQueries({ queryKey: ["streaming-destinations", sessionId] });
-  }, [queryClient, sessionId]);
+    const { error } = await supabase
+      .from("illumina_destinations")
+      .update({ is_enabled: enabled })
+      .eq("id", destinationId);
+    
+    if (error) {
+      console.error("[Streaming] Toggle destination error:", error);
+      toast.error("Erro ao alterar destino");
+      return;
+    }
+    
+    queryClient.invalidateQueries({ queryKey: ["streaming-destinations", sessionId, teamId] });
+  }, [queryClient, sessionId, teamId]);
 
   // Get platform icon color
   const getPlatformColor = useCallback((platform: StreamPlatform) => {
@@ -213,6 +278,8 @@ export function useConexaoStreaming(options: UseConexaoStreamingOptions) {
     // Mutations state
     isStarting: startMutation.isPending,
     isStopping: stopMutation.isPending,
+    isAdding: addDestinationMutation.isPending,
+    isRemoving: removeDestinationMutation.isPending,
     
     // Actions
     startStreaming: (destinationIds: string[]) => startMutation.mutate(destinationIds),
@@ -224,6 +291,7 @@ export function useConexaoStreaming(options: UseConexaoStreamingOptions) {
     addDestination: (destination: { platform: StreamPlatform; name: string; rtmp_url: string; stream_key: string }) => addDestinationMutation.mutate(destination),
     removeDestination: (id: string) => removeDestinationMutation.mutate(id),
     toggleDestination,
+    refetchDestinations: refetch,
     
     // Helpers
     getPlatformColor,

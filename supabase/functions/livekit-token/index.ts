@@ -232,11 +232,16 @@ serve(async (req) => {
       JSON.stringify({
         token,
         roomName,
-        livekitUrl,
+        wsUrl: livekitUrl, // Primary field expected by useLiveKit
+        livekitUrl, // Backward compatibility
         identity,
         role,
         canPublish,
         canSubscribe,
+        permissions: {
+          canPublish,
+          canSubscribe,
+        },
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
