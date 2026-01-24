@@ -120,6 +120,13 @@ class RadioApiClient {
     return this.fetch<RadioTrack>(RADIO_ENDPOINTS.TRACK_BY_ID(id));
   }
 
+  async updateTrack(id: string, data: Partial<RadioTrack>): Promise<RadioTrack> {
+    return this.fetch<RadioTrack>(RADIO_ENDPOINTS.TRACK_BY_ID(id), {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  }
+
   async deleteTrack(id: string): Promise<void> {
     return this.fetch<void>(RADIO_ENDPOINTS.TRACK_BY_ID(id), {
       method: "DELETE",

@@ -19,6 +19,18 @@ export function useRadioPlaylist(id: string) {
   });
 }
 
+export function useCreateRadioPlaylist() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: Partial<RadioPlaylist>) =>
+      radioApiClient.createPlaylist(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["radio", "playlists"] });
+    },
+  });
+}
+
 export function useUpdateRadioPlaylist() {
   const queryClient = useQueryClient();
   

@@ -193,6 +193,7 @@ import {
   RadioLibrary,
   RadioStats,
   RadioPlayers,
+  RadioSettings,
 } from "./modules/radio/pages";
 
 // TV Web Pages
@@ -204,6 +205,7 @@ import {
   TvUploads,
   TvStats,
   TvPlayers,
+  TvSettings,
 } from "./modules/tv/pages";
 
 // Template Settings Pages
@@ -406,6 +408,7 @@ const App = () => (
                         <Route path="radio/library" element={<RadioLibrary />} />
                         <Route path="radio/stats" element={<RadioStats />} />
                         <Route path="radio/players" element={<RadioPlayers />} />
+                        <Route path="radio/settings" element={<RadioSettings />} />
                         
                         {/* TV Web Admin Routes */}
                         <Route path="tv" element={<TvOverview />} />
@@ -415,6 +418,7 @@ const App = () => (
                         <Route path="tv/uploads" element={<TvUploads />} />
                         <Route path="tv/stats" element={<TvStats />} />
                         <Route path="tv/players" element={<TvPlayers />} />
+                        <Route path="tv/settings" element={<TvSettings />} />
                         
                         {/* Classifieds & Jobs Admin */}
                         <Route path="classifieds" element={<ClassifiedsAdmin />} />

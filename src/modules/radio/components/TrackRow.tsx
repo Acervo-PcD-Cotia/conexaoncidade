@@ -1,4 +1,4 @@
-import { Play, Trash2, MoreHorizontal } from "lucide-react";
+import { Play, Trash2, MoreHorizontal, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -14,6 +14,7 @@ import { ptBR } from "date-fns/locale";
 interface TrackRowProps {
   track: RadioTrack;
   onPlay?: () => void;
+  onEdit?: () => void;
   onDelete: () => void;
   isDeleting?: boolean;
 }
@@ -24,7 +25,7 @@ function formatDuration(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
-export function TrackRow({ track, onPlay, onDelete, isDeleting }: TrackRowProps) {
+export function TrackRow({ track, onPlay, onEdit, onDelete, isDeleting }: TrackRowProps) {
   return (
     <TableRow>
       <TableCell>
@@ -72,6 +73,10 @@ export function TrackRow({ track, onPlay, onDelete, isDeleting }: TrackRowProps)
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={onEdit}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Editar
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={onDelete}
               disabled={isDeleting}

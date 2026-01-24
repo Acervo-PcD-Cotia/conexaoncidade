@@ -131,6 +131,7 @@ const radioWebItems: MenuItem[] = [
   { title: "Biblioteca", url: "/admin/radio/library", icon: Music },
   { title: "Estatísticas", url: "/admin/radio/stats", icon: BarChart3 },
   { title: "Players", url: "/admin/radio/players", icon: Layout },
+  { title: "Configurações", url: "/admin/radio/settings", icon: Settings },
 ];
 
 const tvWebItems: MenuItem[] = [
@@ -141,6 +142,7 @@ const tvWebItems: MenuItem[] = [
   { title: "Uploads", url: "/admin/tv/uploads", icon: Upload },
   { title: "Estatísticas", url: "/admin/tv/stats", icon: BarChart3 },
   { title: "Players", url: "/admin/tv/players", icon: Layout },
+  { title: "Configurações", url: "/admin/tv/settings", icon: Settings },
 ];
 
 const businessItems = [

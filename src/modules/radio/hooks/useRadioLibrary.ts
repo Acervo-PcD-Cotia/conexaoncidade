@@ -27,6 +27,18 @@ export function useUploadRadioTrack() {
   });
 }
 
+export function useUpdateRadioTrack() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<RadioTrack> }) =>
+      radioApiClient.updateTrack(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["radio", "library"] });
+    },
+  });
+}
+
 export function useDeleteRadioTrack() {
   const queryClient = useQueryClient();
   
