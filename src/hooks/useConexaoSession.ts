@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useLiveKit, LiveKitParticipant } from "./useLiveKit";
@@ -18,6 +18,10 @@ export interface ConexaoSession {
   host_user_id: string | null;
   created_at: string;
   updated_at: string;
+  metadata_json?: {
+    layout?: SessionLayout;
+    [key: string]: unknown;
+  };
 }
 
 export interface ConexaoParticipant extends LiveKitParticipant {
@@ -31,20 +35,46 @@ export interface UseConexaoSessionOptions {
   displayName?: string;
   onSessionStart?: () => void;
   onSessionEnd?: () => void;
+  onLayoutChange?: (layout: SessionLayout) => void;
 }
 
 export function useConexaoSession(options: UseConexaoSessionOptions) {
-  const { sessionId, displayName, onSessionStart, onSessionEnd } = options;
+  const { sessionId, displayName, onSessionStart, onSessionEnd, onLayoutChange } = options;
   const queryClient = useQueryClient();
   
   const [layout, setLayoutState] = useState<SessionLayout>("grid");
   const [stageParticipants, setStageParticipants] = useState<Set<string>>(new Set());
   const [highlightedParticipant, setHighlightedParticipant] = useState<string | null>(null);
 
-  // Fetch session data from broadcasts table
+  // Fetch session data from illumina_sessions table (or broadcasts as fallback)
   const { data: session, isLoading } = useQuery({
     queryKey: ["conexao-session", sessionId],
     queryFn: async () => {
+      // Try illumina_sessions first
+      const { data: illuminaSession, error: illuminaError } = await supabase
+        .from("illumina_sessions")
+        .select("*")
+        .eq("id", sessionId)
+        .maybeSingle();
+      
+      if (illuminaSession) {
+        const metadata = illuminaSession.metadata_json as ConexaoSession["metadata_json"];
+        return {
+          id: illuminaSession.id,
+          title: illuminaSession.title,
+          status: illuminaSession.status as SessionStatus,
+          layout: (metadata?.layout || "grid") as SessionLayout,
+          livekit_room_name: illuminaSession.livekit_room_name,
+          is_recording: false, // Determined by egress status
+          is_streaming: false, // Determined by egress status
+          host_user_id: illuminaSession.created_by,
+          created_at: illuminaSession.created_at,
+          updated_at: illuminaSession.updated_at,
+          metadata_json: metadata,
+        } as ConexaoSession;
+      }
+
+      // Fallback to broadcasts table
       const { data, error } = await supabase
         .from("broadcasts")
         .select("*")
@@ -57,17 +87,54 @@ export function useConexaoSession(options: UseConexaoSessionOptions) {
         id: data.id,
         title: data.title,
         status: data.status === "live" ? "live" : "idle" as SessionStatus,
-        layout: "grid" as SessionLayout, // Default layout
+        layout: "grid" as SessionLayout,
         livekit_room_name: data.livekit_room_name,
-        is_recording: false, // Will be updated by egress status
-        is_streaming: false, // Will be updated by egress status
+        is_recording: false,
+        is_streaming: false,
         host_user_id: data.created_by,
         created_at: data.created_at,
         updated_at: data.updated_at,
       } as ConexaoSession;
     },
-    refetchInterval: 5000, // Refresh every 5s
+    refetchInterval: 5000,
   });
+
+  // Initialize layout from session data
+  useEffect(() => {
+    if (session?.layout && session.layout !== layout) {
+      setLayoutState(session.layout);
+    }
+  }, [session?.layout]);
+
+  // Subscribe to layout changes via Realtime
+  useEffect(() => {
+    if (!sessionId) return;
+
+    const channel = supabase
+      .channel(`session-layout-${sessionId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "illumina_sessions",
+          filter: `id=eq.${sessionId}`,
+        },
+        (payload) => {
+          const metadata = payload.new.metadata_json as ConexaoSession["metadata_json"];
+          if (metadata?.layout && metadata.layout !== layout) {
+            console.log("[ConexaoSession] Layout synced from Realtime:", metadata.layout);
+            setLayoutState(metadata.layout);
+            onLayoutChange?.(metadata.layout);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [sessionId, layout, onLayoutChange]);
 
   // LiveKit connection
   const livekit = useLiveKit({
@@ -150,6 +217,41 @@ export function useConexaoSession(options: UseConexaoSessionOptions) {
     },
   });
 
+  // Update layout mutation - persists to database for sync
+  const updateLayoutMutation = useMutation({
+    mutationFn: async (newLayout: SessionLayout) => {
+      // Get current metadata
+      const { data: currentSession } = await supabase
+        .from("illumina_sessions")
+        .select("metadata_json")
+        .eq("id", sessionId)
+        .single();
+
+      const currentMetadata = (currentSession?.metadata_json || {}) as Record<string, unknown>;
+      
+      // Update with new layout
+      const { error } = await supabase
+        .from("illumina_sessions")
+        .update({
+          metadata_json: {
+            ...currentMetadata,
+            layout: newLayout,
+          },
+        })
+        .eq("id", sessionId);
+
+      if (error) throw error;
+      return newLayout;
+    },
+    onSuccess: (newLayout) => {
+      console.log("[ConexaoSession] Layout persisted:", newLayout);
+    },
+    onError: (error) => {
+      console.error("[ConexaoSession] Layout update error:", error);
+      // Don't show error toast - layout still works locally
+    },
+  });
+
   // Actions
   const startSession = useCallback(async () => {
     await startSessionMutation.mutateAsync();
@@ -162,8 +264,9 @@ export function useConexaoSession(options: UseConexaoSessionOptions) {
 
   const setLayout = useCallback((newLayout: SessionLayout) => {
     setLayoutState(newLayout);
-    // Could persist to database if needed
-  }, []);
+    // Persist to database for sync across participants
+    updateLayoutMutation.mutate(newLayout);
+  }, [updateLayoutMutation]);
 
   const moveToStage = useCallback((participantId: string) => {
     setStageParticipants(prev => new Set(prev).add(participantId));

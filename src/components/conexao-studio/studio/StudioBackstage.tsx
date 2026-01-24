@@ -1,9 +1,11 @@
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { UserPlus, ArrowUp, Mic, MicOff, Video, VideoOff } from "lucide-react";
+import { UserPlus, ArrowUp, Mic, MicOff, Video, VideoOff, Clock, Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useWaitingGuests, WaitingGuest } from "@/hooks/useWaitingGuests";
 
 interface Participant {
   id: string;
@@ -20,11 +22,117 @@ interface StudioBackstageProps {
   participants: Participant[];
   onMoveToStage: (participantId: string) => void;
   onInvite: () => void;
+  sessionId?: string;
 }
 
-export function StudioBackstage({ participants, onMoveToStage, onInvite }: StudioBackstageProps) {
+function WaitingGuestCard({ 
+  guest, 
+  onApprove, 
+  onReject 
+}: { 
+  guest: WaitingGuest; 
+  onApprove: () => void;
+  onReject: () => void;
+}) {
+  return (
+    <Card className="shrink-0 w-32 p-2 bg-amber-950/30 border-amber-800/50 hover:border-amber-600/50 transition-colors">
+      {/* Avatar with waiting indicator */}
+      <div className="relative aspect-video rounded bg-zinc-700 mb-2 flex items-center justify-center overflow-hidden">
+        <span className="text-lg font-bold text-amber-400/80">
+          {guest.display_name.charAt(0).toUpperCase()}
+        </span>
+        {/* Pulsing waiting indicator */}
+        <div className="absolute top-1 right-1">
+          <Clock className="h-3 w-3 text-amber-400 animate-pulse" />
+        </div>
+        {/* Status indicators */}
+        <div className="absolute bottom-1 right-1 flex gap-0.5">
+          {guest.is_muted && (
+            <span className="p-0.5 rounded bg-red-600/80">
+              <MicOff className="h-2.5 w-2.5" />
+            </span>
+          )}
+          {guest.is_camera_off && (
+            <span className="p-0.5 rounded bg-zinc-600/80">
+              <VideoOff className="h-2.5 w-2.5" />
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Name */}
+      <div className="flex items-center justify-between gap-1 mb-1.5">
+        <span className="text-xs font-medium truncate flex-1 text-amber-200">
+          {guest.display_name}
+        </span>
+        <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 border-amber-600/50 text-amber-400">
+          Aguardando
+        </Badge>
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-1">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              className="flex-1 h-6 text-xs text-red-400 hover:text-red-300 hover:bg-red-950/50"
+              onClick={onReject}
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Recusar</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              size="sm" 
+              className="flex-1 h-6 text-xs bg-emerald-600 hover:bg-emerald-500"
+              onClick={onApprove}
+            >
+              <Check className="h-3 w-3" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Aprovar entrada</TooltipContent>
+        </Tooltip>
+      </div>
+    </Card>
+  );
+}
+
+export function StudioBackstage({ participants, onMoveToStage, onInvite, sessionId }: StudioBackstageProps) {
+  const { waitingGuests, approveGuest, rejectGuest } = useWaitingGuests(sessionId || '');
+
   return (
     <div className="p-3 bg-zinc-900/50">
+      {/* Waiting Guests Section */}
+      {waitingGuests.length > 0 && (
+        <div className="mb-3">
+          <div className="flex items-center gap-2 mb-2">
+            <h3 className="text-xs font-semibold text-amber-400 uppercase tracking-wider flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              Aguardando Entrada ({waitingGuests.length})
+            </h3>
+          </div>
+          <ScrollArea className="w-full">
+            <div className="flex gap-2 pb-2">
+              {waitingGuests.map((guest) => (
+                <WaitingGuestCard
+                  key={guest.id}
+                  guest={guest}
+                  onApprove={() => approveGuest(guest.id)}
+                  onReject={() => rejectGuest(guest.id)}
+                />
+              ))}
+            </div>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
+        </div>
+      )}
+
+      {/* Backstage Participants */}
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
           Bastidores ({participants.length})
