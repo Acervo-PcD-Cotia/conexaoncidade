@@ -7,8 +7,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { useTvVods, useDeleteTvVod } from "../hooks";
-import { VodCard } from "../components";
+import { useTvVods, useDeleteTvVod, useUpdateTvVod } from "../hooks";
+import { VodCard, VideoPlayerModal, EditVodDialog } from "../components";
 import { TvVodItem } from "../types";
 import { Link } from "react-router-dom";
 
@@ -26,8 +26,12 @@ export default function TvVod() {
   });
 
   const deleteVod = useDeleteTvVod();
+  const updateVod = useUpdateTvVod();
+  
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedVod, setSelectedVod] = useState<TvVodItem | null>(null);
+  const [vodToView, setVodToView] = useState<TvVodItem | null>(null);
+  const [vodToEdit, setVodToEdit] = useState<TvVodItem | null>(null);
 
   const handleDelete = () => {
     if (!selectedVod) return;
@@ -47,6 +51,29 @@ export default function TvVod() {
   const openDeleteDialog = (vod: TvVodItem) => {
     setSelectedVod(vod);
     setDeleteDialogOpen(true);
+  };
+
+  const handleView = (vod: TvVodItem) => {
+    setVodToView(vod);
+  };
+
+  const handleEdit = (vod: TvVodItem) => {
+    setVodToEdit(vod);
+  };
+
+  const handleUpdateVod = async (data: Partial<TvVodItem>) => {
+    if (!vodToEdit) return;
+    
+    updateVod.mutate(
+      { id: vodToEdit.id, data },
+      {
+        onSuccess: () => {
+          toast.success("Vídeo atualizado!");
+          setVodToEdit(null);
+        },
+        onError: () => toast.error("Erro ao atualizar vídeo"),
+      }
+    );
   };
 
   if (error) {
@@ -136,8 +163,8 @@ export default function TvVod() {
               <VodCard
                 key={vod.id}
                 vod={vod}
-                onView={(vod) => toast.info(`Visualizar: ${vod.title} (em desenvolvimento)`)}
-                onEdit={(vod) => toast.info(`Editar: ${vod.title} (em desenvolvimento)`)}
+                onView={handleView}
+                onEdit={handleEdit}
                 onDelete={openDeleteDialog}
               />
             ))}
@@ -208,6 +235,22 @@ export default function TvVod() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Video Player Modal */}
+      <VideoPlayerModal
+        open={!!vodToView}
+        onOpenChange={(open) => !open && setVodToView(null)}
+        vod={vodToView}
+      />
+
+      {/* Edit VOD Dialog */}
+      <EditVodDialog
+        open={!!vodToEdit}
+        onOpenChange={(open) => !open && setVodToEdit(null)}
+        vod={vodToEdit}
+        onSubmit={handleUpdateVod}
+        isLoading={updateVod.isPending}
+      />
     </div>
   );
 }
