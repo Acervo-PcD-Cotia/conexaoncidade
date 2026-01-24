@@ -28,8 +28,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { TrackRow, UploadTrackDialog } from "../components";
-import { useRadioLibrary, useDeleteRadioTrack } from "../hooks/useRadioLibrary";
+import { toast } from "sonner";
+import { TrackRow, UploadTrackDialog, EditTrackDialog } from "../components";
+import { useRadioLibrary, useDeleteRadioTrack, useUpdateRadioTrack } from "../hooks/useRadioLibrary";
 import { RadioTrack } from "../types";
 
 const genres = ["Todos", "Pop", "Rock", "MPB", "Sertanejo", "Forró", "Eletrônica"];
@@ -40,6 +41,7 @@ export default function RadioLibrary() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [trackToDelete, setTrackToDelete] = useState<RadioTrack | null>(null);
+  const [trackToEdit, setTrackToEdit] = useState<RadioTrack | null>(null);
 
   const { data, isLoading, error, refetch } = useRadioLibrary({
     page,
@@ -49,6 +51,7 @@ export default function RadioLibrary() {
   });
 
   const deleteMutation = useDeleteRadioTrack();
+  const updateMutation = useUpdateRadioTrack();
 
   const handleDeleteTrack = async () => {
     if (!trackToDelete) return;
@@ -58,6 +61,18 @@ export default function RadioLibrary() {
       setTrackToDelete(null);
     } catch {
       // Error handled by mutation
+    }
+  };
+
+  const handleEditTrack = async (data: Partial<RadioTrack>) => {
+    if (!trackToEdit) return;
+    
+    try {
+      await updateMutation.mutateAsync({ id: trackToEdit.id, data });
+      toast.success("Música atualizada com sucesso!");
+      setTrackToEdit(null);
+    } catch {
+      toast.error("Erro ao atualizar música");
     }
   };
 
@@ -167,10 +182,11 @@ export default function RadioLibrary() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {tracks.map((track) => (
+                {tracks.map((track) => (
                     <TrackRow
                       key={track.id}
                       track={track}
+                      onEdit={() => setTrackToEdit(track)}
                       onDelete={() => setTrackToDelete(track)}
                       isDeleting={deleteMutation.isPending}
                     />
@@ -244,6 +260,15 @@ export default function RadioLibrary() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit Track Dialog */}
+      <EditTrackDialog
+        open={!!trackToEdit}
+        onOpenChange={(open) => !open && setTrackToEdit(null)}
+        track={trackToEdit}
+        onSubmit={handleEditTrack}
+        isSubmitting={updateMutation.isPending}
+      />
     </div>
   );
 }

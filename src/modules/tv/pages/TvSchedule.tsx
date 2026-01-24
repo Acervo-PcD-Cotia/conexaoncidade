@@ -5,19 +5,22 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { useTvSchedule, useCreateTvScheduleItem, useDeleteTvScheduleItem, useTvVods } from "../hooks";
-import { ScheduleItemCard, CreateScheduleDialog, ScheduleFormData } from "../components";
+import { useTvSchedule, useCreateTvScheduleItem, useUpdateTvScheduleItem, useDeleteTvScheduleItem, useTvVods } from "../hooks";
+import { ScheduleItemCard, CreateScheduleDialog, EditScheduleDialog, ScheduleFormData } from "../components";
 import { TvScheduleItem } from "../types";
 
 export default function TvSchedule() {
   const { data: schedule, isLoading, error, refetch } = useTvSchedule();
   const { data: vods } = useTvVods();
   const createItem = useCreateTvScheduleItem();
+  const updateItem = useUpdateTvScheduleItem();
   const deleteItem = useDeleteTvScheduleItem();
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<TvScheduleItem | null>(null);
+  const [itemToEdit, setItemToEdit] = useState<TvScheduleItem | null>(null);
 
   const handleCreate = (data: ScheduleFormData) => {
     createItem.mutate(
@@ -69,6 +72,45 @@ export default function TvSchedule() {
     setDeleteDialogOpen(true);
   };
 
+  const handleEdit = (item: TvScheduleItem) => {
+    setItemToEdit(item);
+    setEditDialogOpen(true);
+  };
+
+  const handleUpdate = (data: Partial<TvScheduleItem>) => {
+    if (!itemToEdit) return;
+    updateItem.mutate(
+      { id: itemToEdit.id, data },
+      {
+        onSuccess: () => {
+          toast.success("Programa atualizado!");
+          setEditDialogOpen(false);
+          setItemToEdit(null);
+        },
+        onError: () => toast.error("Erro ao atualizar programa"),
+      }
+    );
+  };
+
+  const handleDuplicate = (item: TvScheduleItem) => {
+    createItem.mutate(
+      {
+        title: `${item.title} (cópia)`,
+        description: item.description,
+        startAt: item.startAt,
+        endAt: item.endAt,
+        source: item.source,
+        vodId: item.vodId,
+        isRecurring: item.isRecurring,
+        recurringPattern: item.recurringPattern,
+      },
+      {
+        onSuccess: () => toast.success("Programa duplicado!"),
+        onError: () => toast.error("Erro ao duplicar programa"),
+      }
+    );
+  };
+
   if (error) {
     return (
       <div className="p-6 space-y-6">
@@ -118,8 +160,8 @@ export default function TvSchedule() {
             <ScheduleItemCard
               key={item.id}
               item={item}
-              onEdit={(item) => toast.info(`Editar: ${item.title} (em desenvolvimento)`)}
-              onDuplicate={(item) => toast.info(`Duplicar: ${item.title} (em desenvolvimento)`)}
+              onEdit={handleEdit}
+              onDuplicate={handleDuplicate}
               onDelete={openDeleteDialog}
             />
           ))}
@@ -169,6 +211,16 @@ export default function TvSchedule() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit Dialog */}
+      <EditScheduleDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        item={itemToEdit}
+        onSubmit={handleUpdate}
+        isLoading={updateItem.isPending}
+        vods={vods?.items || []}
+      />
     </div>
   );
 }
