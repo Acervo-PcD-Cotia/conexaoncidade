@@ -164,20 +164,119 @@ export default function GuestEntry() {
     }
   }, []);
 
+  // Participant ID for tracking this guest's record
+  const [participantId, setParticipantId] = useState<string | null>(null);
+
+  // Subscribe to participant status changes when waiting
+  useEffect(() => {
+    if (!participantId || step !== "waiting") return;
+
+    const channel = supabase
+      .channel(`guest-status-${participantId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "illumina_session_participants",
+          filter: `id=eq.${participantId}`,
+        },
+        (payload) => {
+          const newStatus = payload.new.status;
+          console.log("[GuestEntry] Status changed to:", newStatus);
+
+          if (newStatus === "approved") {
+            setStep("approved");
+            toast.success("Entrada aprovada! Entrando no estúdio...");
+            // Navigate to studio or connect with publishing permissions
+            if (broadcastId) {
+              navigate(`/studio/live/${broadcastId}?guest=true`);
+            }
+          } else if (newStatus === "rejected") {
+            setStep("rejected");
+            setRejectionMessage(payload.new.lower_third_text || "Sua entrada foi recusada pelo host.");
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [participantId, step, broadcastId, navigate]);
+
   const handleJoinStudio = async () => {
     if (!displayName.trim()) {
       toast.error("Digite seu nome");
       return;
     }
 
-    stopPreview();
-    setStep("waiting");
-    
-    // In a real implementation, this would connect to LiveKit
-    // and the host would receive a notification about the waiting guest
+    try {
+      // First, find or create the session
+      let sessionId = broadcastId;
+
+      // If we have a token but no broadcastId, try to find the session from illumina_studios
+      if (!sessionId && token) {
+        // Check if token matches a studio slug
+        const studioSlug = token.split("-")[0];
+        const { data: studio } = await supabase
+          .from("illumina_studios")
+          .select("id")
+          .eq("slug", studioSlug)
+          .maybeSingle();
+
+        if (studio) {
+          sessionId = studio.id;
+        }
+      }
+
+      if (!sessionId) {
+        toast.error("Sessão não encontrada");
+        return;
+      }
+
+      // Insert as waiting participant
+      const { data: participant, error } = await supabase
+        .from("illumina_session_participants")
+        .insert({
+          session_id: sessionId,
+          display_name: displayName.trim(),
+          role: "guest",
+          status: "waiting",
+          is_camera_off: !isCameraEnabled,
+          is_muted: !isMicEnabled,
+          invite_token: token,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error("[GuestEntry] Insert error:", error);
+        toast.error("Erro ao solicitar entrada");
+        return;
+      }
+
+      setParticipantId(participant.id);
+      stopPreview();
+      setStep("waiting");
+      toast.info("Aguardando aprovação do host...");
+    } catch (err) {
+      console.error("[GuestEntry] Error joining:", err);
+      toast.error("Erro ao entrar no estúdio");
+    }
   };
 
-  const handleLeave = () => {
+  const handleLeave = async () => {
+    // If we have a participant record, update it to left
+    if (participantId) {
+      await supabase
+        .from("illumina_session_participants")
+        .update({
+          status: "rejected",
+          left_at: new Date().toISOString(),
+        })
+        .eq("id", participantId);
+    }
     stopPreview();
     navigate("/");
   };

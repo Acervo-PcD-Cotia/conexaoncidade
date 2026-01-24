@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { 
   Circle, Users, MessageSquare, Palette, Image, 
   Settings, Radio, UserPlus, LogOut,
-  Maximize2, Clock, Wifi, WifiOff, Loader2
+  Maximize2, Clock, Wifi, WifiOff, Loader2, UserCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,10 +23,12 @@ import { BrandingPanel } from "@/components/conexao-studio/panels/BrandingPanel"
 import { MediaPanel } from "@/components/conexao-studio/panels/MediaPanel";
 import { DestinationsPanel } from "@/components/conexao-studio/panels/DestinationsPanel";
 import { SettingsPanel } from "@/components/conexao-studio/panels/SettingsPanel";
+import { WaitingGuestsPanel } from "@/components/conexao-studio/panels/WaitingGuestsPanel";
 
 // Hooks
 import { useConexaoSession, ConexaoParticipant, SessionLayout } from "@/hooks/useConexaoSession";
 import { useLocalRecording } from "@/hooks/useLocalRecording";
+import { useWaitingGuests } from "@/hooks/useWaitingGuests";
 
 type LayoutType = 'grid' | 'spotlight' | 'pip' | 'side-by-side';
 
@@ -430,6 +432,7 @@ export default function StudioSession() {
               participants={backstagePreviewParticipants}
               onMoveToStage={handleMoveToStage}
               onInvite={handleInviteGuest}
+              sessionId={sessionId}
             />
           </div>
 
@@ -455,6 +458,13 @@ export default function StudioSession() {
           {/* Panel Tabs */}
           <Tabs value={activePanel} onValueChange={setActivePanel} className="flex-1 flex flex-col">
             <TabsList className="shrink-0 w-full justify-start rounded-none border-b border-zinc-800 bg-transparent p-0 h-auto">
+              <TabsTrigger 
+                value="waiting" 
+                className="relative rounded-none border-b-2 border-transparent data-[state=active]:border-amber-500 data-[state=active]:bg-transparent px-4 py-3"
+              >
+                <UserCheck className="h-4 w-4" />
+                <WaitingGuestsPanel sessionId={sessionId || ''} compact />
+              </TabsTrigger>
               <TabsTrigger 
                 value="chat" 
                 className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3"
@@ -486,6 +496,16 @@ export default function StudioSession() {
                 <Settings className="h-4 w-4" />
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="waiting" className="flex-1 m-0 overflow-hidden">
+              <WaitingGuestsPanel 
+                sessionId={sessionId || ''} 
+                onGuestApproved={(guest) => {
+                  console.log('[StudioSession] Guest approved:', guest);
+                  // Guest will be added to participants via LiveKit connection
+                }}
+              />
+            </TabsContent>
 
             <TabsContent value="chat" className="flex-1 m-0 overflow-hidden">
               <UnifiedChatPanel sessionId={sessionId} />
