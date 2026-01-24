@@ -54,10 +54,13 @@ import {
   Upload,
   Satellite,
   CalendarDays,
+  ExternalLink,
+  Loader2,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useUserRole } from "@/hooks/useRequireRole";
 import { useNewsCreationModal } from "@/contexts/NewsCreationModalContext";
+import { useSsoNavigation } from "@/hooks/useSsoNavigation";
 import {
   Sidebar,
   SidebarContent,
@@ -152,7 +155,7 @@ const tvWebItems: MenuItem[] = [
   { title: "Configurações", url: "/admin/tv/settings", icon: Settings },
 ];
 
-const businessItems = [
+const businessItems: MenuItem[] = [
   { title: "Soluções", url: "/admin/solutions", icon: Puzzle },
   { title: "Treinamento", url: "/admin/training", icon: GraduationCap },
   { title: "Financeiro", url: "/admin/financial", icon: Receipt },
@@ -160,6 +163,7 @@ const businessItems = [
   { title: "Campanhas", url: "/admin/campaigns/google-maps", icon: MapPin },
   { title: "Transporte Escolar", url: "/admin/transporte-escolar", icon: Bus },
   { title: "Censo PcD", url: "/admin/censo-pcd", icon: Accessibility },
+  { title: "Geração Cotia", url: "#sso-gcotia", icon: ExternalLink, action: true },
 ];
 
 const transporteEscolarItems = [
@@ -190,11 +194,16 @@ export function AdminSidebar() {
   const collapsed = state === "collapsed";
   const { isAdmin } = useUserRole();
   const { openModal } = useNewsCreationModal();
+  const { navigateToGcotia, isLoading: isSsoLoading } = useSsoNavigation();
 
   const handleMenuClick = (item: MenuItem, e: React.MouseEvent) => {
     if (item.action) {
       e.preventDefault();
-      openModal();
+      if (item.url === "#create-news") {
+        openModal();
+      } else if (item.url === "#sso-gcotia") {
+        navigateToGcotia();
+      }
     }
   };
 
@@ -392,14 +401,29 @@ export function AdminSidebar() {
               {businessItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      className="flex items-center gap-2"
-                      activeClassName="bg-primary/10 text-primary"
-                    >
-                      <item.icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
+                    {item.action ? (
+                      <button
+                        onClick={(e) => handleMenuClick(item, e)}
+                        disabled={item.url === "#sso-gcotia" && isSsoLoading}
+                        className="flex w-full items-center gap-2 text-left disabled:opacity-50"
+                      >
+                        {item.url === "#sso-gcotia" && isSsoLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <item.icon className="h-4 w-4" />
+                        )}
+                        {!collapsed && <span>{item.title}</span>}
+                      </button>
+                    ) : (
+                      <NavLink
+                        to={item.url}
+                        className="flex items-center gap-2"
+                        activeClassName="bg-primary/10 text-primary"
+                      >
+                        <item.icon className="h-4 w-4" />
+                        {!collapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    )}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

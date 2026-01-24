@@ -9222,6 +9222,53 @@ export type Database = {
         }
         Relationships: []
       }
+      sso_codes: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          ip_address: string | null
+          target_app: string
+          tenant_id: string | null
+          used_at: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          ip_address?: string | null
+          target_app?: string
+          tenant_id?: string | null
+          used_at?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          target_app?: string
+          tenant_id?: string | null
+          used_at?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sso_codes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       super_banners: {
         Row: {
           alt_text: string | null
@@ -10345,6 +10392,7 @@ export type Database = {
           user_points: number
         }[]
       }
+      cleanup_expired_sso_codes: { Args: never; Returns: undefined }
       generate_content_hash: { Args: { content: string }; Returns: string }
       get_autopost_stats: {
         Args: { p_days?: number; p_tenant_id: string }
