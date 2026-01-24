@@ -66,6 +66,10 @@ export interface UseStudioOverlaysReturn {
   updateOverlay: (id: string, updates: Partial<Overlay>) => Promise<void>;
   deleteOverlay: (id: string) => Promise<void>;
   
+  // Aliases for compatibility
+  addOverlay: (overlay: Partial<Overlay>) => Promise<Overlay>;
+  removeOverlay: (id: string) => Promise<void>;
+  
   // Visibility controls
   showOverlay: (id: string) => Promise<void>;
   hideOverlay: (id: string) => Promise<void>;
@@ -75,6 +79,7 @@ export interface UseStudioOverlaysReturn {
   // Quick actions
   showLowerThird: (content: LowerThirdContent, duration?: number) => Promise<void>;
   showTicker: (content: TickerContent) => Promise<void>;
+  hideTicker: () => Promise<void>;
   showCommentHighlight: (content: CommentHighlightContent, duration?: number) => Promise<void>;
   
   // State
@@ -225,6 +230,14 @@ export function useStudioOverlays(sessionId: string): UseStudioOverlaysReturn {
     }
   }, [overlays, createOverlay, updateOverlay]);
 
+  // Quick action: Hide ticker
+  const hideTicker = useCallback(async (): Promise<void> => {
+    const existingTicker = overlays.find((o: Overlay) => o.type === "ticker");
+    if (existingTicker) {
+      await hideOverlay(existingTicker.id);
+    }
+  }, [overlays, hideOverlay]);
+
   // Quick action: Show comment highlight
   const showCommentHighlight = useCallback(async (content: CommentHighlightContent, duration = 8000): Promise<void> => {
     const newOverlay = await createOverlay({
@@ -258,12 +271,15 @@ export function useStudioOverlays(sessionId: string): UseStudioOverlaysReturn {
     createOverlay,
     updateOverlay,
     deleteOverlay,
+    addOverlay: createOverlay,
+    removeOverlay: deleteOverlay,
     showOverlay,
     hideOverlay,
     toggleOverlay,
     hideAllOverlays,
     showLowerThird,
     showTicker,
+    hideTicker,
     showCommentHighlight,
     isUpdating: false,
   };
