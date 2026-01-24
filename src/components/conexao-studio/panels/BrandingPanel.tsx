@@ -6,40 +6,110 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
-  Image, Type, Layers, Plus, Eye, EyeOff, Trash2, Upload
+  Image, Type, Layers, Plus, Eye, EyeOff, Trash2, Upload, Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useStudioOverlays, OverlayType } from "@/hooks/useStudioOverlays";
+import { toast } from "sonner";
 
-interface Overlay {
-  id: string;
-  name: string;
-  type: 'logo' | 'lower-third' | 'ticker' | 'custom';
-  isActive: boolean;
-  imageUrl?: string;
+interface BrandingPanelProps {
+  sessionId?: string;
 }
 
-const mockOverlays: Overlay[] = [
-  { id: '1', name: 'Logo Principal', type: 'logo', isActive: true },
-  { id: '2', name: 'Lower Third - Nome', type: 'lower-third', isActive: false },
-  { id: '3', name: 'Ticker - Notícias', type: 'ticker', isActive: false },
-];
+export function BrandingPanel({ sessionId }: BrandingPanelProps) {
+  const {
+    overlays,
+    addOverlay,
+    updateOverlay,
+    removeOverlay,
+    showOverlay,
+    hideOverlay,
+    showLowerThird,
+    showTicker,
+    hideTicker,
+    isLoading,
+  } = useStudioOverlays(sessionId || '');
 
-export function BrandingPanel() {
-  const [overlays, setOverlays] = useState<Overlay[]>(mockOverlays);
   const [lowerThirdName, setLowerThirdName] = useState('');
   const [lowerThirdTitle, setLowerThirdTitle] = useState('');
+  const [lowerThirdVariant, setLowerThirdVariant] = useState<'default' | 'minimal' | 'accent'>('default');
+  
   const [tickerText, setTickerText] = useState('');
+  const [tickerSpeed, setTickerSpeed] = useState<'slow' | 'normal' | 'fast'>('normal');
+  const [tickerVariant, setTickerVariant] = useState<'default' | 'breaking' | 'info'>('default');
+  const [isTickerActive, setIsTickerActive] = useState(false);
 
-  const toggleOverlay = (id: string) => {
-    setOverlays(prev => 
-      prev.map(o => o.id === id ? { ...o, isActive: !o.isActive } : o)
-    );
+  const [newLogoUrl, setNewLogoUrl] = useState('');
+  const [newLogoPosition, setNewLogoPosition] = useState<'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'>('top-right');
+
+  const handleShowLowerThird = () => {
+    if (!lowerThirdName.trim()) {
+      toast.error("Digite um nome para o lower third");
+      return;
+    }
+    showLowerThird(lowerThirdName, lowerThirdTitle, lowerThirdVariant);
+    toast.success("Lower Third exibido!");
   };
 
-  const showLowerThird = () => {
-    // Would show lower third with current name/title
-    console.log('Show lower third:', lowerThirdName, lowerThirdTitle);
+  const handleToggleTicker = (checked: boolean) => {
+    if (checked) {
+      if (!tickerText.trim()) {
+        toast.error("Digite um texto para o ticker");
+        return;
+      }
+      showTicker(tickerText, tickerSpeed, tickerVariant);
+      setIsTickerActive(true);
+      toast.success("Ticker ativado!");
+    } else {
+      hideTicker();
+      setIsTickerActive(false);
+      toast.info("Ticker desativado");
+    }
+  };
+
+  const handleAddLogo = () => {
+    if (!newLogoUrl.trim()) {
+      toast.error("Digite a URL do logo");
+      return;
+    }
+    addOverlay({
+      type: 'logo',
+      isVisible: true,
+      position: newLogoPosition,
+      content: { imageUrl: newLogoUrl },
+    });
+    setNewLogoUrl('');
+    toast.success("Logo adicionado!");
+  };
+
+  const toggleOverlay = (id: string, isVisible: boolean) => {
+    if (isVisible) {
+      hideOverlay(id);
+    } else {
+      showOverlay(id);
+    }
+  };
+
+  const getOverlayTypeIcon = (type: OverlayType) => {
+    switch (type) {
+      case 'logo': return <Image className="h-4 w-4" />;
+      case 'lower-third': return <Type className="h-4 w-4" />;
+      case 'ticker': return <Type className="h-4 w-4" />;
+      default: return <Layers className="h-4 w-4" />;
+    }
+  };
+
+  const getOverlayTypeName = (type: OverlayType) => {
+    switch (type) {
+      case 'logo': return 'Logo';
+      case 'lower-third': return 'Lower Third';
+      case 'ticker': return 'Ticker';
+      case 'banner': return 'Banner';
+      case 'comment-highlight': return 'Comentário';
+      default: return type;
+    }
   };
 
   return (
@@ -71,45 +141,100 @@ export function BrandingPanel() {
 
         <TabsContent value="overlays" className="flex-1 m-0 overflow-hidden">
           <ScrollArea className="h-full p-3">
-            <div className="space-y-2">
+            <div className="space-y-3">
               {overlays.map((overlay) => (
                 <Card 
                   key={overlay.id}
                   className={cn(
                     "p-3 bg-zinc-800/50 border-zinc-700 flex items-center justify-between",
-                    overlay.isActive && "border-primary/50"
+                    overlay.isVisible && "border-primary/50"
                   )}
                 >
                   <div className="flex items-center gap-3">
                     <div className={cn(
-                      "h-10 w-16 rounded bg-zinc-700 flex items-center justify-center",
-                      overlay.isActive && "ring-2 ring-primary"
+                      "h-10 w-10 rounded bg-zinc-700 flex items-center justify-center",
+                      overlay.isVisible && "ring-2 ring-primary"
                     )}>
-                      <Image className="h-4 w-4 text-zinc-400" />
+                      {getOverlayTypeIcon(overlay.type)}
                     </div>
                     <div>
-                      <p className="text-sm font-medium">{overlay.name}</p>
-                      <p className="text-xs text-zinc-500 capitalize">{overlay.type}</p>
+                      <p className="text-sm font-medium">
+                        {overlay.type === 'logo' 
+                          ? 'Logo' 
+                          : overlay.type === 'lower-third' 
+                            ? (overlay.content as any)?.name || 'Lower Third'
+                            : getOverlayTypeName(overlay.type)
+                        }
+                      </p>
+                      <p className="text-xs text-zinc-500 capitalize">
+                        {overlay.position || overlay.type}
+                      </p>
                     </div>
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => toggleOverlay(overlay.id)}
-                  >
-                    {overlay.isActive ? (
-                      <Eye className="h-4 w-4 text-primary" />
-                    ) : (
-                      <EyeOff className="h-4 w-4 text-zinc-500" />
-                    )}
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => toggleOverlay(overlay.id, overlay.isVisible)}
+                    >
+                      {overlay.isVisible ? (
+                        <Eye className="h-4 w-4 text-primary" />
+                      ) : (
+                        <EyeOff className="h-4 w-4 text-zinc-500" />
+                      )}
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => removeOverlay(overlay.id)}
+                      className="text-zinc-500 hover:text-red-500"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </Card>
               ))}
 
-              <Button variant="outline" className="w-full border-dashed border-zinc-700 gap-2">
-                <Plus className="h-4 w-4" />
-                Adicionar Overlay
-              </Button>
+              {overlays.length === 0 && !isLoading && (
+                <div className="text-center py-8 text-zinc-500">
+                  <Layers className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Nenhum overlay configurado</p>
+                </div>
+              )}
+
+              {isLoading && (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-zinc-500" />
+                </div>
+              )}
+
+              <div className="pt-4 border-t border-zinc-800">
+                <Label className="text-xs mb-2 block">Adicionar Logo</Label>
+                <div className="space-y-2">
+                  <Input 
+                    placeholder="URL do logo..."
+                    value={newLogoUrl}
+                    onChange={(e) => setNewLogoUrl(e.target.value)}
+                    className="bg-zinc-800 border-zinc-700"
+                  />
+                  <div className="flex gap-2">
+                    <Select value={newLogoPosition} onValueChange={(v: any) => setNewLogoPosition(v)}>
+                      <SelectTrigger className="bg-zinc-800 border-zinc-700">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="top-left">Superior Esquerdo</SelectItem>
+                        <SelectItem value="top-right">Superior Direito</SelectItem>
+                        <SelectItem value="bottom-left">Inferior Esquerdo</SelectItem>
+                        <SelectItem value="bottom-right">Inferior Direito</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button onClick={handleAddLogo} className="shrink-0">
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
           </ScrollArea>
         </TabsContent>
@@ -137,10 +262,28 @@ export function BrandingPanel() {
                 />
               </div>
 
-              {/* Preview */}
+              <div className="space-y-2">
+                <Label className="text-xs">Estilo</Label>
+                <Select value={lowerThirdVariant} onValueChange={(v: any) => setLowerThirdVariant(v)}>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="default">Padrão</SelectItem>
+                    <SelectItem value="minimal">Minimalista</SelectItem>
+                    <SelectItem value="accent">Destaque</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="rounded-lg bg-zinc-800 p-4 border border-zinc-700">
                 <p className="text-xs text-zinc-500 mb-2">Preview</p>
-                <div className="bg-gradient-to-r from-primary/90 to-primary/70 p-3 rounded">
+                <div className={cn(
+                  "p-3 rounded",
+                  lowerThirdVariant === 'minimal' && "bg-black/70",
+                  lowerThirdVariant === 'accent' && "bg-gradient-to-r from-primary to-primary/80",
+                  lowerThirdVariant === 'default' && "bg-gradient-to-r from-zinc-900/95 to-zinc-800/90"
+                )}>
                   <p className="font-bold text-white">
                     {lowerThirdName || 'Nome'}
                   </p>
@@ -150,7 +293,7 @@ export function BrandingPanel() {
                 </div>
               </div>
 
-              <Button onClick={showLowerThird} className="w-full gap-2">
+              <Button onClick={handleShowLowerThird} className="w-full gap-2">
                 <Eye className="h-4 w-4" />
                 Mostrar Lower Third
               </Button>
@@ -171,16 +314,52 @@ export function BrandingPanel() {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <Label className="text-xs">Exibir Ticker</Label>
-                <Switch />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label className="text-xs">Velocidade</Label>
+                  <Select value={tickerSpeed} onValueChange={(v: any) => setTickerSpeed(v)}>
+                    <SelectTrigger className="bg-zinc-800 border-zinc-700">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="slow">Lento</SelectItem>
+                      <SelectItem value="normal">Normal</SelectItem>
+                      <SelectItem value="fast">Rápido</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Estilo</Label>
+                  <Select value={tickerVariant} onValueChange={(v: any) => setTickerVariant(v)}>
+                    <SelectTrigger className="bg-zinc-800 border-zinc-700">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">Destaque</SelectItem>
+                      <SelectItem value="breaking">Urgente</SelectItem>
+                      <SelectItem value="info">Informativo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
-              {/* Preview */}
+              <div className="flex items-center justify-between">
+                <Label className="text-xs">Exibir Ticker</Label>
+                <Switch 
+                  checked={isTickerActive}
+                  onCheckedChange={handleToggleTicker}
+                />
+              </div>
+
               <div className="rounded-lg bg-zinc-800 p-4 border border-zinc-700">
                 <p className="text-xs text-zinc-500 mb-2">Preview</p>
-                <div className="bg-primary/90 p-2 rounded overflow-hidden">
-                  <p className="text-sm font-medium text-white whitespace-nowrap animate-marquee">
+                <div className={cn(
+                  "p-2 rounded overflow-hidden",
+                  tickerVariant === 'default' && "bg-primary/90",
+                  tickerVariant === 'breaking' && "bg-red-600",
+                  tickerVariant === 'info' && "bg-blue-600"
+                )}>
+                  <p className="text-sm font-medium text-white whitespace-nowrap overflow-hidden text-ellipsis">
                     {tickerText || 'Seu texto aparecerá aqui rolando na tela...'}
                   </p>
                 </div>

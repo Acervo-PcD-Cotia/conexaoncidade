@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Send, Youtube, Facebook, MessageCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Send, Youtube, Facebook, MessageCircle, Star, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useStudioOverlays } from "@/hooks/useStudioOverlays";
 
 interface ChatMessage {
   id: string;
@@ -15,29 +19,9 @@ interface ChatMessage {
   avatarUrl?: string;
 }
 
-const mockMessages: ChatMessage[] = [
-  {
-    id: '1',
-    platform: 'youtube',
-    author: 'João Silva',
-    message: 'Muito bom o conteúdo! 👏',
-    timestamp: new Date(Date.now() - 60000),
-  },
-  {
-    id: '2',
-    platform: 'facebook',
-    author: 'Maria Santos',
-    message: 'Qual o tema de hoje?',
-    timestamp: new Date(Date.now() - 45000),
-  },
-  {
-    id: '3',
-    platform: 'internal',
-    author: 'Admin',
-    message: 'Bem-vindos ao programa!',
-    timestamp: new Date(Date.now() - 30000),
-  },
-];
+interface UnifiedChatPanelProps {
+  sessionId?: string;
+}
 
 const getPlatformIcon = (platform: ChatMessage['platform']) => {
   switch (platform) {
@@ -61,19 +45,167 @@ const getPlatformColor = (platform: ChatMessage['platform']) => {
   }
 };
 
-export function UnifiedChatPanel() {
-  const [messages] = useState<ChatMessage[]>(mockMessages);
+export function UnifiedChatPanel({ sessionId }: UnifiedChatPanelProps) {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [filter, setFilter] = useState<'all' | ChatMessage['platform']>('all');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  
+  const { showCommentHighlight } = useStudioOverlays(sessionId || '');
+
+  // Fetch YouTube chat messages
+  const fetchYouTubeChat = useCallback(async () => {
+    if (!sessionId) return;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('conexao-chat-youtube', {
+        body: { live_chat_id: sessionId },
+      });
+      
+      if (error) throw error;
+      
+      const ytMessages: ChatMessage[] = (data.messages || []).map((msg: any) => ({
+        id: msg.id,
+        platform: 'youtube' as const,
+        author: msg.author,
+        message: msg.message,
+        timestamp: new Date(msg.timestamp),
+        avatarUrl: msg.avatarUrl,
+      }));
+      
+      setMessages(prev => {
+        const existingIds = new Set(prev.map(m => m.id));
+        const newMsgs = ytMessages.filter(m => !existingIds.has(m.id));
+        if (newMsgs.length === 0) return prev;
+        return [...prev, ...newMsgs].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+      });
+    } catch (error) {
+      console.error('[UnifiedChatPanel] YouTube fetch error:', error);
+    }
+  }, [sessionId]);
+
+  // Fetch Facebook comments
+  const fetchFacebookComments = useCallback(async () => {
+    if (!sessionId) return;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('conexao-chat-facebook', {
+        body: { video_id: sessionId },
+      });
+      
+      if (error) throw error;
+      
+      const fbMessages: ChatMessage[] = (data.comments || []).map((msg: any) => ({
+        id: msg.id,
+        platform: 'facebook' as const,
+        author: msg.author,
+        message: msg.message,
+        timestamp: new Date(msg.timestamp),
+        avatarUrl: msg.avatarUrl,
+      }));
+      
+      setMessages(prev => {
+        const existingIds = new Set(prev.map(m => m.id));
+        const newMsgs = fbMessages.filter(m => !existingIds.has(m.id));
+        if (newMsgs.length === 0) return prev;
+        return [...prev, ...newMsgs].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+      });
+    } catch (error) {
+      console.error('[UnifiedChatPanel] Facebook fetch error:', error);
+    }
+  }, [sessionId]);
+
+  // Initial load and polling for external chat
+  useEffect(() => {
+    if (!sessionId) return;
+    
+    setIsLoading(true);
+    
+    // Initial fetch
+    Promise.all([fetchYouTubeChat(), fetchFacebookComments()])
+      .finally(() => setIsLoading(false));
+    
+    // Poll every 5 seconds
+    const interval = setInterval(() => {
+      fetchYouTubeChat();
+      fetchFacebookComments();
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, [sessionId, fetchYouTubeChat, fetchFacebookComments]);
+
+  // Subscribe to internal chat via Realtime (if we had a chat table)
+  useEffect(() => {
+    if (!sessionId) return;
+
+    // For now, we'll use broadcast_chat_messages table
+    const channel = supabase
+      .channel(`chat-${sessionId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'broadcast_chat_messages',
+        filter: `broadcast_id=eq.${sessionId}`,
+      }, (payload) => {
+        const newMsg = payload.new as any;
+        setMessages(prev => [...prev, {
+          id: newMsg.id,
+          platform: 'internal',
+          author: newMsg.user_name,
+          message: newMsg.message,
+          timestamp: new Date(newMsg.created_at),
+          avatarUrl: newMsg.user_avatar_url,
+        }]);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [sessionId]);
+
+  // Auto-scroll to bottom
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   const filteredMessages = filter === 'all' 
     ? messages 
     : messages.filter(m => m.platform === filter);
 
-  const handleSend = () => {
-    if (!newMessage.trim()) return;
-    // Would send message to all platforms
-    setNewMessage('');
+  const handleSend = async () => {
+    if (!newMessage.trim() || !sessionId) return;
+    
+    setIsSending(true);
+    
+    try {
+      // Insert into broadcast_chat_messages
+      const { error } = await supabase
+        .from('broadcast_chat_messages')
+        .insert({
+          broadcast_id: sessionId,
+          message: newMessage.trim(),
+          user_name: 'Host', // Could come from user profile
+        });
+      
+      if (error) throw error;
+      
+      setNewMessage('');
+    } catch (error) {
+      console.error('[UnifiedChatPanel] Send error:', error);
+      toast.error("Erro ao enviar mensagem");
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleHighlight = (msg: ChatMessage) => {
+    showCommentHighlight(msg.author, msg.message, msg.platform, msg.avatarUrl);
+    toast.success("Comentário destacado na tela!");
   };
 
   return (
@@ -111,13 +243,19 @@ export function UnifiedChatPanel() {
       </div>
 
       {/* Messages */}
-      <ScrollArea className="flex-1 p-3">
+      <ScrollArea className="flex-1 p-3" ref={scrollRef}>
         <div className="space-y-3">
+          {isLoading && messages.length === 0 && (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin text-zinc-500" />
+            </div>
+          )}
+          
           {filteredMessages.map((msg) => (
             <div 
               key={msg.id}
               className={cn(
-                "p-2 rounded-lg bg-zinc-800/50 border-l-2",
+                "group p-2 rounded-lg bg-zinc-800/50 border-l-2 relative",
                 getPlatformColor(msg.platform)
               )}
             >
@@ -130,11 +268,26 @@ export function UnifiedChatPanel() {
                   {msg.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
-              <p className="text-sm text-zinc-100">{msg.message}</p>
+              <p className="text-sm text-zinc-100 pr-8">{msg.message}</p>
+              
+              {/* Highlight button */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => handleHighlight(msg)}
+                  >
+                    <Star className="h-3 w-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Destacar na tela</TooltipContent>
+              </Tooltip>
             </div>
           ))}
 
-          {filteredMessages.length === 0 && (
+          {!isLoading && filteredMessages.length === 0 && (
             <div className="flex items-center justify-center py-8 text-zinc-500 text-sm">
               Nenhuma mensagem ainda
             </div>
@@ -149,11 +302,16 @@ export function UnifiedChatPanel() {
             placeholder="Enviar mensagem..."
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
             className="bg-zinc-800 border-zinc-700"
+            disabled={isSending}
           />
-          <Button size="icon" onClick={handleSend}>
-            <Send className="h-4 w-4" />
+          <Button size="icon" onClick={handleSend} disabled={isSending || !newMessage.trim()}>
+            {isSending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
           </Button>
         </div>
       </div>

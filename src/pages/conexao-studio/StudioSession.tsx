@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,14 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Card } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { 
-  Mic, MicOff, Video, VideoOff, Monitor, MonitorOff,
-  Circle, Square, Users, MessageSquare, Palette, Image, 
-  Film, Settings, Radio, PhoneCall, UserPlus, LogOut,
-  Layout, Maximize2, Clock, Wifi, WifiOff
+  Circle, Users, MessageSquare, Palette, Image, 
+  Settings, Radio, UserPlus, LogOut,
+  Maximize2, Clock, Wifi, WifiOff, Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -27,61 +24,37 @@ import { MediaPanel } from "@/components/conexao-studio/panels/MediaPanel";
 import { DestinationsPanel } from "@/components/conexao-studio/panels/DestinationsPanel";
 import { SettingsPanel } from "@/components/conexao-studio/panels/SettingsPanel";
 
-type SessionStatus = 'preparing' | 'live' | 'recording' | 'ended';
+// Hooks
+import { useConexaoSession, ConexaoParticipant, SessionLayout } from "@/hooks/useConexaoSession";
+import { useLocalRecording } from "@/hooks/useLocalRecording";
+
 type LayoutType = 'grid' | 'spotlight' | 'pip' | 'side-by-side';
 
-interface Participant {
-  id: string;
-  name: string;
-  avatarUrl?: string;
-  role: 'host' | 'guest' | 'viewer';
-  isMicOn: boolean;
-  isCameraOn: boolean;
-  isScreenSharing: boolean;
-  isOnStage: boolean;
-}
+// Map between our layout types and session layout types
+const layoutMap: Record<LayoutType, SessionLayout> = {
+  'grid': 'grid',
+  'spotlight': 'spotlight',
+  'pip': 'pip',
+  'side-by-side': 'grid',
+};
 
 export default function StudioSession() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   
-  // Session state
-  const [sessionStatus, setSessionStatus] = useState<SessionStatus>('preparing');
-  const [isRecording, setIsRecording] = useState(false);
+  // UI state
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [activePanel, setActivePanel] = useState<string>('chat');
+  const [layout, setLayout] = useState<LayoutType>('grid');
+  
+  // Recording/streaming state (local UI state)
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [streamDuration, setStreamDuration] = useState(0);
-  
-  // Media controls
-  const [isMicOn, setIsMicOn] = useState(true);
-  const [isCameraOn, setIsCameraOn] = useState(true);
-  const [isScreenSharing, setIsScreenSharing] = useState(false);
-  
-  // Layout
-  const [layout, setLayout] = useState<LayoutType>('grid');
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  
-  // Active panel
-  const [activePanel, setActivePanel] = useState<string>('chat');
-  
-  // Mock participants
-  const [participants, setParticipants] = useState<Participant[]>([
-    {
-      id: '1',
-      name: 'Você (Host)',
-      role: 'host',
-      isMicOn: true,
-      isCameraOn: true,
-      isScreenSharing: false,
-      isOnStage: true
-    }
-  ]);
-  
-  const backstageParticipants = participants.filter(p => !p.isOnStage);
-  const stageParticipants = participants.filter(p => p.isOnStage);
 
   // Fetch studio data
-  const { data: studio, isLoading } = useQuery({
+  const { data: studio, isLoading: isLoadingStudio } = useQuery({
     queryKey: ['studio-session', slug],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -95,6 +68,89 @@ export default function StudioSession() {
     },
     enabled: !!slug
   });
+
+  // Get session ID - use current_session_id or studio id as fallback
+  const sessionId = studio?.current_session_id || studio?.id;
+
+  // Conexao Session Hook - real LiveKit integration
+  const {
+    session,
+    participants,
+    stageParticipants,
+    backstageParticipants,
+    isConnected,
+    isConnecting,
+    connectionError,
+    toggleCamera,
+    toggleMicrophone,
+    toggleScreenShare,
+    isCameraEnabled,
+    isMicrophoneEnabled,
+    isScreenShareEnabled,
+    moveToStage,
+    moveToBackstage,
+    connect,
+    disconnect,
+    startSession,
+    endSession,
+    isStarting,
+    isEnding,
+  } = useConexaoSession({
+    sessionId: sessionId || '',
+    displayName: 'Host', // Could come from user profile
+    onSessionStart: () => {
+      console.log('[StudioSession] Session started');
+    },
+    onSessionEnd: () => {
+      console.log('[StudioSession] Session ended');
+    },
+  });
+
+  // Local recording hook
+  const localRecording = useLocalRecording();
+
+  // Convert participants for preview area
+  const previewParticipants = useMemo(() => {
+    // If we have real participants from LiveKit, use those
+    if (stageParticipants.length > 0) {
+      return stageParticipants.map(p => ({
+        id: p.identity,
+        name: p.name || p.identity,
+        avatarUrl: undefined,
+        role: p.role === 'host' ? 'host' as const : 'guest' as const,
+        isMicOn: !p.isMuted,
+        isCameraOn: p.isCameraEnabled,
+        isScreenSharing: p.isScreenShareEnabled,
+        isOnStage: p.isOnStage,
+        videoTrack: p.videoTrack,
+        audioTrack: p.audioTrack,
+      }));
+    }
+    
+    // Fallback to local participant placeholder
+    return [{
+      id: 'local',
+      name: 'Você (Host)',
+      role: 'host' as const,
+      isMicOn: isMicrophoneEnabled,
+      isCameraOn: isCameraEnabled,
+      isScreenSharing: isScreenShareEnabled,
+      isOnStage: true,
+    }];
+  }, [stageParticipants, isMicrophoneEnabled, isCameraEnabled, isScreenShareEnabled]);
+
+  const backstagePreviewParticipants = useMemo(() => {
+    return backstageParticipants.map(p => ({
+      id: p.identity,
+      name: p.name || p.identity,
+      avatarUrl: undefined,
+      role: p.role === 'host' ? 'host' as const : 'guest' as const,
+      isMicOn: !p.isMuted,
+      isCameraOn: p.isCameraEnabled,
+      isScreenSharing: p.isScreenShareEnabled,
+      isOnStage: p.isOnStage,
+    }));
+  }, [backstageParticipants]);
 
   // Recording timer
   useEffect(() => {
@@ -118,6 +174,13 @@ export default function StudioSession() {
     return () => clearInterval(interval);
   }, [isStreaming]);
 
+  // Auto-connect when session is ready
+  useEffect(() => {
+    if (sessionId && !isConnected && !isConnecting && !connectionError) {
+      connect().catch(console.error);
+    }
+  }, [sessionId, isConnected, isConnecting, connectionError, connect]);
+
   const formatDuration = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
@@ -125,67 +188,115 @@ export default function StudioSession() {
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  const handleGoLive = () => {
-    setIsStreaming(true);
-    setSessionStatus('live');
-    toast.success("Você está ao vivo!");
-  };
-
-  const handleStopLive = () => {
-    setIsStreaming(false);
-    setSessionStatus('preparing');
-    setStreamDuration(0);
-    toast.info("Transmissão encerrada");
-  };
-
-  const handleStartRecording = () => {
-    setIsRecording(true);
-    if (sessionStatus === 'preparing') {
-      setSessionStatus('recording');
+  const handleGoLive = async () => {
+    try {
+      // Call edge function to start streaming
+      const { data, error } = await supabase.functions.invoke('conexao-stream-start', {
+        body: { 
+          session_id: sessionId,
+          destination_ids: ['default'], // Could be real destination IDs
+        },
+      });
+      
+      if (error) throw error;
+      
+      setIsStreaming(true);
+      toast.success("Você está ao vivo!");
+    } catch (error) {
+      console.error('[StudioSession] Go live error:', error);
+      toast.error("Erro ao iniciar transmissão");
     }
-    toast.success("Gravação iniciada");
   };
 
-  const handleStopRecording = () => {
-    setIsRecording(false);
-    if (!isStreaming) {
-      setSessionStatus('preparing');
+  const handleStopLive = async () => {
+    try {
+      await supabase.functions.invoke('conexao-stream-stop', {
+        body: { session_id: sessionId },
+      });
+      
+      setIsStreaming(false);
+      setStreamDuration(0);
+      toast.info("Transmissão encerrada");
+    } catch (error) {
+      console.error('[StudioSession] Stop live error:', error);
+      setIsStreaming(false);
+      setStreamDuration(0);
     }
-    toast.info("Gravação finalizada");
+  };
+
+  const handleStartRecording = async () => {
+    try {
+      // Cloud recording via edge function
+      const { data, error } = await supabase.functions.invoke('conexao-recording-start', {
+        body: { 
+          session_id: sessionId,
+          type: 'cloud',
+        },
+      });
+      
+      if (error) throw error;
+      
+      setIsRecording(true);
+      toast.success("Gravação iniciada");
+    } catch (error) {
+      console.error('[StudioSession] Start recording error:', error);
+      toast.error("Erro ao iniciar gravação");
+    }
+  };
+
+  const handleStopRecording = async () => {
+    try {
+      await supabase.functions.invoke('conexao-recording-stop', {
+        body: { session_id: sessionId },
+      });
+      
+      setIsRecording(false);
+      setRecordingDuration(0);
+      toast.info("Gravação finalizada");
+    } catch (error) {
+      console.error('[StudioSession] Stop recording error:', error);
+      setIsRecording(false);
+      setRecordingDuration(0);
+    }
   };
 
   const handleInviteGuest = () => {
-    const inviteLink = `${window.location.origin}/join/${slug}-${Date.now()}`;
+    const inviteLink = `${window.location.origin}/studio/join/${slug}-${Date.now()}`;
     navigator.clipboard.writeText(inviteLink);
     toast.success("Link de convite copiado!");
   };
 
-  const handleLeaveSession = () => {
+  const handleLeaveSession = async () => {
     if (isStreaming || isRecording) {
       const confirmed = window.confirm(
         "Você está ao vivo ou gravando. Tem certeza que deseja sair?"
       );
       if (!confirmed) return;
     }
+    
+    await disconnect();
     navigate('/admin/conexao-studio/studios');
   };
 
-  const moveToStage = (participantId: string) => {
-    setParticipants(prev => 
-      prev.map(p => p.id === participantId ? { ...p, isOnStage: true } : p)
-    );
+  const handleMoveToStage = (participantId: string) => {
+    moveToStage(participantId);
   };
 
-  const moveToBackstage = (participantId: string) => {
-    setParticipants(prev => 
-      prev.map(p => p.id === participantId ? { ...p, isOnStage: false } : p)
-    );
+  const handleMoveToBackstage = (participantId: string) => {
+    moveToBackstage(participantId);
   };
 
-  if (isLoading) {
+  const handleLayoutChange = (newLayout: LayoutType) => {
+    setLayout(newLayout);
+  };
+
+  if (isLoadingStudio) {
     return (
       <div className="h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Carregando estúdio...</p>
+        </div>
       </div>
     );
   }
@@ -211,7 +322,7 @@ export default function StudioSession() {
             )}
             {!isStreaming && !isRecording && (
               <Badge variant="outline" className="border-zinc-600 text-zinc-400">
-                Preparando
+                {isConnected ? 'Pronto' : isConnecting ? 'Conectando...' : 'Preparando'}
               </Badge>
             )}
           </div>
@@ -233,12 +344,26 @@ export default function StudioSession() {
           
           <div className="flex items-center gap-2 text-sm text-zinc-400">
             <Users className="h-4 w-4" />
-            <span>{participants.length}</span>
+            <span>{participants.length || 1}</span>
           </div>
           
           <div className="flex items-center gap-1 text-sm">
-            <Wifi className="h-4 w-4 text-emerald-500" />
-            <span className="text-zinc-400">Conectado</span>
+            {isConnected ? (
+              <>
+                <Wifi className="h-4 w-4 text-emerald-500" />
+                <span className="text-zinc-400">Conectado</span>
+              </>
+            ) : isConnecting ? (
+              <>
+                <Loader2 className="h-4 w-4 text-yellow-500 animate-spin" />
+                <span className="text-zinc-400">Conectando</span>
+              </>
+            ) : (
+              <>
+                <WifiOff className="h-4 w-4 text-zinc-500" />
+                <span className="text-zinc-400">Desconectado</span>
+              </>
+            )}
           </div>
         </div>
 
@@ -291,32 +416,33 @@ export default function StudioSession() {
           {/* Preview/Stage Area */}
           <div className="flex-1 p-4">
             <StudioPreviewArea
-              participants={stageParticipants}
+              participants={previewParticipants}
               layout={layout}
-              onLayoutChange={setLayout}
+              onLayoutChange={handleLayoutChange}
               isStreaming={isStreaming}
+              sessionId={sessionId}
             />
           </div>
 
           {/* Backstage */}
           <div className="shrink-0 border-t border-zinc-800">
             <StudioBackstage
-              participants={backstageParticipants}
-              onMoveToStage={moveToStage}
+              participants={backstagePreviewParticipants}
+              onMoveToStage={handleMoveToStage}
               onInvite={handleInviteGuest}
             />
           </div>
 
           {/* Control Bar */}
           <StudioControlBar
-            isMicOn={isMicOn}
-            isCameraOn={isCameraOn}
-            isScreenSharing={isScreenSharing}
+            isMicOn={isMicrophoneEnabled}
+            isCameraOn={isCameraEnabled}
+            isScreenSharing={isScreenShareEnabled}
             isRecording={isRecording}
             isStreaming={isStreaming}
-            onToggleMic={() => setIsMicOn(!isMicOn)}
-            onToggleCamera={() => setIsCameraOn(!isCameraOn)}
-            onToggleScreenShare={() => setIsScreenSharing(!isScreenSharing)}
+            onToggleMic={toggleMicrophone}
+            onToggleCamera={toggleCamera}
+            onToggleScreenShare={toggleScreenShare}
             onStartRecording={handleStartRecording}
             onStopRecording={handleStopRecording}
             onGoLive={handleGoLive}
@@ -362,11 +488,11 @@ export default function StudioSession() {
             </TabsList>
 
             <TabsContent value="chat" className="flex-1 m-0 overflow-hidden">
-              <UnifiedChatPanel />
+              <UnifiedChatPanel sessionId={sessionId} />
             </TabsContent>
             
             <TabsContent value="branding" className="flex-1 m-0 overflow-hidden">
-              <BrandingPanel />
+              <BrandingPanel sessionId={sessionId} />
             </TabsContent>
             
             <TabsContent value="media" className="flex-1 m-0 overflow-hidden">

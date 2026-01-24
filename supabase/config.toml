@@ -158,3 +158,9 @@ verify_jwt = false
 
 [functions.conexao-stream-stop]
 verify_jwt = false
+
+[functions.conexao-chat-youtube]
+verify_jwt = false
+
+[functions.conexao-chat-facebook]
+verify_jwt = false
