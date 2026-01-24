@@ -21,7 +21,7 @@ serve(async (req) => {
   }
 
   try {
-    const { live_chat_id, page_token } = await req.json();
+    const { live_chat_id, page_token, check_only } = await req.json();
     
     if (!live_chat_id) {
       return new Response(
@@ -31,6 +31,18 @@ serve(async (req) => {
     }
 
     const youtubeApiKey = Deno.env.get("YOUTUBE_API_KEY");
+    const isConfigured = !!youtubeApiKey;
+    
+    // If only checking configuration status
+    if (check_only) {
+      return new Response(
+        JSON.stringify({
+          is_configured: isConfigured,
+          platform: 'youtube',
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     
     if (!youtubeApiKey) {
       console.log("[conexao-chat-youtube] No API key configured, returning mock data");
@@ -43,6 +55,13 @@ serve(async (req) => {
           timestamp: new Date().toISOString(),
           avatarUrl: undefined,
         },
+        {
+          id: `yt-mock-${Date.now()}-2`,
+          author: "Espectador",
+          message: "Muito bom o programa!",
+          timestamp: new Date(Date.now() - 30000).toISOString(),
+          avatarUrl: undefined,
+        },
       ];
       
       return new Response(
@@ -50,6 +69,9 @@ serve(async (req) => {
           messages: mockMessages,
           nextPageToken: null,
           pollingIntervalMillis: 5000,
+          is_configured: false,
+          is_demo: true,
+          platform: 'youtube',
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -69,7 +91,20 @@ serve(async (req) => {
     if (!response.ok) {
       const errorData = await response.json();
       console.error("[conexao-chat-youtube] YouTube API error:", errorData);
-      throw new Error(`YouTube API error: ${response.status}`);
+      
+      // Return empty result with error info instead of throwing
+      return new Response(
+        JSON.stringify({
+          messages: [],
+          nextPageToken: null,
+          pollingIntervalMillis: 10000,
+          is_configured: true,
+          error: `YouTube API error: ${response.status}`,
+          error_details: errorData.error?.message || 'Unknown error',
+          platform: 'youtube',
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const data = await response.json();
@@ -91,6 +126,8 @@ serve(async (req) => {
         messages,
         nextPageToken: data.nextPageToken || null,
         pollingIntervalMillis: data.pollingIntervalMillis || 5000,
+        is_configured: true,
+        platform: 'youtube',
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
@@ -99,7 +136,11 @@ serve(async (req) => {
     console.error("[conexao-chat-youtube] Error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
     return new Response(
-      JSON.stringify({ error: message }),
+      JSON.stringify({ 
+        error: message,
+        is_configured: !!Deno.env.get("YOUTUBE_API_KEY"),
+        platform: 'youtube',
+      }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
