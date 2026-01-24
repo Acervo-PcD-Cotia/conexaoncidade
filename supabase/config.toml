@@ -153,6 +153,9 @@ verify_jwt = false
 [functions.conexao-recording-stop]
 verify_jwt = false
 
+[functions.conexao-recording-check]
+verify_jwt = false
+
 [functions.conexao-stream-start]
 verify_jwt = false
 
