@@ -20,7 +20,7 @@ serve(async (req) => {
   }
 
   try {
-    const { video_id, access_token, after_cursor } = await req.json();
+    const { video_id, access_token, after_cursor, check_only } = await req.json();
     
     if (!video_id) {
       return new Response(
@@ -30,6 +30,18 @@ serve(async (req) => {
     }
 
     const fbAccessToken = access_token || Deno.env.get("FACEBOOK_ACCESS_TOKEN");
+    const isConfigured = !!fbAccessToken;
+    
+    // If only checking configuration status
+    if (check_only) {
+      return new Response(
+        JSON.stringify({
+          is_configured: isConfigured,
+          platform: 'facebook',
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     
     if (!fbAccessToken) {
       console.log("[conexao-chat-facebook] No access token, returning mock data");
@@ -42,12 +54,22 @@ serve(async (req) => {
           timestamp: new Date().toISOString(),
           avatarUrl: undefined,
         },
+        {
+          id: `fb-mock-${Date.now()}-2`,
+          author: "Seguidor",
+          message: "Parabéns pelo conteúdo!",
+          timestamp: new Date(Date.now() - 45000).toISOString(),
+          avatarUrl: undefined,
+        },
       ];
       
       return new Response(
         JSON.stringify({
           comments: mockComments,
           nextCursor: null,
+          is_configured: false,
+          is_demo: true,
+          platform: 'facebook',
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -67,7 +89,19 @@ serve(async (req) => {
     if (!response.ok) {
       const errorData = await response.json();
       console.error("[conexao-chat-facebook] Facebook API error:", errorData);
-      throw new Error(`Facebook API error: ${response.status}`);
+      
+      // Return empty result with error info instead of throwing
+      return new Response(
+        JSON.stringify({
+          comments: [],
+          nextCursor: null,
+          is_configured: true,
+          error: `Facebook API error: ${response.status}`,
+          error_details: errorData.error?.message || 'Unknown error',
+          platform: 'facebook',
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const data = await response.json();
@@ -87,6 +121,8 @@ serve(async (req) => {
       JSON.stringify({
         comments,
         nextCursor: data.paging?.cursors?.after || null,
+        is_configured: true,
+        platform: 'facebook',
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
@@ -95,7 +131,11 @@ serve(async (req) => {
     console.error("[conexao-chat-facebook] Error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
     return new Response(
-      JSON.stringify({ error: message }),
+      JSON.stringify({ 
+        error: message,
+        is_configured: !!Deno.env.get("FACEBOOK_ACCESS_TOKEN"),
+        platform: 'facebook',
+      }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

@@ -4,15 +4,17 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Send, Youtube, Facebook, MessageCircle, Star, Loader2 } from "lucide-react";
+import { Send, Youtube, Facebook, MessageCircle, Star, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useStudioOverlays } from "@/hooks/useStudioOverlays";
+import { useExternalChatStatus } from "@/hooks/useExternalChatStatus";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ChatMessage {
   id: string;
-  platform: 'youtube' | 'facebook' | 'internal';
+  platform: 'youtube' | 'facebook' | 'internal' | 'illumina';
   author: string;
   message: string;
   timestamp: Date;
@@ -30,6 +32,7 @@ const getPlatformIcon = (platform: ChatMessage['platform']) => {
     case 'facebook':
       return <Facebook className="h-3 w-3 text-blue-500" />;
     case 'internal':
+    case 'illumina':
       return <MessageCircle className="h-3 w-3 text-primary" />;
   }
 };
@@ -41,6 +44,7 @@ const getPlatformColor = (platform: ChatMessage['platform']) => {
     case 'facebook':
       return 'border-l-blue-500';
     case 'internal':
+    case 'illumina':
       return 'border-l-primary';
   }
 };
@@ -53,7 +57,49 @@ export function UnifiedChatPanel({ sessionId }: UnifiedChatPanelProps) {
   const [isSending, setIsSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   
+  const { user } = useAuth();
+  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Host';
+  
   const { showCommentHighlight } = useStudioOverlays(sessionId || '');
+  const chatStatus = useExternalChatStatus(sessionId);
+
+  // Fetch internal messages from illumina_chat_messages
+  const fetchInternalMessages = useCallback(async () => {
+    if (!sessionId) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('illumina_chat_messages')
+        .select('*')
+        .eq('session_id', sessionId)
+        .eq('is_deleted', false)
+        .order('created_at', { ascending: true })
+        .limit(100);
+      
+      if (error) {
+        console.error('[UnifiedChatPanel] Internal fetch error:', error);
+        return;
+      }
+      
+      const internalMsgs: ChatMessage[] = (data || []).map((msg) => ({
+        id: msg.id,
+        platform: (msg.platform || 'internal') as ChatMessage['platform'],
+        author: msg.user_name,
+        message: msg.message,
+        timestamp: new Date(msg.created_at),
+        avatarUrl: msg.user_avatar_url || undefined,
+      }));
+      
+      setMessages(prev => {
+        const existingIds = new Set(prev.map(m => m.id));
+        const newMsgs = internalMsgs.filter(m => !existingIds.has(m.id));
+        if (newMsgs.length === 0) return prev;
+        return [...prev, ...newMsgs].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+      });
+    } catch (error) {
+      console.error('[UnifiedChatPanel] Internal fetch error:', error);
+    }
+  }, [sessionId]);
 
   // Fetch YouTube chat messages
   const fetchYouTubeChat = useCallback(async () => {
@@ -117,47 +163,53 @@ export function UnifiedChatPanel({ sessionId }: UnifiedChatPanelProps) {
     }
   }, [sessionId]);
 
-  // Initial load and polling for external chat
+  // Initial load and polling for all chat sources
   useEffect(() => {
     if (!sessionId) return;
     
     setIsLoading(true);
     
-    // Initial fetch
-    Promise.all([fetchYouTubeChat(), fetchFacebookComments()])
-      .finally(() => setIsLoading(false));
+    // Initial fetch from all sources
+    Promise.all([
+      fetchInternalMessages(),
+      fetchYouTubeChat(),
+      fetchFacebookComments()
+    ]).finally(() => setIsLoading(false));
     
-    // Poll every 5 seconds
+    // Poll external sources every 5 seconds
     const interval = setInterval(() => {
       fetchYouTubeChat();
       fetchFacebookComments();
     }, 5000);
     
     return () => clearInterval(interval);
-  }, [sessionId, fetchYouTubeChat, fetchFacebookComments]);
+  }, [sessionId, fetchInternalMessages, fetchYouTubeChat, fetchFacebookComments]);
 
-  // Subscribe to internal chat via Realtime (if we had a chat table)
+  // Subscribe to internal chat via Realtime using illumina_chat_messages
   useEffect(() => {
     if (!sessionId) return;
 
-    // For now, we'll use broadcast_chat_messages table
     const channel = supabase
-      .channel(`chat-${sessionId}`)
+      .channel(`illumina-chat-${sessionId}`)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
-        table: 'broadcast_chat_messages',
-        filter: `broadcast_id=eq.${sessionId}`,
+        table: 'illumina_chat_messages',
+        filter: `session_id=eq.${sessionId}`,
       }, (payload) => {
         const newMsg = payload.new as any;
-        setMessages(prev => [...prev, {
-          id: newMsg.id,
-          platform: 'internal',
-          author: newMsg.user_name,
-          message: newMsg.message,
-          timestamp: new Date(newMsg.created_at),
-          avatarUrl: newMsg.user_avatar_url,
-        }]);
+        setMessages(prev => {
+          // Avoid duplicates
+          if (prev.some(m => m.id === newMsg.id)) return prev;
+          return [...prev, {
+            id: newMsg.id,
+            platform: (newMsg.platform || 'internal') as ChatMessage['platform'],
+            author: newMsg.user_name,
+            message: newMsg.message,
+            timestamp: new Date(newMsg.created_at),
+            avatarUrl: newMsg.user_avatar_url,
+          }].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+        });
       })
       .subscribe();
 
@@ -175,7 +227,7 @@ export function UnifiedChatPanel({ sessionId }: UnifiedChatPanelProps) {
 
   const filteredMessages = filter === 'all' 
     ? messages 
-    : messages.filter(m => m.platform === filter);
+    : messages.filter(m => m.platform === filter || (filter === 'internal' && m.platform === 'illumina'));
 
   const handleSend = async () => {
     if (!newMessage.trim() || !sessionId) return;
@@ -183,13 +235,15 @@ export function UnifiedChatPanel({ sessionId }: UnifiedChatPanelProps) {
     setIsSending(true);
     
     try {
-      // Insert into broadcast_chat_messages
+      // Insert into illumina_chat_messages
       const { error } = await supabase
-        .from('broadcast_chat_messages')
+        .from('illumina_chat_messages')
         .insert({
-          broadcast_id: sessionId,
+          session_id: sessionId,
           message: newMessage.trim(),
-          user_name: 'Host', // Could come from user profile
+          user_name: userName,
+          user_id: user?.id,
+          platform: 'illumina',
         });
       
       if (error) throw error;
@@ -207,15 +261,22 @@ export function UnifiedChatPanel({ sessionId }: UnifiedChatPanelProps) {
     showCommentHighlight({
       author: msg.author,
       message: msg.message,
-      platform: msg.platform,
+      platform: msg.platform === 'illumina' ? 'internal' : msg.platform,
       avatarUrl: msg.avatarUrl,
     }, 8000);
     toast.success("Comentário destacado na tela!");
   };
 
+  const getStatusIcon = (configured: boolean) => {
+    if (configured) {
+      return <CheckCircle2 className="h-3 w-3 text-green-500" />;
+    }
+    return <AlertCircle className="h-3 w-3 text-yellow-500" />;
+  };
+
   return (
     <div className="h-full flex flex-col">
-      {/* Filter tabs */}
+      {/* Filter tabs with status indicators */}
       <div className="shrink-0 flex gap-1 p-2 border-b border-zinc-800">
         <Badge 
           variant={filter === 'all' ? 'default' : 'outline'}
@@ -224,20 +285,40 @@ export function UnifiedChatPanel({ sessionId }: UnifiedChatPanelProps) {
         >
           Todos
         </Badge>
-        <Badge 
-          variant={filter === 'youtube' ? 'default' : 'outline'}
-          className="cursor-pointer gap-1"
-          onClick={() => setFilter('youtube')}
-        >
-          <Youtube className="h-3 w-3" />
-        </Badge>
-        <Badge 
-          variant={filter === 'facebook' ? 'default' : 'outline'}
-          className="cursor-pointer gap-1"
-          onClick={() => setFilter('facebook')}
-        >
-          <Facebook className="h-3 w-3" />
-        </Badge>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge 
+              variant={filter === 'youtube' ? 'default' : 'outline'}
+              className="cursor-pointer gap-1"
+              onClick={() => setFilter('youtube')}
+            >
+              <Youtube className="h-3 w-3" />
+              {getStatusIcon(chatStatus.youtube.configured)}
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent>
+            {chatStatus.youtube.configured 
+              ? "YouTube conectado" 
+              : "YouTube (modo demo - configure YOUTUBE_API_KEY)"}
+          </TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge 
+              variant={filter === 'facebook' ? 'default' : 'outline'}
+              className="cursor-pointer gap-1"
+              onClick={() => setFilter('facebook')}
+            >
+              <Facebook className="h-3 w-3" />
+              {getStatusIcon(chatStatus.facebook.configured)}
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent>
+            {chatStatus.facebook.configured 
+              ? "Facebook conectado" 
+              : "Facebook (modo demo - configure FACEBOOK_ACCESS_TOKEN)"}
+          </TooltipContent>
+        </Tooltip>
         <Badge 
           variant={filter === 'internal' ? 'default' : 'outline'}
           className="cursor-pointer gap-1"
