@@ -29,6 +29,8 @@ import {
   PanelLeft,
   PanelLeftClose,
   Medal,
+  GraduationCap,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,6 +41,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNewsCreationModal } from "@/contexts/NewsCreationModalContext";
 import { useFocusMode } from "@/components/admin/AdminLayout";
+import { useSsoNavigation } from "@/hooks/useSsoNavigation";
 import { cn } from "@/lib/utils";
 import {
   Tooltip,
@@ -64,6 +67,7 @@ import logoFull from "@/assets/logo-full.png";
 export default function Dashboard() {
   const { openModal } = useNewsCreationModal();
   const { focusMode, toggleFocusMode } = useFocusMode();
+  const { navigateToGcotia, isLoading: isSsoLoading } = useSsoNavigation();
   const navigate = useNavigate();
   
   const [searchOpen, setSearchOpen] = useState(false);
@@ -333,6 +337,15 @@ export default function Dashboard() {
       bgColor: "bg-orange-500/10",
       href: "/admin/analytics",
     },
+    {
+      title: "Geração Cotia",
+      description: "Plataforma educacional",
+      icon: GraduationCap,
+      color: "text-teal-600",
+      bgColor: "bg-teal-500/10",
+      onClick: () => navigateToGcotia({ openInNewTab: true }),
+      isLoading: isSsoLoading,
+    },
   ];
 
   const getStatusBadge = (status: string) => {
@@ -561,15 +574,24 @@ export default function Dashboard() {
                   ) : (
                     <Card 
                       key={action.title} 
-                      className="group cursor-pointer dashboard-card-glass dashboard-card-glow dashboard-hover-lift"
-                      onClick={action.onClick}
+                      className={cn(
+                        "group cursor-pointer dashboard-card-glass dashboard-card-glow dashboard-hover-lift",
+                        action.isLoading && "opacity-70 pointer-events-none"
+                      )}
+                      onClick={action.isLoading ? undefined : action.onClick}
                     >
                       <CardContent className="p-5">
                         <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center mb-4", action.bgColor)}>
-                          <action.icon className={cn("h-6 w-6", action.color)} />
+                          {action.isLoading ? (
+                            <Loader2 className={cn("h-6 w-6 animate-spin", action.color)} />
+                          ) : (
+                            <action.icon className={cn("h-6 w-6", action.color)} />
+                          )}
                         </div>
                         <h4 className="font-semibold">{action.title}</h4>
-                        <p className="text-sm text-muted-foreground mt-1">{action.description}</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {action.isLoading ? "Conectando..." : action.description}
+                        </p>
                       </CardContent>
                     </Card>
                   )
