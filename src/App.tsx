@@ -186,6 +186,9 @@ import ConexaoStudioTeam from "./pages/conexao-studio/Team";
 import ConexaoStudioSession from "./pages/conexao-studio/StudioSession";
 import ConexaoStudioGuestEntry from "./pages/conexao-studio/GuestEntry";
 
+// Conexão Stream (Central Hub)
+import ConexaoStream from "./pages/admin/ConexaoStream";
+
 // Rádio Web Pages
 import {
   RadioOverview,
@@ -384,6 +387,9 @@ const App = () => (
                         {/* Censo PcD Admin Routes */}
                         <Route path="censo-pcd" element={<CensoPcdDashboard />} />
                         <Route path="censo-pcd/respostas" element={<CensoPcdRespostas />} />
+                        
+                        {/* Conexão Stream Hub (Central) */}
+                        <Route path="stream" element={<ConexaoStream />} />
                         
                         {/* Broadcast Admin Routes */}
                         <Route path="broadcast" element={<BroadcastDashboard />} />

@@ -104,6 +104,13 @@ const editorialItems = [
   { title: "Podcasts", url: "/admin/podcasts", icon: Mic },
 ];
 
+// Item principal do Conexão Stream (central hub)
+const streamHubItem: MenuItem = { 
+  title: "Conexão Stream", 
+  url: "/admin/stream", 
+  icon: Satellite 
+};
+
 const broadcastItems: MenuItem[] = [
   { title: "Dashboard", url: "/admin/broadcast", icon: Radio },
   { title: "Transmissões", url: "/admin/broadcast/list", icon: Play },
@@ -261,6 +268,27 @@ export function AdminSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Conexão Stream - Central Hub */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Central de Streaming</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to={streamHubItem.url}
+                    className="flex items-center gap-2 font-medium"
+                    activeClassName="bg-primary/10 text-primary"
+                  >
+                    <streamHubItem.icon className="h-4 w-4" />
+                    {!collapsed && <span>{streamHubItem.title}</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
