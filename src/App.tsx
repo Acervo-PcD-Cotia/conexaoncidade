@@ -45,6 +45,7 @@ import QuickNotesAdmin from "./pages/admin/QuickNotesAdmin";
 import Analytics from "./pages/admin/Analytics";
 import ReadingAnalytics from "./pages/admin/ReadingAnalytics";
 import AuditLogs from "./pages/admin/AuditLogs";
+import SsoMonitor from "./pages/admin/SsoMonitor";
 import Settings from "./pages/admin/Settings";
 import NoticiasAI from "./pages/admin/NoticiasAI";
 import SocialDashboard from "./pages/admin/SocialDashboard";
@@ -327,6 +328,7 @@ const App = () => (
                         <Route path="links/bio" element={<LinksBioBuilder />} />
                         <Route path="links/reports" element={<LinksReports />} />
                         <Route path="logs" element={<AuditLogs />} />
+                        <Route path="sso-monitor" element={<SsoMonitor />} />
                         <Route path="settings" element={<Settings />} />
                         <Route path="settings/template" element={<TemplateSelector />} />
                         <Route path="settings/vocabulary" element={<VocabularyEditor />} />
