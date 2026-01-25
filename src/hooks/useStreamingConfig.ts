@@ -136,6 +136,15 @@ export function useStreamingConfig(kind: "radio" | "tv") {
         throw new Error("Selecione um site para continuar");
       }
 
+      // Check if config exists in database before testing
+      if (!config?.api_json_url) {
+        return {
+          ok: false,
+          kind,
+          error: { message: "Salve a configuração com a URL da API antes de testar." },
+        };
+      }
+
       const startTime = Date.now();
       
       // Use fetch with GET and query params for better compatibility
@@ -155,15 +164,29 @@ export function useStreamingConfig(kind: "radio" | "tv") {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        
+        // Handle specific error codes
         if (errorData?.code === "NOT_CONFIGURED") {
           return {
             ok: false,
             kind,
             latencyMs,
-            error: { message: "Ainda não configurado. Salve a URL da API primeiro." },
+            error: { message: "Configuração não encontrada. Salve a URL da API primeiro." },
           };
         }
-        throw new Error(errorData?.message || `Erro ${response.status}`);
+        
+        // Handle invalid kind error (routing issue)
+        if (response.status === 400 && errorData?.error?.message?.includes("Invalid kind")) {
+          console.error("[useStreamingConfig] Routing error:", errorData);
+          throw new Error("Erro interno de roteamento. Tente novamente.");
+        }
+        
+        // Handle missing tenant
+        if (response.status === 400 && errorData?.error?.message?.includes("Missing tenant")) {
+          throw new Error("Tenant não identificado. Recarregue a página.");
+        }
+        
+        throw new Error(errorData?.error?.message || errorData?.message || `Erro ${response.status}`);
       }
 
       const data = await response.json();
@@ -173,7 +196,7 @@ export function useStreamingConfig(kind: "radio" | "tv") {
           ok: false,
           kind,
           latencyMs,
-          error: { message: "Ainda não configurado. Salve a URL da API primeiro." },
+          error: { message: "Configuração não encontrada. Salve a URL da API primeiro." },
         };
       }
       

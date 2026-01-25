@@ -264,15 +264,26 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const pathParts = url.pathname.split("/").filter(Boolean);
     
+    console.log("[streaming-gateway] Request path:", url.pathname);
+    console.log("[streaming-gateway] Path parts:", pathParts);
+    
     // Expected paths: /streaming-gateway/radio/status or /streaming-gateway/tv/status
-    // After Supabase routing: /radio/status or /tv/status
-    const kind = pathParts[0] as "radio" | "tv";
-    const action = pathParts[1] || "status";
+    // Supabase includes function name in path, so we need to skip it
+    let offset = 0;
+    if (pathParts[0] === "streaming-gateway") {
+      offset = 1;
+    }
+    
+    const kind = pathParts[offset] as "radio" | "tv";
+    const action = pathParts[offset + 1] || "status";
     const format = url.searchParams.get("format") || "legacy"; // "v2" or "legacy"
 
+    console.log("[streaming-gateway] Parsed - kind:", kind, "action:", action, "format:", format);
+
     if (!["radio", "tv"].includes(kind)) {
+      console.error("[streaming-gateway] Invalid kind:", kind, "from path:", url.pathname);
       return new Response(
-        JSON.stringify({ ok: false, error: { message: "Invalid kind. Use 'radio' or 'tv'" } }),
+        JSON.stringify({ ok: false, error: { message: `Invalid kind '${kind}'. Use 'radio' or 'tv'. Path: ${url.pathname}` } }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

@@ -196,7 +196,8 @@ function StreamingTvConfigContent() {
                 <Button
                   variant="outline"
                   onClick={handleTestConnection}
-                  disabled={isTestingConnection || !formData.api_json_url || !hasTenant}
+                  disabled={isTestingConnection || !config?.api_json_url || !hasTenant}
+                  title={!config?.api_json_url ? "Salve a configuração primeiro" : "Testar conexão com a API"}
                   size="default"
                 >
                   {isTestingConnection ? (
