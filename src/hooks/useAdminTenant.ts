@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTenantContext } from "@/contexts/TenantContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,7 +7,6 @@ import { supabase } from "@/integrations/supabase/client";
 interface Site {
   id: string;
   name: string;
-  slug: string;
 }
 
 interface AdminTenantResult {
@@ -17,96 +17,113 @@ interface AdminTenantResult {
   availableSites: Site[];
   selectedSite: Site | null;
   selectTenant: (id: string) => void;
+  refetch: () => void;
 }
 
 const STORAGE_KEY = "admin_selected_tenant";
+
+async function fetchUserRole(userId: string) {
+  const { data, error } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .maybeSingle();
+  
+  if (error) {
+    console.error("Error fetching user role:", error);
+    return null;
+  }
+  return data?.role;
+}
+
+async function fetchAllSites() {
+  const { data, error } = await supabase
+    .from("sites")
+    .select("id, name")
+    .order("name");
+  
+  if (error) throw error;
+  return data || [];
+}
+
+async function fetchUserSites(userId: string) {
+  // First get site_ids where user is a member
+  const { data: userSiteIds, error: userSitesError } = await supabase
+    .from("site_users")
+    .select("site_id")
+    .eq("user_id", userId)
+    .eq("status", "active");
+
+  if (userSitesError) throw userSitesError;
+
+  const siteIds = (userSiteIds || []).map(s => s.site_id);
+  
+  if (siteIds.length === 0) {
+    return [];
+  }
+
+  // Fetch sites by IDs
+  const { data: sites, error: sitesError } = await supabase
+    .from("sites")
+    .select("id, name")
+    .in("id", siteIds)
+    .order("name");
+
+  if (sitesError) throw sitesError;
+  return sites || [];
+}
 
 export function useAdminTenant(): AdminTenantResult {
   const { user } = useAuth();
   const { currentTenantId, setCurrentTenantId, isLoading: contextLoading } = useTenantContext();
   
-  const [availableSites, setAvailableSites] = useState<Site[]>([]);
-  const [isLoadingSites, setIsLoadingSites] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch available sites for the user
-  useEffect(() => {
-    const fetchSites = async () => {
-      if (!user) {
-        setAvailableSites([]);
-        setIsLoadingSites(false);
-        return;
-      }
-
+  // Fetch user role and sites with React Query for caching
+  const { data: sitesData, isLoading: sitesLoading, refetch } = useQuery({
+    queryKey: ["admin-available-sites", user?.id],
+    queryFn: async () => {
+      if (!user) return { sites: [], isSuperAdmin: false };
+      
       try {
-        setIsLoadingSites(true);
         setError(null);
-
-        // First try to get site_ids where user is a member
-        const { data: userSiteIds, error: userSitesError } = await supabase
-          .from("site_users")
-          .select("site_id")
-          .eq("user_id", user.id)
-          .eq("status", "active");
-
-        if (userSitesError) {
-          console.error("Error fetching user sites:", userSitesError);
-        }
-
-        const siteIds = (userSiteIds || []).map(s => s.site_id);
         
-        let sitesToUse: Site[] = [];
-
-        if (siteIds.length > 0) {
-          // Fetch sites by IDs
-          const { data: sites, error: sitesError } = await supabase
-            .from("sites")
-            .select("id, name")
-            .in("id", siteIds);
-
-          if (!sitesError && sites) {
-            sitesToUse = sites.map((s: { id: string; name: string }) => ({ 
-              id: s.id, 
-              name: s.name, 
-              slug: s.name.toLowerCase().replace(/\s+/g, '-') 
-            }));
-          }
-        }
-
-        // Fallback: if no sites through membership, get any available site
-        if (sitesToUse.length === 0) {
-          const { data: allSites, error: allSitesError } = await supabase
-            .from("sites")
-            .select("id, name")
-            .limit(10);
-
-          if (allSitesError) {
-            console.error("Error fetching all sites:", allSitesError);
-            setError("Não foi possível carregar os sites disponíveis");
-          } else if (allSites) {
-            sitesToUse = allSites.map((s: { id: string; name: string }) => ({ 
-              id: s.id, 
-              name: s.name, 
-              slug: s.name.toLowerCase().replace(/\s+/g, '-') 
-            }));
+        // Check if user is super_admin
+        const role = await fetchUserRole(user.id);
+        const isSuperAdmin = role === 'super_admin';
+        
+        let sites: Site[];
+        
+        if (isSuperAdmin) {
+          // Super admin can see all sites
+          sites = await fetchAllSites();
+        } else {
+          // Regular user: fetch via site_users
+          sites = await fetchUserSites(user.id);
+          
+          // Fallback: if no sites through membership, try to get any available site
+          if (sites.length === 0) {
+            sites = await fetchAllSites();
           }
         }
         
-        setAvailableSites(sitesToUse);
+        return { sites, isSuperAdmin };
       } catch (err) {
-        console.error("Error in fetchSites:", err);
-        setError("Erro ao carregar sites");
-      } finally {
-        setIsLoadingSites(false);
+        console.error("Error fetching sites:", err);
+        setError("Erro ao carregar sites. Tente novamente.");
+        return { sites: [], isSuperAdmin: false };
       }
-    };
+    },
+    enabled: !!user,
+    staleTime: 60_000, // Cache for 1 minute
+    gcTime: 5 * 60_000, // Keep in cache for 5 minutes
+  });
 
-    fetchSites();
-  }, [user]);
+  const availableSites = sitesData?.sites || [];
 
   // Try to restore tenant from localStorage if not set
   useEffect(() => {
-    if (!currentTenantId && availableSites.length > 0 && !contextLoading) {
+    if (!currentTenantId && availableSites.length > 0 && !contextLoading && !sitesLoading) {
       const storedTenantId = localStorage.getItem(STORAGE_KEY);
       
       // Check if stored tenant is in available sites
@@ -118,7 +135,7 @@ export function useAdminTenant(): AdminTenantResult {
         localStorage.setItem(STORAGE_KEY, availableSites[0].id);
       }
     }
-  }, [currentTenantId, availableSites, contextLoading, setCurrentTenantId]);
+  }, [currentTenantId, availableSites, contextLoading, sitesLoading, setCurrentTenantId]);
 
   // Select a different tenant
   const selectTenant = useCallback((id: string) => {
@@ -131,7 +148,7 @@ export function useAdminTenant(): AdminTenantResult {
     return availableSites.find(s => s.id === currentTenantId) || null;
   }, [availableSites, currentTenantId]);
 
-  const isLoading = contextLoading || isLoadingSites;
+  const isLoading = contextLoading || sitesLoading;
   const hasTenant = !!currentTenantId;
 
   return {
@@ -142,5 +159,6 @@ export function useAdminTenant(): AdminTenantResult {
     availableSites,
     selectedSite,
     selectTenant,
+    refetch,
   };
 }
