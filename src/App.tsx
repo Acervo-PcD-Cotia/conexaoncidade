@@ -190,6 +190,14 @@ import ConexaoStudioGuestEntry from "./pages/conexao-studio/GuestEntry";
 // Conexão Stream (Central Hub)
 import ConexaoStream from "./pages/admin/ConexaoStream";
 
+// Streaming Config Pages
+import StreamingRadioConfig from "./pages/admin/streaming/StreamingRadioConfig";
+import StreamingTvConfig from "./pages/admin/streaming/StreamingTvConfig";
+
+// Public Streaming Pages
+import RadioPage from "./pages/public/RadioPage";
+import TvPage from "./pages/public/TvPage";
+
 // Rádio Web Pages
 import {
   RadioOverview,
@@ -294,6 +302,10 @@ const App = () => (
                       <Route path="/reset-password" element={<ResetPassword />} />
                       <Route path="/login" element={<Navigate to="/auth" replace />} />
                       <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
+                      
+                      {/* Public Streaming Pages */}
+                      <Route path="/radio" element={<RadioPage />} />
+                      <Route path="/tv" element={<TvPage />} />
                       
                       {/* Studio Guest Entry */}
                       <Route path="/studio/join/:token" element={<ConexaoStudioGuestEntry />} />
@@ -428,6 +440,16 @@ const App = () => (
                         {/* TV Web Admin Routes */}
                         <Route path="tv" element={<TvOverview />} />
                         <Route path="tv/live" element={<TvLive />} />
+                        <Route path="tv/schedule" element={<TvSchedule />} />
+                        <Route path="tv/vod" element={<TvVod />} />
+                        <Route path="tv/uploads" element={<TvUploads />} />
+                        <Route path="tv/stats" element={<TvStats />} />
+                        <Route path="tv/players" element={<TvPlayers />} />
+                        <Route path="tv/settings" element={<TvSettings />} />
+                        
+                        {/* Streaming Config Routes */}
+                        <Route path="streaming/radio" element={<StreamingRadioConfig />} />
+                        <Route path="streaming/tv" element={<StreamingTvConfig />} />
                         <Route path="tv/schedule" element={<TvSchedule />} />
                         <Route path="tv/vod" element={<TvVod />} />
                         <Route path="tv/uploads" element={<TvUploads />} />

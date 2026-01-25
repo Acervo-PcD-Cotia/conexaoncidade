@@ -182,3 +182,6 @@ verify_jwt = false
 
 [functions.fetch-syndication-feed]
 verify_jwt = false
+
+[functions.streaming-gateway]
+verify_jwt = false

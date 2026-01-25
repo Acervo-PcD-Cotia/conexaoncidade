@@ -4878,6 +4878,77 @@ export type Database = {
           },
         ]
       }
+      external_streaming_configs: {
+        Row: {
+          api_json_url: string | null
+          api_xml_url: string | null
+          created_at: string | null
+          embed_code: string | null
+          embed_mode: string | null
+          error_count: number | null
+          external_panel_url: string | null
+          id: string
+          is_active: boolean | null
+          kind: string
+          last_error: string | null
+          last_fetched_at: string | null
+          last_snapshot: Json | null
+          notes: string | null
+          player_url: string | null
+          public_page_path: string | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          api_json_url?: string | null
+          api_xml_url?: string | null
+          created_at?: string | null
+          embed_code?: string | null
+          embed_mode?: string | null
+          error_count?: number | null
+          external_panel_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          kind: string
+          last_error?: string | null
+          last_fetched_at?: string | null
+          last_snapshot?: Json | null
+          notes?: string | null
+          player_url?: string | null
+          public_page_path?: string | null
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          api_json_url?: string | null
+          api_xml_url?: string | null
+          created_at?: string | null
+          embed_code?: string | null
+          embed_mode?: string | null
+          error_count?: number | null
+          external_panel_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          kind?: string
+          last_error?: string | null
+          last_fetched_at?: string | null
+          last_snapshot?: Json | null
+          notes?: string | null
+          player_url?: string | null
+          public_page_path?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "external_streaming_configs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fact_check_claims: {
         Row: {
           claim_text: string
