@@ -51,7 +51,7 @@ export interface TestResultV2 {
 }
 
 export function useStreamingConfig(kind: "radio" | "tv") {
-  const { tenantId, hasTenant, isLoading: tenantLoading, error: tenantError } = useAdminTenant();
+  const { tenantId, hasTenant, isLoading: tenantLoading, error: tenantError, availableSites } = useAdminTenant();
   const queryClient = useQueryClient();
 
   const queryKey = ["streaming-config", tenantId, kind];
@@ -72,6 +72,7 @@ export function useStreamingConfig(kind: "radio" | "tv") {
       return data as ExternalStreamingConfig | null;
     },
     enabled: !!tenantId && !tenantLoading,
+    staleTime: 30_000, // Cache for 30 seconds
   });
 
   const saveMutation = useMutation({
@@ -116,7 +117,16 @@ export function useStreamingConfig(kind: "radio" | "tv") {
     },
     onError: (error) => {
       console.error("Error saving streaming config:", error);
-      toast.error(error instanceof Error ? error.message : "Erro ao salvar configuração");
+      const message = error instanceof Error ? error.message : "Erro ao salvar configuração";
+      
+      // Provide clearer error messages for common issues
+      if (message.includes("violates row-level security")) {
+        toast.error("Sem permissão para salvar. Verifique se você tem acesso a este site.");
+      } else if (message.includes("duplicate key")) {
+        toast.error("Configuração já existe para este site.");
+      } else {
+        toast.error(message);
+      }
     },
   });
 
@@ -126,29 +136,51 @@ export function useStreamingConfig(kind: "radio" | "tv") {
         throw new Error("Selecione um site para continuar");
       }
 
-      const { data, error } = await supabase.functions.invoke(
-        `streaming-gateway/${kind}/status`,
+      const startTime = Date.now();
+      
+      // Use fetch with GET and query params for better compatibility
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/streaming-gateway/${kind}/status?format=v2`,
         {
+          method: "GET",
           headers: {
             "x-tenant-id": tenantId,
+            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: { format: "v2" },
         }
       );
 
-      if (error) throw error;
+      const latencyMs = Date.now() - startTime;
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        if (errorData?.code === "NOT_CONFIGURED") {
+          return {
+            ok: false,
+            kind,
+            latencyMs,
+            error: { message: "Ainda não configurado. Salve a URL da API primeiro." },
+          };
+        }
+        throw new Error(errorData?.message || `Erro ${response.status}`);
+      }
+
+      const data = await response.json();
+      
       if (data?.code === "NOT_CONFIGURED") {
         return {
           ok: false,
           kind,
-          error: { message: "Configuração não encontrada" },
+          latencyMs,
+          error: { message: "Ainda não configurado. Salve a URL da API primeiro." },
         };
       }
       
-      // Add latencyMs from response or calculate approximate
       return {
         ...data,
         ok: !data?.error,
+        latencyMs,
       } as TestResultV2;
     },
   });
@@ -159,6 +191,7 @@ export function useStreamingConfig(kind: "radio" | "tv") {
     error: tenantError || (error instanceof Error ? error.message : null),
     hasTenant,
     tenantId,
+    availableSites,
     save: saveMutation.mutate,
     isSaving: saveMutation.isPending,
     testConnection: testConnectionMutation.mutateAsync,

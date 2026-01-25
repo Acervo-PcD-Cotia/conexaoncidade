@@ -30,7 +30,7 @@ function StatusCard({ label, value, icon: Icon }: { label: string; value: string
 }
 
 function StreamingTvConfigContent() {
-  const { config, isLoading, hasTenant, save, isSaving, testConnection, isTestingConnection, testResult, testError } = useStreamingConfig("tv");
+  const { config, isLoading, hasTenant, save, isSaving, testConnection, isTestingConnection, testResult, testError, availableSites } = useStreamingConfig("tv");
   
   const [formData, setFormData] = useState<StreamingConfigInput>({
     api_json_url: "",
@@ -322,7 +322,7 @@ function StreamingTvConfigContent() {
                 </Alert>
               )}
 
-              {/* Collapsible Preview */}
+              {/* Collapsible Preview - Sandboxed iframe for safety */}
               <Collapsible open={showPreview} onOpenChange={setShowPreview}>
                 <CollapsibleTrigger asChild>
                   <Button
@@ -337,9 +337,11 @@ function StreamingTvConfigContent() {
                 <CollapsibleContent className="mt-3">
                   {getPreviewHtml() && (
                     <div className="border rounded-lg p-4 bg-muted/30">
-                      <div
-                        className="w-full aspect-video"
-                        dangerouslySetInnerHTML={{ __html: getPreviewHtml() }}
+                      <iframe
+                        srcDoc={`<!DOCTYPE html><html><head><style>body{margin:0;font-family:sans-serif;}</style></head><body>${getPreviewHtml()}</body></html>`}
+                        sandbox="allow-scripts allow-same-origin"
+                        className="w-full aspect-video border-0 rounded"
+                        title="Preview do Player"
                       />
                     </div>
                   )}
