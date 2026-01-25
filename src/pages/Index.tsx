@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { DynamicHomeSection } from "@/components/home/DynamicHomeSection";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,13 +19,33 @@ const FALLBACK_HOME_SECTIONS: HomeSectionConfig[] = [
   { type: "most_read", order: 10, enabled: true },
 ];
 
+// Safety timeout to prevent infinite loading (5 seconds)
+const LOADING_TIMEOUT_MS = 5000;
+
 const Index = () => {
   const { homeSections, isLoading } = useSiteConfig();
+  const [forceRender, setForceRender] = useState(false);
 
-  // Use fallback if no sections available
+  // Safety timeout: force render after 5 seconds to prevent infinite loading
+  useEffect(() => {
+    if (!isLoading) {
+      setForceRender(false);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      console.warn("Homepage loading timeout - forcing render with fallback sections");
+      setForceRender(true);
+    }, LOADING_TIMEOUT_MS);
+
+    return () => clearTimeout(timer);
+  }, [isLoading]);
+
+  // Use fallback if no sections available or if timeout triggered
   const sectionsToRender = homeSections.length > 0 ? homeSections : FALLBACK_HOME_SECTIONS;
 
-  if (isLoading) {
+  // Show skeleton only if still loading AND timeout hasn't triggered
+  if (isLoading && !forceRender) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-10 w-full" />
