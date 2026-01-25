@@ -4,7 +4,7 @@ import { useTenantContext } from "@/contexts/TenantContext";
 import type { SiteTemplateConfig, RadioConfig, TVConfig, SiteBranding, VocabularyMap } from "@/types/portal-templates";
 
 export function useSiteTemplateConfig() {
-  const { currentTenantId } = useTenantContext();
+  const { currentTenantId, isLoading: tenantLoading } = useTenantContext();
 
   return useQuery({
     queryKey: ["site-template-config", currentTenantId],
@@ -20,7 +20,8 @@ export function useSiteTemplateConfig() {
       if (error) throw error;
       return data as unknown as SiteTemplateConfig | null;
     },
-    enabled: !!currentTenantId,
+    // Only run query when we have a tenant ID and tenant loading is complete
+    enabled: !tenantLoading && !!currentTenantId,
   });
 }
 
