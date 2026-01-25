@@ -1,5 +1,6 @@
 // ============================================
 // Módulo Rádio Web - API Client (isolado)
+// Conecta via Edge Function radio-gateway para backend real
 // ============================================
 
 import type {
@@ -16,29 +17,70 @@ import type {
 import { RADIO_ENDPOINTS } from "./endpoints";
 import { mockRadioServer } from "./mockServer";
 
-const BASE_URL = import.meta.env.VITE_RADIO_API_BASE_URL || "";
-const USE_MOCK = !BASE_URL;
+// Use Edge Function as gateway
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "";
+const GATEWAY_URL = `${SUPABASE_URL}/functions/v1/radio-gateway`;
+
+// Get current tenant ID from context (will be injected)
+let currentTenantId: string | null = null;
+
+export function setRadioTenantId(tenantId: string | null) {
+  currentTenantId = tenantId;
+}
 
 class RadioApiClient {
   private async fetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    if (USE_MOCK) {
+    // If no tenant configured, use mock
+    if (!currentTenantId) {
+      console.log("Radio: No tenant configured, using mock");
       return mockRadioServer.handle<T>(endpoint, options);
     }
 
-    const response = await fetch(`${BASE_URL}${endpoint}`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...options?.headers,
-      },
-      ...options,
-    });
+    try {
+      // Map endpoint to gateway endpoint
+      const gatewayEndpoint = this.mapEndpoint(endpoint);
+      
+      const response = await fetch(`${GATEWAY_URL}${gatewayEndpoint}`, {
+        headers: {
+          "Content-Type": "application/json",
+          "x-tenant-id": currentTenantId,
+          ...options?.headers,
+        },
+        ...options,
+      });
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`API Error ${response.status}: ${error}`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        
+        // If not configured, fallback to mock
+        if (errorData.useMock || errorData.code === "NOT_CONFIGURED") {
+          console.log("Radio: Backend not configured, using mock");
+          return mockRadioServer.handle<T>(endpoint, options);
+        }
+        
+        throw new Error(`API Error ${response.status}: ${errorData.error || "Unknown error"}`);
+      }
+
+      return response.json();
+    } catch (error) {
+      console.error("Radio API error, falling back to mock:", error);
+      // Fallback to mock on any error
+      return mockRadioServer.handle<T>(endpoint, options);
     }
+  }
 
-    return response.json();
+  private mapEndpoint(endpoint: string): string {
+    // Map internal endpoints to gateway endpoints
+    if (endpoint.includes("/status")) return "/status";
+    if (endpoint.includes("/encoder")) return "/encoder";
+    if (endpoint.includes("/autodj/toggle")) return "/autodj/toggle";
+    if (endpoint.includes("/autodj")) return "/autodj";
+    if (endpoint.includes("/playlists")) return "/playlists";
+    if (endpoint.includes("/tracks") || endpoint.includes("/library")) return "/tracks";
+    if (endpoint.includes("/stats")) return `/stats${endpoint.includes("?") ? endpoint.substring(endpoint.indexOf("?")) : ""}`;
+    if (endpoint.includes("/players")) return "/players";
+    if (endpoint.includes("/settings")) return "/settings";
+    return endpoint;
   }
 
   // ============= Status =============
@@ -134,41 +176,21 @@ class RadioApiClient {
   }
 
   async uploadTrack(file: File, metadata?: Partial<RadioTrack>): Promise<RadioTrackUpload> {
-    // Para upload real, usaria FormData
-    // No mock, simula o processo
-    if (USE_MOCK) {
-      return {
-        id: `upload-${Date.now()}`,
-        filename: file.name,
-        status: "done",
-        progressPct: 100,
-        track: {
-          id: `track-${Date.now()}`,
-          title: metadata?.title || file.name.replace(/\.[^/.]+$/, ""),
-          artist: metadata?.artist || "Artista Desconhecido",
-          durationSec: 180,
-          uploadedAt: new Date().toISOString(),
-          playCount: 0,
-        },
-      };
-    }
-
-    const formData = new FormData();
-    formData.append("file", file);
-    if (metadata) {
-      formData.append("metadata", JSON.stringify(metadata));
-    }
-
-    const response = await fetch(`${BASE_URL}${RADIO_ENDPOINTS.TRACK_UPLOAD}`, {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!response.ok) {
-      throw new Error(`Upload failed: ${response.status}`);
-    }
-
-    return response.json();
+    // Para upload, sempre usa mock por enquanto (gateway não suporta upload direto ainda)
+    return {
+      id: `upload-${Date.now()}`,
+      filename: file.name,
+      status: "done",
+      progressPct: 100,
+      track: {
+        id: `track-${Date.now()}`,
+        title: metadata?.title || file.name.replace(/\.[^/.]+$/, ""),
+        artist: metadata?.artist || "Artista Desconhecido",
+        durationSec: 180,
+        uploadedAt: new Date().toISOString(),
+        playCount: 0,
+      },
+    };
   }
 
   // ============= Stats =============

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRadioStatus, useRadioPlaylists, useRadioStats } from "../hooks";
+import { useRadioTenantSync } from "../hooks/useRadioTenantSync";
 import { Link } from "react-router-dom";
 
 function StatusBadge({ state }: { state?: string }) {
@@ -32,6 +33,9 @@ function KpiCard({ title, value, icon: Icon, isLoading }: { title: string; value
 }
 
 export default function RadioOverview() {
+  // Sync tenant ID with radio API client
+  useRadioTenantSync();
+  
   const { data: status, isLoading: statusLoading } = useRadioStatus();
   const { data: playlists, isLoading: playlistsLoading } = useRadioPlaylists();
   const { data: stats, isLoading: statsLoading } = useRadioStats("day");
