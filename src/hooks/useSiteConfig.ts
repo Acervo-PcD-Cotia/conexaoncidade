@@ -54,10 +54,12 @@ const DEFAULT_HOME_SECTIONS: HomeSectionConfig[] = [
 ];
 
 export function useSiteConfig() {
-  const { currentTenantId } = useTenantContext();
+  const { currentTenantId, isLoading: tenantLoading } = useTenantContext();
   const { data: siteConfig, isLoading: configLoading } = useSiteTemplateConfig();
   const { data: template, isLoading: templateLoading } = usePortalTemplate(siteConfig?.template_id);
 
+  // If no tenant context yet (public visitor), use defaults immediately
+  const shouldUseDefaults = !tenantLoading && !currentTenantId;
   const cacheKey = `site_config_${CACHE_VERSION}_${currentTenantId}`;
 
   // Build merged theme
@@ -139,6 +141,11 @@ export function useSiteConfig() {
 
   // Build home sections
   const homeSections = useMemo<HomeSectionConfig[]>(() => {
+    // If using defaults (no tenant), return default sections immediately
+    if (shouldUseDefaults) {
+      return DEFAULT_HOME_SECTIONS;
+    }
+
     // Priority: site override > template > default
     const siteHomeSections = siteConfig?.home_sections_overrides as HomeSectionConfig[] | undefined;
     if (siteHomeSections && siteHomeSections.length > 0) {
@@ -151,7 +158,7 @@ export function useSiteConfig() {
     }
 
     return DEFAULT_HOME_SECTIONS;
-  }, [template, siteConfig]);
+  }, [template, siteConfig, shouldUseDefaults]);
 
   // Build the full config
   const config = useMemo<SiteConfig>(() => ({
@@ -217,6 +224,7 @@ export function useSiteConfig() {
     templateName: config.templateName,
     isModuleEnabled,
     t,
-    isLoading: configLoading || templateLoading,
+    // Not loading if we're using defaults (no tenant)
+    isLoading: shouldUseDefaults ? false : (tenantLoading || configLoading || templateLoading),
   };
 }
