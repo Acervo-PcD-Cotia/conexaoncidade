@@ -2,6 +2,8 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./AuthContext";
 
+const TENANT_CACHE_KEY = "cached_tenant_id";
+
 interface TenantContextType {
   currentTenantId: string | null;
   setCurrentTenantId: (id: string | null) => void;
@@ -12,20 +14,47 @@ const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
 export function TenantProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const [currentTenantId, setCurrentTenantId] = useState<string | null>(null);
+  const [currentTenantId, setCurrentTenantIdState] = useState<string | null>(() => {
+    // Try to restore from cache immediately for faster initial render
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(TENANT_CACHE_KEY);
+    }
+    return null;
+  });
   const [isLoading, setIsLoading] = useState(true);
+
+  // Wrapper to also persist to localStorage
+  const setCurrentTenantId = (id: string | null) => {
+    setCurrentTenantIdState(id);
+    if (id) {
+      localStorage.setItem(TENANT_CACHE_KEY, id);
+    } else {
+      localStorage.removeItem(TENANT_CACHE_KEY);
+    }
+  };
 
   useEffect(() => {
     const fetchDefaultTenant = async () => {
+      // For anonymous users, clear tenant and finish quickly
       if (!user) {
-        setCurrentTenantId(null);
+        setCurrentTenantIdState(null);
+        localStorage.removeItem(TENANT_CACHE_KEY);
         setIsLoading(false);
         return;
       }
 
       try {
-        // Try to get the user's primary site from site_users
-        const { data: siteUser, error } = await supabase
+        // Step 1: Check if user is super_admin (they can access any site)
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        const isSuperAdmin = roleData?.role === 'super_admin';
+
+        // Step 2: Try to get user's site from site_users
+        const { data: siteUser, error: siteUserError } = await supabase
           .from("site_users")
           .select("site_id")
           .eq("user_id", user.id)
@@ -34,21 +63,35 @@ export function TenantProvider({ children }: { children: ReactNode }) {
           .limit(1)
           .maybeSingle();
 
-        if (error) {
-          console.error("Error fetching tenant:", error);
-          // Fallback: try to get the first site
-          const { data: site } = await supabase
+        if (siteUser?.site_id) {
+          // User has a site assignment, use it
+          setCurrentTenantId(siteUser.site_id);
+          setIsLoading(false);
+          return;
+        }
+
+        // Step 3: Fallback - get first available site (especially for super_admin or new users)
+        if (siteUserError || !siteUser?.site_id) {
+          const { data: fallbackSite } = await supabase
             .from("sites")
             .select("id")
             .limit(1)
             .maybeSingle();
-          
-          setCurrentTenantId(site?.id || null);
-        } else {
-          setCurrentTenantId(siteUser?.site_id || null);
+
+          if (fallbackSite?.id) {
+            setCurrentTenantId(fallbackSite.id);
+          } else {
+            // No sites exist at all
+            setCurrentTenantIdState(null);
+          }
         }
       } catch (error) {
         console.error("Error in tenant context:", error);
+        // On error, try to use cached value or null
+        const cached = localStorage.getItem(TENANT_CACHE_KEY);
+        if (!cached) {
+          setCurrentTenantIdState(null);
+        }
       } finally {
         setIsLoading(false);
       }
