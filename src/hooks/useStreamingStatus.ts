@@ -100,24 +100,35 @@ export function useStreamingStatus<T extends RadioStatus | TvStatus = RadioStatu
         }
       );
 
-      if (invokeError) {
-        // Check if it's a "not configured" error
-        if (invokeError.message?.includes("404") || invokeError.message?.includes("NOT_CONFIGURED")) {
-          setStatus(null);
-          setConfig(null);
-          setError(null);
-        } else {
-          throw invokeError;
-        }
-      } else if (data?.code === "NOT_CONFIGURED") {
+      // Handle NOT_CONFIGURED response (can come as data or error)
+      if (data?.code === "NOT_CONFIGURED") {
         setStatus(null);
         setConfig(null);
         setError(null);
-      } else {
-        setStatus(data as T);
-        setError(data?.error || null);
-        setLastUpdated(new Date());
+        return;
       }
+
+      if (invokeError) {
+        // Try to parse error body as JSON to check for NOT_CONFIGURED
+        try {
+          const errorBody = typeof invokeError === 'object' && invokeError.context?.body 
+            ? JSON.parse(invokeError.context.body) 
+            : null;
+          if (errorBody?.code === "NOT_CONFIGURED") {
+            setStatus(null);
+            setConfig(null);
+            setError(null);
+            return;
+          }
+        } catch {
+          // Not JSON, continue with normal error handling
+        }
+        throw invokeError;
+      }
+
+      setStatus(data as T);
+      setError(data?.error || null);
+      setLastUpdated(new Date());
     } catch (err) {
       console.error(`Error fetching ${kind} status:`, err);
       setError(err instanceof Error ? err.message : "Erro ao buscar status");

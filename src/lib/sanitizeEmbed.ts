@@ -27,6 +27,7 @@ const DANGEROUS_PATTERNS = [
   /<\/script/gi,
   /expression\s*\(/gi,
   /url\s*\(\s*['"]?javascript:/gi,
+  /srcdoc\s*=/gi, // Block srcdoc attribute (can contain scripts)
 ];
 
 /**

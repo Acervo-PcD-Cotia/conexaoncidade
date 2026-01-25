@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   LayoutDashboard,
   Newspaper,
@@ -57,6 +58,8 @@ import {
   CalendarDays,
   ExternalLink,
   Loader2,
+  ChevronDown,
+  Sliders,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useUserRole } from "@/hooks/useRequireRole";
@@ -75,6 +78,7 @@ import {
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import logoFull from "@/assets/logo-full.png";
 
 interface MenuItem {
@@ -108,13 +112,7 @@ const editorialItems = [
   { title: "Podcasts", url: "/admin/podcasts", icon: Mic },
 ];
 
-// Item principal do Conexão Stream (central hub)
-const streamHubItem: MenuItem = { 
-  title: "Conexão Stream", 
-  url: "/admin/stream", 
-  icon: Satellite 
-};
-
+// Items do Conexão Ao Vivo (broadcast)
 const broadcastItems: MenuItem[] = [
   { title: "Dashboard", url: "/admin/broadcast", icon: Radio },
   { title: "Transmissões", url: "/admin/broadcast/list", icon: Play },
@@ -124,6 +122,7 @@ const broadcastItems: MenuItem[] = [
   { title: "Grade de Vídeos", url: "/admin/broadcast/videos", icon: Tv },
 ];
 
+// Items do Conexão Studio
 const conexaoStudioItems: MenuItem[] = [
   { title: "Dashboard", url: "/admin/conexao-studio", icon: Video },
   { title: "Estúdios", url: "/admin/conexao-studio/studios", icon: Tv },
@@ -132,28 +131,6 @@ const conexaoStudioItems: MenuItem[] = [
   { title: "Webinários", url: "/admin/conexao-studio/webinars", icon: Presentation },
   { title: "Branding", url: "/admin/conexao-studio/branding", icon: Palette },
   { title: "Equipe", url: "/admin/conexao-studio/team", icon: Users },
-];
-
-const radioWebItems: MenuItem[] = [
-  { title: "Visão Geral", url: "/admin/radio", icon: Radio },
-  { title: "Status do Stream", url: "/admin/radio/status", icon: Activity },
-  { title: "Encoder/Chaves", url: "/admin/radio/encoder", icon: Key },
-  { title: "AutoDJ Avançado", url: "/admin/radio/autodj", icon: ListMusic },
-  { title: "Biblioteca", url: "/admin/radio/library", icon: Music },
-  { title: "Estatísticas", url: "/admin/radio/stats", icon: BarChart3 },
-  { title: "Players", url: "/admin/radio/players", icon: Layout },
-  { title: "Configurações", url: "/admin/radio/settings", icon: Settings },
-];
-
-const tvWebItems: MenuItem[] = [
-  { title: "Visão Geral", url: "/admin/tv", icon: Tv },
-  { title: "Live (RTMP/SRT)", url: "/admin/tv/live", icon: Satellite },
-  { title: "Grade Linear", url: "/admin/tv/schedule", icon: CalendarDays },
-  { title: "VOD", url: "/admin/tv/vod", icon: Film },
-  { title: "Uploads", url: "/admin/tv/uploads", icon: Upload },
-  { title: "Estatísticas", url: "/admin/tv/stats", icon: BarChart3 },
-  { title: "Players", url: "/admin/tv/players", icon: Layout },
-  { title: "Configurações", url: "/admin/tv/settings", icon: Settings },
 ];
 
 const businessItems: MenuItem[] = [
@@ -197,6 +174,11 @@ export function AdminSidebar() {
   const { isAdmin } = useUserRole();
   const { openModal } = useNewsCreationModal();
   const { navigateToGcotia, isLoading: isSsoLoading } = useSsoNavigation();
+  
+  // State for accordion sections
+  const [streamingOpen, setStreamingOpen] = useState(true);
+  const [aoVivoOpen, setAoVivoOpen] = useState(false);
+  const [studioOpen, setStudioOpen] = useState(false);
 
   const handleMenuClick = (item: MenuItem, e: React.MouseEvent) => {
     if (item.action) {
@@ -283,117 +265,128 @@ export function AdminSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Conexão Stream - Central Hub */}
+        {/* Conexão Streaming - Unified Accordion */}
         <SidebarGroup>
-          <SidebarGroupLabel>Central de Streaming</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink
-                    to={streamHubItem.url}
-                    className="flex items-center gap-2 font-medium"
-                    activeClassName="bg-primary/10 text-primary"
-                  >
-                    <streamHubItem.icon className="h-4 w-4" />
-                    {!collapsed && <span>{streamHubItem.title}</span>}
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Conexão Ao Vivo</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {broadcastItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+          <Collapsible open={streamingOpen} onOpenChange={setStreamingOpen}>
+            <CollapsibleTrigger className="flex w-full items-center justify-between px-2 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground">
+              <span className="flex items-center gap-2">
+                <Satellite className="h-4 w-4" />
+                {!collapsed && "Conexão Streaming"}
+              </span>
+              {!collapsed && (
+                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${streamingOpen ? 'rotate-180' : ''}`} />
+              )}
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-1">
+              {/* Hub Central */}
+              <SidebarMenu>
+                <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <NavLink
-                      to={item.url}
-                      end={item.url === "/admin/broadcast"}
-                      className="flex items-center gap-2"
-                      activeClassName="bg-primary/10 text-primary"
+                      to="/admin/stream"
+                      className="flex items-center gap-2 font-medium text-primary"
+                      activeClassName="bg-primary/10"
                     >
-                      <item.icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
+                      <Satellite className="h-4 w-4" />
+                      {!collapsed && <span>Hub Central</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+              </SidebarMenu>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Conexão Studio</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {conexaoStudioItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+              {/* Sub-accordion: Ao Vivo */}
+              <Collapsible open={aoVivoOpen} onOpenChange={setAoVivoOpen}>
+                <CollapsibleTrigger className="flex w-full items-center justify-between px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground ml-2">
+                  <span className="flex items-center gap-2">
+                    <Play className="h-4 w-4" />
+                    {!collapsed && "Ao Vivo"}
+                  </span>
+                  {!collapsed && (
+                    <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${aoVivoOpen ? 'rotate-180' : ''}`} />
+                  )}
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarMenu className="ml-4">
+                    {broadcastItems.map((item) => (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton asChild>
+                          <NavLink
+                            to={item.url}
+                            end={item.url === "/admin/broadcast"}
+                            className="flex items-center gap-2 text-sm"
+                            activeClassName="bg-primary/10 text-primary"
+                          >
+                            <item.icon className="h-3 w-3" />
+                            {!collapsed && <span>{item.title}</span>}
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </CollapsibleContent>
+              </Collapsible>
+
+              {/* Sub-accordion: Studio */}
+              <Collapsible open={studioOpen} onOpenChange={setStudioOpen}>
+                <CollapsibleTrigger className="flex w-full items-center justify-between px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground ml-2">
+                  <span className="flex items-center gap-2">
+                    <Video className="h-4 w-4" />
+                    {!collapsed && "Studio"}
+                  </span>
+                  {!collapsed && (
+                    <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${studioOpen ? 'rotate-180' : ''}`} />
+                  )}
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarMenu className="ml-4">
+                    {conexaoStudioItems.map((item) => (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton asChild>
+                          <NavLink
+                            to={item.url}
+                            end={item.url === "/admin/conexao-studio"}
+                            className="flex items-center gap-2 text-sm"
+                            activeClassName="bg-primary/10 text-primary"
+                          >
+                            <item.icon className="h-3 w-3" />
+                            {!collapsed && <span>{item.title}</span>}
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </CollapsibleContent>
+              </Collapsible>
+
+              {/* Direct links: Radio & TV Config */}
+              <SidebarMenu className="ml-2 border-t pt-2 mt-2">
+                <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <NavLink
-                      to={item.url}
-                      end={item.url === "/admin/conexao-studio"}
+                      to="/admin/streaming/radio"
                       className="flex items-center gap-2"
                       activeClassName="bg-primary/10 text-primary"
                     >
-                      <item.icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
+                      <Radio className="h-4 w-4" />
+                      {!collapsed && <span>Rádio Web (Config)</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Rádio Web</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {radioWebItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <NavLink
-                      to={item.url}
-                      end={item.url === "/admin/radio"}
+                      to="/admin/streaming/tv"
                       className="flex items-center gap-2"
                       activeClassName="bg-primary/10 text-primary"
                     >
-                      <item.icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
+                      <Tv className="h-4 w-4" />
+                      {!collapsed && <span>TV Web (Config)</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>TV Web</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {tvWebItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end={item.url === "/admin/tv"}
-                      className="flex items-center gap-2"
-                      activeClassName="bg-primary/10 text-primary"
-                    >
-                      <item.icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
+              </SidebarMenu>
+            </CollapsibleContent>
+          </Collapsible>
         </SidebarGroup>
 
         <SidebarGroup>

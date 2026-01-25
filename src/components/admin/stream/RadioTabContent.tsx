@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
-import { Radio, Users, Activity, Music, Play, Pause, ArrowRight, Settings } from "lucide-react";
+import { Radio, Users, Activity, Music, Play, Pause, ArrowRight, Settings, ExternalLink, RefreshCw, Sliders } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useRadioStatus, useRadioPlaylists, useRadioStats } from "@/modules/radio/hooks";
+import { useRadioStatus } from "@/hooks/useStreamingStatus";
 
 function KpiCard({ 
   title, 
@@ -38,74 +38,130 @@ function KpiCard({
   );
 }
 
-function StatusBadge({ state }: { state?: string }) {
-  if (state === "online") {
+function StatusBadge({ isOnline }: { isOnline?: boolean }) {
+  if (isOnline) {
     return <Badge className="bg-green-500 hover:bg-green-600">Online</Badge>;
   }
   return <Badge variant="secondary">Offline</Badge>;
 }
 
 export function RadioTabContent() {
-  const { data: status, isLoading: statusLoading } = useRadioStatus();
-  const { data: playlists, isLoading: playlistsLoading } = useRadioPlaylists();
-  const { data: stats, isLoading: statsLoading } = useRadioStats("day");
-
-  const isLoading = statusLoading || playlistsLoading || statsLoading;
+  const { status, config, isLoading, isConfigured, lastUpdated, refetch } = useRadioStatus();
 
   return (
     <div className="space-y-6">
       {/* Header with Status */}
       <div className="flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <StatusBadge state={status?.state} />
-        {status?.state === "online" && (
-          <span className="text-sm text-muted-foreground">
-            {status.bitrateKbps} kbps • {status.listenersNow} ouvintes
-          </span>
-        )}
-      </div>
-      <Button disabled={!status} variant="outline" size="sm">
-          {status?.state === "online" ? (
-            <>
-              <Pause className="h-4 w-4 mr-2" />
-              Pausar
-            </>
-          ) : (
-            <>
-              <Play className="h-4 w-4 mr-2" />
-              Iniciar
-            </>
+        <div className="flex items-center gap-3">
+          <StatusBadge isOnline={status?.isOnline} />
+          {status?.isOnline && (
+            <span className="text-sm text-muted-foreground">
+              {status.listeners} ouvintes
+              {status.nowPlaying?.song && ` • ${status.nowPlaying.song}`}
+            </span>
           )}
-        </Button>
+          {!isConfigured && !isLoading && (
+            <span className="text-sm text-amber-600">Não configurado</span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => refetch()}
+            disabled={isLoading}
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          </Button>
+          {status?.isOnline ? (
+            <Button disabled variant="outline" size="sm">
+              <Pause className="h-4 w-4 mr-2" />
+              Em exibição
+            </Button>
+          ) : (
+            <Button disabled variant="outline" size="sm">
+              <Play className="h-4 w-4 mr-2" />
+              Offline
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <KpiCard 
           title="Ouvintes Agora" 
-          value={status?.listenersNow || 0} 
+          value={status?.listeners || 0} 
           icon={Users} 
           isLoading={isLoading} 
         />
         <KpiCard 
-          title="Pico Hoje" 
-          value={status?.peakToday || 0} 
+          title="Status" 
+          value={status?.isOnline ? "Online" : "Offline"} 
           icon={Activity} 
           isLoading={isLoading} 
         />
         <KpiCard 
-          title="Bitrate" 
-          value={`${status?.bitrateKbps || 0} kbps`} 
-          icon={Radio} 
-          isLoading={isLoading} 
-        />
-        <KpiCard 
-          title="Playlists" 
-          value={playlists?.length || 0} 
+          title="Tocando Agora" 
+          value={status?.nowPlaying?.track?.substring(0, 20) || "-"} 
           icon={Music} 
           isLoading={isLoading} 
         />
+        <KpiCard 
+          title="Gênero" 
+          value={status?.nowPlaying?.genre || "-"} 
+          icon={Radio} 
+          isLoading={isLoading} 
+        />
       </div>
+
+      {/* Action Buttons */}
+      <div className="flex flex-wrap gap-3">
+        <Button asChild>
+          <Link to="/admin/streaming/radio">
+            <Sliders className="h-4 w-4 mr-2" />
+            Configurar Rádio
+          </Link>
+        </Button>
+        
+        {config?.external_panel_url && (
+          <Button variant="outline" asChild>
+            <a href={config.external_panel_url} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Abrir Painel Profissional
+            </a>
+          </Button>
+        )}
+      </div>
+
+      {/* Now Playing Card */}
+      {status?.nowPlaying && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Music className="h-4 w-4" />
+              Tocando Agora
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-4">
+              {status.nowPlaying.coverUrl && (
+                <img 
+                  src={status.nowPlaying.coverUrl} 
+                  alt="Album cover" 
+                  className="h-16 w-16 rounded-lg object-cover"
+                />
+              )}
+              <div>
+                <p className="font-medium">{status.nowPlaying.track}</p>
+                {status.nowPlaying.artist && (
+                  <p className="text-sm text-muted-foreground">{status.nowPlaying.artist}</p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Quick Actions */}
       <div className="grid md:grid-cols-3 gap-4">
@@ -119,7 +175,7 @@ export function RadioTabContent() {
           </CardHeader>
           <CardContent className="pt-0">
             <Button variant="outline" className="w-full" asChild>
-              <Link to="/admin/radio/status">Ver Status</Link>
+              <Link to="/admin/streaming/radio">Ver Configuração</Link>
             </Button>
           </CardContent>
         </Card>
@@ -128,13 +184,16 @@ export function RadioTabContent() {
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
               <Music className="h-4 w-4" />
-              AutoDJ
+              Player Público
             </CardTitle>
-            <CardDescription>Configure playlists e agendamentos</CardDescription>
+            <CardDescription>Acesse a página pública do player</CardDescription>
           </CardHeader>
           <CardContent className="pt-0">
             <Button variant="outline" className="w-full" asChild>
-              <Link to="/admin/radio/autodj">Configurar</Link>
+              <Link to="/radio" target="_blank">
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Abrir Player
+              </Link>
             </Button>
           </CardContent>
         </Card>
@@ -145,72 +204,22 @@ export function RadioTabContent() {
               <Settings className="h-4 w-4" />
               Configurações
             </CardTitle>
-            <CardDescription>Nome da rádio, encoder e mais</CardDescription>
+            <CardDescription>API, embed e integração</CardDescription>
           </CardHeader>
           <CardContent className="pt-0">
             <Button variant="outline" className="w-full" asChild>
-              <Link to="/admin/radio/settings">Acessar</Link>
+              <Link to="/admin/streaming/radio">Acessar</Link>
             </Button>
           </CardContent>
         </Card>
       </div>
 
-      {/* Stats Preview */}
-      {stats && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <div>
-              <CardTitle>Estatísticas do Dia</CardTitle>
-              <CardDescription>Resumo de audiência</CardDescription>
-            </div>
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/admin/radio/stats" className="flex items-center gap-1">
-                Ver mais <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-              <div className="p-3 rounded-lg bg-muted/50">
-                <div className="text-2xl font-bold">{stats.summary.totalListeners}</div>
-                <div className="text-sm text-muted-foreground">Total de Ouvintes</div>
-              </div>
-              <div className="p-3 rounded-lg bg-muted/50">
-                <div className="text-2xl font-bold">{stats.summary.peakListeners}</div>
-                <div className="text-sm text-muted-foreground">Pico</div>
-              </div>
-              <div className="p-3 rounded-lg bg-muted/50">
-                <div className="text-2xl font-bold">{stats.summary.avgSessionMinutes}min</div>
-                <div className="text-sm text-muted-foreground">Sessão Média</div>
-              </div>
-              <div className="p-3 rounded-lg bg-muted/50">
-                <div className="text-2xl font-bold">{stats.summary.totalHoursStreamed}h</div>
-                <div className="text-sm text-muted-foreground">Horas Streamadas</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Last Updated */}
+      {lastUpdated && (
+        <p className="text-xs text-muted-foreground text-right">
+          Última atualização: {lastUpdated.toLocaleTimeString('pt-BR')}
+        </p>
       )}
-
-      {/* Quick Links */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle>Acesso Rápido</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/admin/radio/library">Biblioteca de Músicas</Link>
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/admin/radio/encoder">Encoder / Chaves</Link>
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/admin/radio/players">Gerar Player</Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
