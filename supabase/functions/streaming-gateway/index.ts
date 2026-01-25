@@ -22,6 +22,41 @@ interface StreamingConfig {
   last_error: string | null;
 }
 
+// Normalized Radio Status (VoxHD compatible)
+interface RadioStatusV2 {
+  ok: boolean;
+  kind: "radio";
+  isLive: boolean;
+  listenersNow: number;
+  bitrateKbps: number;
+  nowPlaying: string | null;
+  nextUp: string | null;
+  stationName: string;
+  genre: string | null;
+  artworkUrl: string | null;
+  plan: { maxListeners: number; ftp: string } | null;
+  endpoints: { shoutcast?: string; rtmp?: string; rtsp?: string };
+  latencyMs?: number;
+  checkedAt: string;
+  error?: { message: string; statusCode?: number };
+}
+
+// Normalized TV Status (VoxTV compatible)
+interface TvStatusV2 {
+  ok: boolean;
+  kind: "tv";
+  isLive: boolean;
+  viewersNow: number;
+  bitrateKbps: number;
+  plan: { maxViewers: number; ftp: string } | null;
+  serverIp: string | null;
+  endpoints: { rtmp?: string; rtsp?: string };
+  latencyMs?: number;
+  checkedAt: string;
+  error?: { message: string; statusCode?: number };
+}
+
+// Legacy compatibility interfaces
 interface RadioStatus {
   kind: "radio";
   isOnline: boolean;
@@ -61,70 +96,134 @@ interface TvStatus {
   fetchedAt: string;
 }
 
-// Parse VoxHD Radio JSON response
-function parseVoxHdRadio(data: Record<string, unknown>): RadioStatus {
-  const isOnline = data.status === "Ligado" || data.status === "1" || data.online === true;
+// Check if status is "online" from various providers
+function isStatusOnline(status: unknown): boolean {
+  if (typeof status === "boolean") return status;
+  if (typeof status === "number") return status === 1;
+  if (typeof status === "string") {
+    const s = status.toLowerCase();
+    return ["1", "on", "online", "true", "ligado", "ativo"].includes(s);
+  }
+  return false;
+}
+
+// Parse VoxHD Radio JSON response to normalized V2 format
+function parseVoxHdRadioV2(data: Record<string, unknown>, latencyMs: number): RadioStatusV2 {
+  const isLive = isStatusOnline(data.status) || isStatusOnline(data.online);
   
   return {
+    ok: true,
     kind: "radio",
-    isOnline,
-    statusText: isOnline ? "Ligado" : "Desligado",
-    listeners: Number(data.ouvintes || data.listeners || 0),
-    title: String(data.nome || data.title || "Rádio"),
-    nowPlaying: data.musica ? {
-      track: String(data.musica || ""),
-      artist: String(data.artista || ""),
-      song: String(data.titulo || data.musica || ""),
-      coverUrl: data.capa ? String(data.capa) : null,
-      genre: data.genero ? String(data.genero) : null,
+    isLive,
+    listenersNow: Number(data.ouvintes_conectados || data.ouvintes || data.listeners || 0),
+    bitrateKbps: Number(data.plano_bitrate || data.bitrate || 0),
+    nowPlaying: data.musica_atual ? String(data.musica_atual) : 
+                data.musica ? String(data.musica) : null,
+    nextUp: data.proxima_musica ? String(data.proxima_musica) : 
+            data.proxima ? String(data.proxima) : null,
+    stationName: String(data.titulo || data.nome || data.title || "Rádio"),
+    genre: data.genero ? String(data.genero) : null,
+    artworkUrl: data.capa_musica ? String(data.capa_musica) : 
+                data.capa ? String(data.capa) : null,
+    plan: data.plano_ouvintes ? {
+      maxListeners: Number(data.plano_ouvintes),
+      ftp: String(data.plano_ftp || ""),
     } : null,
-    nextPlaying: data.proxima ? { track: String(data.proxima) } : null,
     endpoints: {
       shoutcast: data.shoutcast ? String(data.shoutcast) : undefined,
       rtmp: data.rtmp ? String(data.rtmp) : undefined,
       rtsp: data.rtsp ? String(data.rtsp) : undefined,
     },
-    fetchedAt: new Date().toISOString(),
+    latencyMs,
+    checkedAt: new Date().toISOString(),
   };
 }
 
-// Parse VoxTV JSON response
-function parseVoxTv(data: Record<string, unknown>): TvStatus {
-  const isOnline = data.status === "Ligado" || data.status === "1" || data.online === true;
+// Parse VoxTV JSON response to normalized V2 format
+function parseVoxTvV2(data: Record<string, unknown>, latencyMs: number): TvStatusV2 {
+  const viewersNow = Number(data.espectadores_conectados || data.espectadores || data.viewers || 0);
+  const isLive = viewersNow > 0 || isStatusOnline(data.status) || isStatusOnline(data.online);
   
   return {
+    ok: true,
     kind: "tv",
-    isOnline,
-    statusText: isOnline ? "Ligado" : "Desligado",
-    viewers: Number(data.espectadores || data.viewers || 0),
-    plan: data.plano ? {
-      viewersLimit: Number((data.plano as Record<string, unknown>).limite_espectadores || 0),
-      ftpLimit: String((data.plano as Record<string, unknown>).limite_ftp || ""),
-      bitrate: String((data.plano as Record<string, unknown>).bitrate || ""),
+    isLive,
+    viewersNow,
+    bitrateKbps: Number(data.plano_bitrate || data.bitrate || 0),
+    plan: data.plano_espectadores ? {
+      maxViewers: Number(data.plano_espectadores),
+      ftp: String(data.plano_ftp || ""),
     } : null,
+    serverIp: data.ip ? String(data.ip) : null,
     endpoints: {
       rtmp: data.rtmp ? String(data.rtmp) : undefined,
       rtsp: data.rtsp ? String(data.rtsp) : undefined,
     },
-    fetchedAt: new Date().toISOString(),
+    latencyMs,
+    checkedAt: new Date().toISOString(),
   };
 }
 
-// Fetch status from external API
+// Convert V2 to legacy format for backwards compatibility
+function radioV2ToLegacy(v2: RadioStatusV2): RadioStatus {
+  return {
+    kind: "radio",
+    isOnline: v2.isLive,
+    statusText: v2.isLive ? "Ligado" : "Desligado",
+    listeners: v2.listenersNow,
+    title: v2.stationName,
+    nowPlaying: v2.nowPlaying ? {
+      track: v2.nowPlaying,
+      artist: "",
+      song: v2.nowPlaying,
+      coverUrl: v2.artworkUrl,
+      genre: v2.genre,
+    } : null,
+    nextPlaying: v2.nextUp ? { track: v2.nextUp } : null,
+    endpoints: v2.endpoints,
+    fetchedAt: v2.checkedAt,
+  };
+}
+
+function tvV2ToLegacy(v2: TvStatusV2): TvStatus {
+  return {
+    kind: "tv",
+    isOnline: v2.isLive,
+    statusText: v2.isLive ? "Ligado" : "Desligado",
+    viewers: v2.viewersNow,
+    plan: v2.plan ? {
+      viewersLimit: v2.plan.maxViewers,
+      ftpLimit: v2.plan.ftp,
+      bitrate: String(v2.bitrateKbps) + "kbps",
+    } : null,
+    endpoints: v2.endpoints,
+    fetchedAt: v2.checkedAt,
+  };
+}
+
+// Fetch status from external API with timeout
 async function fetchExternalStatus(
   config: StreamingConfig
-): Promise<RadioStatus | TvStatus | null> {
+): Promise<{ v2: RadioStatusV2 | TvStatusV2; legacy: RadioStatus | TvStatus } | null> {
   if (!config.api_json_url) {
     return null;
   }
+
+  const startTime = Date.now();
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout
 
   try {
     const response = await fetch(config.api_json_url, {
       headers: {
         "Accept": "application/json",
-        "User-Agent": "ConexaoStreaming/1.0",
+        "User-Agent": "ConexaoStreaming/2.0",
       },
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
+    const latencyMs = Date.now() - startTime;
 
     if (!response.ok) {
       throw new Error(`API returned ${response.status}`);
@@ -133,21 +232,26 @@ async function fetchExternalStatus(
     const data = await response.json();
 
     if (config.kind === "radio") {
-      return parseVoxHdRadio(data);
+      const v2 = parseVoxHdRadioV2(data, latencyMs);
+      const legacy = radioV2ToLegacy(v2);
+      return { v2, legacy };
     } else {
-      return parseVoxTv(data);
+      const v2 = parseVoxTvV2(data, latencyMs);
+      const legacy = tvV2ToLegacy(v2);
+      return { v2, legacy };
     }
   } catch (error) {
+    clearTimeout(timeoutId);
     console.error(`Error fetching external API for ${config.kind}:`, error);
     throw error;
   }
 }
 
-// Check if cache is still valid (15 seconds)
+// Check if cache is still valid (30 seconds)
 function isCacheValid(lastFetchedAt: string | null): boolean {
   if (!lastFetchedAt) return false;
   const elapsed = Date.now() - new Date(lastFetchedAt).getTime();
-  return elapsed < 15000; // 15 seconds
+  return elapsed < 30000; // 30 seconds
 }
 
 Deno.serve(async (req) => {
@@ -164,10 +268,11 @@ Deno.serve(async (req) => {
     // After Supabase routing: /radio/status or /tv/status
     const kind = pathParts[0] as "radio" | "tv";
     const action = pathParts[1] || "status";
+    const format = url.searchParams.get("format") || "legacy"; // "v2" or "legacy"
 
     if (!["radio", "tv"].includes(kind)) {
       return new Response(
-        JSON.stringify({ error: "Invalid kind. Use 'radio' or 'tv'" }),
+        JSON.stringify({ ok: false, error: { message: "Invalid kind. Use 'radio' or 'tv'" } }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -177,7 +282,7 @@ Deno.serve(async (req) => {
 
     if (!tenantId) {
       return new Response(
-        JSON.stringify({ error: "Missing tenant ID" }),
+        JSON.stringify({ ok: false, error: { message: "Missing tenant ID" } }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -199,7 +304,7 @@ Deno.serve(async (req) => {
     if (configError) {
       console.error("Error fetching config:", configError);
       return new Response(
-        JSON.stringify({ error: "Database error", details: configError.message }),
+        JSON.stringify({ ok: false, error: { message: "Database error", statusCode: 500 } }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -251,9 +356,10 @@ Deno.serve(async (req) => {
     // Check cache first
     if (isCacheValid(config.last_fetched_at) && config.last_snapshot) {
       console.log(`Returning cached ${kind} status for tenant ${tenantId}`);
+      const cached = config.last_snapshot;
       return new Response(
         JSON.stringify({ 
-          ...config.last_snapshot, 
+          ...cached, 
           fromCache: true,
           cachedAt: config.last_fetched_at 
         }),
@@ -263,6 +369,40 @@ Deno.serve(async (req) => {
 
     // If no API URL, return offline status
     if (!config.api_json_url) {
+      const checkedAt = new Date().toISOString();
+      
+      if (format === "v2") {
+        const offlineV2 = kind === "radio" ? {
+          ok: true,
+          kind: "radio",
+          isLive: false,
+          listenersNow: 0,
+          bitrateKbps: 0,
+          nowPlaying: null,
+          nextUp: null,
+          stationName: "Rádio",
+          genre: null,
+          artworkUrl: null,
+          plan: null,
+          endpoints: {},
+          checkedAt,
+        } : {
+          ok: true,
+          kind: "tv",
+          isLive: false,
+          viewersNow: 0,
+          bitrateKbps: 0,
+          plan: null,
+          serverIp: null,
+          endpoints: {},
+          checkedAt,
+        };
+        return new Response(
+          JSON.stringify(offlineV2),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       const offlineStatus = kind === "radio" ? {
         kind: "radio",
         isOnline: false,
@@ -272,7 +412,7 @@ Deno.serve(async (req) => {
         nowPlaying: null,
         nextPlaying: null,
         endpoints: {},
-        fetchedAt: new Date().toISOString(),
+        fetchedAt: checkedAt,
       } : {
         kind: "tv",
         isOnline: false,
@@ -280,7 +420,7 @@ Deno.serve(async (req) => {
         viewers: 0,
         plan: null,
         endpoints: {},
-        fetchedAt: new Date().toISOString(),
+        fetchedAt: checkedAt,
       };
 
       return new Response(
@@ -291,34 +431,37 @@ Deno.serve(async (req) => {
 
     // Fetch from external API
     try {
-      const status = await fetchExternalStatus(config);
+      const result = await fetchExternalStatus(config);
 
-      if (status) {
-        // Update cache in database
+      if (result) {
+        // Update cache in database with legacy format for compatibility
         await supabase
           .from("external_streaming_configs")
           .update({
-            last_snapshot: status,
+            last_snapshot: result.legacy as unknown as Record<string, unknown>,
             last_fetched_at: new Date().toISOString(),
             error_count: 0,
             last_error: null,
           })
           .eq("id", config.id);
 
+        // Return format based on query param
+        const responseData = format === "v2" ? result.v2 : result.legacy;
         return new Response(
-          JSON.stringify(status),
+          JSON.stringify(responseData),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
     } catch (apiError) {
       const errorMessage = apiError instanceof Error ? apiError.message : "Unknown error";
+      const isTimeout = errorMessage.includes("abort");
       
       // Update error count in database
       await supabase
         .from("external_streaming_configs")
         .update({
           error_count: config.error_count + 1,
-          last_error: errorMessage,
+          last_error: isTimeout ? "Timeout (8s)" : errorMessage,
           last_fetched_at: new Date().toISOString(),
         })
         .eq("id", config.id);
@@ -330,13 +473,49 @@ Deno.serve(async (req) => {
             ...config.last_snapshot,
             fromCache: true,
             cachedAt: config.last_fetched_at,
-            apiError: errorMessage,
+            apiError: isTimeout ? "Timeout ao conectar à API" : errorMessage,
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
       // Return offline status with error
+      const checkedAt = new Date().toISOString();
+      
+      if (format === "v2") {
+        const errorV2 = kind === "radio" ? {
+          ok: false,
+          kind: "radio",
+          isLive: false,
+          listenersNow: 0,
+          bitrateKbps: 0,
+          nowPlaying: null,
+          nextUp: null,
+          stationName: "Rádio",
+          genre: null,
+          artworkUrl: null,
+          plan: null,
+          endpoints: {},
+          checkedAt,
+          error: { message: isTimeout ? "Timeout ao conectar à API" : errorMessage, statusCode: isTimeout ? 504 : 500 },
+        } : {
+          ok: false,
+          kind: "tv",
+          isLive: false,
+          viewersNow: 0,
+          bitrateKbps: 0,
+          plan: null,
+          serverIp: null,
+          endpoints: {},
+          checkedAt,
+          error: { message: isTimeout ? "Timeout ao conectar à API" : errorMessage, statusCode: isTimeout ? 504 : 500 },
+        };
+        return new Response(
+          JSON.stringify(errorV2),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       const offlineStatus = kind === "radio" ? {
         kind: "radio",
         isOnline: false,
@@ -346,8 +525,8 @@ Deno.serve(async (req) => {
         nowPlaying: null,
         nextPlaying: null,
         endpoints: {},
-        fetchedAt: new Date().toISOString(),
-        error: errorMessage,
+        fetchedAt: checkedAt,
+        error: isTimeout ? "Timeout ao conectar à API" : errorMessage,
       } : {
         kind: "tv",
         isOnline: false,
@@ -355,8 +534,8 @@ Deno.serve(async (req) => {
         viewers: 0,
         plan: null,
         endpoints: {},
-        fetchedAt: new Date().toISOString(),
-        error: errorMessage,
+        fetchedAt: checkedAt,
+        error: isTimeout ? "Timeout ao conectar à API" : errorMessage,
       };
 
       return new Response(
@@ -367,14 +546,14 @@ Deno.serve(async (req) => {
 
     // Fallback
     return new Response(
-      JSON.stringify({ error: "Unexpected error" }),
+      JSON.stringify({ ok: false, error: { message: "Unexpected error" } }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error) {
     console.error("Gateway error:", error);
     return new Response(
-      JSON.stringify({ error: "Internal server error", details: String(error) }),
+      JSON.stringify({ ok: false, error: { message: "Internal server error", statusCode: 500 } }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

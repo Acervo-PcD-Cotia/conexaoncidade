@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Radio, Settings, ExternalLink, Play, TestTube, Save, Loader2, AlertCircle, CheckCircle2, Eye } from "lucide-react";
+import { Radio, Settings, ExternalLink, Play, TestTube, Save, Loader2, AlertCircle, CheckCircle2, Eye, Users, Activity, Zap, Clock } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,12 +10,27 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useStreamingConfig, StreamingConfigInput } from "@/hooks/useStreamingConfig";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useStreamingConfig, StreamingConfigInput, TestResultV2 } from "@/hooks/useStreamingConfig";
 import { sanitizeEmbedCode, isEmbedCodeSafe } from "@/lib/sanitizeEmbed";
-import { RadioStatus } from "@/hooks/useStreamingStatus";
+import { RequireTenant } from "@/components/admin/RequireTenant";
 
-export default function StreamingRadioConfig() {
-  const { config, isLoading, save, isSaving, testConnection, isTestingConnection, testResult, testError } = useStreamingConfig("radio");
+function StatusCard({ label, value, icon: Icon }: { label: string; value: string | number; icon: React.ElementType }) {
+  return (
+    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+      <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center">
+        <Icon className="h-4 w-4 text-primary" />
+      </div>
+      <div>
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="font-semibold text-sm">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+function StreamingRadioConfigContent() {
+  const { config, isLoading, hasTenant, save, isSaving, testConnection, isTestingConnection, testResult, testError } = useStreamingConfig("radio");
   
   const [formData, setFormData] = useState<StreamingConfigInput>({
     api_json_url: "",
@@ -89,31 +104,31 @@ export default function StreamingRadioConfig() {
     );
   }
 
-  const radioStatus = testResult as RadioStatus | undefined;
+  const radioResult = testResult as TestResultV2 | undefined;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Radio className="h-6 w-6 text-primary" />
-            Configuração Rádio Web
-          </h1>
-          <p className="text-muted-foreground">
-            Configure a integração com sua rádio externa (VoxHD, AzuraCast, etc)
-          </p>
+    <div className="space-y-4">
+      {/* Compact Header */}
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Radio className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold">Rádio Web</h1>
+            <p className="text-sm text-muted-foreground">Integração VoxHD, AzuraCast</p>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <Label htmlFor="is-active">Ativo</Label>
             <Switch
               id="is-active"
               checked={formData.is_active}
               onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
             />
+            <Label htmlFor="is-active" className="text-sm">Ativo</Label>
           </div>
-          <Button onClick={handleSave} disabled={isSaving}>
+          <Button onClick={handleSave} disabled={isSaving || !hasTenant} size="sm">
             {isSaving ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (
@@ -124,71 +139,103 @@ export default function StreamingRadioConfig() {
         </div>
       </div>
 
+      {/* Status Cards Row (when test result available) */}
+      {radioResult?.ok && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <StatusCard 
+            label="Status" 
+            value={radioResult.isLive ? "● Ao Vivo" : "Offline"} 
+            icon={Activity} 
+          />
+          <StatusCard 
+            label="Ouvintes" 
+            value={radioResult.listenersNow || 0} 
+            icon={Users} 
+          />
+          <StatusCard 
+            label="Bitrate" 
+            value={radioResult.bitrateKbps ? `${radioResult.bitrateKbps}kbps` : "-"} 
+            icon={Zap} 
+          />
+          <StatusCard 
+            label="Latência" 
+            value={radioResult.latencyMs ? `${radioResult.latencyMs}ms` : "-"} 
+            icon={Clock} 
+          />
+        </div>
+      )}
+
       <Tabs defaultValue="api" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="api">API Externa</TabsTrigger>
-          <TabsTrigger value="embed">Player Embed</TabsTrigger>
-          <TabsTrigger value="panel">Painel Externo</TabsTrigger>
+        <TabsList className="h-9">
+          <TabsTrigger value="api" className="text-sm">API Externa</TabsTrigger>
+          <TabsTrigger value="embed" className="text-sm">Player Embed</TabsTrigger>
+          <TabsTrigger value="panel" className="text-sm">Painel Externo</TabsTrigger>
         </TabsList>
 
         {/* API Configuration */}
         <TabsContent value="api">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Settings className="h-4 w-4" />
                 Configuração da API
               </CardTitle>
-              <CardDescription>
-                Configure a URL da API JSON do seu provedor de streaming
+              <CardDescription className="text-sm">
+                URL da API JSON do seu provedor de streaming
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="api-url">API JSON URL</Label>
-                <Input
-                  id="api-url"
-                  placeholder="http://voxhd.com.br/api-json/SEU_TOKEN"
-                  value={formData.api_json_url || ""}
-                  onChange={(e) => setFormData({ ...formData, api_json_url: e.target.value })}
-                />
-                <p className="text-xs text-muted-foreground">
-                  URL da API que retorna status da rádio em formato JSON
-                </p>
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <Input
+                    placeholder="http://voxhd.com.br/api-json/SEU_TOKEN"
+                    value={formData.api_json_url || ""}
+                    onChange={(e) => setFormData({ ...formData, api_json_url: e.target.value })}
+                  />
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={handleTestConnection}
+                  disabled={isTestingConnection || !formData.api_json_url || !hasTenant}
+                  size="default"
+                >
+                  {isTestingConnection ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <TestTube className="h-4 w-4" />
+                  )}
+                  <span className="ml-2 hidden sm:inline">Testar</span>
+                </Button>
               </div>
 
-              <Button
-                variant="outline"
-                onClick={handleTestConnection}
-                disabled={isTestingConnection || !formData.api_json_url}
-              >
-                {isTestingConnection ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <TestTube className="h-4 w-4 mr-2" />
-                )}
-                Testar Conexão
-              </Button>
-
               {/* Test Result */}
-              {testResult && !testError && (
-                <Alert className="border-green-500 bg-green-500/10">
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  <AlertTitle>Conexão bem-sucedida!</AlertTitle>
-                  <AlertDescription className="space-y-2">
-                    <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
+              {radioResult && !testError && (
+                <Alert className={radioResult.ok ? "border-green-500 bg-green-500/5" : "border-amber-500 bg-amber-500/5"}>
+                  {radioResult.ok ? (
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <AlertCircle className="h-4 w-4 text-amber-500" />
+                  )}
+                  <AlertTitle className="text-sm">{radioResult.ok ? "Conexão OK" : "Resposta recebida"}</AlertTitle>
+                  <AlertDescription>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2 text-sm">
                       <div>
-                        <span className="font-medium">Status:</span>{" "}
-                        <Badge variant={radioStatus?.isOnline ? "default" : "secondary"}>
-                          {radioStatus?.statusText || "Desconhecido"}
+                        <span className="text-muted-foreground">Status:</span>{" "}
+                        <Badge variant={radioResult.isLive ? "default" : "secondary"} className="text-xs">
+                          {radioResult.isLive ? "Ao Vivo" : "Offline"}
                         </Badge>
                       </div>
                       <div>
-                        <span className="font-medium">Ouvintes:</span> {radioStatus?.listeners || 0}
+                        <span className="text-muted-foreground">Ouvintes:</span> {radioResult.listenersNow || 0}
                       </div>
-                      {radioStatus?.nowPlaying && (
+                      {radioResult.nowPlaying && (
                         <div className="col-span-2">
-                          <span className="font-medium">Tocando:</span> {radioStatus.nowPlaying.track}
+                          <span className="text-muted-foreground">Tocando:</span> {radioResult.nowPlaying}
+                        </div>
+                      )}
+                      {radioResult.latencyMs && (
+                        <div>
+                          <span className="text-muted-foreground">Latência:</span> {radioResult.latencyMs}ms
                         </div>
                       )}
                     </div>
@@ -199,8 +246,8 @@ export default function StreamingRadioConfig() {
               {testError && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Erro na conexão</AlertTitle>
-                  <AlertDescription>
+                  <AlertTitle className="text-sm">Erro na conexão</AlertTitle>
+                  <AlertDescription className="text-sm">
                     {testError instanceof Error ? testError.message : "Não foi possível conectar à API"}
                   </AlertDescription>
                 </Alert>
@@ -212,18 +259,18 @@ export default function StreamingRadioConfig() {
         {/* Embed Configuration */}
         <TabsContent value="embed">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Play className="h-5 w-5" />
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Play className="h-4 w-4" />
                 Configuração do Player
               </CardTitle>
-              <CardDescription>
-                Configure o player que será exibido na página pública da rádio
+              <CardDescription className="text-sm">
+                Player exibido na página pública da rádio
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="embed-mode">Modo do Embed</Label>
+                <Label htmlFor="embed-mode" className="text-sm">Modo do Embed</Label>
                 <Select
                   value={formData.embed_mode}
                   onValueChange={(value: "iframe" | "html" | "url") =>
@@ -234,8 +281,8 @@ export default function StreamingRadioConfig() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="url">URL do Stream (recomendado)</SelectItem>
                     <SelectItem value="iframe">Código HTML (iframe/audio)</SelectItem>
-                    <SelectItem value="url">URL do Player</SelectItem>
                     <SelectItem value="html">HTML Customizado</SelectItem>
                   </SelectContent>
                 </Select>
@@ -243,58 +290,61 @@ export default function StreamingRadioConfig() {
 
               {formData.embed_mode === "url" ? (
                 <div className="space-y-2">
-                  <Label htmlFor="player-url">URL do Player</Label>
+                  <Label htmlFor="player-url" className="text-sm">URL do Player/Stream</Label>
                   <Input
                     id="player-url"
-                    placeholder="https://seuservidor.com/player"
+                    placeholder="https://seuservidor.com/stream.mp3"
                     value={formData.player_url || ""}
                     onChange={(e) => setFormData({ ...formData, player_url: e.target.value })}
                   />
+                  <p className="text-xs text-muted-foreground">URL direta do stream MP3/AAC ou player externo</p>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <Label htmlFor="embed-code">Código Embed</Label>
+                  <Label htmlFor="embed-code" className="text-sm">Código Embed</Label>
                   <Textarea
                     id="embed-code"
                     placeholder="<iframe src='...'></iframe> ou <audio src='...'></audio>"
-                    rows={6}
+                    rows={4}
                     value={formData.embed_code || ""}
                     onChange={(e) => setFormData({ ...formData, embed_code: e.target.value })}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Aceita: iframe, audio, video. Scripts serão removidos por segurança.
+                    Aceita: iframe, audio, video. Scripts serão removidos.
                   </p>
                 </div>
               )}
 
               {embedWarning && (
-                <Alert variant="destructive">
+                <Alert variant="destructive" className="py-2">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Aviso de Segurança</AlertTitle>
-                  <AlertDescription>{embedWarning}</AlertDescription>
+                  <AlertDescription className="text-xs">{embedWarning}</AlertDescription>
                 </Alert>
               )}
 
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowPreview(!showPreview)}
-                  disabled={!formData.embed_code && !formData.player_url}
-                >
-                  <Eye className="h-4 w-4 mr-2" />
-                  {showPreview ? "Ocultar Preview" : "Ver Preview"}
-                </Button>
-              </div>
-
-              {showPreview && getPreviewHtml() && (
-                <div className="border rounded-lg p-4 bg-muted/30">
-                  <Label className="mb-2 block">Preview do Player</Label>
-                  <div
-                    className="w-full"
-                    dangerouslySetInnerHTML={{ __html: getPreviewHtml() }}
-                  />
-                </div>
-              )}
+              {/* Collapsible Preview */}
+              <Collapsible open={showPreview} onOpenChange={setShowPreview}>
+                <CollapsibleTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!formData.embed_code && !formData.player_url}
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    {showPreview ? "Ocultar Preview" : "Ver Preview"}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-3">
+                  {getPreviewHtml() && (
+                    <div className="border rounded-lg p-4 bg-muted/30">
+                      <div
+                        className="w-full"
+                        dangerouslySetInnerHTML={{ __html: getPreviewHtml() }}
+                      />
+                    </div>
+                  )}
+                </CollapsibleContent>
+              </Collapsible>
             </CardContent>
           </Card>
         </TabsContent>
@@ -302,45 +352,42 @@ export default function StreamingRadioConfig() {
         {/* External Panel */}
         <TabsContent value="panel">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ExternalLink className="h-5 w-5" />
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <ExternalLink className="h-4 w-4" />
                 Painel Profissional
               </CardTitle>
-              <CardDescription>
-                Link para o painel de administração do seu provedor de streaming
+              <CardDescription className="text-sm">
+                Link para o painel do provedor de streaming
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="panel-url">URL do Painel</Label>
+              <div className="flex gap-3">
                 <Input
-                  id="panel-url"
                   placeholder="https://painel.voxhd.com.br/login"
                   value={formData.external_panel_url || ""}
                   onChange={(e) => setFormData({ ...formData, external_panel_url: e.target.value })}
+                  className="flex-1"
                 />
+                {formData.external_panel_url && (
+                  <Button variant="outline" size="icon" asChild>
+                    <a
+                      href={formData.external_panel_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  </Button>
+                )}
               </div>
 
-              {formData.external_panel_url && (
-                <Button variant="outline" asChild>
-                  <a
-                    href={formData.external_panel_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Abrir Painel Profissional
-                  </a>
-                </Button>
-              )}
-
               <div className="space-y-2">
-                <Label htmlFor="notes">Notas</Label>
+                <Label htmlFor="notes" className="text-sm">Notas</Label>
                 <Textarea
                   id="notes"
                   placeholder="Anotações sobre a configuração..."
-                  rows={3}
+                  rows={2}
                   value={formData.notes || ""}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 />
@@ -350,5 +397,13 @@ export default function StreamingRadioConfig() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+export default function StreamingRadioConfig() {
+  return (
+    <RequireTenant>
+      <StreamingRadioConfigContent />
+    </RequireTenant>
   );
 }

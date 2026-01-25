@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenantContext } from "@/contexts/TenantContext";
 
+// Legacy interfaces for backward compatibility
 export interface RadioStatus {
   kind: "radio";
   isOnline: boolean;
@@ -45,6 +46,41 @@ export interface TvStatus {
   error?: string;
 }
 
+// V2 interfaces with enhanced data
+export interface RadioStatusV2 {
+  ok: boolean;
+  kind: "radio";
+  isLive: boolean;
+  listenersNow: number;
+  bitrateKbps: number;
+  nowPlaying: string | null;
+  nextUp: string | null;
+  stationName: string;
+  genre: string | null;
+  artworkUrl: string | null;
+  plan: { maxListeners: number; ftp: string } | null;
+  endpoints: { shoutcast?: string; rtmp?: string; rtsp?: string };
+  latencyMs?: number;
+  checkedAt: string;
+  fromCache?: boolean;
+  error?: { message: string; statusCode?: number };
+}
+
+export interface TvStatusV2 {
+  ok: boolean;
+  kind: "tv";
+  isLive: boolean;
+  viewersNow: number;
+  bitrateKbps: number;
+  plan: { maxViewers: number; ftp: string } | null;
+  serverIp: string | null;
+  endpoints: { rtmp?: string; rtsp?: string };
+  latencyMs?: number;
+  checkedAt: string;
+  fromCache?: boolean;
+  error?: { message: string; statusCode?: number };
+}
+
 export interface StreamingConfig {
   id: string;
   kind: "radio" | "tv";
@@ -76,7 +112,7 @@ export function useStreamingStatus<T extends RadioStatus | TvStatus = RadioStatu
   options: UseStreamingStatusOptions
 ): UseStreamingStatusReturn<T> {
   const { kind, pollingInterval = 30000, enabled = true } = options;
-  const { currentTenantId } = useTenantContext();
+  const { currentTenantId, isLoading: tenantLoading } = useTenantContext();
   
   const [status, setStatus] = useState<T | null>(null);
   const [config, setConfig] = useState<StreamingConfig | null>(null);
@@ -85,7 +121,8 @@ export function useStreamingStatus<T extends RadioStatus | TvStatus = RadioStatu
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const fetchStatus = useCallback(async () => {
-    if (!currentTenantId || !enabled) {
+    // Don't fetch if tenant is still loading or not set
+    if (tenantLoading || !currentTenantId || !enabled) {
       setIsLoading(false);
       return;
     }
@@ -135,10 +172,10 @@ export function useStreamingStatus<T extends RadioStatus | TvStatus = RadioStatu
     } finally {
       setIsLoading(false);
     }
-  }, [currentTenantId, kind, enabled]);
+  }, [currentTenantId, kind, enabled, tenantLoading]);
 
   const fetchConfig = useCallback(async () => {
-    if (!currentTenantId || !enabled) {
+    if (tenantLoading || !currentTenantId || !enabled) {
       return;
     }
 
@@ -166,21 +203,26 @@ export function useStreamingStatus<T extends RadioStatus | TvStatus = RadioStatu
       console.error(`Error fetching ${kind} config:`, err);
       setConfig(null);
     }
-  }, [currentTenantId, kind, enabled]);
+  }, [currentTenantId, kind, enabled, tenantLoading]);
 
-  // Initial fetch
+  // Initial fetch when tenant is ready
   useEffect(() => {
-    if (enabled && currentTenantId) {
+    if (enabled && currentTenantId && !tenantLoading) {
       setIsLoading(true);
       Promise.all([fetchStatus(), fetchConfig()]).finally(() => {
         setIsLoading(false);
       });
+    } else if (!tenantLoading && !currentTenantId) {
+      // No tenant available, stop loading
+      setIsLoading(false);
+      setStatus(null);
+      setConfig(null);
     }
-  }, [fetchStatus, fetchConfig, enabled, currentTenantId]);
+  }, [fetchStatus, fetchConfig, enabled, currentTenantId, tenantLoading]);
 
   // Polling
   useEffect(() => {
-    if (!enabled || !currentTenantId || pollingInterval <= 0) {
+    if (!enabled || !currentTenantId || pollingInterval <= 0 || tenantLoading) {
       return;
     }
 
@@ -189,7 +231,7 @@ export function useStreamingStatus<T extends RadioStatus | TvStatus = RadioStatu
     }, pollingInterval);
 
     return () => clearInterval(interval);
-  }, [fetchStatus, pollingInterval, enabled, currentTenantId]);
+  }, [fetchStatus, pollingInterval, enabled, currentTenantId, tenantLoading]);
 
   const refetch = useCallback(async () => {
     setIsLoading(true);
@@ -200,7 +242,7 @@ export function useStreamingStatus<T extends RadioStatus | TvStatus = RadioStatu
   return {
     status,
     config,
-    isLoading,
+    isLoading: isLoading || tenantLoading,
     isConfigured: config !== null,
     error,
     lastUpdated,
