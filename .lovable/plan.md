@@ -1,85 +1,144 @@
 
-# Plano de Implementação: Conexão Academy
+# Plano de Implementação: Conexão.AI
 
 ## Visão Geral
 
-O **Conexão Academy** será uma plataforma de aprendizado estilo Netflix integrada ao painel administrativo, com foco em cursos em vídeo e treinamentos para os diferentes perfis de usuário do Portal Conexão.
+O **Conexão.AI** será o cérebro operacional do Portal Conexão na Cidade - um módulo nativo do dashboard que centraliza inteligência artificial, automação e ferramentas inteligentes para acelerar a produção de conteúdo e operações do portal.
 
 ---
 
 ## Arquitetura do Sistema
 
-### Diferença do módulo existente (Treinamento)
+### Posicionamento no Dashboard
 
-| Aspecto | Treinamento Atual | Conexão Academy |
-|---------|-------------------|-----------------|
-| Layout | Cards em grid tradicional | Carrossel estilo Netflix |
-| Foco | Documentação/Tutoriais | Cursos em vídeo |
-| Estrutura | Módulos > Etapas | Categorias > Cursos > Aulas |
-| Visual | Institucional | Streaming/EAD moderno |
-| Administração | Limitada | CRUD completo |
-
-### Novas Tabelas no Banco de Dados
+O módulo será adicionado ao grupo **Negócios** no menu lateral, logo após o Conexão Academy:
 
 ```text
-academy_categories
-├── id (UUID, PK)
-├── name (TEXT)
-├── slug (TEXT, UNIQUE)
-├── description (TEXT)
-├── cover_url (TEXT)
-├── sort_order (INTEGER)
-├── is_active (BOOLEAN)
-└── created_at / updated_at
+Negócios
+├── Conexão Academy
+├── Conexão.AI  ← NOVO
+├── Soluções
+├── Treinamento
+└── ...
+```
 
-academy_courses
-├── id (UUID, PK)
-├── category_id (UUID, FK → academy_categories)
-├── title (TEXT)
-├── slug (TEXT, UNIQUE)
-├── description (TEXT)
-├── cover_url (TEXT)
-├── instructor_name (TEXT)
-├── duration_minutes (INTEGER)
-├── visibility ('all' | 'partners' | 'admin')
-├── is_published (BOOLEAN)
-├── sort_order (INTEGER)
-└── created_at / updated_at
+### Estrutura de Rotas
 
-academy_lessons
-├── id (UUID, PK)
-├── course_id (UUID, FK → academy_courses)
-├── title (TEXT)
-├── description (TEXT)
-├── content_html (TEXT) — editor rico
-├── video_embed (TEXT) — iframe YouTube/Vimeo/Drive
-├── external_links (JSONB) — [{ label, url }]
-├── duration_minutes (INTEGER)
-├── sort_order (INTEGER)
-├── is_published (BOOLEAN)
-└── created_at / updated_at
+| Rota | Página | Descrição |
+|------|--------|-----------|
+| `/admin/conexao-ai` | Dashboard principal | Cards de ação rápida |
+| `/admin/conexao-ai/assistente` | Assistente contextual | Chat com IA do portal |
+| `/admin/conexao-ai/criador` | Criador de conteúdo | Geração de notícias |
+| `/admin/conexao-ai/ferramentas` | Ferramentas inteligentes | Quiz, checklists, etc. |
+| `/admin/conexao-ai/automacoes` | Automações | Motor de eventos |
+| `/admin/conexao-ai/insights` | Insights e diagnósticos | Painéis analíticos |
 
-academy_progress
+---
+
+## Banco de Dados
+
+### Novas Tabelas
+
+```text
+conexao_ai_conversations
 ├── id (UUID, PK)
 ├── user_id (UUID)
-├── lesson_id (UUID, FK → academy_lessons)
-├── progress_percent (INTEGER) — 0-100
-├── completed_at (TIMESTAMPTZ)
-├── last_watched_at (TIMESTAMPTZ)
-└── UNIQUE(user_id, lesson_id)
+├── title (TEXT) - título gerado automaticamente
+├── context (TEXT) - área do portal (news, pcd, radio, etc.)
+├── created_at / updated_at (TIMESTAMPTZ)
+
+conexao_ai_messages
+├── id (UUID, PK)
+├── conversation_id (UUID, FK → conexao_ai_conversations)
+├── role ('user' | 'assistant')
+├── content (TEXT)
+├── metadata (JSONB) - ações sugeridas, links, etc.
+├── created_at (TIMESTAMPTZ)
+
+conexao_ai_content_drafts
+├── id (UUID, PK)
+├── user_id (UUID)
+├── type ('news' | 'pcd' | 'instagram' | 'facebook')
+├── title (TEXT)
+├── content (JSONB) - estrutura completa do conteúdo
+├── status ('draft' | 'published' | 'discarded')
+├── published_id (UUID) - referência à notícia publicada
+├── created_at / updated_at (TIMESTAMPTZ)
+
+conexao_ai_automations
+├── id (UUID, PK)
+├── trigger_event (TEXT) - 'news_created', 'partner_registered', etc.
+├── action_type (TEXT) - 'suggest_share', 'generate_checklist', etc.
+├── config (JSONB) - configurações da automação
+├── is_active (BOOLEAN)
+├── created_at (TIMESTAMPTZ)
+
+conexao_ai_automation_logs
+├── id (UUID, PK)
+├── automation_id (UUID, FK)
+├── user_id (UUID)
+├── trigger_data (JSONB)
+├── result (JSONB)
+├── created_at (TIMESTAMPTZ)
+
+conexao_ai_tool_usage
+├── id (UUID, PK)
+├── user_id (UUID)
+├── tool_id (TEXT) - identificador da ferramenta
+├── input_data (JSONB)
+├── output_data (JSONB)
+├── created_at (TIMESTAMPTZ)
 ```
 
 ---
 
-## Políticas de Segurança (RLS)
+## Edge Functions
 
-| Tabela | Operação | Regra |
-|--------|----------|-------|
-| `academy_categories` | SELECT | Público (anon + authenticated) |
-| `academy_courses` | SELECT | Público para `visibility = 'all'`, verificar role para outros |
-| `academy_lessons` | SELECT | Baseado na visibilidade do curso pai |
-| `academy_progress` | SELECT/INSERT/UPDATE | Apenas para o próprio `user_id` |
-| Todas | INSERT/UPDATE/DELETE | Apenas para admins/editores |
+### 1. `conexao-ai-assistant` (Assistente Contextual)
+
+Sistema de prompt especializado que conhece o portal:
+
+```text
+CONHECIMENTOS DO ASSISTENTE:
+- Módulos do portal (Notícias, Rádio, TV, PcD, Academy, etc.)
+- Fluxos de cadastro (parceiros, eventos, PcD)
+- Regras editoriais do Conexão na Cidade
+- Estrutura de categorias e tags
+- Funcionalidades de cada seção
+- Gamificação da comunidade
+- Direitos PcD e legislação básica
+
+COMPORTAMENTO:
+- Responde APENAS sobre o ecossistema Conexão
+- Sugere ações práticas no sistema
+- Indica rotas/páginas específicas quando relevante
+- Usa linguagem simples e acolhedora
+- Nunca inventa funcionalidades que não existem
+```
+
+### 2. `conexao-ai-content` (Criador de Conteúdo)
+
+Gera conteúdo no padrão editorial:
+
+- Título otimizado (≤60 caracteres)
+- Slug SEO-friendly
+- Chapéu/Hat
+- Subtítulo/Linha fina
+- Lead jornalístico
+- Corpo estruturado
+- Meta título e descrição
+- Sugestão de tags
+- Variantes para PcD News (linguagem inclusiva)
+- Adaptações para redes sociais (Instagram/Facebook)
+
+### 3. `conexao-ai-tools` (Ferramentas)
+
+Ferramentas específicas:
+- Gerador de pautas locais (por cidade/bairro)
+- Quiz de cadastro de parceiros
+- Checklist "Apareça no Google"
+- Formulário guiado PcD
+- Análise de oportunidades de conteúdo
 
 ---
 
@@ -87,319 +146,305 @@ academy_progress
 
 ```text
 src/
-├── pages/admin/academy/
-│   ├── AcademyDashboard.tsx      # Página principal estilo Netflix
-│   ├── AcademyCourse.tsx         # Visualização de curso + lista de aulas
-│   ├── AcademyLesson.tsx         # Player de aula + navegação
-│   ├── AcademyAdminCategories.tsx
-│   ├── AcademyAdminCourses.tsx
-│   ├── AcademyAdminLessons.tsx
-│   └── AcademyAdminLessonEditor.tsx
+├── pages/admin/conexao-ai/
+│   ├── ConexaoAIDashboard.tsx      # Home com cards de ação
+│   ├── ConexaoAIAssistant.tsx      # Chat contextual
+│   ├── ConexaoAICreator.tsx        # Criador de conteúdo
+│   ├── ConexaoAITools.tsx          # Ferramentas inteligentes
+│   ├── ConexaoAIAutomations.tsx    # Motor de automação
+│   └── ConexaoAIInsights.tsx       # Painéis de diagnóstico
 │
-├── components/academy/
-│   ├── AcademyHero.tsx           # Banner do curso em destaque
-│   ├── AcademyCarousel.tsx       # Carrossel horizontal de cursos
-│   ├── AcademyCourseCard.tsx     # Card do curso (capa, título, progresso)
-│   ├── AcademyLessonPlayer.tsx   # Player de vídeo (iframe seguro)
-│   ├── AcademyLessonNav.tsx      # Navegação anterior/próximo
-│   ├── AcademyProgressBar.tsx    # Barra de progresso do curso
-│   └── AcademyContinueWatching.tsx # Seção "Continue assistindo"
+├── components/conexao-ai/
+│   ├── AIActionCard.tsx            # Card de ação rápida
+│   ├── AIChat.tsx                  # Interface de chat
+│   ├── AIChatMessage.tsx           # Mensagem individual
+│   ├── AIContentPreview.tsx        # Preview do conteúdo gerado
+│   ├── AIContentVariants.tsx       # Variantes (PcD, social)
+│   ├── AIToolCard.tsx              # Card de ferramenta
+│   ├── AIAutomationCard.tsx        # Card de automação
+│   ├── AIInsightWidget.tsx         # Widget de insight
+│   └── AIPublishDialog.tsx         # Dialog de publicação
 │
 ├── hooks/
-│   └── useAcademy.ts             # Hooks para cursos, aulas e progresso
+│   └── useConexaoAI.ts             # Hooks do módulo
 │
 └── types/
-    └── academy.ts                # Tipagens TypeScript
+    └── conexao-ai.ts               # Tipagens TypeScript
 ```
 
 ---
 
-## Etapas de Implementação
+## Componentes Principais
 
-### Fase 1: Banco de Dados
+### 1. Dashboard Principal (`ConexaoAIDashboard.tsx`)
 
-1. Criar migração SQL com as 4 tabelas
-2. Habilitar RLS em todas as tabelas
-3. Criar políticas de leitura pública para categorias e cursos publicados
-4. Criar políticas de escrita para administradores
-5. Adicionar índices para performance (slug, category_id, course_id)
+Layout com cards de ação orientados a resultado:
 
-### Fase 2: Sistema de Tipos e Hooks
+| Card | Ícone | Ação |
+|------|-------|------|
+| Criar notícia com IA | Newspaper + Sparkles | Abre o criador de conteúdo |
+| Divulgar negócio | Store | Inicia quiz de parceiro |
+| Criar projeto PcD | Accessibility | Formulário guiado |
+| Configurar Rádio/TV | Radio / Tv | Wizard de configuração |
+| Analisar desempenho | BarChart3 | Vai para insights |
+| Automatizar tarefas | Zap | Lista de automações |
 
-1. Criar `src/types/academy.ts` com interfaces TypeScript
-2. Criar `src/hooks/useAcademy.ts` com:
-   - `useAcademyCategories()` — lista todas as categorias
-   - `useAcademyCourses(categoryId?)` — lista cursos
-   - `useAcademyCourse(slug)` — detalhes de um curso
-   - `useAcademyLessons(courseId)` — aulas de um curso
-   - `useAcademyLesson(lessonId)` — detalhes de uma aula
-   - `useAcademyProgress()` — progresso do usuário
-   - `useUpdateLessonProgress()` — marcar progresso
-   - `useContinueWatching()` — últimas aulas assistidas
+Design: Cards grandes com gradiente, ícone destacado e descrição curta.
 
-### Fase 3: Componentes UI
+### 2. Assistente Inteligente (`ConexaoAIAssistant.tsx`)
 
-1. **AcademyCarousel** — Carrossel horizontal com Embla
-2. **AcademyCourseCard** — Card com capa, título, progresso circular
-3. **AcademyHero** — Banner do curso em destaque (gradiente + CTA)
-4. **AcademyLessonPlayer** — Wrapper seguro para iframes de vídeo
-5. **AcademyLessonNav** — Botões anterior/próximo entre aulas
+Interface de chat estilo moderno:
 
-### Fase 4: Páginas do Aluno
+- Input fixo na parte inferior
+- Histórico de mensagens com scroll
+- Sugestões de perguntas frequentes
+- Ações clicáveis nas respostas (links para rotas do dashboard)
+- Contexto persistente por conversa
 
-1. **AcademyDashboard** (`/admin/academy`)
-   - Seção "Continue Assistindo" (baseado em progresso)
-   - Seções por categoria (carrosséis horizontais)
-   - Filtro de busca
+Exemplos de prompts iniciais:
+- "Como cadastro um parceiro?"
+- "Quero criar uma web rádio"
+- "Como publicar uma notícia corretamente?"
+- "Quais serviços PcD existem no portal?"
 
-2. **AcademyCourse** (`/admin/academy/curso/:slug`)
-   - Hero com capa e descrição
-   - Lista de aulas com checkmarks de conclusão
-   - Barra de progresso geral
+### 3. Criador de Conteúdo (`ConexaoAICreator.tsx`)
 
-3. **AcademyLesson** (`/admin/academy/aula/:id`)
-   - Player de vídeo (iframe)
-   - Conteúdo em texto (HTML rico)
-   - Links externos
-   - Navegação entre aulas
+Fluxo em etapas:
 
-### Fase 5: Páginas de Administração
+1. **Input**: Usuário fornece tema, rascunho ou link
+2. **Geração**: IA gera estrutura completa
+3. **Revisão**: Editor com preview lado a lado
+4. **Variantes**: Toggle para PcD, Instagram, Facebook
+5. **Publicação**: Envio direto para `news` ou clipboard
 
-1. **AcademyAdminCategories** (`/admin/academy/admin/categorias`)
-   - CRUD de categorias com drag-and-drop para ordenação
+Campos gerados:
+- `titulo` (≤60 chars)
+- `slug`
+- `chapeu` (categoria em maiúsculas)
+- `subtitulo` (≤120 chars)
+- `resumo` (2-3 frases)
+- `conteudo` (HTML formatado)
+- `meta_titulo` (≤60 chars)
+- `meta_descricao` (≤160 chars)
+- `tags` (5-12 sugestões)
 
-2. **AcademyAdminCourses** (`/admin/academy/admin/cursos`)
-   - Lista de cursos com filtros
-   - Criar/editar curso
-   - Upload de capa
-   - Definir visibilidade
+### 4. Ferramentas Inteligentes (`ConexaoAITools.tsx`)
 
-3. **AcademyAdminLessons** (`/admin/academy/admin/cursos/:id/aulas`)
-   - Lista de aulas do curso
-   - Reordenação via drag-and-drop
+Grid de ferramentas com cards:
 
-4. **AcademyAdminLessonEditor** (`/admin/academy/admin/aulas/:id`)
-   - Editor rico para conteúdo
-   - Campo para embed de vídeo
-   - Gerenciador de links externos
+| Ferramenta | Descrição | Output |
+|------------|-----------|--------|
+| Gerador de Pautas | Sugere temas por cidade/bairro | Lista de ideias |
+| Quiz Parceiro | Perguntas guiadas para cadastro | Dados estruturados |
+| Checklist Google | Verificação de presença digital | Tarefas acionáveis |
+| Formulário PcD | Cadastro assistido de serviços | Formulário preenchido |
+| Análise de Oportunidades | Identifica lacunas de conteúdo | Relatório |
 
-### Fase 6: Integração ao Sistema
+Cada ferramenta:
+- Objetivo claro no card
+- Fluxo simples (máximo 3 etapas)
+- Resultado acionável (copiar, salvar, publicar)
 
-1. **Sidebar**: Adicionar item "Conexão Academy" no grupo "Negócios"
-2. **Rotas**: Registrar rotas no App.tsx
-3. **Módulo**: Adicionar `ACADEMY` ao sistema de módulos (opcional)
-4. **Permissões**: Verificar roles para administração
+### 5. Automações (`ConexaoAIAutomations.tsx`)
 
----
+Motor baseado em eventos:
 
-## Design Visual
+| Gatilho | Ação Sugerida |
+|---------|---------------|
+| `news_created` | Sugerir divulgação nas redes |
+| `partner_registered` | Gerar checklist de visibilidade |
+| `event_created` | Criar post social |
+| `radio_activated` | Gerar páginas e instruções |
 
-### Paleta de Cores (Estilo Streaming)
+Interface:
+- Lista de automações ativas
+- Toggle para ativar/desativar
+- Log de execuções recentes
+- Automações são SUGERIDAS, não forçadas
 
-- **Background**: `bg-zinc-950` (escuro)
-- **Cards**: `bg-zinc-900` com hover `bg-zinc-800`
-- **Destaque**: Gradiente primário do tema
-- **Texto**: `text-zinc-100` (principal), `text-zinc-400` (secundário)
+### 6. Insights e Diagnósticos (`ConexaoAIInsights.tsx`)
 
-### Componentes Visuais
+Painéis visuais simples:
 
-- Carrossel com Embla Carousel (já instalado)
-- Cards com aspect-ratio 16:9 para capas
-- Hover effects com scale e shadow
-- Progress rings para indicar conclusão
-- Badges para status (novo, em progresso, concluído)
+- Top 10 conteúdos mais acessados
+- Ações mais realizadas (últimos 30 dias)
+- Módulos mais utilizados
+- Demandas mais comuns de PcD
+- Oportunidades de monetização
 
----
-
-## Integrações de Vídeo
-
-O campo `video_embed` aceita iframes de:
-
-- YouTube (embed)
-- Vimeo (embed)
-- Google Drive (embed viewer)
-- Panda Video
-- Qualquer player que suporte iframe
-
-O componente `AcademyLessonPlayer` sanitiza o HTML usando a mesma lógica do módulo de streaming (`sanitizeEmbedCode`).
+Design: Cards com gráficos simples (barras, pizza) usando Recharts.
 
 ---
 
-## Migração SQL Completa
+## Integração com Módulos Existentes
 
-```sql
--- 1. Categorias
-CREATE TABLE public.academy_categories (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT NOT NULL,
-  slug TEXT UNIQUE NOT NULL,
-  description TEXT,
-  cover_url TEXT,
-  sort_order INTEGER DEFAULT 0,
-  is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
+### Reutilização de Infraestrutura
 
--- 2. Cursos
-CREATE TABLE public.academy_courses (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  category_id UUID REFERENCES public.academy_categories(id) ON DELETE SET NULL,
-  title TEXT NOT NULL,
-  slug TEXT UNIQUE NOT NULL,
-  description TEXT,
-  cover_url TEXT,
-  instructor_name TEXT,
-  duration_minutes INTEGER DEFAULT 0,
-  visibility TEXT DEFAULT 'all' CHECK (visibility IN ('all', 'partners', 'admin')),
-  is_published BOOLEAN DEFAULT false,
-  sort_order INTEGER DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
+| Recurso | Origem | Uso no Conexão.AI |
+|---------|--------|-------------------|
+| `news-ai` Edge Function | Notícias IA | Base para criador de conteúdo |
+| `community-ai-chat` | Comunidade | Padrão para assistente |
+| `useAuth` | Auth | Controle de acesso |
+| `useUserRole` | RBAC | Permissões por perfil |
+| Lovable AI Gateway | Infraestrutura | Todas as chamadas de IA |
 
--- 3. Aulas
-CREATE TABLE public.academy_lessons (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  course_id UUID NOT NULL REFERENCES public.academy_courses(id) ON DELETE CASCADE,
-  title TEXT NOT NULL,
-  description TEXT,
-  content_html TEXT,
-  video_embed TEXT,
-  external_links JSONB DEFAULT '[]'::jsonb,
-  duration_minutes INTEGER DEFAULT 0,
-  sort_order INTEGER DEFAULT 0,
-  is_published BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
+### Fluxo de Publicação
 
--- 4. Progresso
-CREATE TABLE public.academy_progress (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL,
-  lesson_id UUID NOT NULL REFERENCES public.academy_lessons(id) ON DELETE CASCADE,
-  progress_percent INTEGER DEFAULT 0,
-  completed_at TIMESTAMPTZ,
-  last_watched_at TIMESTAMPTZ DEFAULT now(),
-  created_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(user_id, lesson_id)
-);
+1. Conteúdo gerado no Conexão.AI
+2. Usuário revisa e ajusta
+3. Clica em "Publicar"
+4. Sistema insere em `news` com `origin: 'conexao-ai'`
+5. Tags são criadas automaticamente
+6. Automação sugere divulgação
 
--- Índices
-CREATE INDEX idx_academy_courses_category ON public.academy_courses(category_id);
-CREATE INDEX idx_academy_lessons_course ON public.academy_lessons(course_id);
-CREATE INDEX idx_academy_progress_user ON public.academy_progress(user_id);
+---
 
--- RLS
-ALTER TABLE public.academy_categories ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.academy_courses ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.academy_lessons ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.academy_progress ENABLE ROW LEVEL SECURITY;
+## Políticas RLS
 
--- Policies: Leitura pública
-CREATE POLICY "Categories are public" ON public.academy_categories
-  FOR SELECT TO public USING (is_active = true);
-
-CREATE POLICY "Published courses are public" ON public.academy_courses
-  FOR SELECT TO public USING (is_published = true);
-
-CREATE POLICY "Lessons from published courses are public" ON public.academy_lessons
-  FOR SELECT TO public USING (
-    is_published = true AND
-    EXISTS (
-      SELECT 1 FROM public.academy_courses
-      WHERE id = academy_lessons.course_id AND is_published = true
-    )
-  );
-
--- Policy: Progresso do próprio usuário
-CREATE POLICY "Users manage own progress" ON public.academy_progress
-  FOR ALL TO authenticated USING (user_id = auth.uid())
-  WITH CHECK (user_id = auth.uid());
-
--- Policies: Admin pode tudo
-CREATE POLICY "Admins manage categories" ON public.academy_categories
-  FOR ALL TO authenticated USING (
-    EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role IN ('super_admin', 'admin'))
-  );
-
-CREATE POLICY "Admins manage courses" ON public.academy_courses
-  FOR ALL TO authenticated USING (
-    EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role IN ('super_admin', 'admin'))
-  );
-
-CREATE POLICY "Admins manage lessons" ON public.academy_lessons
-  FOR ALL TO authenticated USING (
-    EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role IN ('super_admin', 'admin'))
-  );
-```
+| Tabela | SELECT | INSERT | UPDATE | DELETE |
+|--------|--------|--------|--------|--------|
+| `conexao_ai_conversations` | Próprio user | Próprio user | Próprio user | Próprio user |
+| `conexao_ai_messages` | Próprio user | Próprio user | — | — |
+| `conexao_ai_content_drafts` | Próprio user | Próprio user | Próprio user | Próprio user |
+| `conexao_ai_automations` | Admin | Admin | Admin | Admin |
+| `conexao_ai_automation_logs` | Admin | Sistema | — | — |
+| `conexao_ai_tool_usage` | Próprio user | Próprio user | — | — |
 
 ---
 
 ## Menu Lateral (Sidebar)
 
-Adicionar ao grupo "Negócios" em `AdminSidebar.tsx`:
+Adicionar ao grupo **Negócios** em `AdminSidebar.tsx`:
 
 ```typescript
 const businessItems: MenuItem[] = [
-  // ... itens existentes
   { title: "Conexão Academy", url: "/admin/academy", icon: PlayCircle },
+  { title: "Conexão.AI", url: "/admin/conexao-ai", icon: Brain }, // NOVO
+  { title: "Soluções", url: "/admin/solutions", icon: Puzzle },
+  // ...
 ];
 ```
 
-Adicionar grupo de administração:
-
-```typescript
-const academyAdminItems: MenuItem[] = [
-  { title: "Dashboard", url: "/admin/academy", icon: PlayCircle },
-  { title: "Categorias", url: "/admin/academy/admin/categorias", icon: FolderTree },
-  { title: "Cursos", url: "/admin/academy/admin/cursos", icon: BookOpen },
-];
-```
+Ícone sugerido: `Brain` (lucide-react) ou `Sparkles` para consistência com IA.
 
 ---
 
 ## Rotas no App.tsx
 
 ```typescript
-{/* Conexão Academy Routes */}
-<Route path="academy" element={<AcademyDashboard />} />
-<Route path="academy/curso/:slug" element={<AcademyCourse />} />
-<Route path="academy/aula/:id" element={<AcademyLesson />} />
-<Route path="academy/admin/categorias" element={<AcademyAdminCategories />} />
-<Route path="academy/admin/cursos" element={<AcademyAdminCourses />} />
-<Route path="academy/admin/cursos/:id/aulas" element={<AcademyAdminLessons />} />
-<Route path="academy/admin/aulas/:id" element={<AcademyAdminLessonEditor />} />
+// Conexão.AI Pages
+import ConexaoAIDashboard from "./pages/admin/conexao-ai/ConexaoAIDashboard";
+import ConexaoAIAssistant from "./pages/admin/conexao-ai/ConexaoAIAssistant";
+import ConexaoAICreator from "./pages/admin/conexao-ai/ConexaoAICreator";
+import ConexaoAITools from "./pages/admin/conexao-ai/ConexaoAITools";
+import ConexaoAIAutomations from "./pages/admin/conexao-ai/ConexaoAIAutomations";
+import ConexaoAIInsights from "./pages/admin/conexao-ai/ConexaoAIInsights";
+
+// Routes
+<Route path="conexao-ai" element={<ConexaoAIDashboard />} />
+<Route path="conexao-ai/assistente" element={<ConexaoAIAssistant />} />
+<Route path="conexao-ai/criador" element={<ConexaoAICreator />} />
+<Route path="conexao-ai/ferramentas" element={<ConexaoAITools />} />
+<Route path="conexao-ai/automacoes" element={<ConexaoAIAutomations />} />
+<Route path="conexao-ai/insights" element={<ConexaoAIInsights />} />
+```
+
+---
+
+## System Prompt do Assistente
+
+```text
+Você é o Assistente Inteligente do Portal Conexão na Cidade.
+
+VOCÊ CONHECE:
+- Módulos: Notícias, Rádio Web, TV Web, PcD/Núcleo PcD, Academy, Parceiros, Comunidade
+- Fluxos: Cadastro de parceiro, publicação de notícia, criação de evento, registro PcD
+- Ferramentas: Notícias IA, AutoPost, Gerador de Links, Distribuição Social
+- Gamificação: Pontos, níveis, badges da comunidade
+- Legislação PcD básica e direitos
+
+VOCÊ NÃO CONHECE:
+- Assuntos externos ao portal
+- Notícias de outros veículos
+- Informações não relacionadas ao Conexão na Cidade
+
+COMPORTAMENTO:
+- Responde de forma simples e direta
+- Sugere ações práticas (ex: "Vá em Notícias > Nova Notícia")
+- Indica rotas do dashboard quando relevante
+- Usa linguagem acolhedora e inclusiva
+- Nunca inventa funcionalidades
+
+FORMATO DE RESPOSTA:
+- Respostas curtas (máximo 200 palavras)
+- Use listas quando apropriado
+- Inclua [AÇÃO: /rota] para sugerir navegação
 ```
 
 ---
 
 ## Critérios de Aceite
 
-- [ ] Tabelas criadas com RLS ativo
-- [ ] Dashboard estilo Netflix funcional
-- [ ] Carrosséis de cursos por categoria
-- [ ] Seção "Continue Assistindo" baseada em progresso
-- [ ] Player de vídeo com suporte a múltiplas plataformas
-- [ ] Navegação entre aulas (anterior/próximo)
-- [ ] Conteúdo rico com editor HTML
-- [ ] CRUD completo para categorias, cursos e aulas
-- [ ] Ordenação via drag-and-drop
-- [ ] Controle de visibilidade (todos/parceiros/admin)
-- [ ] Menu lateral integrado
-- [ ] Design responsivo e moderno
+### Funcionalidade
+- [ ] Dashboard com 6 cards de ação funcionais
+- [ ] Assistente responde sobre o portal com precisão
+- [ ] Assistente recusa assuntos externos educadamente
+- [ ] Criador gera notícia completa no padrão Conexão
+- [ ] Variantes PcD e Social funcionam
+- [ ] Publicação direta para tabela `news`
+- [ ] Ferramentas com fluxo simples e resultado acionável
+- [ ] Automações sugeridas, não forçadas
+- [ ] Insights mostram dados reais
+
+### Integração
+- [ ] Menu lateral com item Conexão.AI
+- [ ] Rotas registradas e funcionando
+- [ ] Autenticação obrigatória
+- [ ] RLS configurado corretamente
+
+### UX
+- [ ] Interface limpa e moderna
+- [ ] Linguagem simples e humana
+- [ ] Responsivo em mobile
+- [ ] Loading states adequados
+- [ ] Tratamento de erros amigável
 
 ---
 
 ## Estimativa de Esforço
 
-| Fase | Complexidade | Descrição |
-|------|-------------|-----------|
-| Banco de Dados | Baixa | 4 tabelas + RLS |
-| Tipos/Hooks | Média | ~10 hooks |
-| Componentes UI | Alta | 7 componentes visuais |
-| Páginas Aluno | Média | 3 páginas |
-| Páginas Admin | Alta | 4 páginas CRUD |
+| Fase | Complexidade | Componentes |
+|------|-------------|-------------|
+| Banco de Dados | Média | 6 tabelas + RLS |
+| Edge Functions | Alta | 3 funções com prompts complexos |
+| Tipos/Hooks | Média | ~15 hooks |
+| Dashboard | Baixa | 1 página + 6 cards |
+| Assistente | Alta | Chat completo + histórico |
+| Criador | Alta | Editor + variantes + publicação |
+| Ferramentas | Média | 5 ferramentas básicas |
+| Automações | Média | Motor + UI de gestão |
+| Insights | Baixa | 5 widgets com queries |
 | Integração | Baixa | Sidebar + Rotas |
 
+---
+
+## Tecnologias Utilizadas
+
+- **IA**: Lovable AI Gateway (gemini-3-flash-preview)
+- **UI**: Shadcn/ui + Tailwind CSS
+- **Estado**: React Query + Zustand (se necessário)
+- **Gráficos**: Recharts (já instalado)
+- **Editor Rico**: TipTap (já instalado)
+- **Markdown**: react-markdown para renderização de chat
+
+---
+
+## Observações Finais
+
+1. **Isolamento**: O módulo é independente e não modifica outros módulos
+2. **Escalabilidade**: Estrutura preparada para futuro SaaS multi-tenant
+3. **Segurança**: Todas as chamadas de IA passam por Edge Functions
+4. **Performance**: Streaming de respostas para UX responsiva
+5. **Manutenção**: Código documentado e seguindo padrões existentes
+
+O Conexão.AI será o motor inteligente que acelera todas as operações do portal, mantendo a identidade e padrões do Conexão na Cidade.
