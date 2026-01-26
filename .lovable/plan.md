@@ -1,146 +1,120 @@
 
 
-# Plano de Correção Urgente: Notícias não carregam para usuários logados
+# Relatório de Status: Correção "Logado não carrega notícias"
 
-## Diagnóstico
+## Status Atual: ✅ 90% Concluído
 
-### Causa Raiz Identificada
-A política RLS da tabela `illumina_team_members` contém uma subconsulta **proibida** para `auth.users`:
+### O que já foi feito
 
-```sql
--- POLÍTICA PROBLEMÁTICA (atual)
-CREATE POLICY "Team members can view other members" ON public.illumina_team_members
-  FOR SELECT USING (
-    is_illumina_team_member(team_id) OR
-    invited_email = (SELECT email FROM auth.users WHERE id = auth.uid())  -- ❌ PROIBIDO!
+| Ação | Status | Detalhes |
+|------|--------|----------|
+| Identificação da causa raiz | ✅ Concluído | Política RLS de `illumina_team_members` acessava `auth.users` |
+| Migração SQL executada | ✅ Concluído | Política corrigida para usar `auth.jwt() ->> 'email'` |
+| Verificação de logs de erro | ✅ Concluído | Nenhum erro "permission denied" nos logs |
+
+### Verificação das Políticas RLS (Todas OK)
+
+| Tabela | RLS Ativo | Policy de Leitura | Roles | Status |
+|--------|-----------|-------------------|-------|--------|
+| `news` | ✅ | `Notícias publicadas são públicas` | `{public}` | ✅ OK |
+| `categories` | ✅ | `Categorias ativas são públicas` | `{public}` | ✅ OK |
+| `news_tags` | ✅ | `News tags são públicas para leitura` | `{public}` | ✅ OK |
+| `tags` | ✅ | `Tags são públicas` | `{public}` | ✅ OK |
+| `profiles` | ✅ | `Perfis são visíveis publicamente` | `{public}` | ✅ OK |
+| `news_reading_analytics` | ✅ | `Allow anonymous inserts for tracking` | `{public}` | ✅ OK |
+
+**Conclusão**: Não é necessário criar novas políticas - todas já usam `roles: {public}` (inclui `anon` + `authenticated`).
+
+---
+
+## Pendência: Tratamento de Erro no Frontend
+
+Os componentes `LatestNewsList` e `HeroSection` não tratam o estado `error` do React Query, o que pode causar comportamento confuso se houver falha futura.
+
+### Melhorias Recomendadas
+
+#### 1. `LatestNewsList.tsx`
+
+Adicionar tratamento de erro para evitar skeleton infinito em caso de falha:
+
+```tsx
+// Antes
+const { data: news, isLoading } = useNews(12);
+
+// Depois  
+const { data: news, isLoading, error } = useNews(12);
+
+// Adicionar após o bloco isLoading
+if (error) {
+  console.error('[LatestNewsList] Erro ao carregar notícias:', error);
+  return (
+    <section className="container py-4">
+      <div className="text-center text-muted-foreground">
+        <p>Não foi possível carregar as notícias</p>
+        <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+          Tentar novamente
+        </Button>
+      </div>
+    </section>
   );
+}
 ```
 
-**Por que isso quebra tudo?**
-- Usuários autenticados normais **não têm permissão** para acessar `auth.users` diretamente
-- Quando qualquer componente da homepage tenta verificar algo relacionado a times (mesmo indiretamente), esse erro é disparado
-- O erro `permission denied for table users` cascateia e impede o carregamento correto dos dados
-- O React Query fica em estado de loading infinito
+#### 2. `HeroSection.tsx`
 
-### Fluxo do Erro
-```text
-Usuário logado visita homepage
-        ↓
-DynamicHomeSection renderiza seções
-        ↓
-Algum componente verifica permissões de time
-        ↓
-RLS de illumina_team_members é avaliada
-        ↓
-Subconsulta para auth.users FALHA
-        ↓
-"permission denied for table users"
-        ↓
-Query de notícias também falha (mesmo fluxo de autenticação)
-        ↓
-Skeleton infinito
+Mesmo tratamento para a seção principal:
+
+```tsx
+// Antes
+const { data: featuredNews, isLoading: loadingFeatured } = useFeaturedNews(6);
+const { data: latestNews, isLoading: loadingLatest } = useNews(10);
+
+// Depois
+const { data: featuredNews, isLoading: loadingFeatured, error: errorFeatured } = useFeaturedNews(6);
+const { data: latestNews, isLoading: loadingLatest, error: errorLatest } = useNews(10);
+
+// Adicionar tratamento de erro
+const hasError = errorFeatured || errorLatest;
+if (hasError) {
+  console.error('[HeroSection] Erro ao carregar notícias:', errorFeatured || errorLatest);
+  return null; // ou componente de erro
+}
 ```
 
 ---
 
-## Solução
+## Arquivos a Modificar
 
-### 1. Corrigir a Política RLS do `illumina_team_members`
-
-Substituir a subconsulta `auth.users` pela função JWT nativa:
-
-```sql
--- CORREÇÃO: Usar auth.jwt() ao invés de consultar auth.users
-DROP POLICY IF EXISTS "Team members can view other members" ON public.illumina_team_members;
-
-CREATE POLICY "Team members can view other members" ON public.illumina_team_members
-  FOR SELECT USING (
-    is_illumina_team_member(team_id) OR
-    invited_email = auth.jwt() ->> 'email'  -- ✅ CORRETO: usa JWT diretamente
-  );
-```
-
-**Por que funciona?**
-- `auth.jwt() ->> 'email'` extrai o email diretamente do token JWT do usuário
-- Não requer acesso à tabela `auth.users`
-- É a forma recomendada pelo Supabase para obter dados do usuário em políticas RLS
-
-### 2. Garantir Políticas Públicas para Notícias (Verificação)
-
-As políticas atuais da tabela `news` já parecem corretas, mas vou confirmar que incluem `anon` E `authenticated`:
-
-| Tabela | Política | Status |
-|--------|----------|--------|
-| `news` | Notícias publicadas são públicas | ✅ OK (roles: public) |
-| `categories` | Categorias ativas são públicas | ✅ OK (roles: public) |
-| `news_tags` | News tags são públicas para leitura | ✅ OK (roles: public) |
-| `tags` | Tags são públicas | ✅ OK (roles: public) |
-| `profiles` | Perfis são visíveis publicamente | ✅ OK (roles: public) |
-
-Todas as políticas já usam `roles: public` (que inclui `anon` e `authenticated`).
-
----
-
-## Ações Técnicas
-
-### Migração SQL a Ser Executada
-
-```sql
--- 1. Remover política problemática
-DROP POLICY IF EXISTS "Team members can view other members" ON public.illumina_team_members;
-
--- 2. Recriar com sintaxe correta (usando JWT)
-CREATE POLICY "Team members can view other members" ON public.illumina_team_members
-  FOR SELECT USING (
-    is_illumina_team_member(team_id) OR
-    invited_email = (auth.jwt() ->> 'email')
-  );
-```
-
----
-
-## Impacto da Correção
-
-- **Imediato**: Usuários logados poderão ver notícias normalmente
-- **Funcionalidade Illumina**: Continuará funcionando (verificação de email por JWT)
-- **Segurança**: Mantida (apenas verifica email do próprio usuário)
-- **Performance**: Melhora (JWT já está em memória, não precisa de query)
-
----
-
-## Arquivos Afetados
-
-| Tipo | Arquivo/Recurso | Ação |
-|------|-----------------|------|
-| SQL | Nova migração | Criar e executar |
-| Frontend | Nenhum | Não requer mudanças |
+| Arquivo | Ação | Prioridade |
+|---------|------|------------|
+| `src/components/home/LatestNewsList.tsx` | Adicionar tratamento de `error` | Média |
+| `src/components/home/HeroSection.tsx` | Adicionar tratamento de `error` | Média |
 
 ---
 
 ## Critérios de Aceite
 
-- [x] Identificar causa raiz (política RLS com acesso a auth.users)
-- [ ] Executar migração corrigindo a política
-- [ ] Usuário anônimo continua vendo notícias
-- [ ] Usuário logado agora vê notícias corretamente
-- [ ] Funcionalidade de times do Illumina mantida
-- [ ] Nenhum erro "permission denied" nos logs
+- [x] Política RLS problemática corrigida (`illumina_team_members`)
+- [x] Nenhum erro "permission denied" nos logs do Postgres
+- [x] Políticas de `news`, `categories`, `news_tags`, `tags` verificadas
+- [ ] Componentes de frontend tratam estado de erro (opcional, mas recomendado)
+- [ ] Teste manual: usuário logado vê notícias
 
 ---
 
-## Observações Adicionais
+## Próximos Passos
 
-### Prevenção Futura
-Nunca usar subconsultas para `auth.users` em políticas RLS. Alternativas:
+1. **Teste imediato**: Faça login no site e verifique se as notícias aparecem
+2. **Se funcionar**: A correção da política RLS resolveu o problema
+3. **Opcional**: Implementar tratamento de erro nos componentes para robustez futura
 
-| Precisa de... | Use |
-|---------------|-----|
-| Email do usuário | `auth.jwt() ->> 'email'` |
-| ID do usuário | `auth.uid()` |
-| Role do usuário | `auth.jwt() ->> 'role'` |
-| Metadados | `auth.jwt() -> 'user_metadata' ->> 'campo'` |
+---
 
-### Por que o erro só aparece logado?
-- Usuários anônimos não têm sessão JWT, então a condição `invited_email = ...` simplesmente retorna `false` (sem erro)
-- Usuários autenticados têm uma sessão ativa, então a política é avaliada e a subconsulta para `auth.users` é executada (causando o erro)
+## Resumo Executivo
+
+A causa raiz do bug "logado não carrega notícias" era uma política RLS na tabela `illumina_team_members` que tentava acessar `auth.users` - algo proibido para usuários autenticados normais. 
+
+**A correção já foi aplicada** via migração SQL, substituindo a subconsulta por `auth.jwt() ->> 'email'`.
+
+As políticas das tabelas de notícias (`news`, `categories`, `news_tags`, etc.) já estavam corretas desde o início - usam `roles: {public}` que permite acesso tanto para `anon` quanto `authenticated`.
 
