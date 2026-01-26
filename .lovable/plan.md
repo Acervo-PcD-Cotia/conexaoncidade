@@ -1,268 +1,337 @@
 
-# Plano de Correção: Erros de Tipo no Academy
+# Plano: Conexão Academy com Conteúdo Inicial
 
-## Diagnóstico
+## Visão Geral
 
-Após análise detalhada, identifiquei **5 categorias de problemas** de tipagem no módulo Conexão Academy:
-
-### Problemas Encontrados
-
-| # | Problema | Localização | Impacto |
-|---|----------|-------------|---------|
-| 1 | `parseExternalLinks` aceita `Json` mas não valida objetos | `useAcademy.ts:19-31` | Type guard incompleto |
-| 2 | Cast `as unknown as Json` funciona, mas sem type guard | `useAcademy.ts:316, 349` | OK mas pode melhorar |
-| 3 | Joins retornam tipos "any-like" | `useAcademy.ts:144, 176` | Falta tipagem explícita |
-| 4 | `useContinueWatching` usa `Record<string, unknown>` sem type guard | `useAcademy.ts:504-524` | Acesso inseguro a propriedades |
-| 5 | Falta tipagem explícita em `useQuery` | Múltiplos hooks | TypeScript não infere corretamente |
-
-## Estratégia de Correção
-
-A correção será **cirúrgica e isolada** no arquivo `useAcademy.ts`, seguindo o padrão já existente no projeto (`src/types/json.ts`).
+O objetivo é tornar o Conexão Academy funcional desde o primeiro acesso, com:
+1. Dashboard home com CTAs claros e cards de cursos
+2. 2 cursos iniciais (WebRádio e WebTV) com módulos e aulas estruturados
+3. Suporte a checklists nas aulas
+4. Sistema de progresso por usuário
 
 ---
 
-## Correções Detalhadas
+## Análise do Estado Atual
 
-### 1. Melhorar `parseExternalLinks` com Type Guard Robusto
+### Estrutura Existente
 
-O helper atual está correto na lógica, mas podemos torná-lo mais defensivo:
+O Academy já possui uma implementação sólida:
+
+| Componente | Status |
+|------------|--------|
+| Tabelas de banco | `academy_categories`, `academy_courses`, `academy_lessons`, `academy_progress` ✅ |
+| Hooks React Query | CRUD completo para categorias, cursos, aulas e progresso ✅ |
+| Páginas | Dashboard, Curso, Aula (funcional mas sem conteúdo) ✅ |
+| Sidebar | Dentro do grupo "Negócios" ✅ |
+
+### Problemas Identificados
+
+1. **Banco vazio**: Nenhum curso cadastrado
+2. **Dashboard genérica**: Não tem CTAs claros quando vazio
+3. **Sem suporte a checklist**: O campo `external_links` existe, mas não há campo específico para checklists
+4. **Falta seed automático**: Não há lógica para criar cursos iniciais
+
+---
+
+## Mudanças Necessárias
+
+### 1. Banco de Dados
+
+**Alteração na tabela `academy_lessons`:**
+Adicionar coluna `checklist` (JSONB) para armazenar itens de verificação:
+
+```sql
+ALTER TABLE academy_lessons 
+ADD COLUMN IF NOT EXISTS checklist JSONB DEFAULT '[]';
+```
+
+Estrutura do checklist:
+```json
+[
+  { "item": "Definir formato da rádio", "order": 1 },
+  { "item": "Escolher plataforma de streaming", "order": 2 }
+]
+```
+
+**Seed Data (Migration):**
+Inserir automaticamente os 2 cursos com seus módulos e aulas SE a tabela estiver vazia.
+
+---
+
+### 2. Dashboard Home (UI Melhorada)
+
+**Novo comportamento:**
+
+```text
+┌─────────────────────────────────────────────────────────┐
+│ 🎓 Conexão Academy                          [Buscar...] │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  TREINAMENTOS OPERACIONAIS                              │
+│  ┌─────────────┐  ┌─────────────┐                       │
+│  │  📻          │  │  📺          │                       │
+│  │  WebRádio   │  │  WebTV      │                       │
+│  │  do zero    │  │  do zero    │                       │
+│  │  ao ar      │  │  ao ar      │                       │
+│  │             │  │             │                       │
+│  │ [Abrir] 0%  │  │ [Abrir] 0%  │                       │
+│  └─────────────┘  └─────────────┘                       │
+│                                                         │
+│  CONTINUE DE ONDE PAROU                                 │
+│  (exibe se houver progresso)                            │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Componentes a criar/modificar:**
+
+| Arquivo | Ação | Descrição |
+|---------|------|-----------|
+| `AcademyDashboard.tsx` | Modificar | Adicionar CTA principal, empty state melhorado, hook de seed |
+| `AcademyEmptyState.tsx` | Criar | Componente para estado vazio com CTAs |
+| `AcademyCourseGrid.tsx` | Criar | Grid de cursos (alternativa ao carousel) |
+
+---
+
+### 3. Página do Curso com Accordion de Módulos
+
+**Novo componente:** Agrupar aulas por módulo (usando prefixo no título).
+
+A estrutura atual usa `sort_order` para ordenar aulas. Como não há tabela de módulos, usaremos **prefixo no título da aula** para agrupar:
+
+- "M1: Preparação | O que é WebRádio no Conexão"
+- "M1: Preparação | Materiais necessários"
+- "M2: Implantação | Criando a rádio no painel"
+
+**Componente:** `AcademyModuleAccordion.tsx`
+
+```text
+┌──────────────────────────────────────────────┐
+│ ▼ M1: Preparação (3 aulas)                   │
+├──────────────────────────────────────────────┤
+│   ○ O que é WebRádio no Conexão              │
+│   ○ Materiais necessários                    │
+│   ○ Checklist mínimo                         │
+└──────────────────────────────────────────────┘
+│ ▶ M2: Implantação (3 aulas)                  │
+└──────────────────────────────────────────────┘
+```
+
+---
+
+### 4. Página da Aula com Checklist
+
+**Modificar `AcademyLesson.tsx`:**
+
+Adicionar renderização de checklist quando disponível:
+
+```text
+┌─────────────────────────────────────────────────────────┐
+│ ← Voltar ao curso           [Marcar como concluída]     │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  Checklist mínimo para WebRádio                         │
+│                                                         │
+│  ☐ Definir formato da rádio (musical, talk, misto)     │
+│  ☐ Escolher plataforma de streaming                     │
+│  ☐ Preparar identidade visual                           │
+│  ☐ Configurar encoder (OBS, BUTT, etc.)                │
+│  ☐ Testar conexão e qualidade do áudio                 │
+│                                                         │
+│  [Conteúdo em texto da aula...]                        │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Novo componente:** `AcademyLessonChecklist.tsx`
+
+---
+
+### 5. Hook de Auto-Seed
+
+**Criar:** `useAcademySeed.ts`
+
+Lógica:
+1. Verifica se existem cursos
+2. Se não existirem, insere os 2 cursos iniciais com aulas
+3. Executa apenas uma vez (com flag no localStorage para evitar loops)
 
 ```typescript
-// Tipo utilitário para objetos genéricos
-type AnyObj = Record<string, unknown>;
+export function useAcademySeed() {
+  const { data: courses, isLoading } = useAcademyCourses();
+  const [seeded, setSeeded] = useState(false);
 
-// Type guard para verificar se é objeto
-function isObj(v: unknown): v is AnyObj {
-  return typeof v === "object" && v !== null && !Array.isArray(v);
-}
-
-// Helper melhorado
-function parseExternalLinks(input: unknown): AcademyExternalLink[] {
-  if (!input) return [];
-
-  // Supabase pode entregar string JSON em alguns casos
-  let value: unknown = input;
-  if (typeof value === "string") {
-    try {
-      value = JSON.parse(value);
-    } catch {
-      return [];
+  useEffect(() => {
+    if (!isLoading && courses?.length === 0 && !seeded) {
+      seedInitialCourses().then(() => setSeeded(true));
     }
-  }
-
-  if (Array.isArray(value)) {
-    return value
-      .filter(isObj)
-      .map((item) => ({
-        label: typeof item.label === "string" ? item.label : "",
-        url: typeof item.url === "string" ? item.url : "",
-      }))
-      .filter((link) => link.label && link.url);
-  }
-
-  return [];
+  }, [isLoading, courses, seeded]);
 }
 ```
 
-**Mudanças:**
-- Aceita `unknown` ao invés de `Json` (mais flexível)
-- Adiciona type guard `isObj` para validação
-- Trata string JSON potencial
-- Filtra links inválidos (sem label ou url)
-
 ---
 
-### 2. Tipagem Explícita nos Hooks de Query
+## Estrutura de Dados dos Cursos Iniciais
 
-Adicionar tipos genéricos explícitos em todos os `useQuery`:
-
-```typescript
-// Antes
-return useQuery({
-  queryKey: ["academy-categories"],
-  queryFn: async () => { ... }
-});
-
-// Depois
-return useQuery<AcademyCategory[]>({
-  queryKey: ["academy-categories"],
-  queryFn: async () => { ... }
-});
-```
-
-**Hooks a corrigir:**
-- `useAcademyCategories` → `<AcademyCategory[]>`
-- `useAcademyCourses` → `<AcademyCourse[]>`
-- `useAcademyCourse` → `<AcademyCourse | null>`
-- `useAcademyLessons` → `<AcademyLesson[]>`
-- `useAcademyLesson` → `<AcademyLesson | null>`
-- `useAcademyProgress` → `<AcademyProgress[]>`
-- `useContinueWatching` → `<ContinueWatchingItem[]>`
-- `useCourseProgress` → `<{completed: number; total: number; percent: number}>`
-
----
-
-### 3. Normalização Consistente nos Joins
-
-Para hooks que fazem JOIN (cursos com categoria, aulas com curso), aplicar normalização explícita:
+### Curso 1: WebRádio
 
 ```typescript
-// useAcademyCourses
-return data.map((course: any) => ({
-  ...course,
-  category: course.category || undefined,
-})) as AcademyCourse[];
-
-// useAcademyCourse
-const lessons: AcademyLesson[] = (data.lessons || [])
-  .map((lesson: any) => ({
-    ...lesson,
-    external_links: parseExternalLinks(lesson.external_links),
-  }))
-  .sort((a, b) => a.sort_order - b.sort_order);
-
-return {
-  ...data,
-  category: data.category || undefined,
-  lessons,
-} as AcademyCourse;
-```
-
----
-
-### 4. Correção do `useContinueWatching`
-
-Este hook tem a lógica mais complexa. A correção:
-
-```typescript
-export function useContinueWatching() {
-  const { user } = useAuth();
-
-  return useQuery<ContinueWatchingItem[]>({
-    queryKey: ["academy-continue-watching", user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-
-      const { data: progress, error } = await supabase
-        .from("academy_progress")
-        .select(`
-          *,
-          lesson:academy_lessons(
-            *,
-            course:academy_courses(*)
-          )
-        `)
-        .eq("user_id", user.id)
-        .lt("progress_percent", 100)
-        .order("last_watched_at", { ascending: false })
-        .limit(10);
-
-      if (error) throw error;
-
-      return (progress || [])
-        .filter((p: any) => p.lesson && p.lesson.course)
-        .map((p: any) => {
-          const lessonRaw = p.lesson as AnyObj;
-          const courseRaw = lessonRaw.course as AnyObj;
-
-          const lesson: AcademyLesson = {
-            id: String(lessonRaw.id),
-            course_id: String(lessonRaw.course_id),
-            title: String(lessonRaw.title),
-            description: lessonRaw.description as string | null,
-            content_html: lessonRaw.content_html as string | null,
-            video_embed: lessonRaw.video_embed as string | null,
-            external_links: parseExternalLinks(lessonRaw.external_links),
-            duration_minutes: Number(lessonRaw.duration_minutes) || 0,
-            sort_order: Number(lessonRaw.sort_order) || 0,
-            is_published: Boolean(lessonRaw.is_published),
-            created_at: String(lessonRaw.created_at),
-            updated_at: String(lessonRaw.updated_at),
-          };
-
-          const course: AcademyCourse = {
-            id: String(courseRaw.id),
-            category_id: courseRaw.category_id as string | null,
-            title: String(courseRaw.title),
-            slug: String(courseRaw.slug),
-            description: courseRaw.description as string | null,
-            cover_url: courseRaw.cover_url as string | null,
-            instructor_name: courseRaw.instructor_name as string | null,
-            duration_minutes: Number(courseRaw.duration_minutes) || 0,
-            visibility: (courseRaw.visibility as 'all' | 'partners' | 'admin') || 'all',
-            is_published: Boolean(courseRaw.is_published),
-            sort_order: Number(courseRaw.sort_order) || 0,
-            created_at: String(courseRaw.created_at),
-            updated_at: String(courseRaw.updated_at),
-          };
-
-          const progressItem: AcademyProgress = {
-            id: p.id,
-            user_id: p.user_id,
-            lesson_id: p.lesson_id,
-            progress_percent: p.progress_percent,
-            completed_at: p.completed_at,
-            last_watched_at: p.last_watched_at,
-            created_at: p.created_at,
-          };
-
-          return { lesson, course, progress: progressItem };
-        });
+{
+  title: "WebRádio: do zero ao ar",
+  slug: "webradio-do-zero-ao-ar",
+  description: "Aprenda a configurar sua WebRádio no Conexão e colocar no ar com qualidade.",
+  visibility: "all",
+  is_published: true,
+  duration_minutes: 45,
+  lessons: [
+    // M1: Preparação
+    {
+      title: "O que é WebRádio no Conexão",
+      description: "Entenda o conceito e as possibilidades",
+      content_html: "<p>Uma WebRádio é uma estação de rádio que transmite...</p>",
+      sort_order: 1
     },
-    enabled: !!user,
-  });
+    {
+      title: "Materiais necessários",
+      description: "Lista completa do que você precisa",
+      content_html: "<ul><li>Computador ou celular</li>...</ul>",
+      sort_order: 2
+    },
+    {
+      title: "Checklist mínimo",
+      description: "Verifique antes de começar",
+      checklist: [
+        { item: "Definir formato da rádio (musical, talk, misto)", order: 1 },
+        { item: "Escolher plataforma de streaming", order: 2 },
+        // ...
+      ],
+      sort_order: 3
+    },
+    // M2: Implantação
+    {
+      title: "Criando a rádio no painel",
+      description: "Passo a passo no dashboard",
+      content_html: "<p>Acesse Streaming > Rádio Web...</p>",
+      sort_order: 4
+    },
+    // ... demais aulas
+  ]
 }
 ```
 
-**Alternativa simplificada (mantendo casts):**
+### Curso 2: WebTV
 
-Se a abordagem acima for muito verbosa, podemos usar uma versão mais pragmática:
+Estrutura similar com 9 aulas sobre WebTV.
 
-```typescript
-.map((p: any) => ({
-  lesson: {
-    ...(p.lesson as any),
-    external_links: parseExternalLinks(p.lesson?.external_links),
-  } as AcademyLesson,
-  course: p.lesson?.course as AcademyCourse,
-  progress: {
-    id: p.id,
-    user_id: p.user_id,
-    lesson_id: p.lesson_id,
-    progress_percent: p.progress_percent,
-    completed_at: p.completed_at,
-    last_watched_at: p.last_watched_at,
-    created_at: p.created_at,
-  } as AcademyProgress,
-}))
+---
+
+## Arquivos a Criar/Modificar
+
+| Arquivo | Ação | Descrição |
+|---------|------|-----------|
+| `migrations/seed_academy.sql` | Criar | Adicionar coluna checklist + seed data |
+| `src/types/academy.ts` | Modificar | Adicionar `checklist?: AcademyChecklistItem[]` |
+| `src/hooks/useAcademy.ts` | Modificar | Parser para checklist, hook de seed |
+| `src/hooks/useAcademySeed.ts` | Criar | Lógica de auto-seed |
+| `src/pages/admin/academy/AcademyDashboard.tsx` | Modificar | CTA, empty state, grid de cursos |
+| `src/pages/admin/academy/AcademyCourse.tsx` | Modificar | Accordion de módulos |
+| `src/pages/admin/academy/AcademyLesson.tsx` | Modificar | Renderizar checklist |
+| `src/components/academy/AcademyEmptyState.tsx` | Criar | Estado vazio com CTAs |
+| `src/components/academy/AcademyCourseGrid.tsx` | Criar | Grid de cursos |
+| `src/components/academy/AcademyModuleAccordion.tsx` | Criar | Accordion de módulos |
+| `src/components/academy/AcademyLessonChecklist.tsx` | Criar | Renderização de checklist |
+
+---
+
+## Conteúdo das Aulas (Resumo)
+
+### Curso: WebRádio - do zero ao ar
+
+**Módulo 1: Preparação**
+1. **O que é WebRádio no Conexão** - Explicação conceitual
+2. **Materiais necessários** - Lista: computador, microfone, software, internet
+3. **Checklist mínimo** - Verificação pré-implantação
+
+**Módulo 2: Implantação**
+4. **Criando a rádio no painel** - Passo a passo no dashboard
+5. **Configurando streaming e player** - RTMP, Icecast, player embed
+6. **Testes e validação** - Como testar antes de publicar
+
+**Módulo 3: Publicação e distribuição**
+7. **Publicando no portal** - Ativação e destaque
+8. **Alexa e apps: visão geral** - Próximos passos
+9. **Boas práticas e padrões** - Qualidade de áudio, horários
+
+### Curso: WebTV - do zero ao ar
+
+**Módulo 1: Preparação**
+1. **O que é WebTV e formatos** - Ao vivo, gravado, híbrido
+2. **Materiais necessários** - Câmera, encoder, iluminação
+3. **Checklist de qualidade mínima** - Verificação técnica
+
+**Módulo 2: Implantação**
+4. **Criando canal e player** - Configuração no dashboard
+5. **RTMP vs HLS: quando usar** - Diferenças técnicas
+6. **Testes: imagem, som, bitrate** - Validação de qualidade
+
+**Módulo 3: Publicação e crescimento**
+7. **Publicação no portal + destaque** - Visibilidade
+8. **Smart TVs: visão geral** - Futuras integrações
+9. **Monetização e publicidade** - Oportunidades
+
+---
+
+## Fluxo de Implementação
+
+```text
+1. Migration (banco)
+   └─> Adicionar coluna checklist
+   └─> Seed dos 2 cursos com aulas
+
+2. Types/Hooks
+   └─> Atualizar tipos
+   └─> Criar parser de checklist
+   └─> Criar hook de seed
+
+3. Componentes
+   └─> AcademyEmptyState
+   └─> AcademyCourseGrid
+   └─> AcademyModuleAccordion
+   └─> AcademyLessonChecklist
+
+4. Páginas
+   └─> Dashboard (CTA + grid)
+   └─> Curso (accordion)
+   └─> Aula (checklist)
 ```
 
 ---
 
-## Arquivos a Modificar
+## Critérios de Aceite
 
-| Arquivo | Modificações |
-|---------|--------------|
-| `src/hooks/useAcademy.ts` | Todas as correções (único arquivo) |
+### Funcionalidade
+- [ ] Dashboard exibe 2 cursos iniciais automaticamente
+- [ ] Cada curso mostra módulos em accordion
+- [ ] Aulas com checklist renderizam lista de verificação
+- [ ] Progresso do usuário persiste corretamente
+- [ ] Botão "Marcar como concluída" funciona
+- [ ] Empty state tem CTA claro
+
+### Integração
+- [ ] Sidebar mantém "Conexão Academy" no grupo Negócios
+- [ ] Rotas existentes continuam funcionando
+- [ ] Não quebra outros módulos
+
+### UX
+- [ ] Interface limpa e responsiva
+- [ ] Loading states adequados
+- [ ] Feedback visual ao completar aula
 
 ---
 
-## Checklist de Validação
+## Observações Técnicas
 
-Após as correções:
-
-- [ ] `parseExternalLinks()` usa type guard `isObj`
-- [ ] Todos os `useQuery` têm tipo genérico explícito
-- [ ] Nenhum `as unknown as Record` (sem genéricos) existe
-- [ ] `useContinueWatching` retorna tipo correto
-- [ ] Escrita usa `as unknown as Json` (já está correto)
-- [ ] Build passa sem erros de tipo
-
----
-
-## Impacto
-
-- **Escopo**: Isolado em 1 arquivo
-- **Risco**: Baixo (refatoração de tipos, não de lógica)
-- **Benefício**: Elimina erros de tipo, melhora manutenibilidade
-- **Compatibilidade**: Mantém comportamento atual
+1. **Módulos sem tabela própria**: Usaremos agrupamento por prefixo no título da aula para evitar nova tabela
+2. **Checklist no front**: MVP com estado local; persistência opcional via `academy_progress`
+3. **Seed via migration**: Garante que o conteúdo existe desde o deploy
+4. **Reutilização**: Aproveita 100% da infraestrutura existente do Academy
