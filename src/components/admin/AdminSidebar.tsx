@@ -40,6 +40,7 @@ import {
   Play,
   Tv,
   Calendar,
+  PlayCircle,
   Music,
   Video,
   FolderOpen,
@@ -149,6 +150,7 @@ const streamingConfigItems: MenuItem[] = [
 ];
 
 const businessItems: MenuItem[] = [
+  { title: "Conexão Academy", url: "/admin/academy", icon: PlayCircle },
   { title: "Soluções", url: "/admin/solutions", icon: Puzzle },
   { title: "Treinamento", url: "/admin/training", icon: GraduationCap },
   { title: "Financeiro", url: "/admin/financial", icon: Receipt },
