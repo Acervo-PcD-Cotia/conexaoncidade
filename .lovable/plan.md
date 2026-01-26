@@ -1,138 +1,146 @@
 
 
-# Plano: Unificar Layout do /admin com /auth (Estilo CDM Brasil)
+# Plano de Correção Urgente: Notícias não carregam para usuários logados
 
-## Objetivo
-Refazer a tela de "Autenticação Necessária" (`AccessDeniedScreen`) para seguir o mesmo layout de 2 colunas da página `/auth`, com as seguintes alterações visuais:
-- Coluna esquerda: apenas logo (sem textos "Acesse sua conta" e "Painel Conexões")
-- Coluna esquerda: fundo laranja bem claro
+## Diagnóstico
 
----
+### Causa Raiz Identificada
+A política RLS da tabela `illumina_team_members` contém uma subconsulta **proibida** para `auth.users`:
 
-## Comparação Visual
+```sql
+-- POLÍTICA PROBLEMÁTICA (atual)
+CREATE POLICY "Team members can view other members" ON public.illumina_team_members
+  FOR SELECT USING (
+    is_illumina_team_member(team_id) OR
+    invited_email = (SELECT email FROM auth.users WHERE id = auth.uid())  -- ❌ PROIBIDO!
+  );
+```
 
-| Aspecto | Atual (`/admin` não autenticado) | Novo (CDM Style) |
-|---------|----------------------------------|------------------|
-| Layout | Card centralizado | 2 colunas (60/40) |
-| Coluna esquerda | N/A | Logo grande + fundo laranja claro |
-| Coluna direita | Card com ícone ShieldX | Card branco com mensagem e botões |
-| Fundo | `bg-background` (escuro) | Laranja claro (esquerda) + cinza (direita) |
+**Por que isso quebra tudo?**
+- Usuários autenticados normais **não têm permissão** para acessar `auth.users` diretamente
+- Quando qualquer componente da homepage tenta verificar algo relacionado a times (mesmo indiretamente), esse erro é disparado
+- O erro `permission denied for table users` cascateia e impede o carregamento correto dos dados
+- O React Query fica em estado de loading infinito
 
----
-
-## Estrutura Visual Proposta
-
+### Fluxo do Erro
 ```text
-┌─────────────────────────────────────────────────────────────────┐
-│                                                                 │
-│  ┌──────────────────────────┐  ┌────────────────────────────┐  │
-│  │                          │  │                            │  │
-│  │                          │  │         [ShieldX]          │  │
-│  │                          │  │                            │  │
-│  │        [LOGO CNC]        │  │   Autenticação Necessária  │  │
-│  │        Grande            │  │                            │  │
-│  │                          │  │   Você precisa estar       │  │
-│  │                          │  │   logado para acessar...   │  │
-│  │                          │  │                            │  │
-│  │                          │  │   Redirecionando em Xs...  │  │
-│  │                          │  │                            │  │
-│  │                          │  │   [Início]    [Entrar]     │  │
-│  │                          │  │                            │  │
-│  └──────────────────────────┘  └────────────────────────────┘  │
-│   bg: laranja bem claro           bg: cinza claro + card      │
-│   (#fef3e7 ou similar)            branco                      │
-└─────────────────────────────────────────────────────────────────┘
+Usuário logado visita homepage
+        ↓
+DynamicHomeSection renderiza seções
+        ↓
+Algum componente verifica permissões de time
+        ↓
+RLS de illumina_team_members é avaliada
+        ↓
+Subconsulta para auth.users FALHA
+        ↓
+"permission denied for table users"
+        ↓
+Query de notícias também falha (mesmo fluxo de autenticação)
+        ↓
+Skeleton infinito
 ```
 
 ---
 
-## Detalhes de Implementação
+## Solução
 
-### 1. Coluna Esquerda (Branding)
-- Fundo: **laranja bem claro** (`bg-orange-50` ou `#fef3e7`)
-- Conteúdo: **apenas o logo** (sem textos)
-- Logo grande centralizado (`h-24` a `h-32`)
-- Borda direita sutil no desktop
+### 1. Corrigir a Política RLS do `illumina_team_members`
 
-### 2. Coluna Direita (Card de Mensagem)
-- Fundo: cinza claro (`bg-muted/30`)
-- Card branco com sombra e bordas arredondadas
-- Ícone ShieldX (mantido)
-- Título e descrição (mantidos)
-- Contador de redirecionamento (mantido)
-- Botões "Início" e "Entrar" (mantidos)
+Substituir a subconsulta `auth.users` pela função JWT nativa:
 
-### 3. Responsividade
-- Desktop (`lg:` e acima): Grid 2 colunas (60/40)
-- Mobile/Tablet: Coluna única empilhada (logo em cima com fundo laranja, card embaixo)
+```sql
+-- CORREÇÃO: Usar auth.jwt() ao invés de consultar auth.users
+DROP POLICY IF EXISTS "Team members can view other members" ON public.illumina_team_members;
+
+CREATE POLICY "Team members can view other members" ON public.illumina_team_members
+  FOR SELECT USING (
+    is_illumina_team_member(team_id) OR
+    invited_email = auth.jwt() ->> 'email'  -- ✅ CORRETO: usa JWT diretamente
+  );
+```
+
+**Por que funciona?**
+- `auth.jwt() ->> 'email'` extrai o email diretamente do token JWT do usuário
+- Não requer acesso à tabela `auth.users`
+- É a forma recomendada pelo Supabase para obter dados do usuário em políticas RLS
+
+### 2. Garantir Políticas Públicas para Notícias (Verificação)
+
+As políticas atuais da tabela `news` já parecem corretas, mas vou confirmar que incluem `anon` E `authenticated`:
+
+| Tabela | Política | Status |
+|--------|----------|--------|
+| `news` | Notícias publicadas são públicas | ✅ OK (roles: public) |
+| `categories` | Categorias ativas são públicas | ✅ OK (roles: public) |
+| `news_tags` | News tags são públicas para leitura | ✅ OK (roles: public) |
+| `tags` | Tags são públicas | ✅ OK (roles: public) |
+| `profiles` | Perfis são visíveis publicamente | ✅ OK (roles: public) |
+
+Todas as políticas já usam `roles: public` (que inclui `anon` e `authenticated`).
 
 ---
 
-## Arquivo a Modificar
+## Ações Técnicas
 
-| Arquivo | Ação |
-|---------|------|
-| `src/components/auth/AccessDeniedScreen.tsx` | Refatorar para layout 2 colunas com fundo laranja claro na esquerda |
+### Migração SQL a Ser Executada
 
----
+```sql
+-- 1. Remover política problemática
+DROP POLICY IF EXISTS "Team members can view other members" ON public.illumina_team_members;
 
-## Código: Nova Estrutura do AccessDeniedScreen
-
-A estrutura seguirá o padrão do `Auth.tsx`:
-
-```tsx
-// Layout principal - 2 colunas
-<div className="min-h-screen flex flex-col lg:grid lg:grid-cols-[60%_40%]">
-  
-  {/* Coluna Esquerda - Logo com fundo laranja claro */}
-  <div className="flex items-center justify-center py-12 px-6 lg:py-0 bg-orange-50 lg:border-r lg:border-orange-100">
-    <img 
-      src={logoFull} 
-      alt="Conexão na Cidade" 
-      className="h-24 lg:h-32 w-auto"
-    />
-  </div>
-
-  {/* Coluna Direita - Card de mensagem */}
-  <div className="flex-1 flex items-center justify-center p-6 lg:p-12 bg-muted/30">
-    <Card className="w-full max-w-md ...">
-      {/* Conteúdo existente do card */}
-    </Card>
-  </div>
-  
-</div>
+-- 2. Recriar com sintaxe correta (usando JWT)
+CREATE POLICY "Team members can view other members" ON public.illumina_team_members
+  FOR SELECT USING (
+    is_illumina_team_member(team_id) OR
+    invited_email = (auth.jwt() ->> 'email')
+  );
 ```
 
 ---
 
-## Importações a Adicionar
+## Impacto da Correção
 
-```tsx
-import logoFull from "@/assets/logo-full.png";
-```
+- **Imediato**: Usuários logados poderão ver notícias normalmente
+- **Funcionalidade Illumina**: Continuará funcionando (verificação de email por JWT)
+- **Segurança**: Mantida (apenas verifica email do próprio usuário)
+- **Performance**: Melhora (JWT já está em memória, não precisa de query)
 
 ---
 
-## Cor Laranja Claro - Opções
+## Arquivos Afetados
 
-| Opção | Classe Tailwind | Hex |
-|-------|-----------------|-----|
-| Opção 1 | `bg-orange-50` | `#fff7ed` |
-| Opção 2 | `bg-primary/5` | Baseado na cor primária |
-| Opção 3 (custom) | `bg-[#fef3e7]` | Laranja mais suave |
-
-A melhor opção é `bg-orange-50` por ser uma classe Tailwind nativa e combinar bem com a identidade laranja do Conexão.
+| Tipo | Arquivo/Recurso | Ação |
+|------|-----------------|------|
+| SQL | Nova migração | Criar e executar |
+| Frontend | Nenhum | Não requer mudanças |
 
 ---
 
 ## Critérios de Aceite
 
-- [ ] Layout 2 colunas no desktop (60/40), igual ao `/auth`
-- [ ] Coluna esquerda com fundo laranja bem claro (`bg-orange-50`)
-- [ ] Apenas logo na coluna esquerda (sem textos)
-- [ ] Card de mensagem na coluna direita (funcionalidade mantida)
-- [ ] Mobile: layout empilhado (logo com fundo laranja em cima)
-- [ ] Botões "Início" e "Entrar" funcionando
-- [ ] Contador de redirecionamento funcionando
-- [ ] Diferenciação entre "not_authenticated" e "not_authorized" mantida
+- [x] Identificar causa raiz (política RLS com acesso a auth.users)
+- [ ] Executar migração corrigindo a política
+- [ ] Usuário anônimo continua vendo notícias
+- [ ] Usuário logado agora vê notícias corretamente
+- [ ] Funcionalidade de times do Illumina mantida
+- [ ] Nenhum erro "permission denied" nos logs
+
+---
+
+## Observações Adicionais
+
+### Prevenção Futura
+Nunca usar subconsultas para `auth.users` em políticas RLS. Alternativas:
+
+| Precisa de... | Use |
+|---------------|-----|
+| Email do usuário | `auth.jwt() ->> 'email'` |
+| ID do usuário | `auth.uid()` |
+| Role do usuário | `auth.jwt() ->> 'role'` |
+| Metadados | `auth.jwt() -> 'user_metadata' ->> 'campo'` |
+
+### Por que o erro só aparece logado?
+- Usuários anônimos não têm sessão JWT, então a condição `invited_email = ...` simplesmente retorna `false` (sem erro)
+- Usuários autenticados têm uma sessão ativa, então a política é avaliada e a subconsulta para `auth.users` é executada (causando o erro)
 
