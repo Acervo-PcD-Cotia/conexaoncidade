@@ -24,10 +24,16 @@ function truncateText(text: string, maxChars: number): string {
 }
 
 export function HeroSection() {
-  const { data: featuredNews, isLoading: loadingFeatured } = useFeaturedNews(6);
-  const { data: latestNews, isLoading: loadingLatest } = useNews(10);
+  const { data: featuredNews, isLoading: loadingFeatured, error: errorFeatured } = useFeaturedNews(6);
+  const { data: latestNews, isLoading: loadingLatest, error: errorLatest } = useNews(10);
 
   const isLoading = loadingFeatured || loadingLatest;
+  const hasError = errorFeatured || errorLatest;
+
+  if (hasError) {
+    console.error('[HeroSection] Erro ao carregar notícias:', errorFeatured || errorLatest);
+    return null;
+  }
 
   // Combine featured and latest, prioritizing featured
   const allNews = [
