@@ -9653,6 +9653,79 @@ export type Database = {
           },
         ]
       }
+      tenant_modules: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          module_key: string
+          settings: Json | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          module_key: string
+          settings?: Json | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          module_key?: string
+          settings?: Json | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_modules_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_profiles_config: {
+        Row: {
+          allowed_profiles: string[]
+          created_at: string
+          default_profile: string
+          id: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          allowed_profiles?: string[]
+          created_at?: string
+          default_profile?: string
+          id?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          allowed_profiles?: string[]
+          created_at?: string
+          default_profile?: string
+          id?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_profiles_config_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_solutions: {
         Row: {
           activated_at: string | null
@@ -10281,6 +10354,47 @@ export type Database = {
         }
         Relationships: []
       }
+      user_tenant_preferences: {
+        Row: {
+          active_profile: string
+          created_at: string
+          dismissed_onboarding: boolean
+          id: string
+          last_seen_at: string | null
+          tenant_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active_profile?: string
+          created_at?: string
+          dismissed_onboarding?: boolean
+          id?: string
+          last_seen_at?: string | null
+          tenant_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active_profile?: string
+          created_at?: string
+          dismissed_onboarding?: boolean
+          id?: string
+          last_seen_at?: string | null
+          tenant_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_tenant_preferences_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       web_stories: {
         Row: {
           audio_type: string | null
@@ -10506,6 +10620,10 @@ export type Database = {
       }
       is_illumina_team_member: {
         Args: { p_team_id: string; p_user_id?: string }
+        Returns: boolean
+      }
+      is_module_enabled: {
+        Args: { _module_key: string; _tenant_id: string }
         Returns: boolean
       }
       is_site_admin: {
