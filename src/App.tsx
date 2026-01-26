@@ -84,6 +84,14 @@ import AutoPostLogs from "./pages/admin/autopost/AutoPostLogs";
 import AutoPostReports from "./pages/admin/autopost/AutoPostReports";
 import AutoPostSettings from "./pages/admin/autopost/AutoPostSettings";
 
+// Conexão Academy Pages
+import AcademyDashboard from "./pages/admin/academy/AcademyDashboard";
+import AcademyCourse from "./pages/admin/academy/AcademyCourse";
+import AcademyLesson from "./pages/admin/academy/AcademyLesson";
+import AcademyAdminCategories from "./pages/admin/academy/AcademyAdminCategories";
+import AcademyAdminCourses from "./pages/admin/academy/AcademyAdminCourses";
+import AcademyAdminLessons from "./pages/admin/academy/AcademyAdminLessons";
+
 // Community Pages
 import CommunityHub from "./pages/community/CommunityHub";
 import CommunityUnlock from "./pages/community/CommunityUnlock";
@@ -372,6 +380,14 @@ const App = () => (
                         <Route path="autopost/settings" element={<AutoPostSettings />} />
                         <Route path="autopost/sources/new" element={<AutoPostSourceForm />} />
                         <Route path="autopost/sources/:id/edit" element={<AutoPostSourceForm />} />
+                        
+                        {/* Conexão Academy Routes */}
+                        <Route path="academy" element={<AcademyDashboard />} />
+                        <Route path="academy/curso/:slug" element={<AcademyCourse />} />
+                        <Route path="academy/aula/:id" element={<AcademyLesson />} />
+                        <Route path="academy/admin/categorias" element={<AcademyAdminCategories />} />
+                        <Route path="academy/admin/cursos" element={<AcademyAdminCourses />} />
+                        <Route path="academy/admin/cursos/:id/aulas" element={<AcademyAdminLessons />} />
                         
                         {/* Partners Routes */}
                         <Route path="partners" element={<PartnersInbox />} />
