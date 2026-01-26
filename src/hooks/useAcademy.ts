@@ -15,25 +15,45 @@ import type {
 } from "@/types/academy";
 import type { Json } from "@/integrations/supabase/types";
 
-// Helper to safely parse external_links
-function parseExternalLinks(links: Json | null | undefined): AcademyExternalLink[] {
-  if (!links) return [];
-  if (Array.isArray(links)) {
-    return links.map(item => {
-      const obj = item as Record<string, unknown>;
-      return {
-        label: String(obj.label || ''),
-        url: String(obj.url || ''),
-      };
-    });
+// Type utility for generic objects
+type AnyObj = Record<string, unknown>;
+
+// Type guard to verify if value is an object
+function isObj(v: unknown): v is AnyObj {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+
+// Helper to safely parse external_links with robust type guard
+function parseExternalLinks(input: unknown): AcademyExternalLink[] {
+  if (!input) return [];
+
+  // Supabase may deliver JSON string in some cases
+  let value: unknown = input;
+  if (typeof value === "string") {
+    try {
+      value = JSON.parse(value);
+    } catch {
+      return [];
+    }
   }
+
+  if (Array.isArray(value)) {
+    return value
+      .filter(isObj)
+      .map((item) => ({
+        label: typeof item.label === "string" ? item.label : "",
+        url: typeof item.url === "string" ? item.url : "",
+      }))
+      .filter((link) => link.label && link.url);
+  }
+
   return [];
 }
 
 // ============= CATEGORIES =============
 
 export function useAcademyCategories() {
-  return useQuery({
+  return useQuery<AcademyCategory[]>({
     queryKey: ["academy-categories"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -121,7 +141,7 @@ export function useDeleteAcademyCategory() {
 // ============= COURSES =============
 
 export function useAcademyCourses(categoryId?: string) {
-  return useQuery({
+  return useQuery<AcademyCourse[]>({
     queryKey: ["academy-courses", categoryId],
     queryFn: async () => {
       let query = supabase
@@ -139,16 +159,16 @@ export function useAcademyCourses(categoryId?: string) {
       const { data, error } = await query;
       if (error) throw error;
       
-      return data.map(course => ({
+      return (data || []).map((course: any) => ({
         ...course,
-        category: course.category as unknown as AcademyCategory | undefined,
+        category: course.category || undefined,
       })) as AcademyCourse[];
     },
   });
 }
 
 export function useAcademyCourse(slug: string) {
-  return useQuery({
+  return useQuery<AcademyCourse | null>({
     queryKey: ["academy-course", slug],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -163,17 +183,17 @@ export function useAcademyCourse(slug: string) {
 
       if (error) throw error;
       
-      // Parse and sort lessons
-      const lessons = (data.lessons || [])
-        .map((lesson: Record<string, unknown>) => ({
+      // Parse and sort lessons with proper typing
+      const lessons: AcademyLesson[] = ((data.lessons as any[]) || [])
+        .map((lesson: any) => ({
           ...lesson,
-          external_links: parseExternalLinks(lesson.external_links as Json),
+          external_links: parseExternalLinks(lesson.external_links),
         }))
-        .sort((a: AcademyLesson, b: AcademyLesson) => a.sort_order - b.sort_order);
+        .sort((a, b) => a.sort_order - b.sort_order);
       
       return {
         ...data,
-        category: data.category as unknown as AcademyCategory | undefined,
+        category: data.category || undefined,
         lessons,
       } as AcademyCourse;
     },
@@ -255,7 +275,7 @@ export function useDeleteAcademyCourse() {
 // ============= LESSONS =============
 
 export function useAcademyLessons(courseId: string) {
-  return useQuery({
+  return useQuery<AcademyLesson[]>({
     queryKey: ["academy-lessons", courseId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -266,7 +286,7 @@ export function useAcademyLessons(courseId: string) {
 
       if (error) throw error;
       
-      return data.map(lesson => ({
+      return (data || []).map((lesson: any) => ({
         ...lesson,
         external_links: parseExternalLinks(lesson.external_links),
       })) as AcademyLesson[];
@@ -276,7 +296,7 @@ export function useAcademyLessons(courseId: string) {
 }
 
 export function useAcademyLesson(lessonId: string) {
-  return useQuery({
+  return useQuery<AcademyLesson | null>({
     queryKey: ["academy-lesson", lessonId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -293,7 +313,7 @@ export function useAcademyLesson(lessonId: string) {
       return {
         ...data,
         external_links: parseExternalLinks(data.external_links),
-        course: data.course as unknown as AcademyCourse | undefined,
+        course: data.course || undefined,
       } as AcademyLesson;
     },
     enabled: !!lessonId,
@@ -417,7 +437,7 @@ export function useUpdateLessonOrder() {
 export function useAcademyProgress() {
   const { user } = useAuth();
 
-  return useQuery({
+  return useQuery<AcademyProgress[]>({
     queryKey: ["academy-progress", user?.id],
     queryFn: async () => {
       if (!user) return [];
@@ -480,9 +500,9 @@ export function useUpdateLessonProgress() {
 export function useContinueWatching() {
   const { user } = useAuth();
 
-  return useQuery({
+  return useQuery<ContinueWatchingItem[]>({
     queryKey: ["academy-continue-watching", user?.id],
-    queryFn: async (): Promise<ContinueWatchingItem[]> => {
+    queryFn: async () => {
       if (!user) return [];
 
       const { data: progress, error: progressError } = await supabase
@@ -501,36 +521,66 @@ export function useContinueWatching() {
 
       if (progressError) throw progressError;
 
-      return progress
-        .filter((p) => p.lesson && p.lesson.course)
-        .map((p) => {
-          const lessonData = p.lesson as Record<string, unknown>;
-          return {
-            lesson: {
-              ...lessonData,
-              external_links: parseExternalLinks(lessonData.external_links as Json),
-            } as AcademyLesson,
-            course: lessonData.course as AcademyCourse,
-            progress: {
-              id: p.id,
-              user_id: p.user_id,
-              lesson_id: p.lesson_id,
-              progress_percent: p.progress_percent,
-              completed_at: p.completed_at,
-              last_watched_at: p.last_watched_at,
-              created_at: p.created_at,
-            } as AcademyProgress,
+      return (progress || [])
+        .filter((p: any) => p.lesson && p.lesson.course)
+        .map((p: any) => {
+          const lessonRaw = p.lesson as AnyObj;
+          const courseRaw = (lessonRaw.course ?? {}) as AnyObj;
+
+          const lesson: AcademyLesson = {
+            id: String(lessonRaw.id),
+            course_id: String(lessonRaw.course_id),
+            title: String(lessonRaw.title),
+            description: lessonRaw.description as string | null,
+            content_html: lessonRaw.content_html as string | null,
+            video_embed: lessonRaw.video_embed as string | null,
+            external_links: parseExternalLinks(lessonRaw.external_links),
+            duration_minutes: Number(lessonRaw.duration_minutes) || 0,
+            sort_order: Number(lessonRaw.sort_order) || 0,
+            is_published: Boolean(lessonRaw.is_published),
+            created_at: String(lessonRaw.created_at),
+            updated_at: String(lessonRaw.updated_at),
           };
+
+          const course: AcademyCourse = {
+            id: String(courseRaw.id),
+            category_id: courseRaw.category_id as string | null,
+            title: String(courseRaw.title),
+            slug: String(courseRaw.slug),
+            description: courseRaw.description as string | null,
+            cover_url: courseRaw.cover_url as string | null,
+            instructor_name: courseRaw.instructor_name as string | null,
+            duration_minutes: Number(courseRaw.duration_minutes) || 0,
+            visibility: (courseRaw.visibility as 'all' | 'partners' | 'admin') || 'all',
+            is_published: Boolean(courseRaw.is_published),
+            sort_order: Number(courseRaw.sort_order) || 0,
+            created_at: String(courseRaw.created_at),
+            updated_at: String(courseRaw.updated_at),
+          };
+
+          const progressItem: AcademyProgress = {
+            id: p.id,
+            user_id: p.user_id,
+            lesson_id: p.lesson_id,
+            progress_percent: p.progress_percent,
+            completed_at: p.completed_at,
+            last_watched_at: p.last_watched_at,
+            created_at: p.created_at,
+          };
+
+          return { lesson, course, progress: progressItem };
         });
     },
     enabled: !!user,
   });
 }
 
+type CourseProgressResult = { completed: number; total: number; percent: number };
+
 export function useCourseProgress(courseId: string) {
   const { user } = useAuth();
 
-  return useQuery({
+  return useQuery<CourseProgressResult>({
     queryKey: ["academy-course-progress", courseId, user?.id],
     queryFn: async () => {
       if (!user) return { completed: 0, total: 0, percent: 0 };
