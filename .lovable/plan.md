@@ -1,52 +1,46 @@
 
 
-# Plano de Redesign: Tela de Login Estilo CDM Brasil
+# Plano: Unificar Layout do /admin com /auth (Estilo CDM Brasil)
 
 ## Objetivo
-Redesenhar a tela de login (`/auth`) seguindo o layout clean do CDM Brasil (2 colunas), mantendo a identidade visual do Conexão na Cidade (cores laranja + logo) e preservando toda a lógica de autenticação existente.
+Refazer a tela de "Autenticação Necessária" (`AccessDeniedScreen`) para seguir o mesmo layout de 2 colunas da página `/auth`, com as seguintes alterações visuais:
+- Coluna esquerda: apenas logo (sem textos "Acesse sua conta" e "Painel Conexões")
+- Coluna esquerda: fundo laranja bem claro
 
 ---
 
-## Comparação: Atual vs. Novo
+## Comparação Visual
 
-| Aspecto | Atual | Novo (CDM Style) |
-|---------|-------|------------------|
+| Aspecto | Atual (`/admin` não autenticado) | Novo (CDM Style) |
+|---------|----------------------------------|------------------|
 | Layout | Card centralizado | 2 colunas (60/40) |
-| Logo | Pequeno no topo do card | Grande na coluna esquerda |
-| Tabs Login/Signup | Sim, dentro do card | Apenas Login (signup via contato) |
-| Mobile | Responsivo simples | Empilhado (logo em cima) |
-| Fundo | Gradiente escuro | Cinza claro (#f5f7fa) |
+| Coluna esquerda | N/A | Logo grande + fundo laranja claro |
+| Coluna direita | Card com ícone ShieldX | Card branco com mensagem e botões |
+| Fundo | `bg-background` (escuro) | Laranja claro (esquerda) + cinza (direita) |
 
 ---
 
-## Estrutura Visual
+## Estrutura Visual Proposta
 
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                                                                 │
 │  ┌──────────────────────────┐  ┌────────────────────────────┐  │
 │  │                          │  │                            │  │
-│  │                          │  │   E-mail                   │  │
-│  │        [LOGO CNC]        │  │   ┌────────────────────┐   │  │
-│  │        Grande            │  │   │ 📧 email@...       │   │  │
-│  │                          │  │   └────────────────────┘   │  │
-│  │   "Acesse sua conta"     │  │                            │  │
-│  │   "Painel Conexões"      │  │   Senha                    │  │
-│  │                          │  │   ┌────────────────────┐   │  │
-│  │                          │  │   │ 🔒 ••••••••   👁   │   │  │
-│  │                          │  │   └────────────────────┘   │  │
+│  │                          │  │         [ShieldX]          │  │
 │  │                          │  │                            │  │
-│  │                          │  │   [  ENTRAR  ] full-width  │  │
+│  │        [LOGO CNC]        │  │   Autenticação Necessária  │  │
+│  │        Grande            │  │                            │  │
+│  │                          │  │   Você precisa estar       │  │
+│  │                          │  │   logado para acessar...   │  │
 │  │                          │  │                            │  │
-│  │                          │  │   Esqueceu sua senha?      │  │
+│  │                          │  │   Redirecionando em Xs...  │  │
 │  │                          │  │                            │  │
-│  │                          │  │   ─────────────────────    │  │
-│  │                          │  │   Não tem conta? Contate   │  │
-│  │                          │  │   o administrador.         │  │
+│  │                          │  │   [Início]    [Entrar]     │  │
 │  │                          │  │                            │  │
-│  │                          │  │   © Conexão na Cidade      │  │
 │  └──────────────────────────┘  └────────────────────────────┘  │
-│        bg: #f5f7fa                     Card branco             │
+│   bg: laranja bem claro           bg: cinza claro + card      │
+│   (#fef3e7 ou similar)            branco                      │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -54,114 +48,91 @@ Redesenhar a tela de login (`/auth`) seguindo o layout clean do CDM Brasil (2 co
 
 ## Detalhes de Implementação
 
-### 1. Layout Principal
-- Div `min-h-screen` com grid de 2 colunas no desktop (`lg:grid-cols-[60%_40%]`)
-- Mobile: `flex-col` empilhado
-- Background: cinza claro (`bg-gray-50` ou `#f5f7fa`)
+### 1. Coluna Esquerda (Branding)
+- Fundo: **laranja bem claro** (`bg-orange-50` ou `#fef3e7`)
+- Conteúdo: **apenas o logo** (sem textos)
+- Logo grande centralizado (`h-24` a `h-32`)
+- Borda direita sutil no desktop
 
-### 2. Coluna Esquerda (Branding)
-- Centralizado vertical e horizontal
-- Logo grande (`h-24` ou maior)
-- Texto: "Acesse sua conta" + "Painel Conexões"
-- Fundo: mesmo cinza claro, borda direita sutil no desktop
+### 2. Coluna Direita (Card de Mensagem)
+- Fundo: cinza claro (`bg-muted/30`)
+- Card branco com sombra e bordas arredondadas
+- Ícone ShieldX (mantido)
+- Título e descrição (mantidos)
+- Contador de redirecionamento (mantido)
+- Botões "Início" e "Entrar" (mantidos)
 
-### 3. Coluna Direita (Card de Login)
-- Card branco com `shadow-lg`, `rounded-xl`, `border border-gray-200`
-- Padding generoso (`p-8`)
-- Campos com ícones (Mail, Lock)
-- Toggle de visibilidade de senha (Eye/EyeOff)
-- Botão "Entrar" com cor primária (laranja) full-width
-- Link "Esqueceu sua senha?" -> `/reset-password`
-- Texto inferior: "Não tem uma conta? Entre em contato com o administrador."
-- Footer: "© Conexão na Cidade - Todos os direitos reservados"
-
-### 4. Responsividade
-- Desktop (`lg:` e acima): Grid 2 colunas
-- Mobile/Tablet: Coluna única empilhada (logo em cima, card embaixo)
-- Padding ajustado para mobile
-
-### 5. Acessibilidade
-- Labels associados com `htmlFor`
-- TabIndex correto
-- Mensagens de erro visíveis abaixo dos campos
-- Aria-labels nos botões
+### 3. Responsividade
+- Desktop (`lg:` e acima): Grid 2 colunas (60/40)
+- Mobile/Tablet: Coluna única empilhada (logo em cima com fundo laranja, card embaixo)
 
 ---
 
-## Mudanças no Código
+## Arquivo a Modificar
 
-### Arquivo: `src/pages/Auth.tsx`
-
-**O que será mantido:**
-- Todos os imports existentes
-- Constantes `ADMIN_ROLES` e `ROLE_ROUTES`
-- Schema de validação `loginSchema`
-- Lógica do `useEffect` para redirecionamento
-- Função `handleLogin` completa
-- Estado de loading e submitting
-
-**O que será removido:**
-- Tabs de Login/Signup (apenas login nesta tela)
-- Schema `signupSchema` e estados de signup
-- Função `handleSignup`
-
-**O que será adicionado:**
-- Novo layout 2 colunas
-- Toggle de visibilidade de senha
-- Ícone Eye/EyeOff
-- Link "Esqueceu sua senha?"
-- Texto "Não tem conta? Contate admin"
-- Footer com copyright
+| Arquivo | Ação |
+|---------|------|
+| `src/components/auth/AccessDeniedScreen.tsx` | Refatorar para layout 2 colunas com fundo laranja claro na esquerda |
 
 ---
 
-## Cores e Estilo
+## Código: Nova Estrutura do AccessDeniedScreen
 
-```css
-/* Background da página */
-bg-gray-50 ou bg-[#f5f7fa]
+A estrutura seguirá o padrão do `Auth.tsx`:
 
-/* Card */
-bg-white border border-gray-200 shadow-lg rounded-xl
+```tsx
+// Layout principal - 2 colunas
+<div className="min-h-screen flex flex-col lg:grid lg:grid-cols-[60%_40%]">
+  
+  {/* Coluna Esquerda - Logo com fundo laranja claro */}
+  <div className="flex items-center justify-center py-12 px-6 lg:py-0 bg-orange-50 lg:border-r lg:border-orange-100">
+    <img 
+      src={logoFull} 
+      alt="Conexão na Cidade" 
+      className="h-24 lg:h-32 w-auto"
+    />
+  </div>
 
-/* Campos */
-Input com bg-gray-50/50 no focus, borda sutil
-
-/* Botão Entrar */
-bg-primary (laranja) hover:bg-primary/90
-
-/* Links */
-text-primary hover:underline
-
-/* Texto secundário */
-text-muted-foreground ou text-gray-500
+  {/* Coluna Direita - Card de mensagem */}
+  <div className="flex-1 flex items-center justify-center p-6 lg:p-12 bg-muted/30">
+    <Card className="w-full max-w-md ...">
+      {/* Conteúdo existente do card */}
+    </Card>
+  </div>
+  
+</div>
 ```
 
 ---
 
-## Arquivos a Modificar
+## Importações a Adicionar
 
-| Arquivo | Ação |
-|---------|------|
-| `src/pages/Auth.tsx` | Reescrever JSX com novo layout, remover signup |
+```tsx
+import logoFull from "@/assets/logo-full.png";
+```
+
+---
+
+## Cor Laranja Claro - Opções
+
+| Opção | Classe Tailwind | Hex |
+|-------|-----------------|-----|
+| Opção 1 | `bg-orange-50` | `#fff7ed` |
+| Opção 2 | `bg-primary/5` | Baseado na cor primária |
+| Opção 3 (custom) | `bg-[#fef3e7]` | Laranja mais suave |
+
+A melhor opção é `bg-orange-50` por ser uma classe Tailwind nativa e combinar bem com a identidade laranja do Conexão.
 
 ---
 
 ## Critérios de Aceite
 
-- [ ] Layout 2 colunas no desktop (60/40)
-- [ ] Logo grande na esquerda com texto "Acesse sua conta"
-- [ ] Card de login na direita com campos e botão
-- [ ] Toggle de visibilidade de senha funcional
-- [ ] Link "Esqueceu sua senha?" -> `/reset-password`
-- [ ] Mobile: layout empilhado responsivo
-- [ ] Mantém login funcionando (mesma lógica)
-- [ ] Cores laranja do Conexão preservadas
-- [ ] Acessibilidade: labels, tabindex, erros visíveis
-
----
-
-## Observação sobre Signup
-
-O novo design foca apenas no login, seguindo o padrão CDM. O texto "Não tem uma conta? Entre em contato com o administrador" substitui o fluxo de cadastro público. Se futuramente for necessário manter o signup, pode-se criar uma rota separada (`/cadastro`) ou um link condicional.
+- [ ] Layout 2 colunas no desktop (60/40), igual ao `/auth`
+- [ ] Coluna esquerda com fundo laranja bem claro (`bg-orange-50`)
+- [ ] Apenas logo na coluna esquerda (sem textos)
+- [ ] Card de mensagem na coluna direita (funcionalidade mantida)
+- [ ] Mobile: layout empilhado (logo com fundo laranja em cima)
+- [ ] Botões "Início" e "Entrar" funcionando
+- [ ] Contador de redirecionamento funcionando
+- [ ] Diferenciação entre "not_authenticated" e "not_authorized" mantida
 
