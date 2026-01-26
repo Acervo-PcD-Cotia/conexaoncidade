@@ -6,6 +6,8 @@ import { Separator } from "@/components/ui/separator";
 import { useAcademyLesson, useAcademyLessons, useUpdateLessonProgress, useAcademyProgress } from "@/hooks/useAcademy";
 import { AcademyLessonPlayer } from "@/components/academy/AcademyLessonPlayer";
 import { AcademyLessonNav } from "@/components/academy/AcademyLessonNav";
+import { AcademyLessonChecklist } from "@/components/academy/AcademyLessonChecklist";
+import { toast } from "sonner";
 
 export default function AcademyLesson() {
   const { id } = useParams<{ id: string }>();
@@ -34,7 +36,21 @@ export default function AcademyLesson() {
 
   const handleMarkComplete = () => {
     if (!lesson) return;
-    updateProgress.mutate({ lessonId: lesson.id, progressPercent: 100 });
+    updateProgress.mutate(
+      { lessonId: lesson.id, progressPercent: 100 },
+      {
+        onSuccess: () => {
+          toast.success("Aula marcada como concluída!");
+        }
+      }
+    );
+  };
+
+  const handleChecklistComplete = () => {
+    // Auto-mark lesson complete when all checklist items are done
+    if (!isCompleted && lesson) {
+      handleMarkComplete();
+    }
   };
 
   if (isLoading) {
@@ -55,6 +71,8 @@ export default function AcademyLesson() {
       </div>
     );
   }
+
+  const hasChecklist = lesson.checklist && lesson.checklist.length > 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -102,6 +120,15 @@ export default function AcademyLesson() {
               <p className="text-muted-foreground">{lesson.description}</p>
             )}
           </div>
+
+          {/* Checklist - shown prominently if available */}
+          {hasChecklist && (
+            <AcademyLessonChecklist
+              items={lesson.checklist}
+              lessonId={lesson.id}
+              onAllCompleted={handleChecklistComplete}
+            />
+          )}
 
           {/* External Links */}
           {lesson.external_links && lesson.external_links.length > 0 && (
