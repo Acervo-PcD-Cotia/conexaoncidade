@@ -92,6 +92,14 @@ import AcademyAdminCategories from "./pages/admin/academy/AcademyAdminCategories
 import AcademyAdminCourses from "./pages/admin/academy/AcademyAdminCourses";
 import AcademyAdminLessons from "./pages/admin/academy/AcademyAdminLessons";
 
+// Conexão.AI Pages
+import ConexaoAIDashboard from "./pages/admin/conexao-ai/ConexaoAIDashboard";
+import ConexaoAIAssistant from "./pages/admin/conexao-ai/ConexaoAIAssistant";
+import ConexaoAICreator from "./pages/admin/conexao-ai/ConexaoAICreator";
+import ConexaoAITools from "./pages/admin/conexao-ai/ConexaoAITools";
+import ConexaoAIAutomations from "./pages/admin/conexao-ai/ConexaoAIAutomations";
+import ConexaoAIInsights from "./pages/admin/conexao-ai/ConexaoAIInsights";
+
 // Community Pages
 import CommunityHub from "./pages/community/CommunityHub";
 import CommunityUnlock from "./pages/community/CommunityUnlock";
@@ -388,6 +396,14 @@ const App = () => (
                         <Route path="academy/admin/categorias" element={<AcademyAdminCategories />} />
                         <Route path="academy/admin/cursos" element={<AcademyAdminCourses />} />
                         <Route path="academy/admin/cursos/:id/aulas" element={<AcademyAdminLessons />} />
+                        
+                        {/* Conexão.AI Routes */}
+                        <Route path="conexao-ai" element={<ConexaoAIDashboard />} />
+                        <Route path="conexao-ai/assistente" element={<ConexaoAIAssistant />} />
+                        <Route path="conexao-ai/criador" element={<ConexaoAICreator />} />
+                        <Route path="conexao-ai/ferramentas" element={<ConexaoAITools />} />
+                        <Route path="conexao-ai/automacoes" element={<ConexaoAIAutomations />} />
+                        <Route path="conexao-ai/insights" element={<ConexaoAIInsights />} />
                         
                         {/* Partners Routes */}
                         <Route path="partners" element={<PartnersInbox />} />

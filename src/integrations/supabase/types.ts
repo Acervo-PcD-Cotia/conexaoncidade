@@ -4534,6 +4534,211 @@ export type Database = {
           },
         ]
       }
+      conexao_ai_automation_logs: {
+        Row: {
+          automation_id: string | null
+          created_at: string | null
+          id: string
+          result: Json | null
+          status: string | null
+          trigger_data: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          automation_id?: string | null
+          created_at?: string | null
+          id?: string
+          result?: Json | null
+          status?: string | null
+          trigger_data?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          automation_id?: string | null
+          created_at?: string | null
+          id?: string
+          result?: Json | null
+          status?: string | null
+          trigger_data?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conexao_ai_automation_logs_automation_id_fkey"
+            columns: ["automation_id"]
+            isOneToOne: false
+            referencedRelation: "conexao_ai_automations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conexao_ai_automations: {
+        Row: {
+          action_type: string
+          config: Json | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          trigger_event: string
+          updated_at: string | null
+        }
+        Insert: {
+          action_type: string
+          config?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          trigger_event: string
+          updated_at?: string | null
+        }
+        Update: {
+          action_type?: string
+          config?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          trigger_event?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      conexao_ai_content_drafts: {
+        Row: {
+          content: Json | null
+          created_at: string | null
+          id: string
+          published_id: string | null
+          status: string | null
+          title: string | null
+          type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content?: Json | null
+          created_at?: string | null
+          id?: string
+          published_id?: string | null
+          status?: string | null
+          title?: string | null
+          type?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: Json | null
+          created_at?: string | null
+          id?: string
+          published_id?: string | null
+          status?: string | null
+          title?: string | null
+          type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      conexao_ai_conversations: {
+        Row: {
+          context: string | null
+          created_at: string | null
+          id: string
+          title: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          context?: string | null
+          created_at?: string | null
+          id?: string
+          title?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          context?: string | null
+          created_at?: string | null
+          id?: string
+          title?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      conexao_ai_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          role: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          role: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conexao_ai_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conexao_ai_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conexao_ai_tool_usage: {
+        Row: {
+          created_at: string | null
+          id: string
+          input_data: Json | null
+          output_data: Json | null
+          tool_id: string
+          tool_name: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          input_data?: Json | null
+          output_data?: Json | null
+          tool_id: string
+          tool_name?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          input_data?: Json | null
+          output_data?: Json | null
+          tool_id?: string
+          tool_name?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       digital_edition_items: {
         Row: {
           created_at: string | null

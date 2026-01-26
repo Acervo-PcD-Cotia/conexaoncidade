@@ -151,6 +151,7 @@ const streamingConfigItems: MenuItem[] = [
 
 const businessItems: MenuItem[] = [
   { title: "Conexão Academy", url: "/admin/academy", icon: PlayCircle },
+  { title: "Conexão.AI", url: "/admin/conexao-ai", icon: Sparkles },
   { title: "Soluções", url: "/admin/solutions", icon: Puzzle },
   { title: "Treinamento", url: "/admin/training", icon: GraduationCap },
   { title: "Financeiro", url: "/admin/financial", icon: Receipt },
