@@ -40,6 +40,11 @@ export interface AcademyExternalLink {
   url: string;
 }
 
+export interface AcademyChecklistItem {
+  item: string;
+  order: number;
+}
+
 export interface AcademyLesson {
   id: string;
   course_id: string;
@@ -48,6 +53,7 @@ export interface AcademyLesson {
   content_html: string | null;
   video_embed: string | null;
   external_links: AcademyExternalLink[];
+  checklist: AcademyChecklistItem[];
   duration_minutes: number;
   sort_order: number;
   is_published: boolean;

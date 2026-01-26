@@ -11,6 +11,7 @@ import type {
   AcademyCourseFormData,
   AcademyLessonFormData,
   AcademyExternalLink,
+  AcademyChecklistItem,
   ContinueWatchingItem,
 } from "@/types/academy";
 import type { Json } from "@/integrations/supabase/types";
@@ -45,6 +46,32 @@ function parseExternalLinks(input: unknown): AcademyExternalLink[] {
         url: typeof item.url === "string" ? item.url : "",
       }))
       .filter((link) => link.label && link.url);
+  }
+
+  return [];
+}
+
+// Helper to safely parse checklist JSONB
+function parseChecklist(input: unknown): AcademyChecklistItem[] {
+  if (!input) return [];
+
+  let value: unknown = input;
+  if (typeof value === "string") {
+    try {
+      value = JSON.parse(value);
+    } catch {
+      return [];
+    }
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .filter(isObj)
+      .map((item) => ({
+        item: typeof item.item === "string" ? item.item : "",
+        order: typeof item.order === "number" ? item.order : 0,
+      }))
+      .filter((check) => check.item);
   }
 
   return [];
@@ -188,6 +215,7 @@ export function useAcademyCourse(slug: string) {
         .map((lesson: any) => ({
           ...lesson,
           external_links: parseExternalLinks(lesson.external_links),
+          checklist: parseChecklist(lesson.checklist),
         }))
         .sort((a, b) => a.sort_order - b.sort_order);
       
@@ -289,6 +317,7 @@ export function useAcademyLessons(courseId: string) {
       return (data || []).map((lesson: any) => ({
         ...lesson,
         external_links: parseExternalLinks(lesson.external_links),
+        checklist: parseChecklist(lesson.checklist),
       })) as AcademyLesson[];
     },
     enabled: !!courseId,
@@ -313,6 +342,7 @@ export function useAcademyLesson(lessonId: string) {
       return {
         ...data,
         external_links: parseExternalLinks(data.external_links),
+        checklist: parseChecklist(data.checklist),
         course: data.course || undefined,
       } as AcademyLesson;
     },
@@ -535,6 +565,7 @@ export function useContinueWatching() {
             content_html: lessonRaw.content_html as string | null,
             video_embed: lessonRaw.video_embed as string | null,
             external_links: parseExternalLinks(lessonRaw.external_links),
+            checklist: parseChecklist(lessonRaw.checklist),
             duration_minutes: Number(lessonRaw.duration_minutes) || 0,
             sort_order: Number(lessonRaw.sort_order) || 0,
             is_published: Boolean(lessonRaw.is_published),

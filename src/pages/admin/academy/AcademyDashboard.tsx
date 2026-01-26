@@ -4,13 +4,15 @@ import { Input } from "@/components/ui/input";
 import { useAcademyCategories, useAcademyCourses, useContinueWatching, useAcademyProgress } from "@/hooks/useAcademy";
 import { AcademyCarousel } from "@/components/academy/AcademyCarousel";
 import { AcademyContinueWatching } from "@/components/academy/AcademyContinueWatching";
+import { AcademyCourseGrid } from "@/components/academy/AcademyCourseGrid";
+import { AcademyEmptyState } from "@/components/academy/AcademyEmptyState";
 import type { AcademyCourse, AcademyProgress } from "@/types/academy";
 
 export default function AcademyDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const { data: categories, isLoading: loadingCategories } = useAcademyCategories();
-  const { data: allCourses, isLoading: loadingCourses } = useAcademyCourses();
+  const { data: allCourses, isLoading: loadingCourses, refetch } = useAcademyCourses();
   const { data: continueWatching, isLoading: loadingContinue } = useContinueWatching();
   const { data: progressData } = useAcademyProgress();
 
@@ -48,20 +50,20 @@ export default function AcademyDashboard() {
     course.description?.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
 
+  // Only published courses
+  const publishedCourses = filteredCourses.filter(c => c.is_published);
+
   // Group courses by category
   const coursesByCategory = categories?.map(category => ({
     category,
-    courses: filteredCourses.filter(c => c.category_id === category.id && c.is_published),
+    courses: publishedCourses.filter(c => c.category_id === category.id),
   })).filter(group => group.courses.length > 0) || [];
 
-  // Courses without category
-  const uncategorizedCourses = filteredCourses.filter(
-    c => !c.category_id && c.is_published
-  );
+  // Courses without category (main operational training courses)
+  const uncategorizedCourses = publishedCourses.filter(c => !c.category_id);
 
   // New courses (last 30 days)
-  const newCourses = filteredCourses.filter(c => {
-    if (!c.is_published) return false;
+  const newCourses = publishedCourses.filter(c => {
     const createdAt = new Date(c.created_at);
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -81,7 +83,7 @@ export default function AcademyDashboard() {
               <div>
                 <h1 className="text-2xl font-bold">Conexão Academy</h1>
                 <p className="text-sm text-muted-foreground">
-                  Treinamentos e cursos para sua equipe
+                  Treinamentos operacionais para WebRádio e WebTV
                 </p>
               </div>
             </div>
@@ -105,6 +107,8 @@ export default function AcademyDashboard() {
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
+        ) : publishedCourses.length === 0 ? (
+          <AcademyEmptyState onRefresh={() => refetch()} />
         ) : (
           <>
             {/* Continue Watching */}
@@ -112,8 +116,17 @@ export default function AcademyDashboard() {
               <AcademyContinueWatching items={continueWatching} />
             )}
 
+            {/* Main Operational Training - Uncategorized courses first */}
+            {uncategorizedCourses.length > 0 && (
+              <AcademyCourseGrid
+                title="🎯 Treinamentos Operacionais"
+                courses={uncategorizedCourses}
+                progressMap={progressMap}
+              />
+            )}
+
             {/* New Courses */}
-            {newCourses.length > 0 && (
+            {newCourses.length > 0 && newCourses.length !== uncategorizedCourses.length && (
               <AcademyCarousel
                 title="Novos Treinamentos"
                 courses={newCourses}
@@ -131,26 +144,15 @@ export default function AcademyDashboard() {
               />
             ))}
 
-            {/* Uncategorized Courses */}
-            {uncategorizedCourses.length > 0 && (
-              <AcademyCarousel
-                title="Outros Cursos"
-                courses={uncategorizedCourses}
-                progressMap={progressMap}
-              />
-            )}
-
-            {/* Empty State */}
-            {filteredCourses.length === 0 && (
+            {/* Empty search state */}
+            {searchQuery && filteredCourses.length === 0 && (
               <div className="text-center py-20">
                 <GraduationCap className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
                 <h2 className="text-xl font-semibold text-muted-foreground mb-2">
-                  {searchQuery ? "Nenhum curso encontrado" : "Nenhum curso disponível"}
+                  Nenhum curso encontrado
                 </h2>
                 <p className="text-muted-foreground">
-                  {searchQuery
-                    ? "Tente buscar por outro termo"
-                    : "Os cursos aparecerão aqui quando forem publicados"}
+                  Tente buscar por outro termo
                 </p>
               </div>
             )}

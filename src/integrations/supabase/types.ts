@@ -108,6 +108,7 @@ export type Database = {
       }
       academy_lessons: {
         Row: {
+          checklist: Json | null
           content_html: string | null
           course_id: string
           created_at: string | null
@@ -122,6 +123,7 @@ export type Database = {
           video_embed: string | null
         }
         Insert: {
+          checklist?: Json | null
           content_html?: string | null
           course_id: string
           created_at?: string | null
@@ -136,6 +138,7 @@ export type Database = {
           video_embed?: string | null
         }
         Update: {
+          checklist?: Json | null
           content_html?: string | null
           course_id?: string
           created_at?: string | null
