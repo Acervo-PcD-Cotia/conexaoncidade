@@ -17,7 +17,21 @@ function formatTimeAgo(date: string) {
 }
 
 export function LatestNewsList() {
-  const { data: news, isLoading } = useNews(12);
+  const { data: news, isLoading, error } = useNews(12);
+
+  if (error) {
+    console.error('[LatestNewsList] Erro ao carregar notícias:', error);
+    return (
+      <section className="container py-4">
+        <div className="text-center py-8 text-muted-foreground">
+          <p className="mb-3">Não foi possível carregar as notícias</p>
+          <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+            Tentar novamente
+          </Button>
+        </div>
+      </section>
+    );
+  }
 
   if (isLoading) {
     return (
