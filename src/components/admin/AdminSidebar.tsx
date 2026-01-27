@@ -23,6 +23,9 @@ import {
   BookOpen,
   GraduationCap,
   Receipt,
+  Building2,
+  Plus,
+  CheckCircle,
   Bot,
   UsersRound,
   Mic,
@@ -161,6 +164,19 @@ const businessItems: MenuItem[] = [
   { title: "Geração Cotia", url: "#sso-gcotia", icon: ExternalLink, action: true },
 ];
 
+const publidoorItems: MenuItem[] = [
+  { title: "Visão Geral", url: "/admin/publidoor", icon: LayoutDashboard },
+  { title: "Criar Publidoor", url: "/admin/publidoor/criar", icon: Plus },
+  { title: "Campanhas", url: "/admin/publidoor/campanhas", icon: FolderOpen },
+  { title: "Locais", url: "/admin/publidoor/locais", icon: MapPin },
+  { title: "Agenda", url: "/admin/publidoor/agenda", icon: Calendar },
+  { title: "Anunciantes", url: "/admin/publidoor/anunciantes", icon: Building2 },
+  { title: "Métricas", url: "/admin/publidoor/metricas", icon: BarChart3 },
+  { title: "Modelos", url: "/admin/publidoor/modelos", icon: Palette },
+  { title: "Aprovações", url: "/admin/publidoor/aprovacoes", icon: CheckCircle },
+  { title: "Configurações", url: "/admin/publidoor/config", icon: Settings },
+];
+
 const transporteEscolarItems: MenuItem[] = [
   { title: "Dashboard", url: "/admin/transporte-escolar", icon: LayoutDashboard },
   { title: "Escolas", url: "/admin/transporte-escolar/escolas", icon: School },
@@ -198,6 +214,12 @@ const sidebarGroups: SidebarGroupConfig[] = [
     title: "Editorial",
     icon: Newspaper,
     items: editorialItems,
+  },
+  {
+    id: "publidoor",
+    title: "Publidoor",
+    icon: Megaphone,
+    items: publidoorItems,
   },
   {
     id: "streaming",
