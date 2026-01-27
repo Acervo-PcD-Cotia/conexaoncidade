@@ -184,9 +184,19 @@ export default function ConexaoAIInsights() {
                 cx="50%"
                 cy="50%"
                 outerRadius={100}
-                label={({ name, percent }) =>
-                  `${name} ${(percent * 100).toFixed(0)}%`
-                }
+                label={({ name, percent, x, y }) => (
+                  <text
+                    x={x}
+                    y={y}
+                    fill="hsl(25, 95%, 53%)"
+                    textAnchor="middle"
+                    fontSize={12}
+                    fontWeight={500}
+                  >
+                    {`${name} ${(percent * 100).toFixed(0)}%`}
+                  </text>
+                )}
+                labelLine={{ stroke: "hsl(25, 95%, 53%)" }}
               >
                 {moduleUsage.map((_, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
