@@ -8984,6 +8984,7 @@ export type Database = {
           status: string
           tenant_id: string | null
           updated_at: string
+          user_id: string | null
           website: string | null
           whatsapp: string | null
         }
@@ -8999,6 +9000,7 @@ export type Database = {
           status?: string
           tenant_id?: string | null
           updated_at?: string
+          user_id?: string | null
           website?: string | null
           whatsapp?: string | null
         }
@@ -9014,6 +9016,7 @@ export type Database = {
           status?: string
           tenant_id?: string | null
           updated_at?: string
+          user_id?: string | null
           website?: string | null
           whatsapp?: string | null
         }
@@ -11504,6 +11507,7 @@ export type Database = {
           sources_with_errors: number
         }[]
       }
+      get_partner_advertiser_id: { Args: { _user_id: string }; Returns: string }
       has_community_access: { Args: { _user_id: string }; Returns: boolean }
       has_permission: {
         Args: { _permission: string; _user_id: string }
@@ -11540,6 +11544,7 @@ export type Database = {
         Args: { _module_key: string; _tenant_id: string }
         Returns: boolean
       }
+      is_publidoor_partner: { Args: { _user_id: string }; Returns: boolean }
       is_site_admin: {
         Args: { _site_id: string; _user_id: string }
         Returns: boolean
@@ -11554,6 +11559,10 @@ export type Database = {
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       normalize_title_fingerprint: { Args: { title: string }; Returns: string }
+      owns_publidoor_item: {
+        Args: { _publidoor_id: string; _user_id: string }
+        Returns: boolean
+      }
       should_notify_classified_interest: {
         Args: { p_classified_id: string }
         Returns: boolean
