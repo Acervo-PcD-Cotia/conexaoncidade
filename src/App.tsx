@@ -92,6 +92,19 @@ import AcademyAdminCategories from "./pages/admin/academy/AcademyAdminCategories
 import AcademyAdminCourses from "./pages/admin/academy/AcademyAdminCourses";
 import AcademyAdminLessons from "./pages/admin/academy/AcademyAdminLessons";
 
+// Publidoor Pages
+import PublidoorDashboard from "./pages/admin/publidoor/PublidoorDashboard";
+import PublidoorCreate from "./pages/admin/publidoor/PublidoorCreate";
+import PublidoorEdit from "./pages/admin/publidoor/PublidoorEdit";
+import PublidoorCampaigns from "./pages/admin/publidoor/PublidoorCampaigns";
+import PublidoorLocations from "./pages/admin/publidoor/PublidoorLocations";
+import PublidoorSchedules from "./pages/admin/publidoor/PublidoorSchedules";
+import PublidoorAdvertisers from "./pages/admin/publidoor/PublidoorAdvertisers";
+import PublidoorMetrics from "./pages/admin/publidoor/PublidoorMetrics";
+import PublidoorTemplates from "./pages/admin/publidoor/PublidoorTemplates";
+import PublidoorApprovals from "./pages/admin/publidoor/PublidoorApprovals";
+import PublidoorSettings from "./pages/admin/publidoor/PublidoorSettings";
+
 // Conexão.AI Pages
 import ConexaoAIDashboard from "./pages/admin/conexao-ai/ConexaoAIDashboard";
 import ConexaoAIAssistant from "./pages/admin/conexao-ai/ConexaoAIAssistant";
@@ -396,6 +409,19 @@ const App = () => (
                         <Route path="academy/admin/categorias" element={<AcademyAdminCategories />} />
                         <Route path="academy/admin/cursos" element={<AcademyAdminCourses />} />
                         <Route path="academy/admin/cursos/:id/aulas" element={<AcademyAdminLessons />} />
+                        
+                        {/* Publidoor Routes */}
+                        <Route path="publidoor" element={<PublidoorDashboard />} />
+                        <Route path="publidoor/criar" element={<PublidoorCreate />} />
+                        <Route path="publidoor/:id/editar" element={<PublidoorEdit />} />
+                        <Route path="publidoor/campanhas" element={<PublidoorCampaigns />} />
+                        <Route path="publidoor/locais" element={<PublidoorLocations />} />
+                        <Route path="publidoor/agenda" element={<PublidoorSchedules />} />
+                        <Route path="publidoor/anunciantes" element={<PublidoorAdvertisers />} />
+                        <Route path="publidoor/metricas" element={<PublidoorMetrics />} />
+                        <Route path="publidoor/modelos" element={<PublidoorTemplates />} />
+                        <Route path="publidoor/aprovacoes" element={<PublidoorApprovals />} />
+                        <Route path="publidoor/config" element={<PublidoorSettings />} />
                         
                         {/* Conexão.AI Routes */}
                         <Route path="conexao-ai" element={<ConexaoAIDashboard />} />
