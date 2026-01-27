@@ -28,6 +28,18 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         
+        // Dashboard Premium Tokens
+        bg: "hsl(var(--bg))",
+        surface: {
+          DEFAULT: "hsl(var(--surface))",
+          hover: "hsl(var(--surface-hover))",
+        },
+        text: {
+          DEFAULT: "hsl(var(--text))",
+          muted: "hsl(var(--text-muted))",
+        },
+        "primary-soft": "hsl(var(--primary-soft))",
+        
         // Brand Identity - Azul Petróleo
         brand: {
           DEFAULT: "hsl(var(--brand-primary))",
