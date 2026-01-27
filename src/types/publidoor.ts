@@ -18,6 +18,7 @@ export interface PublidoorColorPalette {
 export interface PublidoorAdvertiser {
   id: string;
   tenant_id?: string | null;
+  user_id?: string | null; // Linked auth user (for partner access)
   company_name: string;
   neighborhood?: string | null;
   city?: string | null;

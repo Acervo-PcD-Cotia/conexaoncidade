@@ -105,6 +105,16 @@ import PublidoorTemplates from "./pages/admin/publidoor/PublidoorTemplates";
 import PublidoorApprovals from "./pages/admin/publidoor/PublidoorApprovals";
 import PublidoorSettings from "./pages/admin/publidoor/PublidoorSettings";
 
+// Publidoor Partner Pages
+import PartnerLogin from "./pages/partner/publidoor/PartnerLogin";
+import PartnerLayout from "./pages/partner/publidoor/PartnerLayout";
+import PartnerVitrine from "./pages/partner/publidoor/PartnerVitrine";
+import PartnerEditor from "./pages/partner/publidoor/PartnerEditor";
+import PartnerAgenda from "./pages/partner/publidoor/PartnerAgenda";
+import PartnerMetricsPage from "./pages/partner/publidoor/PartnerMetrics";
+import PartnerBusiness from "./pages/partner/publidoor/PartnerBusiness";
+import PartnerPlan from "./pages/partner/publidoor/PartnerPlan";
+
 // Conexão.AI Pages
 import ConexaoAIDashboard from "./pages/admin/conexao-ai/ConexaoAIDashboard";
 import ConexaoAIAssistant from "./pages/admin/conexao-ai/ConexaoAIAssistant";
@@ -556,6 +566,19 @@ const App = () => (
                         </RouteModuleGuard>
                       } />
                       <Route path="/join/:inviteToken" element={<GuestJoin />} />
+
+                      {/* Publidoor Partner Routes */}
+                      <Route path="/partner/login" element={<PartnerLogin />} />
+                      <Route path="/partner" element={<PartnerLayout />}>
+                        <Route index element={<Navigate to="/partner/publidoor" replace />} />
+                        <Route path="publidoor" element={<PartnerVitrine />} />
+                        <Route path="publidoor/editar" element={<PartnerEditor />} />
+                        <Route path="publidoor/editar/:id" element={<PartnerEditor />} />
+                        <Route path="publidoor/agenda" element={<PartnerAgenda />} />
+                        <Route path="publidoor/metricas" element={<PartnerMetricsPage />} />
+                        <Route path="publidoor/negocio" element={<PartnerBusiness />} />
+                        <Route path="publidoor/plano" element={<PartnerPlan />} />
+                      </Route>
 
                       <Route path="*" element={<NotFound />} />
                     </Routes>
