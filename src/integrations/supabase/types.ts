@@ -8971,6 +8971,529 @@ export type Database = {
         }
         Relationships: []
       }
+      publidoor_advertisers: {
+        Row: {
+          category: string | null
+          city: string | null
+          company_name: string
+          created_at: string
+          google_maps_url: string | null
+          id: string
+          logo_url: string | null
+          neighborhood: string | null
+          status: string
+          tenant_id: string | null
+          updated_at: string
+          website: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          category?: string | null
+          city?: string | null
+          company_name: string
+          created_at?: string
+          google_maps_url?: string | null
+          id?: string
+          logo_url?: string | null
+          neighborhood?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+          website?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          category?: string | null
+          city?: string | null
+          company_name?: string
+          created_at?: string
+          google_maps_url?: string | null
+          id?: string
+          logo_url?: string | null
+          neighborhood?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+          website?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publidoor_advertisers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      publidoor_approvals: {
+        Row: {
+          action: string
+          comment: string | null
+          created_at: string
+          id: string
+          publidoor_id: string
+          reviewer_id: string | null
+        }
+        Insert: {
+          action: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          publidoor_id: string
+          reviewer_id?: string | null
+        }
+        Update: {
+          action?: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          publidoor_id?: string
+          reviewer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publidoor_approvals_publidoor_id_fkey"
+            columns: ["publidoor_id"]
+            isOneToOne: false
+            referencedRelation: "publidoor_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      publidoor_campaigns: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          ends_at: string | null
+          id: string
+          is_exclusive: boolean | null
+          name: string
+          priority: number | null
+          starts_at: string | null
+          status:
+            | Database["public"]["Enums"]["publidoor_campaign_status"]
+            | null
+          tenant_id: string | null
+          theme: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          id?: string
+          is_exclusive?: boolean | null
+          name: string
+          priority?: number | null
+          starts_at?: string | null
+          status?:
+            | Database["public"]["Enums"]["publidoor_campaign_status"]
+            | null
+          tenant_id?: string | null
+          theme?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          id?: string
+          is_exclusive?: boolean | null
+          name?: string
+          priority?: number | null
+          starts_at?: string | null
+          status?:
+            | Database["public"]["Enums"]["publidoor_campaign_status"]
+            | null
+          tenant_id?: string | null
+          theme?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publidoor_campaigns_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      publidoor_items: {
+        Row: {
+          advertiser_id: string | null
+          campaign_id: string | null
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          cta_link: string | null
+          cta_text: string | null
+          id: string
+          internal_name: string
+          logo_url: string | null
+          media_type: string | null
+          media_url: string | null
+          phrase_1: string
+          phrase_2: string | null
+          phrase_3: string | null
+          status: Database["public"]["Enums"]["publidoor_item_status"] | null
+          template_id: string | null
+          tenant_id: string | null
+          type: Database["public"]["Enums"]["publidoor_item_type"]
+          updated_at: string
+        }
+        Insert: {
+          advertiser_id?: string | null
+          campaign_id?: string | null
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          cta_link?: string | null
+          cta_text?: string | null
+          id?: string
+          internal_name: string
+          logo_url?: string | null
+          media_type?: string | null
+          media_url?: string | null
+          phrase_1: string
+          phrase_2?: string | null
+          phrase_3?: string | null
+          status?: Database["public"]["Enums"]["publidoor_item_status"] | null
+          template_id?: string | null
+          tenant_id?: string | null
+          type?: Database["public"]["Enums"]["publidoor_item_type"]
+          updated_at?: string
+        }
+        Update: {
+          advertiser_id?: string | null
+          campaign_id?: string | null
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          cta_link?: string | null
+          cta_text?: string | null
+          id?: string
+          internal_name?: string
+          logo_url?: string | null
+          media_type?: string | null
+          media_url?: string | null
+          phrase_1?: string
+          phrase_2?: string | null
+          phrase_3?: string | null
+          status?: Database["public"]["Enums"]["publidoor_item_status"] | null
+          template_id?: string | null
+          tenant_id?: string | null
+          type?: Database["public"]["Enums"]["publidoor_item_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publidoor_items_advertiser_id_fkey"
+            columns: ["advertiser_id"]
+            isOneToOne: false
+            referencedRelation: "publidoor_advertisers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "publidoor_items_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "publidoor_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "publidoor_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "publidoor_items_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "publidoor_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "publidoor_items_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      publidoor_location_assignments: {
+        Row: {
+          created_at: string
+          id: string
+          is_exclusive: boolean | null
+          location_id: string
+          publidoor_id: string
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_exclusive?: boolean | null
+          location_id: string
+          publidoor_id: string
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_exclusive?: boolean | null
+          location_id?: string
+          publidoor_id?: string
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publidoor_location_assignments_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "publidoor_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "publidoor_location_assignments_publidoor_id_fkey"
+            columns: ["publidoor_id"]
+            isOneToOne: false
+            referencedRelation: "publidoor_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      publidoor_locations: {
+        Row: {
+          allows_rotation: boolean | null
+          created_at: string
+          description: string | null
+          device_target: string | null
+          id: string
+          is_active: boolean | null
+          is_premium: boolean | null
+          max_items: number | null
+          name: string
+          slug: string
+          tenant_id: string | null
+        }
+        Insert: {
+          allows_rotation?: boolean | null
+          created_at?: string
+          description?: string | null
+          device_target?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_premium?: boolean | null
+          max_items?: number | null
+          name: string
+          slug: string
+          tenant_id?: string | null
+        }
+        Update: {
+          allows_rotation?: boolean | null
+          created_at?: string
+          description?: string | null
+          device_target?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_premium?: boolean | null
+          max_items?: number | null
+          name?: string
+          slug?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publidoor_locations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      publidoor_metrics: {
+        Row: {
+          avg_time_on_screen: number | null
+          clicks: number | null
+          created_at: string
+          date: string
+          device: string | null
+          id: string
+          impressions: number | null
+          publidoor_id: string
+        }
+        Insert: {
+          avg_time_on_screen?: number | null
+          clicks?: number | null
+          created_at?: string
+          date?: string
+          device?: string | null
+          id?: string
+          impressions?: number | null
+          publidoor_id: string
+        }
+        Update: {
+          avg_time_on_screen?: number | null
+          clicks?: number | null
+          created_at?: string
+          date?: string
+          device?: string | null
+          id?: string
+          impressions?: number | null
+          publidoor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publidoor_metrics_publidoor_id_fkey"
+            columns: ["publidoor_id"]
+            isOneToOne: false
+            referencedRelation: "publidoor_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      publidoor_schedules: {
+        Row: {
+          created_at: string
+          days_of_week: number[] | null
+          id: string
+          is_active: boolean | null
+          publidoor_id: string
+          schedule_type: string
+          specific_dates: string[] | null
+          time_end: string | null
+          time_start: string | null
+        }
+        Insert: {
+          created_at?: string
+          days_of_week?: number[] | null
+          id?: string
+          is_active?: boolean | null
+          publidoor_id: string
+          schedule_type: string
+          specific_dates?: string[] | null
+          time_end?: string | null
+          time_start?: string | null
+        }
+        Update: {
+          created_at?: string
+          days_of_week?: number[] | null
+          id?: string
+          is_active?: boolean | null
+          publidoor_id?: string
+          schedule_type?: string
+          specific_dates?: string[] | null
+          time_end?: string | null
+          time_start?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publidoor_schedules_publidoor_id_fkey"
+            columns: ["publidoor_id"]
+            isOneToOne: false
+            referencedRelation: "publidoor_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      publidoor_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          key: string
+          tenant_id: string | null
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key: string
+          tenant_id?: string | null
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key?: string
+          tenant_id?: string | null
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publidoor_settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      publidoor_templates: {
+        Row: {
+          color_palette: Json | null
+          created_at: string
+          description: string | null
+          font_family: string | null
+          font_size: string | null
+          has_animations: boolean | null
+          id: string
+          is_active: boolean | null
+          name: string
+          preview_url: string | null
+          slug: string
+          tenant_id: string | null
+        }
+        Insert: {
+          color_palette?: Json | null
+          created_at?: string
+          description?: string | null
+          font_family?: string | null
+          font_size?: string | null
+          has_animations?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          preview_url?: string | null
+          slug: string
+          tenant_id?: string | null
+        }
+        Update: {
+          color_palette?: Json | null
+          created_at?: string
+          description?: string | null
+          font_family?: string | null
+          font_size?: string | null
+          has_animations?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          preview_url?: string | null
+          slug?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publidoor_templates_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       push_notifications: {
         Row: {
           body: string
@@ -11126,6 +11649,14 @@ export type Database = {
         | "approved"
       partnership_status: "pending" | "active" | "suspended" | "rejected"
       pitch_status: "sent" | "approved" | "rejected" | "needs_info"
+      publidoor_campaign_status: "draft" | "active" | "paused" | "ended"
+      publidoor_item_status: "draft" | "review" | "approved" | "published"
+      publidoor_item_type:
+        | "narrativo"
+        | "contextual"
+        | "geografico"
+        | "editorial"
+        | "impacto_total"
       site_user_role: "admin" | "editor" | "journalist" | "reviewer"
       site_user_status: "active" | "pending" | "suspended"
       story_status: "draft" | "published" | "archived"
@@ -11342,6 +11873,15 @@ export const Constants = {
       ],
       partnership_status: ["pending", "active", "suspended", "rejected"],
       pitch_status: ["sent", "approved", "rejected", "needs_info"],
+      publidoor_campaign_status: ["draft", "active", "paused", "ended"],
+      publidoor_item_status: ["draft", "review", "approved", "published"],
+      publidoor_item_type: [
+        "narrativo",
+        "contextual",
+        "geografico",
+        "editorial",
+        "impacto_total",
+      ],
       site_user_role: ["admin", "editor", "journalist", "reviewer"],
       site_user_status: ["active", "pending", "suspended"],
       story_status: ["draft", "published", "archived"],
