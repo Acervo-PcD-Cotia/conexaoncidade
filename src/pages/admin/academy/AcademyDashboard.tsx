@@ -6,6 +6,9 @@ import { AcademyCarousel } from "@/components/academy/AcademyCarousel";
 import { AcademyContinueWatching } from "@/components/academy/AcademyContinueWatching";
 import { AcademyCourseGrid } from "@/components/academy/AcademyCourseGrid";
 import { AcademyEmptyState } from "@/components/academy/AcademyEmptyState";
+import { AcademyProgressSummary } from "@/components/academy/AcademyProgressSummary";
+import { AcademyPrioritySection } from "@/components/academy/AcademyPrioritySection";
+import { AcademyCategorySection } from "@/components/academy/AcademyCategorySection";
 import type { AcademyCourse, AcademyProgress } from "@/types/academy";
 
 export default function AcademyDashboard() {
@@ -53,17 +56,18 @@ export default function AcademyDashboard() {
   // Only published courses
   const publishedCourses = filteredCourses.filter(c => c.is_published);
 
-  // Group courses by category
+  // Priority courses: WebRádio and WebTV (courses without category)
+  const priorityCourses = publishedCourses.filter(c => !c.category_id);
+
+  // Courses by category (excluding priority courses)
   const coursesByCategory = categories?.map(category => ({
     category,
     courses: publishedCourses.filter(c => c.category_id === category.id),
   })).filter(group => group.courses.length > 0) || [];
 
-  // Courses without category (main operational training courses)
-  const uncategorizedCourses = publishedCourses.filter(c => !c.category_id);
-
-  // New courses (last 30 days)
+  // New courses (last 30 days) - only categorized ones
   const newCourses = publishedCourses.filter(c => {
+    if (!c.category_id) return false; // Exclude priority courses
     const createdAt = new Date(c.created_at);
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -83,7 +87,7 @@ export default function AcademyDashboard() {
               <div>
                 <h1 className="text-2xl font-bold">Conexão Academy</h1>
                 <p className="text-sm text-muted-foreground">
-                  Treinamentos operacionais para WebRádio e WebTV
+                  O centro oficial de aprendizado do Portal Conexão
                 </p>
               </div>
             </div>
@@ -111,22 +115,29 @@ export default function AcademyDashboard() {
           <AcademyEmptyState onRefresh={() => refetch()} />
         ) : (
           <>
+            {/* Progress Summary */}
+            {allCourses && progressData && (
+              <AcademyProgressSummary 
+                courses={allCourses} 
+                progress={progressData} 
+              />
+            )}
+
             {/* Continue Watching */}
             {!loadingContinue && continueWatching && continueWatching.length > 0 && (
               <AcademyContinueWatching items={continueWatching} />
             )}
 
-            {/* Main Operational Training - Uncategorized courses first */}
-            {uncategorizedCourses.length > 0 && (
-              <AcademyCourseGrid
-                title="🎯 Treinamentos Operacionais"
-                courses={uncategorizedCourses}
+            {/* Priority Section: WebRádio & WebTV */}
+            {priorityCourses.length > 0 && !searchQuery && (
+              <AcademyPrioritySection
+                courses={priorityCourses}
                 progressMap={progressMap}
               />
             )}
 
-            {/* New Courses */}
-            {newCourses.length > 0 && newCourses.length !== uncategorizedCourses.length && (
+            {/* New Courses (only if there's categorized content) */}
+            {newCourses.length > 0 && !searchQuery && (
               <AcademyCarousel
                 title="Novos Treinamentos"
                 courses={newCourses}
@@ -136,13 +147,22 @@ export default function AcademyDashboard() {
 
             {/* Courses by Category */}
             {coursesByCategory.map(({ category, courses }) => (
-              <AcademyCarousel
+              <AcademyCategorySection
                 key={category.id}
-                title={category.name}
+                category={category}
                 courses={courses}
                 progressMap={progressMap}
               />
             ))}
+
+            {/* Search Results (when searching) */}
+            {searchQuery && filteredCourses.length > 0 && (
+              <AcademyCourseGrid
+                title={`Resultados para "${searchQuery}"`}
+                courses={publishedCourses}
+                progressMap={progressMap}
+              />
+            )}
 
             {/* Empty search state */}
             {searchQuery && filteredCourses.length === 0 && (

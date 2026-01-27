@@ -34,12 +34,26 @@ const ROUTE_TO_GROUP: Record<string, string> = {
   "/admin/streaming/radio": "streaming",
   "/admin/streaming/tv": "streaming",
   
-  // Negócios
+  // Conexão Academy (PRIMEIRO NÍVEL)
+  "/admin/academy": "academy",
+  "/admin/academy/curso": "academy",
+  "/admin/academy/aula": "academy",
+  "/admin/academy/admin": "academy",
+  
+  // Conexão.AI (PRIMEIRO NÍVEL)
+  "/admin/conexao-ai": "conexao-ai",
+  "/admin/conexao-ai/assistente": "conexao-ai",
+  "/admin/conexao-ai/criador": "conexao-ai",
+  "/admin/conexao-ai/ferramentas": "conexao-ai",
+  "/admin/conexao-ai/automacoes": "conexao-ai",
+  "/admin/conexao-ai/insights": "conexao-ai",
+  
+  // Negócios (sem Academy, AI e Training)
   "/admin/solutions": "negocios",
-  "/admin/training": "negocios",
   "/admin/financial": "negocios",
   "/admin/autopost": "negocios",
   "/admin/campaigns": "negocios",
+  "/admin/censo-pcd": "negocios",
   
   // Transporte Escolar
   "/admin/transporte-escolar": "transporte",
