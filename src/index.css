@@ -264,9 +264,9 @@
     font-feature-settings: "tnum" 1;
   }
   
-  /* Extra large stats for premium dashboard */
+  /* Stats for compact dashboard */
   .dashboard-stat-xl {
-    @apply text-4xl lg:text-5xl font-bold tracking-tighter;
+    @apply text-2xl font-bold;
     font-feature-settings: "tnum" 1;
   }
 
@@ -282,9 +282,9 @@
     @apply hover:-translate-y-0.5 hover:shadow-md transition-all duration-200;
   }
   
-  /* Premium header gradient */
+  /* Premium header - clean, no gradient */
   .dashboard-header-premium {
-    background: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--muted) / 0.3) 100%);
+    @apply bg-card border-b border-border;
   }
   
   /* Medal colors for rankings */

@@ -23,20 +23,20 @@ export function KpiCard({
   className,
 }: KpiCardProps) {
   return (
-    <Card className={cn("", className)}>
-      <CardContent className="pt-6">
-        <div className="flex items-start justify-between">
+    <Card className={cn("bg-card border-border", className)}>
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold">{value}</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{title}</p>
+            <p className="text-2xl font-bold tabular-nums">{value}</p>
             {subtitle && (
-              <p className="text-xs text-muted-foreground">{subtitle}</p>
+              <p className="text-[10px] text-muted-foreground">{subtitle}</p>
             )}
             {trend && (
               <p
                 className={cn(
-                  "text-xs",
-                  trend.value >= 0 ? "text-green-600" : "text-destructive"
+                  "text-[10px]",
+                  trend.value >= 0 ? "text-money" : "text-destructive"
                 )}
               >
                 {trend.value >= 0 ? "+" : ""}
@@ -45,7 +45,7 @@ export function KpiCard({
             )}
           </div>
           <div className="p-2 bg-primary/10 rounded-lg">
-            <Icon className="h-5 w-5 text-primary" />
+            <Icon className="h-4 w-4 text-primary" />
           </div>
         </div>
       </CardContent>

@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { Users, Eye, TrendingUp, Activity } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Users, Eye, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { DashboardPanel } from "./DashboardPanel";
 
 export function DashboardAudienceCard() {
   const { data: audienceStats } = useQuery({
@@ -38,46 +38,41 @@ export function DashboardAudienceCard() {
   };
 
   return (
-    <Card className="dashboard-card-glass overflow-hidden">
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <div className="p-1.5 rounded-lg bg-brand/10">
-            <Activity className="h-4 w-4 text-brand" />
+    <DashboardPanel
+      title="Audiência"
+      icon={Users}
+      iconColor="text-brand"
+      contentClassName="pt-2"
+    >
+      <div className="grid grid-cols-3 gap-2">
+        <div className="text-center">
+          <div className="inline-flex p-1.5 rounded-lg bg-muted mb-1">
+            <Eye className="h-4 w-4 text-primary" />
           </div>
-          Audiência
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-3 gap-4">
-          <div className="text-center">
-            <div className="inline-flex p-2 rounded-full bg-muted mb-2">
-              <Eye className="h-5 w-5 text-brand" />
-            </div>
-            <p className="text-2xl font-bold tabular-nums">
-              {formatNumber(audienceStats?.totalViews || 0)}
-            </p>
-            <p className="text-xs text-muted-foreground">Views Totais</p>
-          </div>
-          <div className="text-center">
-            <div className="inline-flex p-2 rounded-full bg-muted mb-2">
-              <Users className="h-5 w-5 text-money" />
-            </div>
-            <p className="text-2xl font-bold tabular-nums">
-              {audienceStats?.onlineUsers || 0}
-            </p>
-            <p className="text-xs text-muted-foreground">Online (24h)</p>
-          </div>
-          <div className="text-center">
-            <div className="inline-flex p-2 rounded-full bg-muted mb-2">
-              <TrendingUp className="h-5 w-5 text-brand-secondary" />
-            </div>
-            <p className="text-2xl font-bold tabular-nums">
-              {formatNumber(audienceStats?.totalUsers || 0)}
-            </p>
-            <p className="text-xs text-muted-foreground">Usuários</p>
-          </div>
+          <p className="text-lg font-bold tabular-nums">
+            {formatNumber(audienceStats?.totalViews || 0)}
+          </p>
+          <p className="text-[10px] text-muted-foreground">Views</p>
         </div>
-      </CardContent>
-    </Card>
+        <div className="text-center">
+          <div className="inline-flex p-1.5 rounded-lg bg-muted mb-1">
+            <Users className="h-4 w-4 text-money" />
+          </div>
+          <p className="text-lg font-bold tabular-nums">
+            {audienceStats?.onlineUsers || 0}
+          </p>
+          <p className="text-[10px] text-muted-foreground">Online 24h</p>
+        </div>
+        <div className="text-center">
+          <div className="inline-flex p-1.5 rounded-lg bg-muted mb-1">
+            <TrendingUp className="h-4 w-4 text-brand" />
+          </div>
+          <p className="text-lg font-bold tabular-nums">
+            {formatNumber(audienceStats?.totalUsers || 0)}
+          </p>
+          <p className="text-[10px] text-muted-foreground">Usuários</p>
+        </div>
+      </div>
+    </DashboardPanel>
   );
 }
