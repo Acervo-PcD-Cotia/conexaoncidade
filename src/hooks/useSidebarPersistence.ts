@@ -4,43 +4,55 @@ import { useLocation } from "react-router-dom";
 const STORAGE_KEY_OPEN_GROUP = "adminSidebarOpenGroup";
 const STORAGE_KEY_COLLAPSED = "adminSidebarCollapsed";
 
+// ============ NOVA ARQUITETURA DE 6 MÓDULOS SEMÂNTICOS ============
 // Map routes to their parent group IDs
 const ROUTE_TO_GROUP: Record<string, string> = {
-  // Principal
-  "/admin": "principal",
-  "/admin/news": "principal",
-  "/admin/noticias-ai": "principal",
-  "/admin/quick-notes": "principal",
-  "/admin/categories": "principal",
-  "/admin/tags": "principal",
-  "/admin/stories": "principal",
+  // CONTEÚDO
+  "/admin": "conteudo",
+  "/admin/news": "conteudo",
+  "/admin/noticias-ai": "conteudo",
+  "/admin/quick-notes": "conteudo",
+  "/admin/stories": "conteudo",
+  "/admin/podcasts": "conteudo",
+  "/admin/editions": "conteudo",
   
-  // Editorial
-  "/admin/home-editor": "editorial",
-  "/admin/banners": "editorial",
-  "/admin/ads": "editorial",
-  "/admin/anti-fake-news": "editorial",
-  "/admin/partners": "editorial",
-  "/admin/social": "editorial",
-  "/admin/links": "editorial",
-  "/admin/analytics": "editorial",
-  "/admin/editions": "editorial",
-  "/admin/podcasts": "editorial",
+  // DISTRIBUIÇÃO & ALCANCE
+  "/admin/social": "distribuicao",
+  "/admin/links": "distribuicao",
+  "/admin/anti-fake-news": "distribuicao",
   
-  // Streaming (main group)
+  // PUBLICIDADE & MONETIZAÇÃO
+  "/admin/ads": "monetizacao",
+  "/admin/banners": "monetizacao",
+  "/admin/publidoor": "monetizacao",
+  "/admin/partners": "monetizacao",
+  
+  // STREAMING & MÍDIA
   "/admin/stream": "streaming",
   "/admin/broadcast": "streaming",
   "/admin/conexao-studio": "streaming",
   "/admin/streaming/radio": "streaming",
   "/admin/streaming/tv": "streaming",
   
-  // Conexão Academy (PRIMEIRO NÍVEL)
+  // GESTÃO DO PORTAL
+  "/admin/home-editor": "gestao",
+  "/admin/categories": "gestao",
+  "/admin/tags": "gestao",
+  "/admin/settings/template": "gestao",
+  "/admin/settings/vocabulary": "gestao",
+  "/admin/settings/modules": "gestao",
+  
+  // INTELIGÊNCIA & MÉTRICAS
+  "/admin/analytics": "inteligencia",
+  "/admin/reading-analytics": "inteligencia",
+  
+  // CONEXÃO ACADEMY (primeiro nível)
   "/admin/academy": "academy",
   "/admin/academy/curso": "academy",
   "/admin/academy/aula": "academy",
   "/admin/academy/admin": "academy",
   
-  // Conexão.AI (PRIMEIRO NÍVEL)
+  // CONEXÃO.AI (primeiro nível)
   "/admin/conexao-ai": "conexao-ai",
   "/admin/conexao-ai/assistente": "conexao-ai",
   "/admin/conexao-ai/criador": "conexao-ai",
@@ -48,22 +60,17 @@ const ROUTE_TO_GROUP: Record<string, string> = {
   "/admin/conexao-ai/automacoes": "conexao-ai",
   "/admin/conexao-ai/insights": "conexao-ai",
   
-  // Negócios (sem Academy, AI e Training)
+  // NEGÓCIOS
   "/admin/solutions": "negocios",
   "/admin/financial": "negocios",
   "/admin/autopost": "negocios",
   "/admin/campaigns": "negocios",
   "/admin/censo-pcd": "negocios",
   
-  // Transporte Escolar
+  // TRANSPORTE ESCOLAR
   "/admin/transporte-escolar": "transporte",
   
-  // Config Portal
-  "/admin/settings/template": "config-portal",
-  "/admin/settings/vocabulary": "config-portal",
-  "/admin/settings/modules": "config-portal",
-  
-  // Admin
+  // ADMINISTRAÇÃO
   "/admin/community": "admin",
   "/admin/sso-monitor": "admin",
   "/admin/users": "admin",

@@ -31,6 +31,7 @@ import {
   Medal,
   GraduationCap,
   Loader2,
+  DollarSign,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -63,6 +64,11 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import logoFull from "@/assets/logo-full.png";
+
+// Import new dashboard components
+import { DashboardRevenueCard } from "@/components/admin/dashboard/DashboardRevenueCard";
+import { DashboardProductionCard } from "@/components/admin/dashboard/DashboardProductionCard";
+import { DashboardAudienceCard } from "@/components/admin/dashboard/DashboardAudienceCard";
 
 export default function Dashboard() {
   const { openModal } = useNewsCreationModal();
@@ -546,10 +552,18 @@ export default function Dashboard() {
           ))}
         </section>
 
-        {/* Main Content Grid */}
-        <main className="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-6 px-8 py-6 min-h-0 overflow-hidden">
-          {/* Ações Rápidas - 3 columns */}
-          <div className="lg:col-span-3 flex flex-col gap-6 min-h-0">
+        {/* Main Content Grid - REDESIGNED */}
+        <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 px-8 py-6 min-h-0 overflow-hidden">
+          {/* Left Column - 8 cols */}
+          <div className="lg:col-span-8 flex flex-col gap-6 min-h-0">
+            {/* Row 1: Production + Revenue + Audience */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <DashboardProductionCard />
+              <DashboardRevenueCard />
+              <DashboardAudienceCard />
+            </div>
+            
+            {/* Ações Rápidas */}
             <Card className="flex-1 flex flex-col overflow-hidden dashboard-card-glass">
               <div className="p-5 border-b shrink-0">
                 <h3 className="font-semibold text-lg flex items-center gap-2">
@@ -557,17 +571,17 @@ export default function Dashboard() {
                   Ações Rápidas
                 </h3>
               </div>
-              <div className="flex-1 p-5 grid grid-cols-2 md:grid-cols-3 gap-4 content-start overflow-auto">
-                {quickActions.map((action) => (
+              <div className="flex-1 p-5 grid grid-cols-2 md:grid-cols-4 gap-4 content-start overflow-auto">
+                {quickActions.slice(0, 8).map((action) => (
                   action.href ? (
                     <Link key={action.title} to={action.href}>
                       <Card className="group cursor-pointer dashboard-card-glass dashboard-card-glow dashboard-hover-lift h-full">
-                        <CardContent className="p-5">
-                          <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center mb-4", action.bgColor)}>
-                            <action.icon className={cn("h-6 w-6", action.color)} />
+                        <CardContent className="p-4">
+                          <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center mb-3", action.bgColor)}>
+                            <action.icon className={cn("h-5 w-5", action.color)} />
                           </div>
-                          <h4 className="font-semibold">{action.title}</h4>
-                          <p className="text-sm text-muted-foreground mt-1">{action.description}</p>
+                          <h4 className="font-semibold text-sm">{action.title}</h4>
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{action.description}</p>
                         </CardContent>
                       </Card>
                     </Link>
@@ -580,16 +594,16 @@ export default function Dashboard() {
                       )}
                       onClick={action.isLoading ? undefined : action.onClick}
                     >
-                      <CardContent className="p-5">
-                        <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center mb-4", action.bgColor)}>
+                      <CardContent className="p-4">
+                        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center mb-3", action.bgColor)}>
                           {action.isLoading ? (
-                            <Loader2 className={cn("h-6 w-6 animate-spin", action.color)} />
+                            <Loader2 className={cn("h-5 w-5 animate-spin", action.color)} />
                           ) : (
-                            <action.icon className={cn("h-6 w-6", action.color)} />
+                            <action.icon className={cn("h-5 w-5", action.color)} />
                           )}
                         </div>
-                        <h4 className="font-semibold">{action.title}</h4>
-                        <p className="text-sm text-muted-foreground mt-1">
+                        <h4 className="font-semibold text-sm">{action.title}</h4>
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
                           {action.isLoading ? "Conectando..." : action.description}
                         </p>
                       </CardContent>
@@ -600,8 +614,8 @@ export default function Dashboard() {
             </Card>
           </div>
 
-          {/* Sidebar - 2 columns */}
-          <div className="lg:col-span-2 flex flex-col gap-6 min-h-0">
+          {/* Right Column - 4 cols */}
+          <div className="lg:col-span-4 flex flex-col gap-6 min-h-0">
             {/* Últimas Atualizações */}
             <Card className="flex-1 flex flex-col overflow-hidden min-h-0 dashboard-card-glass">
               <div className="p-5 border-b shrink-0 flex items-center justify-between">

@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { BarChart3, TrendingUp, Eye, Newspaper, FolderTree, Download, Calendar, Filter } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { BarChart3, TrendingUp, Eye, Newspaper, FolderTree, Download, Calendar, Filter, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { EmptyAnalyticsState } from "@/components/admin/EmptyAnalyticsState";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function Analytics() {
   const [dateRange, setDateRange] = useState({
@@ -170,6 +172,32 @@ export default function Analytics() {
     toast.success("Relatório exportado!");
   };
 
+  // Check if we have any meaningful data
+  const hasData = (mostRead && mostRead.length > 0) || totalViews > 0 || totalPageViews > 0;
+
+  // If no data at all, show empty state
+  if (!hasData && !categoryStats?.length) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="font-heading text-3xl font-bold flex items-center gap-2">
+              <BarChart3 className="h-8 w-8" />
+              Analytics
+            </h1>
+            <p className="text-muted-foreground">
+              Métricas de desempenho editorial
+            </p>
+          </div>
+        </div>
+        <EmptyAnalyticsState 
+          title="Nenhum dado de analytics ainda"
+          description="Os dados começarão a aparecer assim que houver notícias publicadas e tráfego no portal. Publique sua primeira notícia para começar a coletar métricas."
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -182,11 +210,21 @@ export default function Analytics() {
             Métricas de desempenho editorial
           </p>
         </div>
-        <Button variant="outline" onClick={exportToCSV}>
+        <Button variant="outline" onClick={exportToCSV} disabled={!mostRead?.length}>
           <Download className="mr-2 h-4 w-4" />
           Exportar CSV
         </Button>
       </div>
+
+      {/* Info alert when data is limited */}
+      {totalPageViews === 0 && totalViews > 0 && (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Os dados de page views ainda estão sendo coletados. As métricas completas aparecerão em breve.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Filters */}
       <Card>

@@ -57,6 +57,11 @@ import {
   ChevronDown,
   PanelLeftClose,
   PanelLeftOpen,
+  FileText,
+  TrendingUp,
+  DollarSign,
+  Bell,
+  Globe,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useUserRole } from "@/hooks/useRequireRole";
@@ -88,6 +93,8 @@ interface MenuItem {
   url: string;
   icon: LucideIcon;
   action?: boolean;
+  badge?: string;
+  badgeColor?: string;
 }
 
 interface SidebarGroupConfig {
@@ -104,30 +111,37 @@ interface SidebarGroupConfig {
   }[];
 }
 
-const mainMenuItems: MenuItem[] = [
+// ============ NOVA ARQUITETURA DE 6 MÓDULOS SEMÂNTICOS ============
+
+// 1️⃣ CONTEÚDO - Produção editorial
+const contentItems: MenuItem[] = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
   { title: "Notícias", url: "/admin/news", icon: Newspaper },
-  { title: "Cadastrar Notícia", url: "#create-news", icon: FilePlus2, action: true },
-  { title: "Notícias IA", url: "/admin/noticias-ai", icon: Sparkles },
+  { title: "Nova Notícia", url: "#create-news", icon: FilePlus2, action: true },
+  { title: "Notícias IA", url: "/admin/noticias-ai", icon: Sparkles, badge: "IA", badgeColor: "bg-violet-500" },
   { title: "Notas Rápidas", url: "/admin/quick-notes", icon: Zap },
-  { title: "Categorias", url: "/admin/categories", icon: FolderTree },
-  { title: "Tags", url: "/admin/tags", icon: Tag },
   { title: "Web Stories", url: "/admin/stories", icon: PlaySquare },
+  { title: "Podcasts", url: "/admin/podcasts", icon: Mic },
+  { title: "Edição Digital", url: "/admin/editions", icon: BookOpen },
 ];
 
-const editorialItems: MenuItem[] = [
-  { title: "Editor da Home", url: "/admin/home-editor", icon: PanelTop },
-  { title: "Banners", url: "/admin/banners", icon: Image },
-  { title: "Anúncios", url: "/admin/ads", icon: Megaphone },
-  { title: "Check Fake News", url: "/admin/anti-fake-news", icon: ShieldCheck },
-  { title: "Parceiros & Sindicação", url: "/admin/partners", icon: Handshake },
+// 2️⃣ DISTRIBUIÇÃO & ALCANCE - Audiência e tráfego
+const distributionItems: MenuItem[] = [
   { title: "Distribuição Social", url: "/admin/social", icon: Share2 },
   { title: "Gerador de Links", url: "/admin/links", icon: Link2 },
-  { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
-  { title: "Edição Digital", url: "/admin/editions", icon: BookOpen },
-  { title: "Podcasts", url: "/admin/podcasts", icon: Mic },
+  { title: "SEO & Performance", url: "/admin/analytics", icon: TrendingUp },
+  { title: "Check Fake News", url: "/admin/anti-fake-news", icon: ShieldCheck },
 ];
 
+// 3️⃣ PUBLICIDADE & MONETIZAÇÃO - Receita
+const monetizationItems: MenuItem[] = [
+  { title: "Anúncios", url: "/admin/ads", icon: Megaphone },
+  { title: "Super Banners", url: "/admin/banners", icon: Image },
+  { title: "Publidoor", url: "/admin/publidoor", icon: Building2, badge: "Premium", badgeColor: "bg-amber-500" },
+  { title: "Parceiros", url: "/admin/partners", icon: Handshake },
+];
+
+// 4️⃣ STREAMING & MÍDIA - Transmissão
 const broadcastItems: MenuItem[] = [
   { title: "Dashboard", url: "/admin/broadcast", icon: Radio },
   { title: "Transmissões", url: "/admin/broadcast/list", icon: Play },
@@ -148,18 +162,35 @@ const conexaoStudioItems: MenuItem[] = [
 ];
 
 const streamingConfigItems: MenuItem[] = [
-  { title: "Rádio Web (Config)", url: "/admin/streaming/radio", icon: Radio },
-  { title: "TV Web (Config)", url: "/admin/streaming/tv", icon: Tv },
+  { title: "Rádio Web", url: "/admin/streaming/radio", icon: Radio },
+  { title: "TV Web", url: "/admin/streaming/tv", icon: Tv },
 ];
 
-// Conexão Academy items (primeiro nível)
+// 5️⃣ GESTÃO DO PORTAL - Governança
+const portalManagementItems: MenuItem[] = [
+  { title: "Editor da Home", url: "/admin/home-editor", icon: PanelTop },
+  { title: "Categorias", url: "/admin/categories", icon: FolderTree },
+  { title: "Tags", url: "/admin/tags", icon: Tag },
+  { title: "Modelo do Portal", url: "/admin/settings/template", icon: Palette },
+  { title: "Vocabulário", url: "/admin/settings/vocabulary", icon: Languages },
+  { title: "Módulos", url: "/admin/settings/modules", icon: ToggleLeft },
+];
+
+// 6️⃣ INTELIGÊNCIA & MÉTRICAS - Dados
+const intelligenceItems: MenuItem[] = [
+  { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
+  { title: "Relatórios Editoriais", url: "/admin/reading-analytics", icon: FileText },
+  { title: "Métricas Comerciais", url: "/admin/publidoor/metricas", icon: DollarSign },
+];
+
+// Conexão Academy - Primeiro nível
 const academyItems: MenuItem[] = [
   { title: "Dashboard", url: "/admin/academy", icon: LayoutDashboard },
   { title: "Categorias", url: "/admin/academy/admin/categorias", icon: FolderTree },
   { title: "Cursos", url: "/admin/academy/admin/cursos", icon: BookOpen },
 ];
 
-// Conexão.AI items (primeiro nível)
+// Conexão.AI - Primeiro nível
 const conexaoAIItems: MenuItem[] = [
   { title: "Dashboard", url: "/admin/conexao-ai", icon: LayoutDashboard },
   { title: "Assistente", url: "/admin/conexao-ai/assistente", icon: Bot },
@@ -169,7 +200,7 @@ const conexaoAIItems: MenuItem[] = [
   { title: "Insights", url: "/admin/conexao-ai/insights", icon: BarChart3 },
 ];
 
-// Negócios items (sem Academy, AI e Training)
+// Negócios - Módulos especiais
 const businessItems: MenuItem[] = [
   { title: "Soluções", url: "/admin/solutions", icon: Puzzle },
   { title: "Financeiro", url: "/admin/financial", icon: Receipt },
@@ -179,19 +210,7 @@ const businessItems: MenuItem[] = [
   { title: "Geração Cotia", url: "#sso-gcotia", icon: ExternalLink, action: true },
 ];
 
-const publidoorItems: MenuItem[] = [
-  { title: "Visão Geral", url: "/admin/publidoor", icon: LayoutDashboard },
-  { title: "Criar Publidoor", url: "/admin/publidoor/criar", icon: Plus },
-  { title: "Campanhas", url: "/admin/publidoor/campanhas", icon: FolderOpen },
-  { title: "Locais", url: "/admin/publidoor/locais", icon: MapPin },
-  { title: "Agenda", url: "/admin/publidoor/agenda", icon: Calendar },
-  { title: "Anunciantes", url: "/admin/publidoor/anunciantes", icon: Building2 },
-  { title: "Métricas", url: "/admin/publidoor/metricas", icon: BarChart3 },
-  { title: "Modelos", url: "/admin/publidoor/modelos", icon: Palette },
-  { title: "Aprovações", url: "/admin/publidoor/aprovacoes", icon: CheckCircle },
-  { title: "Configurações", url: "/admin/publidoor/config", icon: Settings },
-];
-
+// Transporte Escolar
 const transporteEscolarItems: MenuItem[] = [
   { title: "Dashboard", url: "/admin/transporte-escolar", icon: LayoutDashboard },
   { title: "Escolas", url: "/admin/transporte-escolar/escolas", icon: School },
@@ -200,45 +219,40 @@ const transporteEscolarItems: MenuItem[] = [
   { title: "Denúncias", url: "/admin/transporte-escolar/reports", icon: AlertTriangle },
 ];
 
-const templateSettingsItems: MenuItem[] = [
-  { title: "Modelo do Portal", url: "/admin/settings/template", icon: Palette },
-  { title: "Vocabulário", url: "/admin/settings/vocabulary", icon: Languages },
-  { title: "Módulos", url: "/admin/settings/modules", icon: ToggleLeft },
-];
-
+// Admin only
 const adminOnlyItems: MenuItem[] = [
+  { title: "Usuários", url: "/admin/users", icon: Users },
   { title: "Conexões", url: "/admin/community", icon: UsersRound },
   { title: "Cadastro Assistido", url: "/admin/community/phone-import", icon: Smartphone },
-  { title: "Relatório Ofertas", url: "/admin/community/phone-offers-report", icon: BarChart3 },
   { title: "Monitor SSO", url: "/admin/sso-monitor", icon: Shield },
-  { title: "Usuários", url: "/admin/users", icon: Users },
   { title: "Logs", url: "/admin/logs", icon: History },
   { title: "Configurações", url: "/admin/settings", icon: Settings },
 ];
 
-// All sidebar groups configuration
+// ============ GRUPOS CONSOLIDADOS ============
+
 const sidebarGroups: SidebarGroupConfig[] = [
   {
-    id: "principal",
-    title: "Principal",
-    icon: LayoutDashboard,
-    items: mainMenuItems,
+    id: "conteudo",
+    title: "Conteúdo",
+    icon: FileText,
+    items: contentItems,
   },
   {
-    id: "editorial",
-    title: "Editorial",
-    icon: Newspaper,
-    items: editorialItems,
+    id: "distribuicao",
+    title: "Distribuição & Alcance",
+    icon: Globe,
+    items: distributionItems,
   },
   {
-    id: "publidoor",
-    title: "Publidoor",
-    icon: Megaphone,
-    items: publidoorItems,
+    id: "monetizacao",
+    title: "Publicidade & Monetização",
+    icon: DollarSign,
+    items: monetizationItems,
   },
   {
     id: "streaming",
-    title: "Conexão Streaming",
+    title: "Streaming & Mídia",
     icon: Satellite,
     items: [{ title: "Hub Central", url: "/admin/stream", icon: Satellite }],
     subGroups: [
@@ -246,14 +260,26 @@ const sidebarGroups: SidebarGroupConfig[] = [
       { id: "studio", title: "Studio", icon: Video, items: conexaoStudioItems },
     ],
   },
-  // Conexão Academy - PRIMEIRO NÍVEL (NOVO)
+  {
+    id: "gestao",
+    title: "Gestão do Portal",
+    icon: Settings,
+    items: portalManagementItems,
+    adminOnly: true,
+  },
+  {
+    id: "inteligencia",
+    title: "Inteligência & Métricas",
+    icon: BarChart3,
+    items: intelligenceItems,
+  },
+  // Produtos standalone
   {
     id: "academy",
     title: "Conexão Academy",
     icon: GraduationCap,
     items: academyItems,
   },
-  // Conexão.AI - PRIMEIRO NÍVEL (NOVO)
   {
     id: "conexao-ai",
     title: "Conexão.AI",
@@ -271,13 +297,6 @@ const sidebarGroups: SidebarGroupConfig[] = [
     title: "Transporte Escolar",
     icon: Bus,
     items: transporteEscolarItems,
-  },
-  {
-    id: "config-portal",
-    title: "Configurações do Portal",
-    icon: Palette,
-    items: templateSettingsItems,
-    adminOnly: true,
   },
   {
     id: "admin",
@@ -347,7 +366,10 @@ export function AdminSidebar() {
                       {item.url === "#sso-gcotia" && isSsoLoading ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
-                        <item.icon className="h-4 w-4" />
+                        <item.icon className={cn(
+                          "h-4 w-4",
+                          item.icon === Sparkles && "text-violet-500"
+                        )} />
                       )}
                     </button>
                   ) : (
@@ -357,7 +379,10 @@ export function AdminSidebar() {
                       className="flex items-center justify-center p-2"
                       activeClassName="bg-primary/10 text-primary"
                     >
-                      <item.icon className="h-4 w-4" />
+                      <item.icon className={cn(
+                        "h-4 w-4",
+                        item.icon === Sparkles && "text-violet-500"
+                      )} />
                     </NavLink>
                   )}
                 </SidebarMenuButton>
@@ -383,9 +408,20 @@ export function AdminSidebar() {
               {item.url === "#sso-gcotia" && isSsoLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <item.icon className="h-4 w-4" />
+                <item.icon className={cn(
+                  "h-4 w-4",
+                  item.icon === Sparkles && "text-violet-500"
+                )} />
               )}
-              <span>{item.title}</span>
+              <span className="flex-1">{item.title}</span>
+              {item.badge && (
+                <span className={cn(
+                  "text-[9px] font-semibold px-1.5 py-0.5 rounded-full text-white",
+                  item.badgeColor || "bg-primary"
+                )}>
+                  {item.badge}
+                </span>
+              )}
             </button>
           ) : (
             <NavLink
@@ -394,8 +430,19 @@ export function AdminSidebar() {
               className="flex items-center gap-2 text-sm"
               activeClassName="bg-primary/10 text-primary font-medium"
             >
-              <item.icon className="h-4 w-4" />
-              <span>{item.title}</span>
+              <item.icon className={cn(
+                "h-4 w-4",
+                item.icon === Sparkles && "text-violet-500"
+              )} />
+              <span className="flex-1">{item.title}</span>
+              {item.badge && (
+                <span className={cn(
+                  "text-[9px] font-semibold px-1.5 py-0.5 rounded-full text-white",
+                  item.badgeColor || "bg-primary"
+                )}>
+                  {item.badge}
+                </span>
+              )}
             </NavLink>
           )}
         </SidebarMenuButton>
@@ -426,7 +473,10 @@ export function AdminSidebar() {
                   groupActive && "bg-primary/10 text-primary"
                 )}
               >
-                <group.icon className="h-4 w-4" />
+                <group.icon className={cn(
+                  "h-4 w-4",
+                  group.icon === Sparkles && "text-violet-500"
+                )} />
               </button>
             </TooltipTrigger>
             <TooltipContent side="right" sideOffset={10}>
@@ -449,7 +499,10 @@ export function AdminSidebar() {
           )}
         >
           <span className="flex items-center gap-2">
-            <group.icon className="h-4 w-4" />
+            <group.icon className={cn(
+              "h-4 w-4",
+              group.icon === Sparkles && "text-violet-500"
+            )} />
             <span>{group.title}</span>
           </span>
           <ChevronDown
