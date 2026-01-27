@@ -1,500 +1,440 @@
 
-# Plano: Implementação do Módulo "Publidoor Partner"
+
+# Plano de Transformação: Portal Conexão na Cidade → Plataforma de Mídia Digital Premium
 
 ## Resumo Executivo
 
-Criar uma área exclusiva para anunciantes chamada **Publidoor Partner**, separada do dashboard administrativo, permitindo que parceiros gerenciem sua Presença Digital Urbana de forma autônoma, com fluxo de aprovação editorial. Reutilizaremos 100% das entidades existentes do módulo Publidoor.
+Transformação completa do Portal Conexão de um painel administrativo funcional em uma **Plataforma de Mídia Digital Premium**, com reestruturação do menu, redesign visual e correções de usabilidade. 
 
 ---
 
-## 1. Alteração no Banco de Dados
+## 1. Reestruturação do Menu Principal (AdminSidebar.tsx)
 
-### 1.1 Adicionar coluna `user_id` na tabela `publidoor_advertisers`
+### Nova Arquitetura de Módulos
 
-Atualmente a tabela não possui vínculo com usuários autenticados. Precisamos adicionar:
+A estrutura atual com 12 grupos será consolidada em **6 módulos semânticos**:
 
-```sql
--- Adicionar coluna user_id para vincular advertiser ao usuário parceiro
-ALTER TABLE publidoor_advertisers
-ADD COLUMN user_id uuid REFERENCES auth.users(id);
+| Módulo | Ícone | Itens |
+|--------|-------|-------|
+| **CONTEÚDO** | FileText | Dashboard, Notícias, Notícias IA, Notas Rápidas, Web Stories, Podcasts, Edição Digital |
+| **DISTRIBUIÇÃO & ALCANCE** | Share2 | Distribuição Social, Gerador de Links, SEO & Performance, Push Notifications |
+| **PUBLICIDADE & MONETIZAÇÃO** | Megaphone | Anúncios, Super Banners, Publidoor (Premium), Parceiros |
+| **STREAMING & MÍDIA** | Radio | Hub Central, Web Rádio, Web TV, Estúdio ao Vivo, Conexão Studio |
+| **GESTÃO DO PORTAL** | Settings | Editor da Home, Categorias, Tags, Modelo do Portal, Vocabulário, Módulos |
+| **INTELIGÊNCIA & MÉTRICAS** | BarChart3 | Analytics, Relatórios Editoriais, Relatórios Comerciais |
 
--- Criar índice para performance
-CREATE INDEX idx_publidoor_advertisers_user_id ON publidoor_advertisers(user_id);
+### Mapeamento de Itens
+
+**CONTEÚDO (6 itens):**
+```
+├── Dashboard (link para /admin)
+├── Notícias → /admin/news
+├── Notícias IA → /admin/noticias-ai (ícone Sparkles roxo)
+├── Notas Rápidas → /admin/quick-notes
+├── Web Stories → /admin/stories
+├── Podcasts → /admin/podcasts
+└── Edição Digital → /admin/editions
 ```
 
-### 1.2 Políticas RLS para Parceiros
-
-```sql
--- Permitir que parceiros vejam apenas seus próprios dados
-CREATE POLICY "Partners can view own advertiser"
-ON publidoor_advertisers FOR SELECT
-USING (auth.uid() = user_id OR EXISTS (
-  SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role IN ('admin', 'super_admin', 'commercial')
-));
-
--- Permitir que parceiros atualizem seus próprios dados
-CREATE POLICY "Partners can update own advertiser"
-ON publidoor_advertisers FOR UPDATE
-USING (auth.uid() = user_id);
-
--- Permitir que parceiros vejam seus próprios Publidoors
-CREATE POLICY "Partners can view own publidoor items"
-ON publidoor_items FOR SELECT
-USING (
-  advertiser_id IN (
-    SELECT id FROM publidoor_advertisers WHERE user_id = auth.uid()
-  ) OR EXISTS (
-    SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role IN ('admin', 'super_admin', 'commercial')
-  )
-);
-
--- Permitir que parceiros criem/atualizem seus Publidoors
-CREATE POLICY "Partners can insert own publidoor items"
-ON publidoor_items FOR INSERT
-WITH CHECK (
-  advertiser_id IN (SELECT id FROM publidoor_advertisers WHERE user_id = auth.uid())
-);
-
-CREATE POLICY "Partners can update own publidoor items"
-ON publidoor_items FOR UPDATE
-USING (
-  advertiser_id IN (SELECT id FROM publidoor_advertisers WHERE user_id = auth.uid())
-);
-
--- Políticas para métricas (somente leitura para parceiros)
-CREATE POLICY "Partners can view own metrics"
-ON publidoor_metrics FOR SELECT
-USING (
-  publidoor_id IN (
-    SELECT pi.id FROM publidoor_items pi
-    JOIN publidoor_advertisers pa ON pi.advertiser_id = pa.id
-    WHERE pa.user_id = auth.uid()
-  )
-);
-
--- Políticas para schedules (somente leitura para parceiros)
-CREATE POLICY "Partners can view own schedules"
-ON publidoor_schedules FOR SELECT
-USING (
-  publidoor_id IN (
-    SELECT pi.id FROM publidoor_items pi
-    JOIN publidoor_advertisers pa ON pi.advertiser_id = pa.id
-    WHERE pa.user_id = auth.uid()
-  )
-);
+**DISTRIBUIÇÃO & ALCANCE (4 itens):**
+```
+├── Distribuição Social → /admin/social
+├── Gerador de Links → /admin/links
+├── SEO & Performance → /admin/analytics (renomear aba)
+└── Push Notifications → /admin/push (criar placeholder se não existe)
 ```
 
----
-
-## 2. Estrutura de Arquivos
-
-### 2.1 Páginas (Partner Portal)
-
-```text
-src/pages/partner/publidoor/
-├── PartnerLogin.tsx           # Login exclusivo para parceiros
-├── PartnerLayout.tsx          # Layout com sidebar do parceiro
-├── PartnerVitrine.tsx         # Home: Minha Vitrine
-├── PartnerEditor.tsx          # Criar/Editar Publidoor
-├── PartnerAgenda.tsx          # Agenda de Exibição (readonly)
-├── PartnerMetrics.tsx         # Métricas simplificadas
-├── PartnerBusiness.tsx        # Meu Negócio (dados do anunciante)
-└── PartnerPlan.tsx            # Plano & Renovação
+**PUBLICIDADE & MONETIZAÇÃO (4 itens):**
+```
+├── Anúncios → /admin/ads
+├── Super Banners → /admin/banners
+├── Publidoor (Premium) → /admin/publidoor
+└── Parcerias → /admin/partners
 ```
 
-### 2.2 Componentes
-
-```text
-src/components/partner/
-├── PartnerSidebar.tsx         # Menu lateral do parceiro
-├── PartnerHeader.tsx          # Header com logo e logout
-├── PartnerStatusBadge.tsx     # Badge de status (Ativo, Em análise, etc)
-├── PartnerPreview.tsx         # Preview do Publidoor (reutiliza PublidoorPreview)
-├── PartnerMetricsCard.tsx     # Card de métricas simplificadas
-└── PartnerProtectedRoute.tsx  # Guarda de rota para parceiros
+**STREAMING & MÍDIA (manter subgrupos):**
+```
+├── Hub Central → /admin/stream
+├── Ao Vivo (subgrupo) → Dashboard, Transmissões, Canais, Programas, Playlists
+├── Studio (subgrupo) → Dashboard, Estúdios, Biblioteca, Destinos
+└── Configurações → Rádio Web, TV Web
 ```
 
-### 2.3 Hooks
-
-```text
-src/hooks/
-├── usePartnerAuth.ts          # Hook de autenticação do parceiro
-├── usePartnerPublidoor.ts     # Operações específicas do parceiro
-└── usePartnerAdvertiser.ts    # Dados do anunciante vinculado
+**GESTÃO DO PORTAL (6 itens):**
+```
+├── Editor da Home → /admin/home-editor
+├── Categorias → /admin/categories
+├── Tags → /admin/tags
+├── Modelo do Portal → /admin/settings/template
+├── Vocabulário → /admin/settings/vocabulary
+└── Módulos → /admin/settings/modules
 ```
 
-### 2.4 Contexto
+**INTELIGÊNCIA & MÉTRICAS (3 itens):**
+```
+├── Analytics → /admin/analytics
+├── Relatórios Editoriais → /admin/reading-analytics (renomear)
+└── Relatórios Comerciais → (novo, métricas de Publidoor e Anúncios consolidadas)
+```
 
-```text
-src/contexts/
-└── PartnerContext.tsx         # Contexto com dados do parceiro logado
+### Itens Separados (Primeiro Nível como Produtos)
+
+Manter Academy e Conexão.AI como primeiro nível:
+```
+├── 🎓 Conexão Academy
+└── ✨ Conexão.AI
+```
+
+### Módulo Administração (Admin-only)
+
+Consolidar:
+```
+├── Usuários → /admin/users
+├── Comunidade → /admin/community
+├── Logs de Auditoria → /admin/logs
+├── Monitor SSO → /admin/sso-monitor
+└── Configurações Gerais → /admin/settings
 ```
 
 ---
 
-## 3. Rotas (App.tsx)
+## 2. Design System - Atualização de Paleta
+
+### Paleta Proposta
+
+A paleta atual já está bem definida (Orange & Dark Gray). Ajustes:
+
+**Manter:**
+- Primary: `hsl(25, 95%, 53%)` - Laranja vibrante
+- Background dark: `hsl(220, 20%, 8%)` - Cinza escuro profundo
+- Sidebar: `hsl(220, 20%, 6%)` - Cinza ainda mais escuro
+
+**Adicionar tokens específicos (src/index.css):**
+```css
+/* IA / Automação - Roxo exclusivo */
+--ai-primary: 262 83% 58%;
+--ai-secondary: 280 68% 50%;
+
+/* Monetização - Verde dinheiro */
+--money-primary: 142 76% 36%;
+
+/* Urgência editorial */
+--editorial-urgent: 0 84% 60%;
+```
+
+**Ajustes visuais para eliminar aspecto genérico:**
+- Aumentar contraste em cards
+- Adicionar gradientes sutis nos headers de módulo
+- Usar badges coloridos por contexto (IA = roxo, Monetização = verde)
+
+---
+
+## 3. Dashboard - Reconstrução Total
+
+### Estrutura Proposta: "Centro de Comando"
+
+Layout em grid responsivo com 4 áreas principais:
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ HEADER - Logo + Título "Centro de Comando" + Modo Foco + Alertas + Busca   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌─────────────────────────────┐  ┌─────────────────────────────┐          │
+│  │ 📊 INDICADORES PRINCIPAIS   │  │ 💰 RECEITA & MONETIZAÇÃO    │          │
+│  │ Conteúdo | Alcance | Receita│  │ Publidoor | Anúncios | CTR  │          │
+│  │ Grandes (XL) - Gráficos     │  │ Valores em destaque verde   │          │
+│  └─────────────────────────────┘  └─────────────────────────────┘          │
+│                                                                             │
+│  ┌─────────────────────────────┐  ┌─────────────────────────────┐          │
+│  │ 📰 PRODUÇÃO EDITORIAL       │  │ 📈 AUDIÊNCIA HOJE           │          │
+│  │ Publicadas hoje | Rascunhos │  │ Views | Sessões | Online    │          │
+│  │ Em revisão | Agendadas      │  │ Gráfico simples sparkline   │          │
+│  └─────────────────────────────┘  └─────────────────────────────┘          │
+│                                                                             │
+│  ┌───────────────────────────────────────────────────────────────────────┐ │
+│  │ ⚡ AÇÕES RÁPIDAS                                                      │ │
+│  │ [Nova Notícia] [Web Story] [Nota Rápida] [Auto Post] [Analytics]      │ │
+│  └───────────────────────────────────────────────────────────────────────┘ │
+│                                                                             │
+│  ┌─────────────────────────────┐  ┌─────────────────────────────┐          │
+│  │ 🔥 MAIS LIDAS               │  │ 📝 ATIVIDADE RECENTE        │          │
+│  │ Top 5 com ranking visual    │  │ Últimas 5 notícias          │          │
+│  └─────────────────────────────┘  └─────────────────────────────┘          │
+│                                                                             │
+│  ┌───────────────────────────────────────────────────────────────────────┐ │
+│  │ ⚠️ ALERTAS EDITORIAIS (se houver)                                     │ │
+│  │ Rascunhos antigos | Notícias sem imagem | Integrações inativas        │ │
+│  └───────────────────────────────────────────────────────────────────────┘ │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Componentes do Dashboard
+
+**Card 1: Indicadores Principais (2/3 largura)**
+- 4 métricas em cards grandes
+- Publicadas Hoje | Total Notícias | Stories Ativos | Visualizações
+- Usar `dashboard-stat-xl` para valores
+- Gradientes coloridos por tipo
+
+**Card 2: Receita & Monetização (1/3 largura)**
+- Receita estimada (Publidoor)
+- Impressões totais
+- CTR médio
+- Badge verde para valores monetários
+
+**Card 3: Produção Editorial**
+- Rascunhos pendentes
+- Em revisão
+- Agendadas
+- Badges coloridos por status
+
+**Card 4: Audiência em Tempo Real**
+- Usuários online (24h)
+- Sessões únicas
+- Mini sparkline de tendência
+
+**Seção Ações Rápidas**
+- Grid horizontal com 6-7 botões de ação
+- Ícones grandes + labels curtos
+- Hover com glow sutil
+
+**Seção Mais Lidas**
+- Top 5 com medals (ouro, prata, bronze)
+- Barra de popularidade visual
+- Link para Analytics
+
+**Seção Atividade Recente**
+- Últimas 5 notícias editadas
+- Status badge + tempo relativo
+- Click para editar
+
+**Seção Alertas (condicional)**
+- Só aparece se houver alertas
+- Fundo amarelo/amber sutil
+- Links diretos para resolver
+
+---
+
+## 4. Notícias IA - Transformação em Wizard Guiado
+
+### Fluxo Wizard Proposto
+
+Converter a página atual de tabs em um fluxo step-by-step:
+
+```text
+STEP 1: TEMA & FONTE
+┌─────────────────────────────────────────────────────────────────┐
+│ "O que você quer criar hoje?"                                   │
+│                                                                 │
+│ ┌──────────────┐  ┌──────────────┐  ┌──────────────┐           │
+│ │ 📝 TEXTO     │  │ 🔗 URL      │  │ 📦 LOTE     │           │
+│ │ Colar texto  │  │ Link fonte  │  │ Múltiplas   │           │
+│ │ de notícia   │  │ da notícia  │  │ notícias    │           │
+│ └──────────────┘  └──────────────┘  └──────────────┘           │
+│                                                                 │
+│ [Textarea grande para input]                                    │
+│                                                                 │
+│                                        [Próximo →]              │
+└─────────────────────────────────────────────────────────────────┘
+
+STEP 2: CONFIGURAÇÕES
+┌─────────────────────────────────────────────────────────────────┐
+│ "Ajuste as configurações"                                       │
+│                                                                 │
+│ ☑️ Corrigir lead automaticamente                                │
+│ ☑️ Gerar tags SEO                                               │
+│ ☐ Destacar na Home                                              │
+│                                                                 │
+│ [← Voltar]                         [Processar com IA →]         │
+└─────────────────────────────────────────────────────────────────┘
+
+STEP 3: REVISÃO
+┌─────────────────────────────────────────────────────────────────┐
+│ "Revise o conteúdo gerado"                                      │
+│                                                                 │
+│ ┌─────────────────────────┐  ┌──────────────────────────┐      │
+│ │ PREVIEW DESKTOP         │  │ CAMPOS EDITÁVEIS        │      │
+│ │ (visual fiel do site)   │  │ Título, Slug, Resumo,   │      │
+│ │                         │  │ Conteúdo, Categoria,    │      │
+│ │                         │  │ Tags, Imagem            │      │
+│ └─────────────────────────┘  └──────────────────────────┘      │
+│                                                                 │
+│ [← Refazer]                           [Publicar →]              │
+└─────────────────────────────────────────────────────────────────┘
+
+STEP 4: PUBLICADO
+┌─────────────────────────────────────────────────────────────────┐
+│ ✅ "Notícia publicada com sucesso!"                             │
+│                                                                 │
+│ [Ver Notícia] [Criar Outra] [Ir para Lista]                     │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Implementação
+
+Criar novo componente `NoticiasAIWizard.tsx` que substitui o layout atual de tabs:
+- Usar state machine para controlar steps
+- Manter componentes existentes (`NoticiasAIInput`, `NoticiasAIManualTab`, etc.)
+- Adicionar preview real-time no step de revisão
+- Progress bar visual no topo
+- Animações suaves com Framer Motion
+
+---
+
+## 5. Editor da Home - Melhorias de UX
+
+### Melhorias Propostas
+
+**Preview Maior e Fiel:**
+- Aumentar tamanho do preview de 1/3 para 1/2 da tela
+- Usar iframe real do site público para preview
+- Toggle mobile/desktop
+
+**Drag and Drop Melhorado:**
+- Visual mais claro ao arrastar (ghost preview)
+- Snap visual ao soltar
+- Feedback sonoro opcional
+
+**Componentização Visual:**
+- Cards maiores para blocos
+- Ícone visual por tipo de bloco
+- Preview inline do conteúdo
+
+**Redução de Listas Longas:**
+- Paginação em vez de scroll infinito
+- Busca/filtro rápido
+- Colapsar blocos inativos por padrão
+
+---
+
+## 6. Analytics - Correção e Robustez
+
+### Problema Atual
+A página funciona mas depende de dados que podem não existir.
+
+### Solução
+Implementar **graceful degradation**:
 
 ```typescript
-// Partner Routes (fora do AdminLayout)
-<Route path="/partner" element={<PartnerLayout />}>
-  <Route index element={<Navigate to="/partner/publidoor" replace />} />
-  <Route path="publidoor" element={<PartnerVitrine />} />
-  <Route path="publidoor/editar" element={<PartnerEditor />} />
-  <Route path="publidoor/editar/:id" element={<PartnerEditor />} />
-  <Route path="publidoor/agenda" element={<PartnerAgenda />} />
-  <Route path="publidoor/metricas" element={<PartnerMetrics />} />
-  <Route path="publidoor/negocio" element={<PartnerBusiness />} />
-  <Route path="publidoor/plano" element={<PartnerPlan />} />
-</Route>
-
-// Partner Auth (público)
-<Route path="/partner/login" element={<PartnerLogin />} />
-```
-
----
-
-## 4. Detalhamento das Páginas
-
-### 4.1 PartnerLogin.tsx
-
-| Item | Descrição |
-|------|-----------|
-| **Layout** | Similar ao CommunityAuth, visual premium e urbano |
-| **Autenticação** | Email + Senha (usa AuthContext existente) |
-| **Validação** | Após login, verifica se user_id existe em publidoor_advertisers |
-| **Erro** | Se não for parceiro, exibe mensagem e link para contato |
-| **Sucesso** | Redireciona para /partner/publidoor |
-
-### 4.2 PartnerVitrine.tsx (Home)
-
-**Cards exibidos:**
-- Status atual do Publidoor (badge colorido)
-- Próxima data de exibição
-- Local contratado (somente leitura)
-- Tipo de Publidoor
-- Cliques e Impressões (últimos 7 dias)
-
-**CTAs:**
-- "Editar Vitrine" → /partner/publidoor/editar/:id
-- "Renovar Presença" → /partner/publidoor/plano
-
-**Status possíveis:**
-- `draft` → "Rascunho" (cinza)
-- `review` → "Em Análise" (amarelo/laranja)
-- `approved` → "Aprovado" (azul)
-- `published` → "Ativo" (verde)
-
-### 4.3 PartnerEditor.tsx
-
-**Campos disponíveis para parceiro:**
-- Frase 1 (principal) *
-- Frase 2 (secundária)
-- Frase 3 (opcional)
-- Upload de imagem ou vídeo
-- Logo da empresa
-- Texto do botão (CTA)
-- Link de destino *
-
-**Campos bloqueados (definidos pelo admin):**
-- Tipo de Publidoor
-- Local de exibição
-- Exclusividade
-- Template
-
-**Comportamento:**
-- Toda edição salva o Publidoor com status `review`
-- Preview em tempo real (desktop/mobile)
-- Reutiliza componente `PublidoorPreview`
-
-### 4.4 PartnerAgenda.tsx
-
-**Exibição (somente leitura):**
-- Data de início e fim da campanha
-- Dias da semana de exibição
-- Faixas de horário
-- Contador de dias restantes
-
-### 4.5 PartnerMetrics.tsx
-
-**Métricas exibidas:**
-- Total de Impressões
-- Total de Cliques
-- CTR (%)
-- Filtro por período: 7, 15, 30 dias
-
-**Gráfico:**
-- Linha simples de impressões/cliques ao longo do tempo
-
-### 4.6 PartnerBusiness.tsx
-
-**Formulário editável:**
-- Nome da empresa *
-- Bairro / Cidade
-- Categoria
-- WhatsApp
-- Website
-- Link Google Maps
-- Logotipo (upload)
-
-**Comportamento:**
-- Dados salvos alimentam automaticamente os Publidoors vinculados
-
-### 4.7 PartnerPlan.tsx
-
-**Exibição:**
-- Plano atual (nome, benefícios)
-- Data de vencimento
-- Histórico de pagamentos (placeholder/futuro)
-
-**CTAs:**
-- "Renovar Plano"
-- "Solicitar Upgrade"
-- "Falar com Atendimento" (WhatsApp)
-
----
-
-## 5. PartnerLayout.tsx
-
-```text
-┌─────────────────────────────────────────────────────────────┐
-│ HEADER                                                      │
-│ [Logo Publidoor Partner]              [Nome] [Sair]         │
-├───────────────┬─────────────────────────────────────────────┤
-│ SIDEBAR       │ CONTENT                                     │
-│               │                                             │
-│ 🏪 Minha      │                                             │
-│   Vitrine     │    <Outlet />                               │
-│               │                                             │
-│ ✏️ Editar     │                                             │
-│   Vitrine     │                                             │
-│               │                                             │
-│ 📅 Agenda     │                                             │
-│               │                                             │
-│ 📊 Métricas   │                                             │
-│               │                                             │
-│ 🏢 Meu        │                                             │
-│   Negócio     │                                             │
-│               │                                             │
-│ 💳 Plano      │                                             │
-│               │                                             │
-└───────────────┴─────────────────────────────────────────────┘
-```
-
----
-
-## 6. Hook usePartnerAuth.ts
-
-```typescript
-export function usePartnerAuth() {
-  const { user, isLoading } = useAuth();
-  
-  // Busca advertiser vinculado ao user
-  const { data: advertiser, isLoading: loadingAdvertiser } = useQuery({
-    queryKey: ['partner-advertiser', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from('publidoor_advertisers')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-      if (error) return null;
-      return data;
-    },
-    enabled: !!user?.id,
-  });
-  
-  return {
-    user,
-    advertiser,
-    isPartner: !!advertiser,
-    isLoading: isLoading || loadingAdvertiser,
-  };
+// Se não há dados, mostrar estado vazio elegante
+if (!pageViews?.length && !mostRead?.length) {
+  return (
+    <EmptyAnalyticsState 
+      title="Nenhum dado ainda"
+      description="Os dados de analytics começarão a aparecer assim que houver tráfego no portal."
+      action={<Button>Configurar Tracking</Button>}
+    />
+  );
 }
 ```
 
----
-
-## 7. Hook usePartnerPublidoor.ts
-
-```typescript
-// Buscar Publidoors do parceiro
-export function usePartnerPublidoors(advertiserId: string) {
-  return useQuery({
-    queryKey: ['partner-publidoors', advertiserId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('publidoor_items')
-        .select(`
-          *,
-          campaign:publidoor_campaigns(*),
-          template:publidoor_templates(*)
-        `)
-        .eq('advertiser_id', advertiserId)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!advertiserId,
-  });
-}
-
-// Criar/Atualizar Publidoor como parceiro (sempre vai para 'review')
-export function usePartnerUpdatePublidoor() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ id, ...data }) => {
-      const updateData = {
-        ...data,
-        status: 'review', // Sempre volta para análise
-      };
-      // ... update logic
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['partner-publidoors'] });
-      toast.success('Sua vitrine foi enviada para análise!');
-    },
-  });
-}
-```
+**Regras:**
+1. Nunca mostrar erro de tela quebrada
+2. Sempre mostrar valores zero como fallback
+3. Cards com "Sem dados" em vez de quebrar
+4. Sugestão de ação quando dados faltam
 
 ---
 
-## 8. Terminologia (Regras de UX)
+## 7. Publidoor - Interface Comercial Premium
 
-| Evitar | Usar |
-|--------|------|
-| Anúncio | Vitrine, Presença |
-| Banner | Exibição |
-| Publicidade | Presença Digital Urbana |
-| Campanha (para parceiro) | Período de exibição |
-| Impressões (técnico) | Visualizações |
+### Melhorias
+
+**Dashboard com Exemplos Visuais:**
+- Adicionar preview dos formatos disponíveis
+- Galeria de templates
+- Métricas de performance em destaque
+
+**Cards de Métricas Comerciais:**
+- Impressões com tendência
+- Cliques com CTR
+- Receita estimada em verde
+- Comparativo período anterior
 
 ---
 
-## 9. Fluxo de Aprovação
+## 8. Arquivos a Modificar
+
+### Modificações Principais
+
+| Arquivo | Ação | Descrição |
+|---------|------|-----------|
+| `src/components/admin/AdminSidebar.tsx` | REFATORAR | Nova estrutura de 6 módulos |
+| `src/hooks/useSidebarPersistence.ts` | ATUALIZAR | Mapear novos grupos |
+| `src/pages/admin/Dashboard.tsx` | REDESENHAR | Centro de Comando |
+| `src/pages/admin/NoticiasAI.tsx` | REFATORAR | Converter para Wizard |
+| `src/pages/admin/Analytics.tsx` | CORRIGIR | Adicionar fallbacks |
+| `src/pages/admin/HomeEditor.tsx` | MELHORAR | Preview maior, UX |
+| `src/index.css` | ATUALIZAR | Tokens AI/Money |
+
+### Novos Componentes
+
+| Componente | Localização | Função |
+|------------|-------------|--------|
+| `DashboardCommandCenter.tsx` | `src/components/admin/dashboard/` | Layout principal do dashboard |
+| `DashboardMetricsGrid.tsx` | `src/components/admin/dashboard/` | Grid de métricas |
+| `DashboardRevenueCard.tsx` | `src/components/admin/dashboard/` | Card de receita |
+| `DashboardAudienceCard.tsx` | `src/components/admin/dashboard/` | Card de audiência |
+| `NoticiasAIWizard.tsx` | `src/components/admin/noticias-ai/` | Fluxo wizard |
+| `WizardStep.tsx` | `src/components/admin/noticias-ai/` | Componente de step |
+| `EmptyAnalyticsState.tsx` | `src/components/admin/` | Estado vazio de analytics |
+
+---
+
+## 9. Ordem de Implementação
+
+### Fase 1: Estrutura e Menu (Alta prioridade)
+1. Refatorar AdminSidebar.tsx com nova estrutura
+2. Atualizar useSidebarPersistence.ts
+3. Verificar todas as rotas
+
+### Fase 2: Dashboard (Alta prioridade)
+4. Criar componentes do Centro de Comando
+5. Redesenhar layout com grid
+6. Adicionar métricas de receita
+
+### Fase 3: Correções Críticas
+7. Corrigir Analytics com fallbacks
+8. Testar todas as rotas
+
+### Fase 4: UX Avançado
+9. Converter Notícias IA para Wizard
+10. Melhorar Editor da Home
+11. Refinar Publidoor
+
+### Fase 5: Polimento
+12. Aplicar novos tokens CSS
+13. Adicionar animações
+14. Testes finais de navegação
+
+---
+
+## 10. Checklist de Validação Final
+
+Antes de finalizar:
+- [ ] Nenhuma rota quebrada
+- [ ] Nenhuma tela com erro
+- [ ] Nenhum menu redundante
+- [ ] Nenhuma funcionalidade órfã
+- [ ] UX fluido e coerente
+- [ ] Analytics nunca quebra
+- [ ] Dashboard responde: "O portal está crescendo?"
+- [ ] Produto pronto para comercialização
+
+---
+
+## 11. Resultado Esperado
 
 ```text
-┌─────────────────┐
-│  PARCEIRO cria  │
-│  ou edita       │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Status muda    │
-│  para "review"  │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  ADMIN vê no    │
-│  painel de      │
-│  aprovações     │
-└────────┬────────┘
-         │
-    ┌────┴────┐
-    ▼         ▼
-┌───────┐ ┌───────┐
-│Aprova │ │Rejeita│
-└───┬───┘ └───┬───┘
-    │         │
-    ▼         ▼
-┌───────┐ ┌───────┐
-│approved│ │ draft │
-│ + auto │ │(volta)│
-│ agenda │ └───────┘
-└───────┘
+✅ Menu consolidado em 6 módulos semânticos
+✅ Dashboard como Centro de Comando
+✅ Notícias IA com fluxo wizard guiado
+✅ Analytics à prova de erros
+✅ Editor da Home com preview melhorado
+✅ Publidoor com interface comercial
+✅ Design premium e consistente
+✅ Produto pronto para escala e revenda
 ```
 
----
-
-## 10. Design Visual
-
-**Princípios:**
-- Visual premium e urbano
-- Tipografia forte (Plus Jakarta Sans)
-- Cores: fundo escuro, destaques em laranja (primary)
-- Animações suaves (Framer Motion)
-- Cards com glassmorphism sutil
-- Destaque visual para status e CTAs
-- Mobile-first, responsivo
-
----
-
-## 11. Arquivos a Criar/Modificar
-
-### Novos Arquivos
-
-| Arquivo | Descrição |
-|---------|-----------|
-| `src/pages/partner/publidoor/PartnerLogin.tsx` | Página de login |
-| `src/pages/partner/publidoor/PartnerLayout.tsx` | Layout com sidebar |
-| `src/pages/partner/publidoor/PartnerVitrine.tsx` | Home do parceiro |
-| `src/pages/partner/publidoor/PartnerEditor.tsx` | Criar/editar Publidoor |
-| `src/pages/partner/publidoor/PartnerAgenda.tsx` | Agenda (readonly) |
-| `src/pages/partner/publidoor/PartnerMetrics.tsx` | Métricas |
-| `src/pages/partner/publidoor/PartnerBusiness.tsx` | Meu Negócio |
-| `src/pages/partner/publidoor/PartnerPlan.tsx` | Plano & Renovação |
-| `src/components/partner/PartnerSidebar.tsx` | Menu lateral |
-| `src/components/partner/PartnerHeader.tsx` | Header |
-| `src/components/partner/PartnerStatusBadge.tsx` | Badge de status |
-| `src/hooks/usePartnerAuth.ts` | Hook de autenticação |
-| `src/hooks/usePartnerPublidoor.ts` | Hook de operações |
-| `src/contexts/PartnerContext.tsx` | Contexto do parceiro |
-
-### Arquivos a Modificar
-
-| Arquivo | Modificação |
-|---------|-------------|
-| `src/App.tsx` | Adicionar rotas /partner/* |
-| `src/types/publidoor.ts` | Adicionar `user_id` ao tipo Advertiser |
-| SQL Migration | Adicionar coluna e políticas RLS |
-
----
-
-## 12. Ordem de Implementação
-
-### Fase 1: Infraestrutura
-1. Criar migration SQL (user_id + RLS policies)
-2. Atualizar types.ts após migration
-3. Criar hooks (usePartnerAuth, usePartnerPublidoor)
-4. Criar PartnerContext
-
-### Fase 2: Layout e Autenticação
-5. Criar PartnerLogin.tsx
-6. Criar PartnerLayout.tsx
-7. Criar PartnerSidebar.tsx e PartnerHeader.tsx
-8. Adicionar rotas no App.tsx
-
-### Fase 3: Páginas
-9. Criar PartnerVitrine.tsx (Home)
-10. Criar PartnerEditor.tsx
-11. Criar PartnerBusiness.tsx
-12. Criar PartnerAgenda.tsx
-13. Criar PartnerMetrics.tsx
-14. Criar PartnerPlan.tsx
-
-### Fase 4: Polimento
-15. Aplicar design premium
-16. Adicionar animações
-17. Testes e ajustes finais
-
----
-
-## 13. Resultado Esperado
-
-```text
-✅ Área exclusiva /partner/publidoor funcional
-✅ Login separado para parceiros
-✅ Visualização e edição de Publidoors próprios
-✅ Fluxo de aprovação funcionando
-✅ Métricas simplificadas
-✅ Agenda em modo leitura
-✅ Gestão do negócio (dados do anunciante)
-✅ Página de plano e renovação
-✅ RLS garantindo isolamento de dados
-✅ Design premium e urbano
-✅ Sem duplicação de tabelas
-✅ Terminologia correta (sem "anúncio")
-```
