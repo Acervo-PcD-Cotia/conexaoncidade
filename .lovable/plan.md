@@ -1,361 +1,440 @@
 
-# Plano: Aplicação Real do Design System Global
+# Plano: Dashboard Premium com Modo Claro / Escuro / Sistema
 
-## Resumo
+## Resumo Executivo
 
-Implementar tokens globais de design que transformem o Portal Conexão na Cidade de um template admin genérico em uma plataforma premium com identidade visual própria. A mudança é estrutural: todos os componentes passarão a consumir tokens semânticos em vez de cores hardcoded.
-
----
-
-## 1. Reestruturação dos Design Tokens (index.css)
-
-### Nova Hierarquia de Tokens
-
-Adicionar tokens semânticos de nível superior que todos os componentes devem consumir:
-
-```css
-/* ============ DESIGN TOKENS GLOBAIS ============ */
-
-/* Brand - Identidade do produto (Azul Petróleo) */
---brand-primary: 200 65% 25%;        /* Azul petróleo escuro */
---brand-secondary: 200 50% 35%;      /* Azul petróleo médio */
---brand-accent: 200 40% 45%;         /* Azul petróleo claro */
-
-/* CTA - Ações principais (Laranja) */
---cta-primary: 25 95% 53%;           /* Laranja vibrante */
---cta-hover: 25 95% 48%;             /* Laranja hover */
---cta-foreground: 0 0% 100%;         /* Branco */
-
-/* AI - Conexão.AI (Roxo) */
---ai-primary: 262 83% 58%;           /* Roxo vibrante */
---ai-secondary: 280 68% 50%;         /* Roxo secundário */
---ai-glow: 262 80% 60%;              /* Efeito glow */
-
-/* Money - Monetização (Verde) */
---money-primary: 142 76% 36%;        /* Verde dinheiro */
---money-secondary: 158 64% 52%;      /* Verde claro */
-
-/* Base Neutral - Fundos e cards */
---neutral-50: 0 0% 98%;
---neutral-100: 220 13% 95%;
---neutral-200: 220 13% 91%;
---neutral-800: 220 20% 12%;
---neutral-900: 220 20% 8%;
-```
-
-### Sidebar Tokens (baseados em brand)
-
-```css
-/* Sidebar - Identidade visual forte */
---sidebar-background: 200 65% 12%;      /* Brand escuro */
---sidebar-foreground: 0 0% 98%;
---sidebar-active-bg: 200 50% 20%;       /* Brand + destaque */
---sidebar-active-indicator: var(--cta-primary);
---sidebar-hover: 200 50% 18%;
---sidebar-border: 200 40% 20%;
-```
+Atualizar o Dashboard "Centro de Comando" para um visual institucional premium com identidade em laranja, suportando Claro, Escuro e detecção automática do Sistema. Todas as cores serão baseadas em tokens, eliminando valores hardcoded.
 
 ---
 
-## 2. Tailwind Config - Novos Tokens
+## 1. Sistema de Tema Completo
 
-### Atualizar tailwind.config.ts
+### 1.1 Atualizar useTheme.ts
 
-Adicionar novos aliases de cor:
+O hook atual suporta apenas "light" e "dark". Será expandido para:
 
 ```typescript
-colors: {
-  // ... existing colors
-  
-  // Brand identity
-  brand: {
-    DEFAULT: "hsl(var(--brand-primary))",
-    secondary: "hsl(var(--brand-secondary))",
-    accent: "hsl(var(--brand-accent))",
-  },
-  
-  // CTA / Actions
-  cta: {
-    DEFAULT: "hsl(var(--cta-primary))",
-    hover: "hsl(var(--cta-hover))",
-    foreground: "hsl(var(--cta-foreground))",
-  },
-  
-  // AI module
-  ai: {
-    DEFAULT: "hsl(var(--ai-primary))",
-    secondary: "hsl(var(--ai-secondary))",
-    glow: "hsl(var(--ai-glow))",
-  },
-  
-  // Monetization
-  money: {
-    DEFAULT: "hsl(var(--money-primary))",
-    secondary: "hsl(var(--money-secondary))",
-  },
-}
+type ThemeMode = "light" | "dark" | "system";
+
+// Lógica:
+// - "system" -> detecta prefers-color-scheme e aplica automaticamente
+// - Persistência em localStorage: "theme-mode"
+// - Listener para mudanças do sistema em tempo real
+```
+
+**Novo comportamento:**
+- `mode`: "light" | "dark" | "system" (preferência do usuário)
+- `resolvedTheme`: "light" | "dark" (tema efetivamente aplicado)
+- Listener `matchMedia` para detectar mudanças do SO em tempo real
+
+### 1.2 Criar ThemeContext.tsx
+
+Contexto global para disponibilizar o tema em toda a aplicação:
+
+```text
+ThemeProvider
+├── mode (light | dark | system)
+├── resolvedTheme (light | dark)
+├── setMode(mode)
+└── toggleTheme()
 ```
 
 ---
 
-## 3. Sidebar - Identidade da Marca
+## 2. Tokens Obrigatórios - Padronização
 
-### Mudanças em AdminSidebar.tsx
-
-**Sidebar Container:**
-- Fundo: `bg-sidebar` (que será `--brand-primary` escuro)
-- Borda: sutil com `--sidebar-border`
-
-**Item Ativo:**
-- Fundo mais claro: `bg-sidebar-active-bg`
-- Indicador lateral: barra de 3px à esquerda com `--cta-primary`
-- Texto: branco com opacidade total
-
-**Item Inativo:**
-- Texto: branco com 70% opacidade
-- Hover: fundo `--sidebar-hover`
-
-**Badges Semânticos:**
-- Badge "IA": `bg-ai text-white`
-- Badge "Premium": `bg-money text-white`
-
-**Código de referência:**
-```tsx
-// Active item styling
-<NavLink
-  className={cn(
-    "relative flex items-center gap-2 px-3 py-2 rounded-md transition-colors",
-    "text-sidebar-foreground/70 hover:bg-sidebar-hover hover:text-sidebar-foreground",
-  )}
-  activeClassName={cn(
-    "bg-sidebar-active-bg text-sidebar-foreground font-medium",
-    "before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2",
-    "before:h-6 before:w-1 before:rounded-r-full before:bg-cta"
-  )}
->
-```
-
----
-
-## 4. Dashboard e Cards
-
-### Princípios
-
-**Cards:**
-- Fundo sempre neutro: `bg-card` (branco/cinza claro)
-- Sem fundos coloridos competindo visualmente
-- Bordas sutis: `border-border`
-
-**Ícones e Badges Semânticos:**
-- Editorial/Conteúdo: `text-brand`
-- Audiência: `text-brand-secondary`
-- IA/Automação: `text-ai` 
-- Monetização: `text-money`
-- CTA/Ações: `text-cta`
-
-### Mudanças nos Cards do Dashboard
-
-**DashboardProductionCard.tsx:**
-- Header icon: `text-brand` (não primary/laranja)
-- Stats icons: cores semânticas por contexto
-  - Rascunhos: `text-muted-foreground`
-  - Em Revisão: `text-cta` (ação necessária)
-  - Agendadas: `text-brand`
-  - Publicadas: `text-money` (sucesso)
-
-**DashboardRevenueCard.tsx:**
-- Header icon: `text-money` (verde)
-- Todos os valores monetários: `text-money`
-- Título do card com badge verde
-
-**DashboardAudienceCard.tsx:**
-- Header icon: `text-brand-secondary`
-- Métricas de engajamento: `text-brand`
-
-### Remover Fundos Pastel
-
-Substituir:
-```tsx
-// ANTES - fundos pastel competindo
-bgColor: "bg-emerald-500/10"
-bgColor: "bg-blue-500/10"
-bgColor: "bg-purple-500/10"
-bgColor: "bg-orange-500/10"
-
-// DEPOIS - fundos neutros, ícones coloridos
-bgColor: "bg-muted"  // ou sem fundo
-iconColor: "text-brand" // cor semântica no ícone apenas
-```
-
----
-
-## 5. Botões e Ações
-
-### Regra de Uso do CTA (Laranja)
-
-**CTA Primary (Laranja) - APENAS para:**
-- "Criar"
-- "Nova Notícia"
-- "Publicar"
-- "Ativar"
-- "Salvar e Publicar"
-
-**Secondary/Outline - Para:**
-- "Cancelar"
-- "Voltar"
-- "Ver mais"
-- "Editar"
-
-**Ghost - Para:**
-- Ações de toolbar
-- Ícones de navegação
-- Toggles
-
-### Atualizar Button Component
-
-O componente Button já usa `--primary`. Precisamos garantir que:
-- `variant="default"` = CTA (laranja) → para ações principais
-- Não usar `variant="default"` para navegação ou ações secundárias
-
----
-
-## 6. Classes Utilitárias Semânticas
-
-### Adicionar em index.css
+### 2.1 Adicionar novos tokens em index.css
 
 ```css
-/* ============ UTILITY CLASSES SEMÂNTICAS ============ */
-
-/* AI Elements */
-.text-ai { color: hsl(var(--ai-primary)); }
-.bg-ai { background-color: hsl(var(--ai-primary)); }
-.border-ai { border-color: hsl(var(--ai-primary)); }
-.glow-ai { box-shadow: 0 0 12px hsl(var(--ai-glow) / 0.4); }
-
-/* Money/Monetization */
-.text-money { color: hsl(var(--money-primary)); }
-.bg-money { background-color: hsl(var(--money-primary)); }
-.border-money { border-color: hsl(var(--money-primary)); }
-
-/* Brand */
-.text-brand { color: hsl(var(--brand-primary)); }
-.bg-brand { background-color: hsl(var(--brand-primary)); }
-.border-brand { border-color: hsl(var(--brand-primary)); }
-
-/* CTA */
-.text-cta { color: hsl(var(--cta-primary)); }
-.bg-cta { background-color: hsl(var(--cta-primary)); }
-.border-cta { border-color: hsl(var(--cta-primary)); }
-
-/* Semantic Badges */
-.badge-ai {
-  @apply bg-ai text-white text-[9px] font-semibold px-1.5 py-0.5 rounded-full;
+:root {
+  /* Dashboard Premium Tokens */
+  --bg: var(--background);
+  --surface: var(--card);
+  --surface-hover: var(--muted);
+  --text: var(--foreground);
+  --text-muted: var(--muted-foreground);
+  
+  /* Primary (Laranja - Identidade) */
+  --primary-soft: 25 95% 53% / 0.1;
+  
+  /* Semantic tokens para dashboard */
+  --dashboard-card-bg: var(--card);
+  --dashboard-stat-text: var(--foreground);
+  --dashboard-icon-accent: var(--primary);
 }
 
-.badge-premium {
-  @apply bg-money text-white text-[9px] font-semibold px-1.5 py-0.5 rounded-full;
+.dark {
+  /* Ajustes dark mode */
+  --primary-soft: 25 95% 55% / 0.15;
 }
+```
 
-.badge-brand {
-  @apply bg-brand text-white text-[9px] font-semibold px-1.5 py-0.5 rounded-full;
-}
+### 2.2 Atualizar Tailwind Config
 
-/* Sidebar specific */
-.sidebar-item-active {
-  @apply relative;
-}
-
-.sidebar-item-active::before {
-  content: "";
-  @apply absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 rounded-r-full;
-  background-color: hsl(var(--cta-primary));
+Adicionar aliases:
+```typescript
+colors: {
+  bg: "hsl(var(--bg))",
+  surface: "hsl(var(--surface))",
+  "surface-hover": "hsl(var(--surface-hover))",
+  "primary-soft": "hsl(var(--primary-soft))",
 }
 ```
 
 ---
 
-## 7. Arquivos a Modificar
+## 3. Refatoração do Dashboard
 
-| Arquivo | Ação | Mudança Principal |
-|---------|------|-------------------|
-| `src/index.css` | REFATORAR | Adicionar tokens globais (brand, cta, ai, money) |
-| `tailwind.config.ts` | ATUALIZAR | Adicionar aliases de cores semânticas |
-| `src/components/admin/AdminSidebar.tsx` | REFATORAR | Aplicar brand colors, indicador ativo, badges |
-| `src/pages/admin/Dashboard.tsx` | REFATORAR | Remover fundos pastel, usar cores semânticas |
-| `src/components/admin/dashboard/DashboardProductionCard.tsx` | ATUALIZAR | Header brand, ícones semânticos |
-| `src/components/admin/dashboard/DashboardRevenueCard.tsx` | ATUALIZAR | Usar money-primary consistentemente |
-| `src/components/admin/dashboard/DashboardAudienceCard.tsx` | ATUALIZAR | Usar brand para audiência |
-
----
-
-## 8. Validação Visual Final
-
-### Checklist de Identidade
-
-| Elemento | Cor Esperada | Token |
-|----------|--------------|-------|
-| Sidebar fundo | Azul petróleo escuro | `--brand-primary` (dark) |
-| Sidebar item ativo | Indicador laranja | `--cta-primary` |
-| Badge "IA" | Roxo | `--ai-primary` |
-| Badge "Premium" | Verde | `--money-primary` |
-| Cards fundo | Neutro (branco/cinza) | `--card` |
-| Ícone monetização | Verde | `--money-primary` |
-| Ícone IA | Roxo | `--ai-primary` |
-| Ícone editorial | Azul petróleo | `--brand-primary` |
-| Botões principais | Laranja | `--cta-primary` |
-
-### Regra de Reconhecimento Imediato
-
-- **IA** = Roxo → imediatamente reconhecível
-- **Monetização** = Verde → imediatamente reconhecível
-- **Marca/Editorial** = Azul petróleo → identidade própria
-- **Ações** = Laranja → apenas CTAs importantes
-
----
-
-## 9. Resultado Esperado
+### 3.1 Estrutura Visual Premium
 
 ```text
-✅ Sidebar com identidade de marca (azul petróleo, não genérico)
-✅ Item ativo com indicador lateral laranja
+┌─────────────────────────────────────────────────────────────────┐
+│ HEADER - Logo + "Centro de Comando" + [Modo Foco] [Alertas]    │
+│ Fundo neutro (--bg), sem gradientes pesados                    │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  TOPO: VISÃO GERAL (4 cards)                                   │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐          │
+│  │Publicadas│ │  Total   │ │ Stories  │ │ Views    │          │
+│  │  Hoje    │ │ Notícias │ │  Ativos  │ │ Totais   │          │
+│  │   12     │ │  1,247   │ │    18    │ │  45.2K   │          │
+│  │  🟠      │ │  🟠      │ │  🟠      │ │  🟠      │          │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘          │
+│  Fundo: surface | Borda sutil | Ícone: primary (laranja)       │
+│                                                                 │
+│  CORPO: GRID EDITORIAL                                          │
+│  ┌─────────────────────────────┐ ┌───────────────────────────┐ │
+│  │ COL PRINCIPAL (8 cols)      │ │ COL SECUNDÁRIA (4 cols)   │ │
+│  │                             │ │                           │ │
+│  │ ┌─────┐ ┌─────┐ ┌─────┐    │ │ ┌─────────────────────┐   │ │
+│  │ │Prod.│ │Rec. │ │Aud. │    │ │ │ Últimas Atualizações│   │ │
+│  │ │Edit │ │Monet│ │ência│    │ │ │                     │   │ │
+│  │ └─────┘ └─────┘ └─────┘    │ │ └─────────────────────┘   │ │
+│  │                             │ │                           │ │
+│  │ ┌─────────────────────────┐ │ │ ┌─────────────────────┐   │ │
+│  │ │ Ações Rápidas           │ │ │ │ Mais Lidas          │   │ │
+│  │ │ Grid de botões premium  │ │ │ │ Top 5 com medals    │   │ │
+│  │ └─────────────────────────┘ │ └─────────────────────────┘ │ │
+│  └─────────────────────────────┘                               │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 3.2 Cards com Identidade Laranja
+
+**Regras de Design:**
+- Fundo dos cards: `bg-surface` (neutro, branco/cinza escuro)
+- Bordas: `border-border` (sutil, sem destaque)
+- Ícones: `text-primary` (laranja) como cor de destaque
+- Valores: `text-foreground` (preto/branco conforme modo)
+- Labels: `text-muted-foreground`
+
+**Sem gradientes de fundo coloridos** - eliminar:
+```typescript
+// REMOVER estas classes dos statsCards:
+gradient: "from-emerald-500/20 to-transparent"
+bgColor: "bg-emerald-500/10"
+color: "text-emerald-600"
+
+// SUBSTITUIR por:
+iconBg: "bg-primary/10"  // Laranja suave
+iconColor: "text-primary" // Laranja
+```
+
+### 3.3 Remover Cores Hardcoded
+
+Substituições no Dashboard.tsx:
+
+| Antes | Depois |
+|-------|--------|
+| `text-emerald-600` | `text-primary` |
+| `text-blue-600` | `text-primary` |
+| `text-purple-600` | `text-ai` ou `text-primary` |
+| `text-orange-600` | `text-primary` |
+| `bg-emerald-500/10` | `bg-primary/10` |
+| `bg-blue-500/10` | `bg-primary/10` |
+| `bg-purple-500/10` | `bg-ai/10` (se for IA) ou `bg-primary/10` |
+| `bg-orange-500/10` | `bg-primary/10` |
+| `bg-yellow-500/10` | `bg-primary/10` |
+| `bg-green-500/10` | `bg-money/10` (se monetização) |
+
+---
+
+## 4. Configuração de Aparência
+
+### 4.1 Criar Nova Página de Aparência
+
+**Localização:** `src/pages/admin/settings/AppearanceSettings.tsx`
+
+```text
+Gestão do Portal → Configurações → Aparência
+┌─────────────────────────────────────────────┐
+│ 🎨 Aparência                                │
+│                                             │
+│ Tema do Dashboard                           │
+│ ┌─────────┐ ┌─────────┐ ┌─────────┐        │
+│ │ ☀️      │ │ 🌙      │ │ 🖥️      │        │
+│ │ Claro   │ │ Escuro  │ │ Sistema │        │
+│ │  [✓]    │ │         │ │         │        │
+│ └─────────┘ └─────────┘ └─────────┘        │
+│                                             │
+│ ⓘ O modo "Sistema" detecta automaticamente │
+│   a preferência do seu dispositivo.        │
+│                                             │
+│ [Salvar preferência]                        │
+└─────────────────────────────────────────────┘
+```
+
+### 4.2 Persistência da Preferência
+
+- Por usuário: `localStorage.setItem("theme-mode", mode)`
+- Global do portal: Opcional, via tabela `site_settings` se desejar
+
+### 4.3 Adicionar Rota
+
+Adicionar ao menu de Gestão do Portal:
+```text
+Gestão do Portal
+├── Editor da Home
+├── Categorias
+├── Tags
+├── Aparência ← NOVO
+├── Modelo do Portal
+└── Vocabulário
+```
+
+---
+
+## 5. Componentes Premium
+
+### 5.1 ThemeToggle.tsx
+
+Componente reutilizável para seleção de tema:
+
+```typescript
+// Props
+interface ThemeToggleProps {
+  variant?: "dropdown" | "cards";  // dropdown para header, cards para settings
+}
+
+// Visual com RadioGroup de 3 opções
+// Ícones: Sun, Moon, Monitor
+```
+
+### 5.2 Atualização do AdminLayout
+
+Adicionar ThemeToggle no header do admin:
+
+```text
+┌─────────────────────────────────────────────────┐
+│ Logo    [Busca...]    [🌙] [🔔] [👤]            │
+└─────────────────────────────────────────────────┘
+                         ↑
+                    ThemeToggle (dropdown)
+```
+
+---
+
+## 6. Arquivos a Modificar
+
+### Novos Arquivos
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `src/hooks/useThemeMode.ts` | Hook expandido com suporte a "system" |
+| `src/contexts/ThemeContext.tsx` | Contexto global de tema |
+| `src/components/admin/ThemeToggle.tsx` | Componente de seleção de tema |
+| `src/pages/admin/settings/AppearanceSettings.tsx` | Página de configuração |
+
+### Arquivos a Modificar
+
+| Arquivo | Mudança |
+|---------|---------|
+| `src/index.css` | Adicionar tokens `--primary-soft`, padronizar dashboard |
+| `tailwind.config.ts` | Adicionar aliases `surface`, `primary-soft` |
+| `src/pages/admin/Dashboard.tsx` | Refatorar cores para usar tokens |
+| `src/components/admin/dashboard/DashboardProductionCard.tsx` | Usar tokens |
+| `src/components/admin/dashboard/DashboardRevenueCard.tsx` | Usar tokens |
+| `src/components/admin/dashboard/DashboardAudienceCard.tsx` | Usar tokens |
+| `src/components/admin/AdminSidebar.tsx` | Adicionar link para Aparência |
+| `src/App.tsx` | Adicionar rota `/admin/settings/appearance` |
+| `src/App.tsx` | Envolver app com ThemeProvider |
+
+---
+
+## 7. Detalhes de Implementação
+
+### 7.1 Hook useThemeMode.ts
+
+```typescript
+type ThemeMode = "light" | "dark" | "system";
+
+export function useThemeMode() {
+  const [mode, setMode] = useState<ThemeMode>(() => {
+    const stored = localStorage.getItem("theme-mode") as ThemeMode;
+    return stored || "system";
+  });
+
+  // Calcula tema resolvido
+  const resolvedTheme = useMemo(() => {
+    if (mode === "system") {
+      return window.matchMedia("(prefers-color-scheme: dark)").matches 
+        ? "dark" 
+        : "light";
+    }
+    return mode;
+  }, [mode]);
+
+  // Listener para mudanças do sistema
+  useEffect(() => {
+    if (mode !== "system") return;
+    
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = () => forceUpdate();
+    
+    mediaQuery.addEventListener("change", handler);
+    return () => mediaQuery.removeEventListener("change", handler);
+  }, [mode]);
+
+  // Aplica classe no documento
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove("light", "dark");
+    root.classList.add(resolvedTheme);
+    localStorage.setItem("theme-mode", mode);
+  }, [resolvedTheme, mode]);
+
+  return { mode, setMode, resolvedTheme };
+}
+```
+
+### 7.2 Tokens CSS para Dashboard
+
+```css
+/* Dashboard Premium - Tokens unificados */
+:root {
+  --dashboard-bg: var(--muted) / 0.2;
+  --dashboard-card: var(--card);
+  --dashboard-card-border: var(--border);
+  --dashboard-icon-bg: 25 95% 53% / 0.1;
+  --dashboard-icon-color: var(--primary);
+  --dashboard-stat-color: var(--foreground);
+  --dashboard-label-color: var(--muted-foreground);
+}
+
+.dark {
+  --dashboard-bg: var(--muted) / 0.1;
+  --dashboard-icon-bg: 25 95% 55% / 0.15;
+}
+```
+
+### 7.3 Card Premium Refatorado
+
+```typescript
+// statsCards refatorado
+const statsCards = [
+  {
+    title: "Publicadas Hoje",
+    value: stats?.publishedToday || 0,
+    icon: Newspaper,
+    // Sem cores individuais - tudo usa tokens
+  },
+  // ...
+];
+
+// Renderização
+<Card className="bg-surface border-border">
+  <CardContent className="p-6">
+    <div className="flex items-start justify-between">
+      <div>
+        <p className="text-xs font-medium text-muted-foreground uppercase">
+          {stat.title}
+        </p>
+        <p className="dashboard-stat-xl text-foreground mt-2">
+          {stat.value}
+        </p>
+      </div>
+      <div className="p-3 rounded-xl bg-primary/10">
+        <stat.icon className="h-6 w-6 text-primary" />
+      </div>
+    </div>
+  </CardContent>
+</Card>
+```
+
+---
+
+## 8. Estilos Premium Específicos
+
+### 8.1 Cards Neutros com Borda
+
+```css
+.dashboard-card-premium {
+  @apply bg-card border border-border rounded-xl;
+  @apply hover:shadow-md hover:border-primary/20 transition-all;
+}
+```
+
+### 8.2 Ícones em Laranja
+
+Todos os ícones de destaque usarão:
+```css
+.dashboard-icon-accent {
+  @apply text-primary bg-primary/10 p-3 rounded-xl;
+}
+```
+
+### 8.3 Espaçamento como Separador
+
+- Gap entre cards: `gap-6`
+- Padding interno: `p-6`
+- Eliminar divisórias pesadas
+
+---
+
+## 9. Validação Visual
+
+### Checklist de Modo Claro
+
+| Elemento | Esperado |
+|----------|----------|
+| Background | Branco/Cinza muito claro |
+| Cards | Brancos com borda cinza clara |
+| Ícones | Laranja vibrante |
+| Textos valores | Preto/Cinza escuro |
+| Labels | Cinza médio |
+
+### Checklist de Modo Escuro
+
+| Elemento | Esperado |
+|----------|----------|
+| Background | Cinza escuro profundo |
+| Cards | Cinza escuro com borda sutil |
+| Ícones | Laranja brilhante |
+| Textos valores | Branco |
+| Labels | Cinza claro |
+
+### Checklist de Modo Sistema
+
+| Elemento | Esperado |
+|----------|----------|
+| Detecção | Segue `prefers-color-scheme` do SO |
+| Mudança | Atualiza automaticamente |
+| Persistência | "system" salvo no localStorage |
+
+---
+
+## 10. Resultado Esperado
+
+```text
+✅ Dashboard com visual institucional premium
+✅ Identidade forte em laranja (ícones, botões, indicadores)
 ✅ Cards neutros sem competição visual
-✅ IA imediatamente reconhecível (roxo)
-✅ Monetização imediatamente reconhecível (verde)
-✅ CTA laranja apenas para ações principais
-✅ Aspecto de plataforma premium, não admin template
-✅ Tokens globais consumidos por todos os componentes
-✅ Consistência visual em todo o dashboard
-```
-
----
-
-## 10. Paleta Final de Referência
-
-```text
-┌────────────────────────────────────────────────────────────┐
-│ DESIGN TOKENS - PORTAL CONEXÃO NA CIDADE                   │
-├────────────────────────────────────────────────────────────┤
-│                                                            │
-│  🔷 BRAND (Azul Petróleo)                                  │
-│     Primary:   hsl(200, 65%, 25%)  ████████                │
-│     Secondary: hsl(200, 50%, 35%)  ████████                │
-│     Accent:    hsl(200, 40%, 45%)  ████████                │
-│                                                            │
-│  🟠 CTA (Laranja)                                          │
-│     Primary:   hsl(25, 95%, 53%)   ████████                │
-│     Hover:     hsl(25, 95%, 48%)   ████████                │
-│                                                            │
-│  🟣 AI (Roxo)                                              │
-│     Primary:   hsl(262, 83%, 58%)  ████████                │
-│     Secondary: hsl(280, 68%, 50%)  ████████                │
-│                                                            │
-│  🟢 MONEY (Verde)                                          │
-│     Primary:   hsl(142, 76%, 36%)  ████████                │
-│     Secondary: hsl(158, 64%, 52%)  ████████                │
-│                                                            │
-│  ⬜ NEUTRAL                                                │
-│     50:        hsl(0, 0%, 98%)     ████████                │
-│     900:       hsl(220, 20%, 8%)   ████████                │
-│                                                            │
-└────────────────────────────────────────────────────────────┘
+✅ Modo Claro elegante e limpo
+✅ Modo Escuro elegante (não pesado)
+✅ Modo Sistema com detecção automática
+✅ Configuração em Gestão → Aparência
+✅ Nenhuma cor hardcoded
+✅ Todos os componentes usando tokens
+✅ Experiência premium de portal institucional
 ```
