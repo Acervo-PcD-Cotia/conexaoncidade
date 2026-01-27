@@ -383,7 +383,11 @@ const App = () => (
                         <Route path="financial/profiles" element={<FinancialProfiles />} />
                         <Route path="financial/receivables" element={<FinancialReceivables />} />
                         <Route path="financial/invoices" element={<FinancialInvoices />} />
-                        <Route path="training" element={<TrainingHub />} />
+                        {/* Redirects para rotas antigas de treinamento */}
+                        <Route path="training" element={<Navigate to="/admin/academy" replace />} />
+                        <Route path="training/*" element={<Navigate to="/admin/academy" replace />} />
+                        <Route path="universidade" element={<Navigate to="/admin/academy" replace />} />
+                        <Route path="treinamento" element={<Navigate to="/admin/academy" replace />} />
                         <Route path="podcasts" element={<PodcastsList />} />
                         <Route path="anti-fake-news" element={<AntiFakeNewsAdmin />} />
                         

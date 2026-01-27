@@ -152,11 +152,26 @@ const streamingConfigItems: MenuItem[] = [
   { title: "TV Web (Config)", url: "/admin/streaming/tv", icon: Tv },
 ];
 
+// Conexão Academy items (primeiro nível)
+const academyItems: MenuItem[] = [
+  { title: "Dashboard", url: "/admin/academy", icon: LayoutDashboard },
+  { title: "Categorias", url: "/admin/academy/admin/categorias", icon: FolderTree },
+  { title: "Cursos", url: "/admin/academy/admin/cursos", icon: BookOpen },
+];
+
+// Conexão.AI items (primeiro nível)
+const conexaoAIItems: MenuItem[] = [
+  { title: "Dashboard", url: "/admin/conexao-ai", icon: LayoutDashboard },
+  { title: "Assistente", url: "/admin/conexao-ai/assistente", icon: Bot },
+  { title: "Criador", url: "/admin/conexao-ai/criador", icon: FilePlus2 },
+  { title: "Ferramentas", url: "/admin/conexao-ai/ferramentas", icon: Zap },
+  { title: "Automações", url: "/admin/conexao-ai/automacoes", icon: Play },
+  { title: "Insights", url: "/admin/conexao-ai/insights", icon: BarChart3 },
+];
+
+// Negócios items (sem Academy, AI e Training)
 const businessItems: MenuItem[] = [
-  { title: "Conexão Academy", url: "/admin/academy", icon: PlayCircle },
-  { title: "Conexão.AI", url: "/admin/conexao-ai", icon: Sparkles },
   { title: "Soluções", url: "/admin/solutions", icon: Puzzle },
-  { title: "Treinamento", url: "/admin/training", icon: GraduationCap },
   { title: "Financeiro", url: "/admin/financial", icon: Receipt },
   { title: "Auto Post PRO", url: "/admin/autopost", icon: Bot },
   { title: "Campanhas", url: "/admin/campaigns/google-maps", icon: MapPin },
@@ -230,6 +245,20 @@ const sidebarGroups: SidebarGroupConfig[] = [
       { id: "ao-vivo", title: "Ao Vivo", icon: Play, items: broadcastItems },
       { id: "studio", title: "Studio", icon: Video, items: conexaoStudioItems },
     ],
+  },
+  // Conexão Academy - PRIMEIRO NÍVEL (NOVO)
+  {
+    id: "academy",
+    title: "Conexão Academy",
+    icon: GraduationCap,
+    items: academyItems,
+  },
+  // Conexão.AI - PRIMEIRO NÍVEL (NOVO)
+  {
+    id: "conexao-ai",
+    title: "Conexão.AI",
+    icon: Sparkles,
+    items: conexaoAIItems,
   },
   {
     id: "negocios",
