@@ -49,6 +49,25 @@
     --news-featured: 25 95% 53%;
     --news-success: 142 76% 36%;
 
+    /* ============ NOVOS TOKENS SEMÂNTICOS ============ */
+    /* IA / Automação - Roxo exclusivo */
+    --ai-primary: 262 83% 58%;
+    --ai-secondary: 280 68% 50%;
+    --ai-glow: 262 83% 58%;
+
+    /* Monetização - Verde dinheiro */
+    --money-primary: 142 76% 36%;
+    --money-secondary: 158 64% 52%;
+    --money-glow: 142 76% 40%;
+
+    /* Urgência editorial */
+    --editorial-urgent: 0 84% 60%;
+    --editorial-warning: 38 92% 50%;
+
+    /* Streaming */
+    --streaming-primary: 340 82% 52%;
+    --streaming-live: 0 84% 60%;
+
     /* Category colors */
     --category-politics: 217 91% 50%;
     --category-sports: 142 76% 36%;
@@ -109,6 +128,21 @@
 
     /* News tokens for dark */
     --news-featured: 25 95% 55%;
+
+    /* ============ NOVOS TOKENS DARK ============ */
+    /* IA / Automação */
+    --ai-primary: 262 83% 65%;
+    --ai-secondary: 280 68% 58%;
+    --ai-glow: 262 80% 60%;
+
+    /* Monetização */
+    --money-primary: 142 70% 45%;
+    --money-secondary: 158 60% 50%;
+    --money-glow: 142 70% 45%;
+
+    /* Streaming */
+    --streaming-primary: 340 82% 60%;
+    --streaming-live: 0 84% 55%;
 
     /* Sidebar dark */
     --sidebar-background: 220 20% 6%;
