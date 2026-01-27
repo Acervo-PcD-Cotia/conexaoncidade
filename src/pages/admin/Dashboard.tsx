@@ -5,15 +5,11 @@ import {
   Newspaper,
   Eye,
   PlaySquare,
-  TrendingUp,
   Clock,
   FileText,
   AlertTriangle,
-  Calendar,
   Edit3,
   Zap,
-  FileSearch,
-  Users,
   PenLine,
   Sparkles,
   Image,
@@ -30,10 +26,8 @@ import {
   PanelLeftClose,
   Medal,
   GraduationCap,
-  Loader2,
-  DollarSign,
+  TrendingUp,
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -69,6 +63,9 @@ import logoFull from "@/assets/logo-full.png";
 import { DashboardRevenueCard } from "@/components/admin/dashboard/DashboardRevenueCard";
 import { DashboardProductionCard } from "@/components/admin/dashboard/DashboardProductionCard";
 import { DashboardAudienceCard } from "@/components/admin/dashboard/DashboardAudienceCard";
+import { KpiCard } from "@/components/admin/dashboard/KpiCard";
+import { DashboardPanel } from "@/components/admin/dashboard/DashboardPanel";
+import { QuickActionsGrid } from "@/components/admin/dashboard/QuickActionsGrid";
 
 export default function Dashboard() {
   const { openModal } = useNewsCreationModal();
@@ -257,83 +254,32 @@ export default function Dashboard() {
     },
   });
 
-  // Stats cards data - Using semantic tokens (primary = orange)
+  // Stats cards data - Compact KPI format
   const statsCards = [
-    {
-      title: "Publicadas Hoje",
-      value: stats?.publishedToday || 0,
-      icon: Newspaper,
-    },
-    {
-      title: "Total de Notícias",
-      value: stats?.totalNews || 0,
-      icon: FileText,
-    },
-    {
-      title: "Stories Ativos",
-      value: stats?.totalStories || 0,
-      icon: PlaySquare,
-    },
-    {
-      title: "Visualizações",
-      value: stats?.totalViews || 0,
-      icon: Eye,
-    },
+    { title: "Publicadas Hoje", value: stats?.publishedToday || 0, icon: Newspaper },
+    { title: "Total de Notícias", value: stats?.totalNews || 0, icon: FileText },
+    { title: "Stories Ativos", value: stats?.totalStories || 0, icon: PlaySquare },
+    { title: "Visualizações", value: stats?.totalViews || 0, icon: Eye },
   ];
 
-  // Quick actions - Using semantic tokens
+  // Quick actions - Compact format
   const quickActions = [
-    {
-      title: "Nova Notícia",
-      description: "Criar notícia manual ou IA",
-      icon: PenLine,
-      onClick: () => openModal(),
-    },
-    {
-      title: "Web Story",
-      description: "Criar novo story visual",
-      icon: PlaySquare,
-      href: "/admin/stories/new",
-    },
-    {
-      title: "Nota Rápida",
-      description: "Publicar nota curta",
-      icon: Zap,
-      href: "/admin/quick-notes",
-    },
-    {
-      title: "Auto Post PRO",
-      description: "Captura automática",
-      icon: Bot,
-      href: "/admin/autopost",
-    },
-    {
-      title: "Campanhas",
-      description: "Gerenciar banners",
-      icon: Megaphone,
-      href: "/admin/banners",
-    },
-    {
-      title: "Analytics",
-      description: "Métricas de desempenho",
-      icon: BarChart3,
-      href: "/admin/analytics",
-    },
-    {
-      title: "Geração Cotia",
-      description: "Plataforma educacional",
-      icon: GraduationCap,
-      onClick: () => navigateToGcotia({ openInNewTab: true }),
-      isLoading: isSsoLoading,
-    },
+    { title: "Nova Notícia", description: "Criar notícia manual ou IA", icon: PenLine, onClick: () => openModal() },
+    { title: "Web Story", description: "Criar novo story visual", icon: PlaySquare, href: "/admin/stories/new" },
+    { title: "Nota Rápida", description: "Publicar nota curta", icon: Zap, href: "/admin/quick-notes" },
+    { title: "Auto Post", description: "Captura automática", icon: Bot, href: "/admin/autopost" },
+    { title: "Campanhas", description: "Gerenciar banners", icon: Megaphone, href: "/admin/banners" },
+    { title: "Analytics", description: "Métricas de desempenho", icon: BarChart3, href: "/admin/analytics" },
+    { title: "Academy", description: "Plataforma educacional", icon: GraduationCap, onClick: () => navigateToGcotia({ openInNewTab: true }), isLoading: isSsoLoading },
+    { title: "Links", description: "Links rastreáveis", icon: Link2, href: "/admin/links" },
   ];
 
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
-      published: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-      draft: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-      scheduled: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-      review: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+      published: "bg-money/10 text-money",
+      draft: "bg-muted text-muted-foreground",
+      scheduled: "bg-brand/10 text-brand",
+      review: "bg-primary/10 text-primary",
     };
     const labels: Record<string, string> = {
       published: "Publicado",
@@ -342,7 +288,7 @@ export default function Dashboard() {
       review: "Revisão",
     };
     return (
-      <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${styles[status] || styles.draft}`}>
+      <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium", styles[status] || styles.draft)}>
         {labels[status] || status}
       </span>
     );
@@ -353,20 +299,19 @@ export default function Dashboard() {
   return (
     <TooltipProvider>
       <div className="h-[calc(100vh-80px)] flex flex-col gap-0 overflow-hidden">
-        {/* Header do Dashboard */}
-        <header className="h-24 shrink-0 flex items-center justify-between px-8 dashboard-header-premium rounded-t-lg">
+        {/* Header - Compact h-14 */}
+        <header className="h-14 shrink-0 flex items-center justify-between px-6 border-b border-border bg-card">
           {/* Left: Logo + Título */}
-          <div className="flex items-center gap-4">
-            <img src={logoFull} alt="Logo" className="h-12 w-auto hidden lg:block" />
-            <div className="hidden lg:block h-10 w-px bg-border" />
+          <div className="flex items-center gap-3">
+            <img src={logoFull} alt="Logo" className="h-8 w-auto hidden lg:block" />
+            <div className="hidden lg:block h-8 w-px bg-border" />
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">Centro de Comando</h1>
-              <p className="text-sm text-muted-foreground">Dashboard Editorial</p>
+              <h1 className="text-lg font-semibold">Centro de Comando</h1>
             </div>
           </div>
           
-          {/* Right: Modo Foco + Alertas + Busca + Ações */}
-          <div className="flex items-center gap-3">
+          {/* Right: Actions */}
+          <div className="flex items-center gap-2">
             {/* Modo Foco */}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -374,21 +319,13 @@ export default function Dashboard() {
                   variant="ghost" 
                   size="sm"
                   onClick={toggleFocusMode}
-                  className={cn(
-                    "h-9 w-9 p-0",
-                    focusMode && "bg-primary/10 text-primary"
-                  )}
+                  className={cn("h-8 w-8 p-0", focusMode && "bg-primary/10 text-primary")}
                 >
-                  {focusMode ? (
-                    <PanelLeft className="h-4 w-4" />
-                  ) : (
-                    <PanelLeftClose className="h-4 w-4" />
-                  )}
+                  {focusMode ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
                 <p>{focusMode ? "Mostrar menu" : "Modo foco"}</p>
-                <p className="text-[10px] text-muted-foreground">Ctrl+Shift+F</p>
               </TooltipContent>
             </Tooltip>
 
@@ -398,40 +335,31 @@ export default function Dashboard() {
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className={cn(
-                    "relative h-9 px-3",
-                    alertsCount === 0 && "text-muted-foreground"
-                  )}
+                  className={cn("relative h-8 w-8 p-0", alertsCount === 0 && "text-muted-foreground")}
                 >
-                  <AlertTriangle className={cn(
-                    "h-4 w-4",
-                    alertsCount > 0 && "text-destructive animate-pulse"
-                  )} />
+                  <AlertTriangle className={cn("h-4 w-4", alertsCount > 0 && "text-destructive")} />
                   {alertsCount > 0 && (
-                    <span className="absolute -top-1 -right-1 h-5 min-w-[20px] rounded-full bg-destructive text-[10px] text-white flex items-center justify-center px-1 font-medium">
+                    <span className="absolute -top-1 -right-1 h-4 min-w-[16px] rounded-full bg-destructive text-[9px] text-white flex items-center justify-center px-1 font-medium">
                       {alertsCount}
                     </span>
                   )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent align="end" className="w-80 bg-popover">
-                <div className="space-y-3">
+              <PopoverContent align="end" className="w-72 bg-popover">
+                <div className="space-y-2">
                   <h4 className="font-semibold text-sm">Alertas Editoriais</h4>
                   {alertsCount === 0 ? (
-                    <p className="text-sm text-muted-foreground">Nenhum alerta no momento! 🎉</p>
+                    <p className="text-sm text-muted-foreground">Nenhum alerta! 🎉</p>
                   ) : (
                     <div className="space-y-1">
                       {(alerts?.oldDraftsCount ?? 0) > 0 && (
                         <Link 
                           to="/admin/news?status=draft" 
-                          className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors"
+                          className="flex items-center gap-2 p-2 rounded-md hover:bg-muted transition-colors"
                         >
-                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                            <FileText className="h-4 w-4 text-primary" />
-                          </div>
+                          <FileText className="h-4 w-4 text-primary" />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium">{alerts?.oldDraftsCount} rascunhos antigos</p>
-                            <p className="text-xs text-muted-foreground">Há mais de 7 dias</p>
                           </div>
                           <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         </Link>
@@ -439,14 +367,11 @@ export default function Dashboard() {
                       {(alerts?.noImageCount ?? 0) > 0 && (
                         <Link 
                           to="/admin/news?filter=no-image" 
-                          className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors"
+                          className="flex items-center gap-2 p-2 rounded-md hover:bg-muted transition-colors"
                         >
-                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                            <ImageOff className="h-4 w-4 text-primary" />
-                          </div>
+                          <ImageOff className="h-4 w-4 text-primary" />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium">{alerts?.noImageCount} sem imagem</p>
-                            <p className="text-xs text-muted-foreground">Notícias publicadas</p>
                           </div>
                           <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         </Link>
@@ -454,14 +379,11 @@ export default function Dashboard() {
                       {(stats?.inactiveIntegrations ?? 0) > 0 && (
                         <Link 
                           to="/admin/social/settings" 
-                          className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors"
+                          className="flex items-center gap-2 p-2 rounded-md hover:bg-muted transition-colors"
                         >
-                          <div className="h-8 w-8 rounded-full bg-destructive/10 flex items-center justify-center">
-                            <AlertTriangle className="h-4 w-4 text-destructive" />
-                          </div>
+                          <AlertTriangle className="h-4 w-4 text-destructive" />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium">{stats?.inactiveIntegrations} integrações inativas</p>
-                            <p className="text-xs text-muted-foreground">Redes sociais</p>
                           </div>
                           <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         </Link>
@@ -476,198 +398,128 @@ export default function Dashboard() {
             <Button 
               variant="outline" 
               size="sm"
-              className="h-9 gap-2 hidden sm:flex"
+              className="h-8 gap-2 hidden sm:flex"
               onClick={() => setSearchOpen(true)}
             >
-              <Search className="h-4 w-4" />
-              <span className="text-muted-foreground">Buscar...</span>
-              <kbd className="ml-2 text-[10px] bg-muted px-1.5 py-0.5 rounded font-mono">⌘K</kbd>
+              <Search className="h-3.5 w-3.5" />
+              <span className="text-muted-foreground text-xs">Buscar...</span>
+              <kbd className="ml-1 text-[9px] bg-muted px-1 py-0.5 rounded font-mono">⌘K</kbd>
             </Button>
             
             {/* Nova Notícia */}
-            <Button onClick={openModal} className="gap-2 h-9">
-              <PenLine className="h-4 w-4" />
-              <span className="hidden sm:inline">Nova Notícia</span>
+            <Button onClick={openModal} size="sm" className="gap-1.5 h-8">
+              <PenLine className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline text-xs">Nova Notícia</span>
             </Button>
           </div>
         </header>
 
-        {/* Stats Grid - Premium with neutral cards and orange accents */}
-        <section className="shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-6 px-8 py-6 bg-muted/20">
+        {/* KPI Cards Row - Compact */}
+        <section className="shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-4 px-6 py-4 bg-muted/20">
           {statsCards.map((stat) => (
-            <Card key={stat.title} className="relative overflow-hidden bg-card border-border hover:shadow-md transition-shadow">
-              <CardContent className="relative p-6">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      {stat.title}
-                    </p>
-                    <p className="dashboard-stat-xl mt-2 text-foreground">
-                      {typeof stat.value === "number" 
-                        ? stat.value >= 1000 
-                          ? `${(stat.value / 1000).toFixed(1)}K`
-                          : stat.value.toLocaleString('pt-BR')
-                        : stat.value
-                      }
-                    </p>
-                  </div>
-                  <div className="p-3 rounded-xl bg-primary/10">
-                    <stat.icon className="h-6 w-6 text-primary" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <KpiCard key={stat.title} title={stat.title} value={stat.value} icon={stat.icon} />
           ))}
         </section>
 
-        {/* Main Content Grid - REDESIGNED */}
-        <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 px-8 py-6 min-h-0 overflow-hidden">
+        {/* Main Content Grid - 8+4 cols */}
+        <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 px-6 py-4 min-h-0 overflow-hidden">
           {/* Left Column - 8 cols */}
-          <div className="lg:col-span-8 flex flex-col gap-6 min-h-0">
-            {/* Row 1: Production + Revenue + Audience */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <DashboardProductionCard />
-              <DashboardRevenueCard />
-              <DashboardAudienceCard />
-            </div>
-            
-            {/* Ações Rápidas - Premium with neutral cards and orange accents */}
-            <Card className="flex-1 flex flex-col overflow-hidden bg-card border-border">
-              <div className="p-5 border-b shrink-0">
-                <h3 className="font-semibold text-lg flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-primary" />
-                  Ações Rápidas
-                </h3>
-              </div>
-              <div className="flex-1 p-5 grid grid-cols-2 md:grid-cols-4 gap-4 content-start overflow-auto">
-                {quickActions.slice(0, 8).map((action) => (
-                  action.href ? (
-                    <Link key={action.title} to={action.href}>
-                      <Card className="group cursor-pointer bg-card border-border hover:border-primary/30 hover:shadow-md transition-all h-full">
-                        <CardContent className="p-4">
-                          <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3 bg-primary/10">
-                            <action.icon className="h-5 w-5 text-primary" />
-                          </div>
-                          <h4 className="font-semibold text-sm">{action.title}</h4>
-                          <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{action.description}</p>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  ) : (
-                    <Card 
-                      key={action.title} 
-                      className={cn(
-                        "group cursor-pointer bg-card border-border hover:border-primary/30 hover:shadow-md transition-all",
-                        action.isLoading && "opacity-70 pointer-events-none"
-                      )}
-                      onClick={action.isLoading ? undefined : action.onClick}
-                    >
-                      <CardContent className="p-4">
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3 bg-primary/10">
-                          {action.isLoading ? (
-                            <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                          ) : (
-                            <action.icon className="h-5 w-5 text-primary" />
-                          )}
-                        </div>
-                        <h4 className="font-semibold text-sm">{action.title}</h4>
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                          {action.isLoading ? "Conectando..." : action.description}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  )
-                ))}
-              </div>
-            </Card>
-          </div>
-
-          {/* Right Column - 4 cols */}
-          <div className="lg:col-span-4 flex flex-col gap-6 min-h-0">
-            {/* Últimas Atualizações */}
-            <Card className="flex-1 flex flex-col overflow-hidden min-h-0 bg-card border-border">
-              <div className="p-5 border-b shrink-0 flex items-center justify-between">
-                <h3 className="font-semibold flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  Últimas Atualizações
-                </h3>
+          <div className="lg:col-span-8 flex flex-col gap-4 min-h-0">
+            {/* Recent Articles */}
+            <DashboardPanel
+              title="Artigos Recentes"
+              icon={Clock}
+              action={
                 <Button variant="ghost" size="sm" className="h-7 text-xs" asChild>
                   <Link to="/admin/news">Ver todas</Link>
                 </Button>
-              </div>
-              <div className="flex-1 p-4 space-y-2 overflow-auto">
-                {recentNews?.map((news) => (
-                  <div
-                    key={news.id}
-                    className="flex items-center justify-between rounded-lg border border-border/50 p-3 hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <Link
-                        to={`/admin/news/${news.id}/edit`}
-                        className="text-sm font-medium hover:text-primary line-clamp-1"
-                      >
-                        {news.title}
-                      </Link>
-                      <div className="flex items-center gap-2 mt-1">
-                        {getStatusBadge(news.status)}
-                        <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
-                          <Eye className="h-3 w-3" />
-                          {news.view_count}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground">
-                          {formatDistanceToNow(new Date(news.updated_at), {
-                            addSuffix: true,
-                            locale: ptBR,
-                          })}
-                        </span>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" asChild>
-                      <Link to={`/admin/news/${news.id}/edit`}>
-                        <Edit3 className="h-3.5 w-3.5" />
-                      </Link>
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </Card>
-
-            {/* Mais Lidas */}
-            <Card className="flex-1 flex flex-col overflow-hidden min-h-0 bg-card border-border">
-              <div className="p-5 border-b shrink-0">
-                <h3 className="font-semibold flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-primary" />
-                  Mais Lidas
-                </h3>
-              </div>
-              <div className="flex-1 p-4 space-y-2 overflow-auto">
-                {mostRead?.map((news, index) => (
-                  <div key={news.id} className="flex items-center gap-3 py-2.5 hover:bg-muted/30 rounded-lg px-3 transition-colors">
-                    {index < 3 ? (
-                      <Medal className={cn(
-                        "h-5 w-5 shrink-0",
-                        index === 0 && "medal-gold",
-                        index === 1 && "medal-silver",
-                        index === 2 && "medal-bronze"
-                      )} />
-                    ) : (
-                      <span className="flex h-5 w-5 items-center justify-center text-xs text-muted-foreground font-medium">
-                        {index + 1}
-                      </span>
-                    )}
+              }
+              className="flex-1 flex flex-col overflow-hidden"
+              contentClassName="flex-1 overflow-auto space-y-1"
+            >
+              {recentNews?.map((news) => (
+                <div
+                  key={news.id}
+                  className="flex items-center justify-between py-2 px-2 -mx-2 rounded-md hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex-1 min-w-0">
                     <Link
                       to={`/admin/news/${news.id}/edit`}
-                      className="flex-1 text-sm hover:text-primary line-clamp-1"
+                      className="text-sm font-medium hover:text-primary line-clamp-1"
                     >
                       {news.title}
                     </Link>
-                    <span className="text-xs text-muted-foreground shrink-0 font-semibold tabular-nums">
-                      {news.view_count?.toLocaleString('pt-BR')}
-                    </span>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {getStatusBadge(news.status)}
+                      <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                        <Eye className="h-3 w-3" />
+                        {news.view_count}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {formatDistanceToNow(new Date(news.updated_at), { addSuffix: true, locale: ptBR })}
+                      </span>
+                    </div>
                   </div>
-                ))}
-              </div>
-            </Card>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" asChild>
+                    <Link to={`/admin/news/${news.id}/edit`}>
+                      <Edit3 className="h-3.5 w-3.5" />
+                    </Link>
+                  </Button>
+                </div>
+              ))}
+            </DashboardPanel>
+
+            {/* Most Read */}
+            <DashboardPanel
+              title="Mais Lidas"
+              icon={TrendingUp}
+              iconColor="text-primary"
+              className="flex-1 flex flex-col overflow-hidden"
+              contentClassName="flex-1 overflow-auto space-y-1"
+            >
+              {mostRead?.map((news, index) => (
+                <div key={news.id} className="flex items-center gap-3 py-2 px-2 -mx-2 hover:bg-muted/30 rounded-md transition-colors">
+                  {index < 3 ? (
+                    <Medal className={cn(
+                      "h-4 w-4 shrink-0",
+                      index === 0 && "medal-gold",
+                      index === 1 && "medal-silver",
+                      index === 2 && "medal-bronze"
+                    )} />
+                  ) : (
+                    <span className="flex h-4 w-4 items-center justify-center text-xs text-muted-foreground font-medium">
+                      {index + 1}
+                    </span>
+                  )}
+                  <Link
+                    to={`/admin/news/${news.id}/edit`}
+                    className="flex-1 text-sm hover:text-primary line-clamp-1"
+                  >
+                    {news.title}
+                  </Link>
+                  <span className="text-xs text-muted-foreground shrink-0 font-semibold tabular-nums">
+                    {news.view_count?.toLocaleString('pt-BR')}
+                  </span>
+                </div>
+              ))}
+            </DashboardPanel>
+
+            {/* Quick Actions - Compact grid */}
+            <DashboardPanel
+              title="Ações Rápidas"
+              icon={Sparkles}
+              className="shrink-0"
+              contentClassName="pt-2"
+            >
+              <QuickActionsGrid actions={quickActions} />
+            </DashboardPanel>
+          </div>
+
+          {/* Right Column - 4 cols */}
+          <div className="lg:col-span-4 flex flex-col gap-4 min-h-0 overflow-auto">
+            <DashboardProductionCard />
+            <DashboardAudienceCard />
+            <DashboardRevenueCard />
           </div>
         </main>
       </div>

@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { DollarSign, TrendingUp, Eye, MousePointer } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { DashboardPanel } from "./DashboardPanel";
 
 export function DashboardRevenueCard() {
   // Fetch Publidoor metrics
@@ -71,7 +71,7 @@ export function DashboardRevenueCard() {
       label: "Cliques",
       value: totalClicks,
       icon: MousePointer,
-      iconColor: "text-brand-secondary",
+      iconColor: "text-primary",
     },
     {
       label: "CTR Médio",
@@ -82,31 +82,24 @@ export function DashboardRevenueCard() {
   ];
 
   return (
-    <Card className="dashboard-card-glass overflow-hidden">
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <div className="p-1.5 rounded-lg bg-money/10">
-            <DollarSign className="h-4 w-4 text-money" />
+    <DashboardPanel
+      title="Receita & Monetização"
+      icon={DollarSign}
+      iconColor="text-money"
+      contentClassName="space-y-1"
+    >
+      {stats.map((stat) => (
+        <div
+          key={stat.label}
+          className="flex items-center justify-between py-2 px-2 -mx-2 rounded-md"
+        >
+          <div className="flex items-center gap-2">
+            <stat.icon className={cn("h-3.5 w-3.5", stat.iconColor)} />
+            <span className="text-sm text-muted-foreground">{stat.label}</span>
           </div>
-          Receita & Monetização
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {stats.map((stat) => (
-          <div
-            key={stat.label}
-            className="flex items-center justify-between py-2 border-b border-border/50 last:border-0"
-          >
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-muted">
-                <stat.icon className={cn("h-3.5 w-3.5", stat.iconColor)} />
-              </div>
-              <span className="text-sm text-muted-foreground">{stat.label}</span>
-            </div>
-            <span className="font-bold tabular-nums">{stat.value}</span>
-          </div>
-        ))}
-      </CardContent>
-    </Card>
+          <span className="font-bold tabular-nums text-sm">{stat.value}</span>
+        </div>
+      ))}
+    </DashboardPanel>
   );
 }

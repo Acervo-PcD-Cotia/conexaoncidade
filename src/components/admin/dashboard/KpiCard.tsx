@@ -6,31 +6,41 @@ interface KpiCardProps {
   title: string;
   value: string | number;
   icon: LucideIcon;
-  description?: string;
   trend?: {
     value: number;
-    isPositive: boolean;
+    label: string;
   };
   className?: string;
 }
 
-export function KpiCard({ title, value, icon: Icon, description, trend, className }: KpiCardProps) {
+export function KpiCard({
+  title,
+  value,
+  icon: Icon,
+  trend,
+  className,
+}: KpiCardProps) {
+  const formattedValue = typeof value === "number"
+    ? value >= 1000
+      ? `${(value / 1000).toFixed(1)}K`
+      : value.toLocaleString('pt-BR')
+    : value;
+
   return (
     <Card className={cn("bg-card border-border", className)}>
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{title}</p>
-            <p className="text-2xl font-bold tabular-nums">{value}</p>
-            {description && (
-              <p className="text-[10px] text-muted-foreground">{description}</p>
-            )}
+          <div>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              {title}
+            </p>
+            <p className="text-2xl font-bold tabular-nums mt-1">{formattedValue}</p>
             {trend && (
               <p className={cn(
-                "text-[10px]",
-                trend.isPositive ? "text-money" : "text-destructive"
+                "text-[10px] mt-0.5",
+                trend.value >= 0 ? "text-money" : "text-destructive"
               )}>
-                {trend.isPositive ? "+" : ""}{trend.value}% vs ontem
+                {trend.value >= 0 ? "+" : ""}{trend.value}% {trend.label}
               </p>
             )}
           </div>
