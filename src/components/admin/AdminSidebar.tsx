@@ -118,7 +118,7 @@ const contentItems: MenuItem[] = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
   { title: "Notícias", url: "/admin/news", icon: Newspaper },
   { title: "Nova Notícia", url: "#create-news", icon: FilePlus2, action: true },
-  { title: "Notícias IA", url: "/admin/noticias-ai", icon: Sparkles, badge: "IA", badgeColor: "bg-violet-500" },
+  { title: "Notícias IA", url: "/admin/noticias-ai", icon: Sparkles, badge: "IA", badgeColor: "bg-ai" },
   { title: "Notas Rápidas", url: "/admin/quick-notes", icon: Zap },
   { title: "Web Stories", url: "/admin/stories", icon: PlaySquare },
   { title: "Podcasts", url: "/admin/podcasts", icon: Mic },
@@ -137,7 +137,7 @@ const distributionItems: MenuItem[] = [
 const monetizationItems: MenuItem[] = [
   { title: "Anúncios", url: "/admin/ads", icon: Megaphone },
   { title: "Super Banners", url: "/admin/banners", icon: Image },
-  { title: "Publidoor", url: "/admin/publidoor", icon: Building2, badge: "Premium", badgeColor: "bg-amber-500" },
+  { title: "Publidoor", url: "/admin/publidoor", icon: Building2, badge: "Premium", badgeColor: "bg-money" },
   { title: "Parceiros", url: "/admin/partners", icon: Handshake },
 ];
 
@@ -368,7 +368,7 @@ export function AdminSidebar() {
                       ) : (
                         <item.icon className={cn(
                           "h-4 w-4",
-                          item.icon === Sparkles && "text-violet-500"
+                          item.icon === Sparkles && "text-ai"
                         )} />
                       )}
                     </button>
@@ -377,11 +377,11 @@ export function AdminSidebar() {
                       to={item.url}
                       end={item.url === "/admin"}
                       className="flex items-center justify-center p-2"
-                      activeClassName="bg-primary/10 text-primary"
+                      activeClassName="bg-sidebar-active-bg text-cta"
                     >
                       <item.icon className={cn(
                         "h-4 w-4",
-                        item.icon === Sparkles && "text-violet-500"
+                        item.icon === Sparkles && "text-ai"
                       )} />
                     </NavLink>
                   )}
@@ -410,14 +410,14 @@ export function AdminSidebar() {
               ) : (
                 <item.icon className={cn(
                   "h-4 w-4",
-                  item.icon === Sparkles && "text-violet-500"
+                  item.icon === Sparkles && "text-ai"
                 )} />
               )}
               <span className="flex-1">{item.title}</span>
               {item.badge && (
                 <span className={cn(
                   "text-[9px] font-semibold px-1.5 py-0.5 rounded-full text-white",
-                  item.badgeColor || "bg-primary"
+                  item.badgeColor || "bg-cta"
                 )}>
                   {item.badge}
                 </span>
@@ -427,18 +427,18 @@ export function AdminSidebar() {
             <NavLink
               to={item.url}
               end={item.url === "/admin" || item.url === "/admin/transporte-escolar"}
-              className="flex items-center gap-2 text-sm"
-              activeClassName="bg-primary/10 text-primary font-medium"
+              className="relative flex items-center gap-2 text-sm group"
+              activeClassName="bg-sidebar-active-bg text-sidebar-foreground font-medium before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-6 before:w-1 before:rounded-r-full before:bg-cta"
             >
               <item.icon className={cn(
                 "h-4 w-4",
-                item.icon === Sparkles && "text-violet-500"
+                item.icon === Sparkles && "text-ai"
               )} />
               <span className="flex-1">{item.title}</span>
               {item.badge && (
                 <span className={cn(
                   "text-[9px] font-semibold px-1.5 py-0.5 rounded-full text-white",
-                  item.badgeColor || "bg-primary"
+                  item.badgeColor || "bg-cta"
                 )}>
                   {item.badge}
                 </span>
@@ -469,13 +469,13 @@ export function AdminSidebar() {
                 }}
                 className={cn(
                   "flex w-full items-center justify-center p-2 my-1 rounded-md transition-colors",
-                  "hover:bg-accent hover:text-accent-foreground",
-                  groupActive && "bg-primary/10 text-primary"
+                  "hover:bg-sidebar-hover hover:text-sidebar-foreground",
+                  groupActive && "bg-sidebar-active-bg text-cta"
                 )}
               >
                 <group.icon className={cn(
                   "h-4 w-4",
-                  group.icon === Sparkles && "text-violet-500"
+                  group.icon === Sparkles && "text-ai"
                 )} />
               </button>
             </TooltipTrigger>
@@ -493,15 +493,15 @@ export function AdminSidebar() {
         <CollapsibleTrigger
           className={cn(
             "flex w-full items-center justify-between px-2 py-2 text-sm font-medium rounded-md transition-colors",
-            "text-muted-foreground hover:text-foreground hover:bg-accent/50",
-            isOpen && "text-foreground bg-accent/30",
-            groupActive && "text-primary"
+            "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-hover",
+            isOpen && "text-sidebar-foreground bg-sidebar-accent",
+            groupActive && "text-cta"
           )}
         >
           <span className="flex items-center gap-2">
             <group.icon className={cn(
               "h-4 w-4",
-              group.icon === Sparkles && "text-violet-500"
+              group.icon === Sparkles && "text-ai"
             )} />
             <span>{group.title}</span>
           </span>
@@ -599,8 +599,8 @@ function SubAccordion({ id, title, icon: Icon, items, handleMenuClick, isItemAct
       <CollapsibleTrigger
         className={cn(
           "flex w-full items-center justify-between px-2 py-1.5 text-sm rounded-md transition-colors",
-          "text-muted-foreground hover:text-foreground hover:bg-accent/50",
-          hasActiveItem && "text-primary"
+          "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-hover",
+          hasActiveItem && "text-cta"
         )}
       >
         <span className="flex items-center gap-2">
@@ -617,8 +617,8 @@ function SubAccordion({ id, title, icon: Icon, items, handleMenuClick, isItemAct
                 <NavLink
                   to={item.url}
                   end={item.url.includes("/admin/broadcast") && item.url === "/admin/broadcast"}
-                  className="flex items-center gap-2 text-xs"
-                  activeClassName="bg-primary/10 text-primary font-medium"
+                  className="relative flex items-center gap-2 text-xs"
+                  activeClassName="bg-sidebar-active-bg text-sidebar-foreground font-medium before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-0.5 before:rounded-r-full before:bg-cta"
                 >
                   <item.icon className="h-3 w-3" />
                   <span>{item.title}</span>

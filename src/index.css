@@ -9,7 +9,36 @@
 
 @layer base {
   :root {
-    /* Core brand colors - Orange & Light Gray */
+    /* ============ GLOBAL DESIGN TOKENS ============ */
+    
+    /* BRAND - Identidade do produto (Azul Petróleo) */
+    --brand-primary: 200 65% 25%;
+    --brand-secondary: 200 50% 35%;
+    --brand-accent: 200 40% 45%;
+    
+    /* CTA - Ações principais (Laranja) */
+    --cta-primary: 25 95% 53%;
+    --cta-hover: 25 95% 48%;
+    --cta-foreground: 0 0% 100%;
+    
+    /* AI - Conexão.AI (Roxo) */
+    --ai-primary: 262 83% 58%;
+    --ai-secondary: 280 68% 50%;
+    --ai-glow: 262 80% 60%;
+    
+    /* MONEY - Monetização (Verde) */
+    --money-primary: 142 76% 36%;
+    --money-secondary: 158 64% 52%;
+    --money-glow: 142 76% 40%;
+    
+    /* NEUTRAL - Base */
+    --neutral-50: 0 0% 98%;
+    --neutral-100: 220 13% 95%;
+    --neutral-200: 220 13% 91%;
+    --neutral-800: 220 20% 12%;
+    --neutral-900: 220 20% 8%;
+
+    /* ============ CORE TOKENS ============ */
     --background: 0 0% 98%;
     --foreground: 220 20% 12%;
 
@@ -19,7 +48,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 20% 12%;
 
-    /* Primary - Vibrant Orange */
+    /* Primary - Uses CTA (Laranja) */
     --primary: 25 95% 53%;
     --primary-foreground: 0 0% 100%;
 
@@ -49,18 +78,7 @@
     --news-featured: 25 95% 53%;
     --news-success: 142 76% 36%;
 
-    /* ============ NOVOS TOKENS SEMÂNTICOS ============ */
-    /* IA / Automação - Roxo exclusivo */
-    --ai-primary: 262 83% 58%;
-    --ai-secondary: 280 68% 50%;
-    --ai-glow: 262 83% 58%;
-
-    /* Monetização - Verde dinheiro */
-    --money-primary: 142 76% 36%;
-    --money-secondary: 158 64% 52%;
-    --money-glow: 142 76% 40%;
-
-    /* Urgência editorial */
+    /* Editorial */
     --editorial-urgent: 0 84% 60%;
     --editorial-warning: 38 92% 50%;
 
@@ -82,19 +100,50 @@
     --market-up: 142 76% 36%;
     --market-down: 0 84% 60%;
 
-    /* Sidebar */
-    --sidebar-background: 220 20% 10%;
+    /* Sidebar - Brand Identity (Azul Petróleo) */
+    --sidebar-background: 200 65% 12%;
     --sidebar-foreground: 0 0% 98%;
     --sidebar-primary: 25 95% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 15% 18%;
+    --sidebar-accent: 200 50% 18%;
     --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 220 15% 20%;
+    --sidebar-border: 200 40% 20%;
     --sidebar-ring: 25 95% 53%;
+    --sidebar-active-bg: 200 50% 20%;
+    --sidebar-hover: 200 50% 16%;
   }
 
   .dark {
-    /* Dark mode - Deep charcoal background */
+    /* ============ DARK MODE DESIGN TOKENS ============ */
+    
+    /* BRAND - Azul Petróleo (ajustado para dark) */
+    --brand-primary: 200 60% 35%;
+    --brand-secondary: 200 50% 45%;
+    --brand-accent: 200 45% 55%;
+    
+    /* CTA - Laranja vibrante */
+    --cta-primary: 25 95% 55%;
+    --cta-hover: 25 95% 50%;
+    --cta-foreground: 0 0% 100%;
+    
+    /* AI - Roxo (mais brilhante no dark) */
+    --ai-primary: 262 83% 65%;
+    --ai-secondary: 280 68% 58%;
+    --ai-glow: 262 80% 60%;
+    
+    /* MONEY - Verde (ajustado) */
+    --money-primary: 142 70% 45%;
+    --money-secondary: 158 60% 50%;
+    --money-glow: 142 70% 45%;
+    
+    /* NEUTRAL */
+    --neutral-50: 220 15% 15%;
+    --neutral-100: 220 15% 18%;
+    --neutral-200: 220 15% 22%;
+    --neutral-800: 0 0% 92%;
+    --neutral-900: 0 0% 98%;
+
+    /* Dark mode core */
     --background: 220 20% 8%;
     --foreground: 0 0% 98%;
 
@@ -129,30 +178,21 @@
     /* News tokens for dark */
     --news-featured: 25 95% 55%;
 
-    /* ============ NOVOS TOKENS DARK ============ */
-    /* IA / Automação */
-    --ai-primary: 262 83% 65%;
-    --ai-secondary: 280 68% 58%;
-    --ai-glow: 262 80% 60%;
-
-    /* Monetização */
-    --money-primary: 142 70% 45%;
-    --money-secondary: 158 60% 50%;
-    --money-glow: 142 70% 45%;
-
     /* Streaming */
     --streaming-primary: 340 82% 60%;
     --streaming-live: 0 84% 55%;
 
-    /* Sidebar dark */
-    --sidebar-background: 220 20% 6%;
+    /* Sidebar dark - Brand Identity */
+    --sidebar-background: 200 65% 8%;
     --sidebar-foreground: 0 0% 98%;
     --sidebar-primary: 25 95% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 15% 12%;
+    --sidebar-accent: 200 50% 14%;
     --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 220 15% 15%;
+    --sidebar-border: 200 40% 15%;
     --sidebar-ring: 25 95% 55%;
+    --sidebar-active-bg: 200 50% 16%;
+    --sidebar-hover: 200 50% 12%;
   }
 }
 

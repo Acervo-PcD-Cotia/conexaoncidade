@@ -27,6 +27,44 @@ export default {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        
+        // Brand Identity - Azul Petróleo
+        brand: {
+          DEFAULT: "hsl(var(--brand-primary))",
+          secondary: "hsl(var(--brand-secondary))",
+          accent: "hsl(var(--brand-accent))",
+        },
+        
+        // CTA - Laranja (ações principais)
+        cta: {
+          DEFAULT: "hsl(var(--cta-primary))",
+          hover: "hsl(var(--cta-hover))",
+          foreground: "hsl(var(--cta-foreground))",
+        },
+        
+        // AI - Roxo (Conexão.AI)
+        ai: {
+          DEFAULT: "hsl(var(--ai-primary))",
+          secondary: "hsl(var(--ai-secondary))",
+          glow: "hsl(var(--ai-glow))",
+        },
+        
+        // Money - Verde (Monetização)
+        money: {
+          DEFAULT: "hsl(var(--money-primary))",
+          secondary: "hsl(var(--money-secondary))",
+          glow: "hsl(var(--money-glow))",
+        },
+        
+        // Neutral
+        neutral: {
+          50: "hsl(var(--neutral-50))",
+          100: "hsl(var(--neutral-100))",
+          200: "hsl(var(--neutral-200))",
+          800: "hsl(var(--neutral-800))",
+          900: "hsl(var(--neutral-900))",
+        },
+
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
@@ -64,6 +102,8 @@ export default {
           "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
+          "active-bg": "hsl(var(--sidebar-active-bg))",
+          hover: "hsl(var(--sidebar-hover))",
         },
         news: {
           urgent: "hsl(var(--news-urgent))",

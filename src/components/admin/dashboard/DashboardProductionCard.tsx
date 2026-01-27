@@ -43,32 +43,27 @@ export function DashboardProductionCard() {
       label: "Rascunhos",
       value: productionStats?.drafts || 0,
       icon: FileText,
-      color: "text-yellow-500",
-      bgColor: "bg-yellow-500/10",
-      href: "/admin/news?status=draft",
+      iconColor: "text-muted-foreground",
     },
     {
       label: "Em Revisão",
       value: productionStats?.review || 0,
       icon: Clock,
-      color: "text-orange-500",
-      bgColor: "bg-orange-500/10",
+      iconColor: "text-cta",
       href: "/admin/news?status=review",
     },
     {
       label: "Agendadas",
       value: productionStats?.scheduled || 0,
       icon: Calendar,
-      color: "text-blue-500",
-      bgColor: "bg-blue-500/10",
+      iconColor: "text-brand",
       href: "/admin/news?status=scheduled",
     },
     {
       label: "Publicadas Hoje",
       value: productionStats?.publishedToday || 0,
       icon: Send,
-      color: "text-green-500",
-      bgColor: "bg-green-500/10",
+      iconColor: "text-money",
       href: "/admin/news?status=published",
     },
   ];
@@ -77,33 +72,39 @@ export function DashboardProductionCard() {
     <Card className="dashboard-card-glass overflow-hidden">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-base">
-          <div className="p-1.5 rounded-lg bg-primary/10">
-            <FileText className="h-4 w-4 text-primary" />
+          <div className="p-1.5 rounded-lg bg-brand/10">
+            <FileText className="h-4 w-4 text-brand" />
           </div>
           Produção Editorial
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
-        {stats.map((stat) => (
-          <Link
-            key={stat.label}
-            to={stat.href}
-            className="flex items-center justify-between py-2 px-2 -mx-2 rounded-lg hover:bg-muted/50 transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              <div className={cn("p-1.5 rounded-lg", stat.bgColor)}>
-                <stat.icon className={cn("h-3.5 w-3.5", stat.color)} />
+        {stats.map((stat) => {
+          const content = (
+            <div className="flex items-center justify-between py-2 px-2 -mx-2 rounded-lg hover:bg-muted/50 transition-colors">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-muted">
+                  <stat.icon className={cn("h-3.5 w-3.5", stat.iconColor)} />
+                </div>
+                <span className="text-sm text-muted-foreground">{stat.label}</span>
               </div>
-              <span className="text-sm text-muted-foreground">{stat.label}</span>
+              <span className={cn(
+                "font-bold tabular-nums px-2 py-0.5 rounded-full text-sm",
+                stat.value > 0 ? "bg-muted" : "bg-muted/50 text-muted-foreground"
+              )}>
+                {stat.value}
+              </span>
             </div>
-            <span className={cn(
-              "font-bold tabular-nums px-2 py-0.5 rounded-full text-sm",
-              stat.value > 0 ? stat.bgColor : "bg-muted"
-            )}>
-              {stat.value}
-            </span>
-          </Link>
-        ))}
+          );
+
+          return stat.href ? (
+            <Link key={stat.label} to={stat.href}>
+              {content}
+            </Link>
+          ) : (
+            <div key={stat.label}>{content}</div>
+          );
+        })}
       </CardContent>
     </Card>
   );

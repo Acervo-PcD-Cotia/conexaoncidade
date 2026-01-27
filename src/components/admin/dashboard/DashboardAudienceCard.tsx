@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Users, Eye, TrendingUp, Activity } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { cn } from "@/lib/utils";
 
 export function DashboardAudienceCard() {
   const { data: audienceStats } = useQuery({
@@ -42,8 +41,8 @@ export function DashboardAudienceCard() {
     <Card className="dashboard-card-glass overflow-hidden">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-base">
-          <div className="p-1.5 rounded-lg bg-blue-500/10">
-            <Activity className="h-4 w-4 text-blue-500" />
+          <div className="p-1.5 rounded-lg bg-brand/10">
+            <Activity className="h-4 w-4 text-brand" />
           </div>
           Audiência
         </CardTitle>
@@ -51,8 +50,8 @@ export function DashboardAudienceCard() {
       <CardContent>
         <div className="grid grid-cols-3 gap-4">
           <div className="text-center">
-            <div className="inline-flex p-2 rounded-full bg-orange-500/10 mb-2">
-              <Eye className="h-5 w-5 text-orange-500" />
+            <div className="inline-flex p-2 rounded-full bg-muted mb-2">
+              <Eye className="h-5 w-5 text-brand" />
             </div>
             <p className="text-2xl font-bold tabular-nums">
               {formatNumber(audienceStats?.totalViews || 0)}
@@ -60,8 +59,8 @@ export function DashboardAudienceCard() {
             <p className="text-xs text-muted-foreground">Views Totais</p>
           </div>
           <div className="text-center">
-            <div className="inline-flex p-2 rounded-full bg-green-500/10 mb-2">
-              <Users className="h-5 w-5 text-green-500" />
+            <div className="inline-flex p-2 rounded-full bg-muted mb-2">
+              <Users className="h-5 w-5 text-money" />
             </div>
             <p className="text-2xl font-bold tabular-nums">
               {audienceStats?.onlineUsers || 0}
@@ -69,8 +68,8 @@ export function DashboardAudienceCard() {
             <p className="text-xs text-muted-foreground">Online (24h)</p>
           </div>
           <div className="text-center">
-            <div className="inline-flex p-2 rounded-full bg-purple-500/10 mb-2">
-              <TrendingUp className="h-5 w-5 text-purple-500" />
+            <div className="inline-flex p-2 rounded-full bg-muted mb-2">
+              <TrendingUp className="h-5 w-5 text-brand-secondary" />
             </div>
             <p className="text-2xl font-bold tabular-nums">
               {formatNumber(audienceStats?.totalUsers || 0)}

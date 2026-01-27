@@ -59,29 +59,25 @@ export function DashboardRevenueCard() {
       label: "Publidoors Ativos",
       value: publidoorMetrics?.activeItems || 0,
       icon: DollarSign,
-      color: "text-green-500",
-      bgColor: "bg-green-500/10",
+      iconColor: "text-money",
     },
     {
       label: "Impressões Totais",
       value: totalImpressions >= 1000 ? `${(totalImpressions / 1000).toFixed(1)}K` : totalImpressions,
       icon: Eye,
-      color: "text-blue-500",
-      bgColor: "bg-blue-500/10",
+      iconColor: "text-brand",
     },
     {
       label: "Cliques",
       value: totalClicks,
       icon: MousePointer,
-      color: "text-purple-500",
-      bgColor: "bg-purple-500/10",
+      iconColor: "text-brand-secondary",
     },
     {
       label: "CTR Médio",
       value: `${avgCtr}%`,
       icon: TrendingUp,
-      color: "text-orange-500",
-      bgColor: "bg-orange-500/10",
+      iconColor: "text-money",
     },
   ];
 
@@ -89,8 +85,8 @@ export function DashboardRevenueCard() {
     <Card className="dashboard-card-glass overflow-hidden">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-base">
-          <div className="p-1.5 rounded-lg bg-green-500/10">
-            <DollarSign className="h-4 w-4 text-green-500" />
+          <div className="p-1.5 rounded-lg bg-money/10">
+            <DollarSign className="h-4 w-4 text-money" />
           </div>
           Receita & Monetização
         </CardTitle>
@@ -102,8 +98,8 @@ export function DashboardRevenueCard() {
             className="flex items-center justify-between py-2 border-b border-border/50 last:border-0"
           >
             <div className="flex items-center gap-2">
-              <div className={cn("p-1.5 rounded-lg", stat.bgColor)}>
-                <stat.icon className={cn("h-3.5 w-3.5", stat.color)} />
+              <div className="p-1.5 rounded-lg bg-muted">
+                <stat.icon className={cn("h-3.5 w-3.5", stat.iconColor)} />
               </div>
               <span className="text-sm text-muted-foreground">{stat.label}</span>
             </div>
