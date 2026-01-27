@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
+import { ThemeToggle } from "./ThemeToggle";
 
 export function AdminHeader() {
   const { user, signOut } = useAuth();
@@ -43,6 +44,9 @@ export function AdminHeader() {
       </div>
 
       <div className="flex items-center gap-2">
+        {/* Theme Toggle */}
+        <ThemeToggle />
+
         {/* Voltar ao site */}
         <Button
           variant="ghost"

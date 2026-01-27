@@ -257,98 +257,72 @@ export default function Dashboard() {
     },
   });
 
-  // Stats cards data
+  // Stats cards data - Using semantic tokens (primary = orange)
   const statsCards = [
     {
       title: "Publicadas Hoje",
       value: stats?.publishedToday || 0,
       icon: Newspaper,
-      color: "text-emerald-600",
-      bgColor: "bg-emerald-500/10",
-      gradient: "from-emerald-500/20 to-transparent",
     },
     {
       title: "Total de Notícias",
       value: stats?.totalNews || 0,
       icon: FileText,
-      color: "text-blue-600",
-      bgColor: "bg-blue-500/10",
-      gradient: "from-blue-500/20 to-transparent",
     },
     {
       title: "Stories Ativos",
       value: stats?.totalStories || 0,
       icon: PlaySquare,
-      color: "text-purple-600",
-      bgColor: "bg-purple-500/10",
-      gradient: "from-purple-500/20 to-transparent",
     },
     {
       title: "Visualizações",
       value: stats?.totalViews || 0,
       icon: Eye,
-      color: "text-orange-600",
-      bgColor: "bg-orange-500/10",
-      gradient: "from-orange-500/20 to-transparent",
     },
   ];
 
-  // Quick actions
+  // Quick actions - Using semantic tokens
   const quickActions = [
     {
       title: "Nova Notícia",
       description: "Criar notícia manual ou IA",
       icon: PenLine,
-      color: "text-primary",
-      bgColor: "bg-primary/10",
       onClick: () => openModal(),
     },
     {
       title: "Web Story",
       description: "Criar novo story visual",
       icon: PlaySquare,
-      color: "text-purple-600",
-      bgColor: "bg-purple-500/10",
       href: "/admin/stories/new",
     },
     {
       title: "Nota Rápida",
       description: "Publicar nota curta",
       icon: Zap,
-      color: "text-yellow-600",
-      bgColor: "bg-yellow-500/10",
       href: "/admin/quick-notes",
     },
     {
       title: "Auto Post PRO",
       description: "Captura automática",
       icon: Bot,
-      color: "text-green-600",
-      bgColor: "bg-green-500/10",
       href: "/admin/autopost",
     },
     {
       title: "Campanhas",
       description: "Gerenciar banners",
       icon: Megaphone,
-      color: "text-blue-600",
-      bgColor: "bg-blue-500/10",
       href: "/admin/banners",
     },
     {
       title: "Analytics",
       description: "Métricas de desempenho",
       icon: BarChart3,
-      color: "text-orange-600",
-      bgColor: "bg-orange-500/10",
       href: "/admin/analytics",
     },
     {
       title: "Geração Cotia",
       description: "Plataforma educacional",
       icon: GraduationCap,
-      color: "text-teal-600",
-      bgColor: "bg-teal-500/10",
       onClick: () => navigateToGcotia({ openInNewTab: true }),
       isLoading: isSsoLoading,
     },
@@ -452,8 +426,8 @@ export default function Dashboard() {
                           to="/admin/news?status=draft" 
                           className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors"
                         >
-                          <div className="h-8 w-8 rounded-full bg-yellow-500/10 flex items-center justify-center">
-                            <FileText className="h-4 w-4 text-yellow-600" />
+                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                            <FileText className="h-4 w-4 text-primary" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium">{alerts?.oldDraftsCount} rascunhos antigos</p>
@@ -467,8 +441,8 @@ export default function Dashboard() {
                           to="/admin/news?filter=no-image" 
                           className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors"
                         >
-                          <div className="h-8 w-8 rounded-full bg-orange-500/10 flex items-center justify-center">
-                            <ImageOff className="h-4 w-4 text-orange-600" />
+                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                            <ImageOff className="h-4 w-4 text-primary" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium">{alerts?.noImageCount} sem imagem</p>
@@ -482,8 +456,8 @@ export default function Dashboard() {
                           to="/admin/social/settings" 
                           className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors"
                         >
-                          <div className="h-8 w-8 rounded-full bg-red-500/10 flex items-center justify-center">
-                            <AlertTriangle className="h-4 w-4 text-red-600" />
+                          <div className="h-8 w-8 rounded-full bg-destructive/10 flex items-center justify-center">
+                            <AlertTriangle className="h-4 w-4 text-destructive" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium">{stats?.inactiveIntegrations} integrações inativas</p>
@@ -518,23 +492,17 @@ export default function Dashboard() {
           </div>
         </header>
 
-        {/* Stats Grid */}
+        {/* Stats Grid - Premium with neutral cards and orange accents */}
         <section className="shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-6 px-8 py-6 bg-muted/20">
           {statsCards.map((stat) => (
-            <Card key={stat.title} className={cn(
-              "relative overflow-hidden dashboard-card-glass dashboard-card-glow",
-              stat.title.includes("Publicadas") && "dashboard-gradient-emerald",
-              stat.title.includes("Total") && "dashboard-gradient-blue",
-              stat.title.includes("Stories") && "dashboard-gradient-purple",
-              stat.title.includes("Visualizações") && "dashboard-gradient-orange"
-            )}>
+            <Card key={stat.title} className="relative overflow-hidden bg-card border-border hover:shadow-md transition-shadow">
               <CardContent className="relative p-6">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       {stat.title}
                     </p>
-                    <p className="dashboard-stat-xl mt-2">
+                    <p className="dashboard-stat-xl mt-2 text-foreground">
                       {typeof stat.value === "number" 
                         ? stat.value >= 1000 
                           ? `${(stat.value / 1000).toFixed(1)}K`
@@ -543,8 +511,8 @@ export default function Dashboard() {
                       }
                     </p>
                   </div>
-                  <div className={cn("p-3 rounded-xl", stat.bgColor)}>
-                    <stat.icon className={cn("h-6 w-6", stat.color)} />
+                  <div className="p-3 rounded-xl bg-primary/10">
+                    <stat.icon className="h-6 w-6 text-primary" />
                   </div>
                 </div>
               </CardContent>
@@ -563,8 +531,8 @@ export default function Dashboard() {
               <DashboardAudienceCard />
             </div>
             
-            {/* Ações Rápidas */}
-            <Card className="flex-1 flex flex-col overflow-hidden dashboard-card-glass">
+            {/* Ações Rápidas - Premium with neutral cards and orange accents */}
+            <Card className="flex-1 flex flex-col overflow-hidden bg-card border-border">
               <div className="p-5 border-b shrink-0">
                 <h3 className="font-semibold text-lg flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-primary" />
@@ -575,10 +543,10 @@ export default function Dashboard() {
                 {quickActions.slice(0, 8).map((action) => (
                   action.href ? (
                     <Link key={action.title} to={action.href}>
-                      <Card className="group cursor-pointer dashboard-card-glass dashboard-card-glow dashboard-hover-lift h-full">
+                      <Card className="group cursor-pointer bg-card border-border hover:border-primary/30 hover:shadow-md transition-all h-full">
                         <CardContent className="p-4">
-                          <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center mb-3", action.bgColor)}>
-                            <action.icon className={cn("h-5 w-5", action.color)} />
+                          <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3 bg-primary/10">
+                            <action.icon className="h-5 w-5 text-primary" />
                           </div>
                           <h4 className="font-semibold text-sm">{action.title}</h4>
                           <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{action.description}</p>
@@ -589,17 +557,17 @@ export default function Dashboard() {
                     <Card 
                       key={action.title} 
                       className={cn(
-                        "group cursor-pointer dashboard-card-glass dashboard-card-glow dashboard-hover-lift",
+                        "group cursor-pointer bg-card border-border hover:border-primary/30 hover:shadow-md transition-all",
                         action.isLoading && "opacity-70 pointer-events-none"
                       )}
                       onClick={action.isLoading ? undefined : action.onClick}
                     >
                       <CardContent className="p-4">
-                        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center mb-3", action.bgColor)}>
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3 bg-primary/10">
                           {action.isLoading ? (
-                            <Loader2 className={cn("h-5 w-5 animate-spin", action.color)} />
+                            <Loader2 className="h-5 w-5 animate-spin text-primary" />
                           ) : (
-                            <action.icon className={cn("h-5 w-5", action.color)} />
+                            <action.icon className="h-5 w-5 text-primary" />
                           )}
                         </div>
                         <h4 className="font-semibold text-sm">{action.title}</h4>
@@ -617,7 +585,7 @@ export default function Dashboard() {
           {/* Right Column - 4 cols */}
           <div className="lg:col-span-4 flex flex-col gap-6 min-h-0">
             {/* Últimas Atualizações */}
-            <Card className="flex-1 flex flex-col overflow-hidden min-h-0 dashboard-card-glass">
+            <Card className="flex-1 flex flex-col overflow-hidden min-h-0 bg-card border-border">
               <div className="p-5 border-b shrink-0 flex items-center justify-between">
                 <h3 className="font-semibold flex items-center gap-2">
                   <Clock className="h-4 w-4" />
@@ -665,10 +633,10 @@ export default function Dashboard() {
             </Card>
 
             {/* Mais Lidas */}
-            <Card className="flex-1 flex flex-col overflow-hidden min-h-0 dashboard-card-glass">
+            <Card className="flex-1 flex flex-col overflow-hidden min-h-0 bg-card border-border">
               <div className="p-5 border-b shrink-0">
                 <h3 className="font-semibold flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-orange-500" />
+                  <TrendingUp className="h-4 w-4 text-primary" />
                   Mais Lidas
                 </h3>
               </div>

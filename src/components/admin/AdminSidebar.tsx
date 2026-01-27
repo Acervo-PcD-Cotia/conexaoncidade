@@ -171,7 +171,8 @@ const portalManagementItems: MenuItem[] = [
   { title: "Editor da Home", url: "/admin/home-editor", icon: PanelTop },
   { title: "Categorias", url: "/admin/categories", icon: FolderTree },
   { title: "Tags", url: "/admin/tags", icon: Tag },
-  { title: "Modelo do Portal", url: "/admin/settings/template", icon: Palette },
+  { title: "Aparência", url: "/admin/settings/appearance", icon: Palette },
+  { title: "Modelo do Portal", url: "/admin/settings/template", icon: Settings },
   { title: "Vocabulário", url: "/admin/settings/vocabulary", icon: Languages },
   { title: "Módulos", url: "/admin/settings/modules", icon: ToggleLeft },
 ];

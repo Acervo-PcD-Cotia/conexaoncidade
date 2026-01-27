@@ -266,20 +266,24 @@ import {
 import TemplateSelector from "./pages/admin/settings/TemplateSelector";
 import VocabularyEditor from "./pages/admin/settings/VocabularyEditor";
 import ModulesManager from "./pages/admin/settings/ModulesManager";
+import AppearanceSettings from "./pages/admin/settings/AppearanceSettings";
+
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TenantProvider>
-          <SiteThemeProvider>
-            <AccessibilityProvider>
-              <NewsCreationProvider>
-                <NewsCreationModalProvider>
-                  <MiniPlayerProvider>
-                    <TooltipProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <TenantProvider>
+            <SiteThemeProvider>
+              <AccessibilityProvider>
+                <NewsCreationProvider>
+                  <NewsCreationModalProvider>
+                    <MiniPlayerProvider>
+                      <TooltipProvider>
                     <Toaster />
                     <Sonner />
                 <BrowserRouter>
@@ -387,6 +391,7 @@ const App = () => (
                         <Route path="settings/template" element={<TemplateSelector />} />
                         <Route path="settings/vocabulary" element={<VocabularyEditor />} />
                         <Route path="settings/modules" element={<ModulesManager />} />
+                        <Route path="settings/appearance" element={<AppearanceSettings />} />
                         <Route path="solutions" element={<Solutions />} />
                         <Route path="events" element={<EventsList />} />
                         <Route path="editions" element={<EditionsList />} />
@@ -592,9 +597,10 @@ const App = () => (
               </NewsCreationModalProvider>
             </NewsCreationProvider>
           </AccessibilityProvider>
-        </SiteThemeProvider>
-      </TenantProvider>
-    </AuthProvider>
+          </SiteThemeProvider>
+        </TenantProvider>
+      </AuthProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 </HelmetProvider>
 );
