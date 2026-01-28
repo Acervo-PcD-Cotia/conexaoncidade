@@ -5640,6 +5640,620 @@ export type Database = {
           },
         ]
       }
+      football_api_cache: {
+        Row: {
+          cache_key: string
+          created_at: string | null
+          data: Json
+          expires_at: string
+          id: string
+        }
+        Insert: {
+          cache_key: string
+          created_at?: string | null
+          data: Json
+          expires_at: string
+          id?: string
+        }
+        Update: {
+          cache_key?: string
+          created_at?: string | null
+          data?: Json
+          expires_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      football_competitions: {
+        Row: {
+          country: string | null
+          created_at: string | null
+          external_id: number | null
+          id: string
+          is_active: boolean | null
+          logo_url: string | null
+          name: string
+          season: number
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string | null
+          external_id?: number | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          name: string
+          season?: number
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          country?: string | null
+          created_at?: string | null
+          external_id?: number | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          name?: string
+          season?: number
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      football_favorites: {
+        Row: {
+          created_at: string | null
+          id: string
+          notifications_enabled: boolean | null
+          notify_goals: boolean | null
+          notify_match_end: boolean | null
+          notify_match_start: boolean | null
+          team_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          notifications_enabled?: boolean | null
+          notify_goals?: boolean | null
+          notify_match_end?: boolean | null
+          notify_match_start?: boolean | null
+          team_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          notifications_enabled?: boolean | null
+          notify_goals?: boolean | null
+          notify_match_end?: boolean | null
+          notify_match_start?: boolean | null
+          team_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "football_favorites_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "football_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      football_head_to_head: {
+        Row: {
+          created_at: string | null
+          draws: number | null
+          id: string
+          last_updated: string | null
+          team_a_id: string | null
+          team_a_wins: number | null
+          team_b_id: string | null
+          team_b_wins: number | null
+          total_matches: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          draws?: number | null
+          id?: string
+          last_updated?: string | null
+          team_a_id?: string | null
+          team_a_wins?: number | null
+          team_b_id?: string | null
+          team_b_wins?: number | null
+          total_matches?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          draws?: number | null
+          id?: string
+          last_updated?: string | null
+          team_a_id?: string | null
+          team_a_wins?: number | null
+          team_b_id?: string | null
+          team_b_wins?: number | null
+          total_matches?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "football_head_to_head_team_a_id_fkey"
+            columns: ["team_a_id"]
+            isOneToOne: false
+            referencedRelation: "football_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "football_head_to_head_team_b_id_fkey"
+            columns: ["team_b_id"]
+            isOneToOne: false
+            referencedRelation: "football_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      football_match_events: {
+        Row: {
+          assist_player_name: string | null
+          created_at: string | null
+          detail: string | null
+          event_type: string
+          extra_minute: number | null
+          id: string
+          match_id: string | null
+          minute: number | null
+          player_name: string | null
+          team_id: string | null
+        }
+        Insert: {
+          assist_player_name?: string | null
+          created_at?: string | null
+          detail?: string | null
+          event_type: string
+          extra_minute?: number | null
+          id?: string
+          match_id?: string | null
+          minute?: number | null
+          player_name?: string | null
+          team_id?: string | null
+        }
+        Update: {
+          assist_player_name?: string | null
+          created_at?: string | null
+          detail?: string | null
+          event_type?: string
+          extra_minute?: number | null
+          id?: string
+          match_id?: string | null
+          minute?: number | null
+          player_name?: string | null
+          team_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "football_match_events_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "football_matches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "football_match_events_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "football_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      football_match_stats: {
+        Row: {
+          away_corners: number | null
+          away_fouls: number | null
+          away_offsides: number | null
+          away_possession: number | null
+          away_red_cards: number | null
+          away_saves: number | null
+          away_shots: number | null
+          away_shots_on_target: number | null
+          away_yellow_cards: number | null
+          created_at: string | null
+          home_corners: number | null
+          home_fouls: number | null
+          home_offsides: number | null
+          home_possession: number | null
+          home_red_cards: number | null
+          home_saves: number | null
+          home_shots: number | null
+          home_shots_on_target: number | null
+          home_yellow_cards: number | null
+          id: string
+          match_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          away_corners?: number | null
+          away_fouls?: number | null
+          away_offsides?: number | null
+          away_possession?: number | null
+          away_red_cards?: number | null
+          away_saves?: number | null
+          away_shots?: number | null
+          away_shots_on_target?: number | null
+          away_yellow_cards?: number | null
+          created_at?: string | null
+          home_corners?: number | null
+          home_fouls?: number | null
+          home_offsides?: number | null
+          home_possession?: number | null
+          home_red_cards?: number | null
+          home_saves?: number | null
+          home_shots?: number | null
+          home_shots_on_target?: number | null
+          home_yellow_cards?: number | null
+          id?: string
+          match_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          away_corners?: number | null
+          away_fouls?: number | null
+          away_offsides?: number | null
+          away_possession?: number | null
+          away_red_cards?: number | null
+          away_saves?: number | null
+          away_shots?: number | null
+          away_shots_on_target?: number | null
+          away_yellow_cards?: number | null
+          created_at?: string | null
+          home_corners?: number | null
+          home_fouls?: number | null
+          home_offsides?: number | null
+          home_possession?: number | null
+          home_red_cards?: number | null
+          home_saves?: number | null
+          home_shots?: number | null
+          home_shots_on_target?: number | null
+          home_yellow_cards?: number | null
+          id?: string
+          match_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "football_match_stats_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: true
+            referencedRelation: "football_matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      football_matches: {
+        Row: {
+          away_score: number | null
+          away_score_halftime: number | null
+          away_team_id: string | null
+          city: string | null
+          competition_id: string | null
+          created_at: string | null
+          elapsed_time: number | null
+          external_id: number | null
+          home_score: number | null
+          home_score_halftime: number | null
+          home_team_id: string | null
+          id: string
+          match_date: string
+          round: number | null
+          round_name: string | null
+          season: number
+          slug: string | null
+          status: string | null
+          updated_at: string | null
+          venue: string | null
+        }
+        Insert: {
+          away_score?: number | null
+          away_score_halftime?: number | null
+          away_team_id?: string | null
+          city?: string | null
+          competition_id?: string | null
+          created_at?: string | null
+          elapsed_time?: number | null
+          external_id?: number | null
+          home_score?: number | null
+          home_score_halftime?: number | null
+          home_team_id?: string | null
+          id?: string
+          match_date: string
+          round?: number | null
+          round_name?: string | null
+          season?: number
+          slug?: string | null
+          status?: string | null
+          updated_at?: string | null
+          venue?: string | null
+        }
+        Update: {
+          away_score?: number | null
+          away_score_halftime?: number | null
+          away_team_id?: string | null
+          city?: string | null
+          competition_id?: string | null
+          created_at?: string | null
+          elapsed_time?: number | null
+          external_id?: number | null
+          home_score?: number | null
+          home_score_halftime?: number | null
+          home_team_id?: string | null
+          id?: string
+          match_date?: string
+          round?: number | null
+          round_name?: string | null
+          season?: number
+          slug?: string | null
+          status?: string | null
+          updated_at?: string | null
+          venue?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "football_matches_away_team_id_fkey"
+            columns: ["away_team_id"]
+            isOneToOne: false
+            referencedRelation: "football_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "football_matches_competition_id_fkey"
+            columns: ["competition_id"]
+            isOneToOne: false
+            referencedRelation: "football_competitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "football_matches_home_team_id_fkey"
+            columns: ["home_team_id"]
+            isOneToOne: false
+            referencedRelation: "football_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      football_player_stats: {
+        Row: {
+          assists: number | null
+          competition_id: string | null
+          created_at: string | null
+          external_id: number | null
+          goals: number | null
+          id: string
+          last_updated: string | null
+          matches_played: number | null
+          minutes_played: number | null
+          nationality: string | null
+          player_name: string
+          player_photo_url: string | null
+          position: string | null
+          red_cards: number | null
+          season: number
+          team_id: string | null
+          yellow_cards: number | null
+        }
+        Insert: {
+          assists?: number | null
+          competition_id?: string | null
+          created_at?: string | null
+          external_id?: number | null
+          goals?: number | null
+          id?: string
+          last_updated?: string | null
+          matches_played?: number | null
+          minutes_played?: number | null
+          nationality?: string | null
+          player_name: string
+          player_photo_url?: string | null
+          position?: string | null
+          red_cards?: number | null
+          season?: number
+          team_id?: string | null
+          yellow_cards?: number | null
+        }
+        Update: {
+          assists?: number | null
+          competition_id?: string | null
+          created_at?: string | null
+          external_id?: number | null
+          goals?: number | null
+          id?: string
+          last_updated?: string | null
+          matches_played?: number | null
+          minutes_played?: number | null
+          nationality?: string | null
+          player_name?: string
+          player_photo_url?: string | null
+          position?: string | null
+          red_cards?: number | null
+          season?: number
+          team_id?: string | null
+          yellow_cards?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "football_player_stats_competition_id_fkey"
+            columns: ["competition_id"]
+            isOneToOne: false
+            referencedRelation: "football_competitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "football_player_stats_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "football_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      football_standings: {
+        Row: {
+          away_drawn: number | null
+          away_goals_against: number | null
+          away_goals_for: number | null
+          away_lost: number | null
+          away_played: number | null
+          away_won: number | null
+          competition_id: string | null
+          created_at: string | null
+          drawn: number | null
+          form: string | null
+          goal_difference: number | null
+          goals_against: number | null
+          goals_for: number | null
+          home_drawn: number | null
+          home_goals_against: number | null
+          home_goals_for: number | null
+          home_lost: number | null
+          home_played: number | null
+          home_won: number | null
+          id: string
+          last_updated: string | null
+          lost: number | null
+          played: number | null
+          points: number | null
+          position: number
+          season: number
+          team_id: string | null
+          won: number | null
+        }
+        Insert: {
+          away_drawn?: number | null
+          away_goals_against?: number | null
+          away_goals_for?: number | null
+          away_lost?: number | null
+          away_played?: number | null
+          away_won?: number | null
+          competition_id?: string | null
+          created_at?: string | null
+          drawn?: number | null
+          form?: string | null
+          goal_difference?: number | null
+          goals_against?: number | null
+          goals_for?: number | null
+          home_drawn?: number | null
+          home_goals_against?: number | null
+          home_goals_for?: number | null
+          home_lost?: number | null
+          home_played?: number | null
+          home_won?: number | null
+          id?: string
+          last_updated?: string | null
+          lost?: number | null
+          played?: number | null
+          points?: number | null
+          position: number
+          season?: number
+          team_id?: string | null
+          won?: number | null
+        }
+        Update: {
+          away_drawn?: number | null
+          away_goals_against?: number | null
+          away_goals_for?: number | null
+          away_lost?: number | null
+          away_played?: number | null
+          away_won?: number | null
+          competition_id?: string | null
+          created_at?: string | null
+          drawn?: number | null
+          form?: string | null
+          goal_difference?: number | null
+          goals_against?: number | null
+          goals_for?: number | null
+          home_drawn?: number | null
+          home_goals_against?: number | null
+          home_goals_for?: number | null
+          home_lost?: number | null
+          home_played?: number | null
+          home_won?: number | null
+          id?: string
+          last_updated?: string | null
+          lost?: number | null
+          played?: number | null
+          points?: number | null
+          position?: number
+          season?: number
+          team_id?: string | null
+          won?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "football_standings_competition_id_fkey"
+            columns: ["competition_id"]
+            isOneToOne: false
+            referencedRelation: "football_competitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "football_standings_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "football_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      football_teams: {
+        Row: {
+          created_at: string | null
+          external_id: number | null
+          founded_year: number | null
+          id: string
+          logo_url: string | null
+          name: string
+          primary_color: string | null
+          secondary_color: string | null
+          short_name: string | null
+          slug: string
+          stadium_city: string | null
+          stadium_name: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          external_id?: number | null
+          founded_year?: number | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          primary_color?: string | null
+          secondary_color?: string | null
+          short_name?: string | null
+          slug: string
+          stadium_city?: string | null
+          stadium_name?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          external_id?: number | null
+          founded_year?: number | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          primary_color?: string | null
+          secondary_color?: string | null
+          short_name?: string | null
+          slug?: string
+          stadium_city?: string | null
+          stadium_name?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       home_config: {
         Row: {
           block_name: string
