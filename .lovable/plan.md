@@ -1,373 +1,96 @@
 
-# Plano: Auto Post Regional - Módulo Completo e Independente
+# Plano Completo: Finalizar 100% do Auto Post Regional
 
-## Visão Geral
+## Resumo Executivo
 
-Criar um módulo **totalmente independente** do Auto Post PRO, com banco próprio, edge functions próprias, páginas próprias e fontes pré-cadastradas (seed) das 13 prefeituras da região Grande Cotia.
-
----
-
-## Arquitetura do Sistema
-
-```text
-┌─────────────────────────────────────────────────────────────────────┐
-│                        AUTO POST REGIONAL                           │
-├─────────────────────────────────────────────────────────────────────┤
-│  ROTAS                                                              │
-│  /admin/autopost-regional           → Dashboard                     │
-│  /admin/autopost-regional/fontes    → Gerenciar Fontes              │
-│  /admin/autopost-regional/fila      → Fila Editorial                │
-│  /admin/autopost-regional/logs      → Execuções e Erros             │
-├─────────────────────────────────────────────────────────────────────┤
-│  TABELAS (NOVAS)                                                    │
-│  regional_sources         → Fontes RSS/Listing                      │
-│  regional_ingest_items    → Itens capturados                        │
-│  regional_ingest_runs     → Histórico de execuções                  │
-├─────────────────────────────────────────────────────────────────────┤
-│  EDGE FUNCTIONS (NOVAS)                                             │
-│  regional-ingest          → Captura RSS + Listing                   │
-│  regional-process-item    → Processa, reescreve, publica            │
-│  regional-admin-tools     → Testar, rodar, pausar, etc.             │
-└─────────────────────────────────────────────────────────────────────┘
-```
+Implementar os ~35 itens pendentes para o módulo Auto Post Regional, divididos em 5 sprints de trabalho.
 
 ---
 
-## 1. Banco de Dados (Migrations)
-
-### Tabela: `regional_sources`
-
-| Coluna | Tipo | Default | Descrição |
-|--------|------|---------|-----------|
-| id | uuid | gen_random_uuid() | PK |
-| city | text | NOT NULL | Nome da cidade |
-| name | text | NOT NULL | Nome da fonte |
-| type | text | NOT NULL | 'rss' ou 'listing' |
-| source_url | text | | URL do portal |
-| rss_url | text | | URL do feed RSS |
-| listing_url | text | | URL da listagem |
-| selectors | jsonb | | Seletores para listing |
-| is_active | boolean | true | Ativa/inativa |
-| mode | text | 'review' | 'review', 'auto_publish', 'off' |
-| poll_interval_minutes | int | 120 | Intervalo entre execuções |
-| rate_limit_per_hour | int | 60 | Limite de requisições |
-| last_fetched_at | timestamptz | | Última execução |
-| last_success_at | timestamptz | | Último sucesso |
-| error_count | int | 0 | Contador de erros |
-| last_error | text | | Último erro |
-| tags_default | text[] | | Tags padrão |
-| created_at | timestamptz | now() | |
-| updated_at | timestamptz | now() | |
-
-### Tabela: `regional_ingest_items`
-
-| Coluna | Tipo | Default | Descrição |
-|--------|------|---------|-----------|
-| id | uuid | gen_random_uuid() | PK |
-| source_id | uuid | FK regional_sources | Fonte |
-| canonical_url | text | UNIQUE | URL original (dedupe) |
-| title | text | | Título capturado |
-| excerpt | text | | Resumo |
-| content | text | | Conteúdo completo |
-| image_url | text | | Imagem original |
-| published_at | timestamptz | | Data original |
-| raw_payload | jsonb | | Dados brutos |
-| status | text | 'new' | new/queued/processed/skipped/failed/published |
-| draft_id | uuid | | ID do draft gerado |
-| news_id | uuid | | ID da notícia publicada |
-| rewritten_title | text | | Título reescrito |
-| rewritten_content | text | | Conteúdo reescrito |
-| seo_meta_title | text | | Meta título |
-| seo_meta_description | text | | Meta descrição |
-| generated_image_url | text | | Imagem gerada por IA |
-| processed_at | timestamptz | | Quando foi processado |
-| published_at_portal | timestamptz | | Quando foi publicado |
-| created_at | timestamptz | now() | |
-
-### Tabela: `regional_ingest_runs`
-
-| Coluna | Tipo | Default | Descrição |
-|--------|------|---------|-----------|
-| id | uuid | gen_random_uuid() | PK |
-| source_id | uuid | FK regional_sources | Fonte |
-| started_at | timestamptz | now() | Início |
-| finished_at | timestamptz | | Fim |
-| status | text | 'running' | ok/warning/error |
-| items_found | int | 0 | Itens encontrados |
-| items_new | int | 0 | Itens novos |
-| items_duplicated | int | 0 | Duplicados ignorados |
-| items_errored | int | 0 | Com erro |
-| result | jsonb | | Detalhes |
-| log | text | | Log textual |
-| created_at | timestamptz | now() | |
-
-### RLS Policies
-
-- Leitura: permitida para usuários autenticados com role admin/editor
-- Escrita: apenas admin/super_admin
-
-### Seed das 13 Fontes
-
-| # | Cidade | Tipo | URL |
-|---|--------|------|-----|
-| 1 | Itapevi | rss | https://noticias.itapevi.sp.gov.br/feed/ |
-| 2 | Vargem Grande Paulista | rss | https://www.vargemgrandepaulista.sp.gov.br/site/category/noticias-da-cidade/feed/ |
-| 3 | São Roque | listing | https://www.saoroque.sp.gov.br/portal/noticias |
-| 4 | Ibiúna | rss | https://ibiuna.sp.gov.br/todas-as-noticias/feed/ |
-| 5 | Embu-Guaçu | listing | https://www.embuguacu.sp.gov.br/noticias |
-| 6 | Embu das Artes | rss | https://cidadeembudasartes.sp.gov.br/feed/ |
-| 7 | Itapecerica da Serra | listing | https://www.itapecerica.sp.gov.br/noticias |
-| 8 | São Lourenço da Serra | rss | https://saolourencodaserra.sp.gov.br/novo/feed/ |
-| 9 | São Paulo (Prefeitura) | listing | https://prefeitura.sp.gov.br/todas-as-noticias/ |
-| 10 | Osasco | rss | https://osasco.sp.gov.br/feed/ |
-| 11 | Jandira | listing | https://portal.jandira.sp.gov.br/Noticias/ |
-| 12 | Carapicuíba | listing | https://www.carapicuiba.sp.gov.br/noticia/ |
-| 13 | Barueri | rss | https://portal.barueri.sp.gov.br/feed |
-
----
-
-## 2. Edge Functions
-
-### `regional-ingest`
-
-Responsabilidades:
-- Executar por source_id ou todas as fontes ativas
-- Para RSS: parse do feed XML
-- Para Listing: fetch HTML + extração de links
-- Deduplicação por canonical_url
-- Inserir em regional_ingest_items com status 'new'
-- Criar registro em regional_ingest_runs
-
-Lógica de Listing:
-1. Tentar auto-detect de links (padrões comuns)
-2. Se falhar, usar selectors configurados
-3. Extrair: link, título, data (se disponível)
-
-Rate limiting:
-- Concorrência máxima: 3
-- Backoff exponencial em 429/403/timeout
-- 5 falhas seguidas: pausar fonte por 12h
-
-### `regional-process-item`
-
-Responsabilidades:
-- Receber ingest_item_id
-- Buscar conteúdo completo da URL original
-- Reescrever com estilo jornalístico natural
-- Gerar meta_title (≤60), meta_description (≤160)
-- Gerar imagem realista SEM texto via IA
-- Se mode=auto_publish: publicar na tabela news
-- Se mode=review: deixar como draft
-
-Output:
-- rewritten_title, rewritten_content
-- seo_meta_title, seo_meta_description
-- generated_image_url
-- Atualizar status para 'processed' ou 'published'
-
-### `regional-admin-tools`
-
-Endpoints (via action no body):
-- `test_source`: preview de 10 itens (dry_run)
-- `run_now`: forçar ingest de 1 fonte
-- `reprocess_url`: reprocessar item específico
-- `pause_source` / `resume_source`: ativar/desativar
-- `update_selectors`: salvar e testar seletores
-
----
-
-## 3. Páginas (UI)
-
-### `/admin/autopost-regional` (Dashboard)
-
-Layout:
-- Header com título "Auto Post Regional - Grande Cotia"
-- 5 cards de métricas
-- Lista de execuções recentes (últimas 10)
-- Preview da fila editorial (últimos 10 itens)
-
-Cards:
-1. Capturadas Hoje (azul)
-2. Publicadas Hoje (verde)
-3. Na Fila (laranja)
-4. Duplicadas Bloqueadas (roxo)
-5. Fontes com Erro (vermelho)
-
-### `/admin/autopost-regional/fontes`
-
-Layout:
-- Tabela com as 13 fontes (preenchidas pelo seed)
-- Colunas: Cidade, Nome, Tipo, Status, Última Execução, Ações
-- Ações: Testar, Rodar Agora, Editar, Pausar/Ativar, Ver Logs
-
-Modal de Edição:
-- Campos: city, name, type, URLs, mode, interval
-- Se type=listing: editor de selectors + botão "Testar Selectors"
-- Filtros: palavras obrigatórias/proibidas
-
-### `/admin/autopost-regional/fila`
-
-Layout:
-- Tabela de itens capturados
-- Filtros: status, cidade
-- Colunas: Título, Cidade, Status, Data Captura, Ações
-- Ações: Processar, Reprocessar, Ver Original, Ver Payload
-
-### `/admin/autopost-regional/logs`
-
-Layout:
-- Lista de runs por fonte
-- Filtros: fonte, status, período
-- Colunas: Fonte, Início, Status, Novos, Duplicados, Erros
-- Expandir para ver log completo
-
----
-
-## 4. Hooks (React Query)
-
-Novo arquivo: `src/hooks/useRegionalAutoPost.ts`
-
-Hooks:
-- `useRegionalSources()` - listar fontes
-- `useRegionalSource(id)` - fonte específica
-- `useUpdateRegionalSource()` - atualizar fonte
-- `useRegionalQueue(status?)` - fila de itens
-- `useRegionalRuns(sourceId?)` - execuções
-- `useRegionalStats()` - métricas do dashboard
-- `useTestRegionalSource()` - testar fonte
-- `useRunRegionalIngest()` - executar ingest
-- `useProcessRegionalItem()` - processar item
-
----
-
-## 5. Correções Necessárias
-
-### Remover redirect errado
-
-Arquivo: `src/pages/admin/autopost/AutoPostRegional.tsx`
-
-Atualmente faz: `<Navigate to="/admin/autopost" replace />`
-
-Deve ser: Página completa do dashboard regional
-
-### Atualizar quick action
-
-Arquivo: `src/types/profiles-modules.ts`
-
-Linha 246: mudar href de `/admin/autopost` para `/admin/autopost-regional`
-
----
-
-## 6. Rotas (App.tsx)
-
-Adicionar dentro do bloco admin:
-
-```text
-{/* Auto Post Regional (Grande Cotia) - Módulo Independente */}
-<Route path="autopost-regional" element={<RegionalDashboard />} />
-<Route path="autopost-regional/fontes" element={<RegionalSources />} />
-<Route path="autopost-regional/fontes/:id/edit" element={<RegionalSourceEdit />} />
-<Route path="autopost-regional/fila" element={<RegionalQueue />} />
-<Route path="autopost-regional/logs" element={<RegionalLogs />} />
-```
-
----
-
-## 7. Menu Lateral
-
-O item já está correto em `contentItems`:
-- Título: "Auto Post Regional"
-- URL: `/admin/autopost-regional`
-- Badge: "Grande Cotia"
-
----
-
-## 8. Fluxo de Operação
-
-```text
-[Cron 2h] → regional-ingest
-              ↓
-         Para cada fonte ativa:
-              ↓
-         RSS? → Parse XML
-         Listing? → Fetch HTML + Extract
-              ↓
-         Dedupe por canonical_url
-              ↓
-         Inserir regional_ingest_items (status: new)
-              ↓
-         Criar regional_ingest_runs
-              ↓
-[Manual ou Auto] → regional-process-item
-              ↓
-         Buscar conteúdo completo
-              ↓
-         Reescrever + SEO
-              ↓
-         Gerar imagem IA (sem texto)
-              ↓
-         mode=auto_publish? → Publicar em news
-         mode=review? → Aguardar aprovação
-```
-
----
-
-## 9. Arquivos a Criar/Modificar
-
-### Novos Arquivos
-
-```text
-supabase/migrations/xxx_regional_autopost_tables.sql
-supabase/functions/regional-ingest/index.ts
-supabase/functions/regional-process-item/index.ts
-supabase/functions/regional-admin-tools/index.ts
-src/hooks/useRegionalAutoPost.ts
-src/pages/admin/autopost-regional/RegionalDashboard.tsx
-src/pages/admin/autopost-regional/RegionalSources.tsx
-src/pages/admin/autopost-regional/RegionalSourceEdit.tsx
-src/pages/admin/autopost-regional/RegionalQueue.tsx
-src/pages/admin/autopost-regional/RegionalLogs.tsx
-```
-
-### Arquivos a Modificar
-
-```text
-src/App.tsx - adicionar rotas
-src/types/profiles-modules.ts - corrigir href
-supabase/config.toml - adicionar edge functions
-```
-
-### Arquivo a Remover/Substituir
-
-```text
-src/pages/admin/autopost/AutoPostRegional.tsx - substituir por redirect para nova rota
-```
-
----
-
-## 10. Detalhes Técnicos
-
-### Extração de Listing (Auto-detect)
-
-Padrões a buscar:
-- Links contendo: /noticia/, /noticias/, /portal/noticias, /news/
-- Dentro de containers: article, .news-item, .noticia, .card
-- Com títulos em h2, h3, .title, .titulo
-
-Seletores padrão iniciais:
-```json
-{
-  "item_container": "article, .news-item, .noticia",
-  "item_link": "a[href*='noticia']",
-  "item_title": "h2, h3, .title",
-  "item_date": "time, .date, .data"
+## SPRINT 1: Edge Function `regional-process-item` (CRÍTICO)
+
+### 1.1 Criar Edge Function `regional-process-item`
+
+**Arquivo**: `supabase/functions/regional-process-item/index.ts`
+
+**Funcionalidades**:
+- Recebe `item_id` de um item na fila
+- Busca conteúdo completo da URL original (fetch + parse HTML)
+- Reescreve usando Lovable AI (Gemini 2.5 Flash)
+- Gera metadados SEO (meta_title ≤60, meta_description ≤160)
+- Gera imagem usando Gemini Image (sem texto)
+- Cria as 12 tags obrigatórias
+- Atualiza item com status `processed`
+- Se `mode=auto_publish`: publica na tabela `news`
+
+**Campos a preencher**:
+- `rewritten_title`
+- `rewritten_content` (HTML formatado)
+- `seo_meta_title`
+- `seo_meta_description`
+- `generated_image_url`
+- `processed_at`
+- Se publicado: `news_id`, `published_at_portal`, status `published`
+
+**Integração com IA**:
+- Reutilizar lógica de `autopost-rewrite` e `autopost-image-generator`
+- Usar endpoint `https://ai.gateway.lovable.dev/v1/chat/completions`
+- Modelo texto: `google/gemini-2.5-flash`
+- Modelo imagem: `google/gemini-3-pro-image-preview`
+
+### 1.2 Adicionar action `process_item` em `regional-admin-tools`
+
+```typescript
+case 'process_item': {
+  const response = await fetch(`${supabaseUrl}/functions/v1/regional-process-item`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${supabaseKey}` },
+    body: JSON.stringify({ item_id }),
+  });
+  return new Response(await response.text(), { headers: corsHeaders });
+}
+
+case 'process_all_new': {
+  // Busca até 10 itens com status 'new' ou 'queued'
+  // Processa em paralelo com Promise.allSettled
+}
+
+case 'publish_item': {
+  // Publica item processado na tabela news
 }
 ```
 
-### Tags Padrão (12 tags)
+---
 
-Para cada fonte, gerar automaticamente:
-1. Nome da cidade
+## SPRINT 2: Integração com Tabela `news`
+
+### 2.1 Lógica de Publicação
+
+Ao publicar um item processado, criar registro em `news` com:
+
+| Campo news | Origem |
+|------------|--------|
+| title | rewritten_title |
+| slug | gerado do título |
+| content | rewritten_content |
+| excerpt | primeiros 160 chars do conteúdo |
+| featured_image_url | generated_image_url |
+| og_image_url | generated_image_url |
+| card_image_url | generated_image_url |
+| image_alt | "Imagem ilustrativa: {cidade}" |
+| image_credit | "IA | Conexão na Cidade" |
+| meta_title | seo_meta_title |
+| meta_description | seo_meta_description |
+| source | canonical_url |
+| status | 'published' |
+| published_at | now() |
+| origin | 'autopost' |
+| category_id | categoria "Cidades" ou default |
+
+### 2.2 Geração das 12 Tags Obrigatórias
+
+Algoritmo para gerar tags:
+1. Nome da cidade (ex: "Barueri")
 2. "regional"
 3. "grande cotia"
 4. "prefeitura"
@@ -376,30 +99,434 @@ Para cada fonte, gerar automaticamente:
 7. "administração"
 8. "região oeste"
 9. "são paulo"
-10. "interior"
-11. Categoria inferida do conteúdo
+10. "interior paulista"
+11. Categoria inferida (saúde, educação, obras, etc.)
 12. Tema principal da notícia
 
-### Integração com News
+### 2.3 Inserir Tags na Tabela `news_tags`
 
-Ao publicar, criar registro em `news` com:
-- title: rewritten_title
-- content: rewritten_content
-- source: canonical_url
-- category_id: mapeamento ou "Geral"
-- tags: 12 tags definidas
-- featured_image_url: generated_image_url
-- meta_title, meta_description, og_image_url
-- status: 'published'
-- author_id: usuário do sistema
+Após criar a notícia:
+1. Verificar/criar tags na tabela `tags`
+2. Criar relações em `news_tags`
 
 ---
 
-## Checklist de Validação Final
+## SPRINT 3: Melhorias no `regional-ingest`
 
-1. Clicar em "Auto Post Regional" abre /admin/autopost-regional (NÃO /admin/autopost)
-2. Tela de fontes mostra as 13 fontes pré-cadastradas
-3. "Testar" em Itapevi retorna itens do RSS
-4. "Testar" em São Roque retorna itens da listagem
-5. Rodar ingest cria itens com dedupe por canonical_url
-6. Processar item cria draft, reescreve, aplica SEO, gera imagem
+### 3.1 Tratamento de Erros TLS/SSL
+
+Adicionar ao fetch do RSS:
+```typescript
+try {
+  // Tentar HTTPS
+  const response = await fetch(url, { timeout: 15000 });
+} catch (e) {
+  if (e.message.includes('TLS') || e.message.includes('SSL')) {
+    console.log('[Retry] Tentando HTTP...');
+    const httpUrl = url.replace('https://', 'http://');
+    response = await fetch(httpUrl, { timeout: 15000 });
+  }
+}
+```
+
+### 3.2 Backoff Exponencial
+
+```typescript
+async function fetchWithRetry(url: string, maxRetries = 3) {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const res = await fetch(url);
+      if (res.status === 429 || res.status === 503) {
+        await sleep(Math.pow(2, i) * 1000);
+        continue;
+      }
+      return res;
+    } catch (e) {
+      await sleep(Math.pow(2, i) * 1000);
+    }
+  }
+  throw new Error('Max retries exceeded');
+}
+```
+
+### 3.3 Parser de Listing Otimizado
+
+Melhorar extração HTML:
+- Timeout mais curto (10s)
+- Limitar tamanho do HTML (2MB max)
+- Usar regex mais específicos por cidade
+- Fallback para padrões genéricos
+
+### 3.4 Campos Extras na Tabela
+
+Adicionar via migration:
+```sql
+ALTER TABLE regional_ingest_items 
+  ADD COLUMN IF NOT EXISTS error_message TEXT,
+  ADD COLUMN IF NOT EXISTS retry_count INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS processing_started_at TIMESTAMPTZ;
+
+CREATE INDEX IF NOT EXISTS idx_regional_items_status 
+  ON regional_ingest_items(status);
+CREATE INDEX IF NOT EXISTS idx_regional_items_source 
+  ON regional_ingest_items(source_id);
+```
+
+---
+
+## SPRINT 4: UI - Páginas e Componentes
+
+### 4.1 Botão "Processar" na Fila (`RegionalQueue.tsx`)
+
+Adicionar na coluna de ações:
+```tsx
+{item.status === 'new' && (
+  <Button
+    variant="ghost"
+    size="icon"
+    onClick={() => processItem.mutate(item.id)}
+    disabled={processItem.isPending}
+    title="Processar com IA"
+  >
+    <Sparkles className="h-4 w-4 text-purple-500" />
+  </Button>
+)}
+```
+
+### 4.2 Botão "Publicar" na Fila
+
+Após processado, mostrar botão para publicar:
+```tsx
+{item.status === 'processed' && (
+  <Button
+    variant="ghost"
+    size="icon"
+    onClick={() => publishItem.mutate(item.id)}
+    disabled={publishItem.isPending}
+    title="Publicar agora"
+  >
+    <Send className="h-4 w-4 text-green-500" />
+  </Button>
+)}
+```
+
+### 4.3 Preview do Conteúdo Reescrito
+
+No Dialog de detalhes, adicionar abas:
+- Original
+- Reescrito
+- SEO
+- Imagem
+
+### 4.4 Página `RegionalSourceEdit.tsx`
+
+Nova página para edição de fonte:
+- Formulário com todos os campos
+- Editor de CSS selectors (para listing)
+- Botão "Testar Selectors"
+- Preview dos 5 primeiros itens
+
+Rota: `/admin/autopost-regional/fontes/:id/edit`
+
+### 4.5 Editor Visual de Selectors
+
+Componente com campos:
+```tsx
+<div className="space-y-4">
+  <div>
+    <Label>Container do Item</Label>
+    <Input 
+      placeholder="article, .news-item" 
+      value={selectors.item_container}
+      onChange={(e) => updateSelector('item_container', e.target.value)}
+    />
+  </div>
+  <div>
+    <Label>Link da Notícia</Label>
+    <Input 
+      placeholder="a[href*='noticia']" 
+      value={selectors.item_link}
+      onChange={(e) => updateSelector('item_link', e.target.value)}
+    />
+  </div>
+  <div>
+    <Label>Título</Label>
+    <Input placeholder="h2, h3, .title" />
+  </div>
+  <div>
+    <Label>Data (opcional)</Label>
+    <Input placeholder="time, .date" />
+  </div>
+  <Button onClick={testSelectors}>
+    Testar Selectors
+  </Button>
+</div>
+```
+
+---
+
+## SPRINT 5: Hooks e Automação
+
+### 5.1 Novos Hooks em `useRegionalAutoPost.ts`
+
+```typescript
+// Processar item individual
+export function useProcessRegionalItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (itemId: string) => {
+      const { data, error } = await supabase.functions.invoke('regional-admin-tools', {
+        body: { action: 'process_item', item_id: itemId },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['regional-queue'] });
+      toast.success('Item processado com sucesso');
+    },
+  });
+}
+
+// Publicar item processado
+export function usePublishRegionalItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (itemId: string) => {
+      const { data, error } = await supabase.functions.invoke('regional-admin-tools', {
+        body: { action: 'publish_item', item_id: itemId },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['regional-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['regional-stats'] });
+      toast.success(`Publicado: ${data.slug}`);
+    },
+  });
+}
+
+// Processar todos os novos
+export function useProcessAllNew() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke('regional-admin-tools', {
+        body: { action: 'process_all_new' },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['regional-queue'] });
+      toast.success(`${data.processed} itens processados`);
+    },
+  });
+}
+
+// Testar selectors
+export function useTestSelectors() {
+  return useMutation({
+    mutationFn: async ({ sourceId, selectors }: { sourceId: string; selectors: Record<string, string> }) => {
+      const { data, error } = await supabase.functions.invoke('regional-admin-tools', {
+        body: { action: 'test_selectors', source_id: sourceId, selectors },
+      });
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+// Atualizar fonte
+export function useCreateRegionalSource() {
+  // Para adicionar novas fontes manualmente
+}
+```
+
+### 5.2 Cron de Ingestão Automática
+
+Adicionar em `supabase/config.toml`:
+```toml
+[functions.regional-ingest]
+verify_jwt = false
+schedule = "0 */2 * * *"  # A cada 2 horas
+```
+
+Ou criar via pg_cron (se disponível):
+```sql
+SELECT cron.schedule(
+  'regional-ingest-cron',
+  '0 */2 * * *',
+  $$SELECT net.http_post(
+    url := current_setting('app.supabase_url') || '/functions/v1/regional-ingest',
+    headers := jsonb_build_object('Authorization', 'Bearer ' || current_setting('app.service_role_key'))
+  )$$
+);
+```
+
+### 5.3 Cron de Processamento Automático
+
+Para fontes com `mode=auto_publish`:
+```sql
+SELECT cron.schedule(
+  'regional-process-cron',
+  '*/30 * * * *',  # A cada 30 minutos
+  $$SELECT net.http_post(
+    url := current_setting('app.supabase_url') || '/functions/v1/regional-admin-tools',
+    headers := jsonb_build_object('Authorization', 'Bearer ' || current_setting('app.service_role_key')),
+    body := '{"action": "process_all_new"}'::jsonb
+  )$$
+);
+```
+
+---
+
+## SPRINT 6: Segurança e Validações
+
+### 6.1 Validação SSRF
+
+Em `regional-ingest`, validar URLs antes de fetch:
+```typescript
+function isValidSourceUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    // Bloquear IPs privados
+    if (parsed.hostname.match(/^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/)) {
+      return false;
+    }
+    // Permitir apenas HTTP/HTTPS
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+```
+
+### 6.2 Sanitização HTML
+
+Limpar conteúdo antes de salvar:
+```typescript
+function sanitizeHtml(html: string): string {
+  // Remover scripts, iframes, event handlers
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
+    .replace(/on\w+="[^"]*"/gi, '')
+    .replace(/javascript:/gi, '');
+}
+```
+
+### 6.3 Rate Limiting por Fonte
+
+Em `regional-ingest`:
+```typescript
+// Verificar rate limit
+if (source.rate_limit_per_hour) {
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+  const { count } = await supabase
+    .from('regional_ingest_runs')
+    .select('*', { count: 'exact', head: true })
+    .eq('source_id', source.id)
+    .gte('started_at', oneHourAgo.toISOString());
+  
+  if (count >= source.rate_limit_per_hour) {
+    console.log(`[Skip] Rate limit reached for ${source.name}`);
+    continue;
+  }
+}
+```
+
+---
+
+## Resumo de Arquivos
+
+### Novos Arquivos
+1. `supabase/functions/regional-process-item/index.ts`
+2. `src/pages/admin/autopost-regional/RegionalSourceEdit.tsx`
+3. `src/components/admin/regional/SelectorEditor.tsx`
+
+### Arquivos Modificados
+1. `supabase/functions/regional-admin-tools/index.ts` - adicionar actions
+2. `supabase/functions/regional-ingest/index.ts` - melhorar error handling
+3. `src/hooks/useRegionalAutoPost.ts` - adicionar hooks
+4. `src/pages/admin/autopost-regional/RegionalQueue.tsx` - botões processar/publicar
+5. `src/pages/admin/autopost-regional/RegionalSources.tsx` - link para edit
+6. `src/App.tsx` - rota de edição
+7. `supabase/config.toml` - nova edge function
+
+### Migrations
+1. Adicionar colunas `error_message`, `retry_count`, `processing_started_at`
+2. Criar índices para performance
+3. Configurar pg_cron (se disponível)
+
+---
+
+## Ordem de Implementação
+
+| Prioridade | Item | Impacto |
+|------------|------|---------|
+| 1 | Edge Function `regional-process-item` | Crítico - habilita processamento |
+| 2 | Actions em `regional-admin-tools` | Crítico - conecta UI ao backend |
+| 3 | Hooks de processamento | Alto - permite UI funcionar |
+| 4 | Botões processar/publicar na fila | Alto - UX principal |
+| 5 | Integração com tabela `news` | Alto - publicação final |
+| 6 | Tratamento erros TLS | Médio - aumenta cobertura fontes |
+| 7 | Página de edição de fonte | Médio - configuração avançada |
+| 8 | Editor de selectors | Médio - listing sources |
+| 9 | Cron automático | Médio - automação |
+| 10 | Validações segurança | Médio - produção |
+
+---
+
+## Checklist Final (35 itens)
+
+### Edge Functions (8 itens)
+- [ ] Criar `regional-process-item`
+- [ ] Implementar fetch de conteúdo completo
+- [ ] Integrar Lovable AI para reescrita
+- [ ] Integrar Gemini Image para imagens
+- [ ] Adicionar action `process_item`
+- [ ] Adicionar action `process_all_new`
+- [ ] Adicionar action `publish_item`
+- [ ] Adicionar action `test_selectors`
+
+### Ingestão (6 itens)
+- [ ] Tratamento TLS/SSL com fallback
+- [ ] Backoff exponencial
+- [ ] Parser listing otimizado
+- [ ] Validação SSRF
+- [ ] Rate limiting por fonte
+- [ ] Timeout configurável
+
+### Banco de Dados (4 itens)
+- [ ] Coluna `error_message`
+- [ ] Coluna `retry_count`
+- [ ] Coluna `processing_started_at`
+- [ ] Índices de performance
+
+### Integração News (5 itens)
+- [ ] Criar registro em `news`
+- [ ] Gerar slug único
+- [ ] Inserir 12 tags
+- [ ] Linkar `news_tags`
+- [ ] Atualizar status para `published`
+
+### UI/Hooks (9 itens)
+- [ ] Hook `useProcessRegionalItem`
+- [ ] Hook `usePublishRegionalItem`
+- [ ] Hook `useProcessAllNew`
+- [ ] Hook `useTestSelectors`
+- [ ] Botão Processar na fila
+- [ ] Botão Publicar na fila
+- [ ] Preview conteúdo reescrito
+- [ ] Página `RegionalSourceEdit`
+- [ ] Editor visual de selectors
+
+### Automação (3 itens)
+- [ ] Cron ingestão (2h)
+- [ ] Cron processamento (30min)
+- [ ] Auto-publish para fontes configuradas
