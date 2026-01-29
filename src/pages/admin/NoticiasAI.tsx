@@ -50,6 +50,7 @@ interface ManualData {
   is_home_highlight?: boolean;
   is_urgent?: boolean;
   is_featured?: boolean;
+  generateWebStory?: boolean;  // Flag para geração automática de WebStory
 }
 
 interface JsonData {
@@ -268,6 +269,7 @@ export default function NoticiasAI() {
           is_home_highlight: article.is_home_highlight || false,
           is_urgent: article.is_urgent || false,
           is_featured: article.is_featured || false,
+          auto_generate_webstory: article.generateWebStory ?? true,  // Explicitamente definir a flag de WebStory
           status: 'published',
           published_at: new Date().toISOString(),
           origin: 'ai',
@@ -310,8 +312,15 @@ export default function NoticiasAI() {
       if (news?.auto_generate_webstory) {
         supabase.functions.invoke('generate-webstory', {
           body: { newsId: news.id }
-        }).then(() => console.log('WebStory generation triggered for:', news.id))
-          .catch(err => console.error('WebStory generation failed:', err));
+        }).then((response) => {
+          console.log('WebStory generation triggered for:', news.id);
+          if (response.data?.success) {
+            toast({
+              title: '📱 WebStory gerada!',
+              description: 'A WebStory foi criada automaticamente.',
+            });
+          }
+        }).catch(err => console.error('WebStory generation failed:', err));
       }
       
       // Trigger automatic Podcast generation if enabled

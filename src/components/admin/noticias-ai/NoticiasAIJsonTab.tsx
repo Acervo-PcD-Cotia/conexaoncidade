@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Copy, Check, Eye, Download, AlertTriangle, Loader2, Trash2, Image } from 'lucide-react';
+import { Copy, Check, Eye, Download, AlertTriangle, Loader2, Trash2, Image, Wand2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { ArticlePreviewDialog } from './ArticlePreviewDialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface NewsArticle {
   titulo: string;
@@ -35,6 +36,7 @@ interface NewsArticle {
   chapeu?: string;
   editor?: string;
   destaque?: 'none' | 'home' | 'featured' | 'urgent';
+  generateWebStory?: boolean;  // Flag para geração de WebStory
   _duplicateInfo?: {
     matchType: string;
     existingId: string;
@@ -282,6 +284,21 @@ export function NoticiasAIJsonTab({
                       <Badge variant="outline" className="text-xs text-amber-600 border-amber-300 bg-amber-50">
                         -{missingFields.length} campos
                       </Badge>
+                    )}
+                    {article.generateWebStory !== false && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Badge variant="outline" className="text-xs text-purple-600 border-purple-300 bg-purple-50 gap-1">
+                              <Wand2 className="h-3 w-3" />
+                              WebStory
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>WebStory será gerada automaticamente</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     )}
                   </div>
                 </div>
