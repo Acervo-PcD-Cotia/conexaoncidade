@@ -7,7 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TeamBadge } from "@/components/esportes/TeamBadge";
 import { MatchStats } from "@/components/esportes/MatchStats";
+import { WhereToWatchCard } from "@/components/esportes/WhereToWatchCard";
 import { useMatchBySlug } from "@/hooks/useFootball";
+import { useBrBroadcastByMatch } from "@/hooks/useBrasileiraoNews";
 import { getMatchStatusLabel, getStatusColor, isMatchLive, isMatchFinished } from "@/types/football";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -16,6 +18,7 @@ import { cn } from "@/lib/utils";
 export default function MatchDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const { data: match, isLoading, error } = useMatchBySlug(slug);
+  const { data: broadcast } = useBrBroadcastByMatch(match?.id || '');
 
   if (isLoading) {
     return (
@@ -158,6 +161,11 @@ export default function MatchDetailPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Where to Watch */}
+        {broadcast && (
+          <WhereToWatchCard broadcast={broadcast} />
+        )}
 
         {/* Stats - Placeholder for now */}
         <MatchStats 

@@ -228,6 +228,42 @@ export default function EsportesDashboard() {
         </Card>
       )}
 
+      {/* Brasileirão Tools */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Ferramentas do Brasileirão</CardTitle>
+          <CardDescription>Gerencie dados, transmissões e notícias</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Button asChild variant="outline" className="h-auto py-4 flex-col gap-2">
+              <Link to="/admin/esportes/brasileirao/sync">
+                <RefreshCw className="h-5 w-5" />
+                <span className="text-xs">Sync & Logs</span>
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="h-auto py-4 flex-col gap-2">
+              <Link to="/admin/esportes/brasileirao/transmissoes">
+                <Calendar className="h-5 w-5" />
+                <span className="text-xs">Transmissões</span>
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="h-auto py-4 flex-col gap-2">
+              <Link to="/admin/esportes/brasileirao/noticias">
+                <Award className="h-5 w-5" />
+                <span className="text-xs">Notícias IA</span>
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="h-auto py-4 flex-col gap-2">
+              <Link to="/admin/esportes/configurar">
+                <Settings className="h-5 w-5" />
+                <span className="text-xs">Configurar</span>
+              </Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Stats Card */}
       <Card>
         <CardHeader>

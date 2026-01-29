@@ -106,6 +106,9 @@ import EsportesDashboard from "./pages/admin/esportes/EsportesDashboard";
 import BrasileiraoHome from "./pages/admin/esportes/BrasileiraoHome";
 import EsportesEstatisticas from "./pages/admin/esportes/EsportesEstatisticas";
 import EsportesConfig from "./pages/admin/esportes/EsportesConfig";
+import BrasileiraoSync from "./pages/admin/esportes/BrasileiraoSync";
+import BrasileiraoBroadcasts from "./pages/admin/esportes/BrasileiraoBroadcasts";
+import BrasileiraoNews from "./pages/admin/esportes/BrasileiraoNews";
 
 // Public Esportes Pages
 import BrasileiraoPage from "./pages/public/esportes/BrasileiraoPage";
@@ -114,6 +117,7 @@ import MatchDetailPage from "./pages/public/esportes/MatchDetailPage";
 import TeamDetailPage from "./pages/public/esportes/TeamDetailPage";
 import RoundPage from "./pages/public/esportes/RoundPage";
 import TopScorersPage from "./pages/public/esportes/TopScorersPage";
+import GeneratedNewsDetail from "./pages/public/esportes/GeneratedNewsDetail";
 
 // Public ENEM 2026 Page
 import Enem2026Landing from "./pages/public/Enem2026Landing";
@@ -381,6 +385,7 @@ const App = () => (
                       
                       {/* Public Esportes Routes */}
                       <Route path="/esportes/brasileirao" element={<BrasileiraoPage />} />
+                      <Route path="/esportes/brasileirao/noticia/:slug" element={<GeneratedNewsDetail />} />
                       <Route path="/esportes/brasileirao/:serie" element={<SerieDetailPage />} />
                       <Route path="/esportes/brasileirao/:serie/rodada/:round" element={<RoundPage />} />
                       <Route path="/esportes/brasileirao/:serie/jogo/:slug" element={<MatchDetailPage />} />
@@ -479,6 +484,9 @@ const App = () => (
                         {/* Esportes Routes */}
                         <Route path="esportes" element={<EsportesDashboard />} />
                         <Route path="esportes/brasileirao" element={<BrasileiraoHome />} />
+                        <Route path="esportes/brasileirao/sync" element={<BrasileiraoSync />} />
+                        <Route path="esportes/brasileirao/transmissoes" element={<BrasileiraoBroadcasts />} />
+                        <Route path="esportes/brasileirao/noticias" element={<BrasileiraoNews />} />
                         <Route path="esportes/estatisticas" element={<EsportesEstatisticas />} />
                         <Route path="esportes/configurar" element={<EsportesConfig />} />
                         
