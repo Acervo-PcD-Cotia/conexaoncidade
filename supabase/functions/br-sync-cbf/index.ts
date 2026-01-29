@@ -264,7 +264,8 @@ async function ensureStandingsExist(supabase: any, competitionId: string, season
       .single();
     
     if (team) {
-      await supabase
+      // IMPORTANT: Do NOT include goal_difference - it's a GENERATED column
+      const { error: upsertError } = await supabase
         .from('football_standings')
         .upsert({
           competition_id: competitionId,
@@ -277,10 +278,14 @@ async function ensureStandingsExist(supabase: any, competitionId: string, season
           lost: 0,
           goals_for: 0,
           goals_against: 0,
-          goal_difference: 0,
+          // goal_difference is computed automatically by PostgreSQL
           points: 0,
         }, { onConflict: 'competition_id,team_id,season' });
       
+      if (upsertError) {
+        console.error(`Failed to upsert standing for team ${teamName}:`, upsertError);
+        continue;
+      }
       processed++;
     }
   }
@@ -393,16 +398,20 @@ Deno.serve(async (req) => {
     // Ensure teams exist first
     await ensureTeamsExist(supabase);
     
-    // Get competition ID
+    // Get competition ID - search by name containing "Série A" and order by season DESC
     const { data: competition } = await supabase
       .from('football_competitions')
-      .select('id')
-      .eq('slug', 'brasileirao-serie-a')
+      .select('id, slug, season')
+      .ilike('name', '%Série A%')
+      .order('season', { ascending: false })
+      .limit(1)
       .single();
     
     if (!competition) {
-      throw new Error('Competition brasileirao-serie-a not found');
+      throw new Error('Competition Série A not found - please create it first');
     }
+    
+    console.log(`Using competition: ${competition.slug} (season ${competition.season})`);
     
     // Fetch CBF news page
     const headers: Record<string, string> = {

@@ -315,10 +315,11 @@ export function useCompetitionByType(type: string) {
         .from("football_competitions")
         .select("*")
         .ilike("name", `%${type}%`)
+        .order("season", { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
       
-      if (error && error.code !== "PGRST116") throw error;
+      if (error) throw error;
       return data;
     },
     staleTime: 24 * 60 * 60 * 1000,

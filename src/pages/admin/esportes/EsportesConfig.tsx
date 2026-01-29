@@ -184,7 +184,7 @@ export default function EsportesConfig() {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Temporada:</span>
-                <span className="font-mono">2025</span>
+                <span className="font-mono">{serieA?.season || new Date().getFullYear()}</span>
               </div>
             </div>
             
@@ -225,7 +225,7 @@ export default function EsportesConfig() {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Temporada:</span>
-                <span className="font-mono">2025</span>
+                <span className="font-mono">{serieB?.season || new Date().getFullYear()}</span>
               </div>
             </div>
             
