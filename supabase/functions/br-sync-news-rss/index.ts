@@ -5,22 +5,145 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface RSSItem {
+interface NewsItem {
   title: string;
   link: string;
-  description: string;
-  pubDate: string;
-  author?: string;
+  excerpt?: string;
   imageUrl?: string;
+  author?: string;
+  publishedAt?: string;
 }
 
-// Parse RSS XML
-function parseRSS(xml: string): RSSItem[] {
-  const items: RSSItem[] = [];
+// Parse news from GE HTML page (fallback from RSS)
+function parseGeHtmlPage(html: string): NewsItem[] {
+  const items: NewsItem[] = [];
   
-  // Simple regex-based parsing for RSS items
+  // GE uses various patterns for news cards
+  // Pattern 1: feed-post components
+  const feedPostPattern = /<div[^>]*class="[^"]*feed-post[^"]*"[^>]*>[\s\S]*?<\/div>\s*<\/div>/gi;
+  
+  // Pattern 2: bastian (their CMS) article cards  
+  const articlePattern = /<article[^>]*>[\s\S]*?<\/article>/gi;
+  
+  // Pattern 3: Direct link parsing with titles
+  const linkPattern = /<a[^>]+href="(https?:\/\/ge\.globo\.com\/[^"]*)"[^>]*>[\s\S]*?<\/a>/gi;
+  
+  // First, try to extract structured articles
+  let matches = html.match(articlePattern) || [];
+  
+  for (const articleHtml of matches) {
+    const item = extractNewsFromBlock(articleHtml);
+    if (item) items.push(item);
+  }
+  
+  // Also extract from links if articles not found
+  if (items.length === 0) {
+    let match;
+    while ((match = linkPattern.exec(html)) !== null) {
+      const url = match[1];
+      const blockHtml = match[0];
+      
+      // Skip non-news links
+      if (url.includes('/video/') || url.includes('/foto/') || url.includes('/ao-vivo/')) continue;
+      
+      const item = extractNewsFromBlock(blockHtml, url);
+      if (item) items.push(item);
+    }
+  }
+  
+  // Dedupe by URL
+  const seen = new Set<string>();
+  return items.filter(item => {
+    if (seen.has(item.link)) return false;
+    seen.add(item.link);
+    return true;
+  }).slice(0, 30); // Limit to 30 most recent
+}
+
+function extractNewsFromBlock(html: string, defaultUrl?: string): NewsItem | null {
+  // Extract URL
+  const urlMatch = html.match(/href="(https?:\/\/ge\.globo\.com\/[^"]+)"/i);
+  const url = urlMatch?.[1] || defaultUrl;
+  
+  if (!url) return null;
+  
+  // Extract title - try multiple patterns
+  let title = '';
+  
+  // Pattern 1: h2/h3 title
+  const titleMatch = html.match(/<h[123][^>]*>([\s\S]*?)<\/h[123]>/i);
+  if (titleMatch) {
+    title = cleanText(titleMatch[1]);
+  }
+  
+  // Pattern 2: title attribute
+  if (!title) {
+    const titleAttr = html.match(/title="([^"]+)"/i);
+    if (titleAttr) title = cleanText(titleAttr[1]);
+  }
+  
+  // Pattern 3: aria-label
+  if (!title) {
+    const ariaLabel = html.match(/aria-label="([^"]+)"/i);
+    if (ariaLabel) title = cleanText(ariaLabel[1]);
+  }
+  
+  if (!title || title.length < 10) return null;
+  
+  // Skip non-Brasileirão content
+  const brasileiraoKeywords = [
+    'brasileir', 'série a', 'campeonato brasileiro',
+    'flamengo', 'palmeiras', 'corinthians', 'são paulo', 'santos',
+    'botafogo', 'fluminense', 'vasco', 'grêmio', 'internacional',
+    'atlético', 'cruzeiro', 'bahia', 'fortaleza', 'athletico',
+    'bragantino', 'vitória', 'juventude', 'cuiabá'
+  ];
+  
+  const titleLower = title.toLowerCase();
+  const isBrasileirao = brasileiraoKeywords.some(kw => titleLower.includes(kw));
+  
+  if (!isBrasileirao) return null;
+  
+  // Extract image
+  const imgMatch = html.match(/src="(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/i);
+  const imageUrl = imgMatch?.[1];
+  
+  // Extract excerpt
+  const excerptMatch = html.match(/<p[^>]*class="[^"]*(?:summary|excerpt|description)[^"]*"[^>]*>([\s\S]*?)<\/p>/i);
+  const excerpt = excerptMatch ? cleanText(excerptMatch[1]) : undefined;
+  
+  // Extract time
+  const timeMatch = html.match(/<time[^>]*datetime="([^"]+)"/i);
+  const publishedAt = timeMatch?.[1];
+  
+  return {
+    title: title.substring(0, 500),
+    link: url,
+    excerpt: excerpt?.substring(0, 1000),
+    imageUrl,
+    publishedAt,
+  };
+}
+
+function cleanText(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(/<[^>]*>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Parse RSS XML (fallback)
+function parseRSS(xml: string): NewsItem[] {
+  const items: NewsItem[] = [];
+  
   const itemMatches = xml.match(/<item>([\s\S]*?)<\/item>/gi);
-  
   if (!itemMatches) return items;
   
   for (const itemXml of itemMatches) {
@@ -30,25 +153,22 @@ function parseRSS(xml: string): RSSItem[] {
     const pubDate = extractTag(itemXml, 'pubDate');
     const author = extractTag(itemXml, 'author') || extractTag(itemXml, 'dc:creator');
     
-    // Try to extract image from enclosure or media:content
     let imageUrl = '';
     const enclosureMatch = itemXml.match(/<enclosure[^>]+url="([^"]+)"[^>]*type="image/i);
     if (enclosureMatch) {
       imageUrl = enclosureMatch[1];
     } else {
       const mediaMatch = itemXml.match(/<media:content[^>]+url="([^"]+)"/i);
-      if (mediaMatch) {
-        imageUrl = mediaMatch[1];
-      }
+      if (mediaMatch) imageUrl = mediaMatch[1];
     }
     
     if (title && link) {
       items.push({
-        title: cleanHtml(title),
+        title: cleanText(title),
         link,
-        description: cleanHtml(description),
-        pubDate,
-        author: cleanHtml(author),
+        excerpt: cleanText(description),
+        publishedAt: pubDate,
+        author: cleanText(author),
         imageUrl,
       });
     }
@@ -63,23 +183,10 @@ function extractTag(xml: string, tagName: string): string {
   return match ? match[1].trim() : '';
 }
 
-function cleanHtml(text: string): string {
-  if (!text) return '';
-  return text
-    .replace(/<[^>]*>/g, '')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&nbsp;/g, ' ')
-    .trim();
-}
-
 // Check rate limit
 async function checkRateLimit(supabase: any, sourceKey: string): Promise<boolean> {
   const BUCKET_SIZE = 20;
-  const REFILL_RATE = 2; // tokens per minute
+  const REFILL_RATE = 2;
   
   const { data: state } = await supabase
     .from('br_rate_state')
@@ -180,14 +287,13 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
     
-    // Parse request
     const { source: sourceFilter } = await req.json().catch(() => ({}));
     
-    // Get enabled RSS sources
+    // Get enabled sources (both RSS and HTML types)
     let query = supabase
       .from('br_sources')
       .select('*')
-      .eq('kind', 'rss')
+      .in('kind', ['rss', 'html'])
       .eq('is_enabled', true);
     
     if (sourceFilter) {
@@ -202,7 +308,7 @@ Deno.serve(async (req) => {
     
     if (!sources || sources.length === 0) {
       return new Response(
-        JSON.stringify({ message: 'No RSS sources enabled' }),
+        JSON.stringify({ message: 'No news sources enabled' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -213,18 +319,18 @@ Deno.serve(async (req) => {
       const sourceStartTime = Date.now();
       
       try {
-        // Check rate limit
         const canProceed = await checkRateLimit(supabase, source.key);
         if (!canProceed) {
           results[source.key] = { error: 'Rate limited', skipped: true };
           continue;
         }
         
-        console.log(`Fetching RSS from ${source.name}: ${source.url}`);
+        console.log(`Fetching news from ${source.name}: ${source.url}`);
         
         const headers: Record<string, string> = {
-          'User-Agent': 'ConexaoNaCidade/1.0 NewsBot',
-          'Accept': 'application/rss+xml, application/xml, text/xml, */*',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
         };
         
         if (source.last_etag) {
@@ -256,8 +362,17 @@ Deno.serve(async (req) => {
             .eq('key', source.key);
         }
         
-        const xml = await response.text();
-        const items = parseRSS(xml);
+        const content = await response.text();
+        
+        // Parse based on content type
+        let items: NewsItem[];
+        const contentType = response.headers.get('Content-Type') || '';
+        
+        if (contentType.includes('xml') || source.kind === 'rss') {
+          items = parseRSS(content);
+        } else {
+          items = parseGeHtmlPage(content);
+        }
         
         console.log(`Parsed ${items.length} items from ${source.name}`);
         
@@ -265,7 +380,7 @@ Deno.serve(async (req) => {
         let itemsSkipped = 0;
         
         for (const item of items) {
-          // Check if already exists (dedupe by URL)
+          // Check if already exists
           const { data: existing } = await supabase
             .from('br_news_items')
             .select('id')
@@ -279,9 +394,9 @@ Deno.serve(async (req) => {
           
           // Parse date
           let publishedAt: string | null = null;
-          if (item.pubDate) {
+          if (item.publishedAt) {
             try {
-              publishedAt = new Date(item.pubDate).toISOString();
+              publishedAt = new Date(item.publishedAt).toISOString();
             } catch {
               publishedAt = new Date().toISOString();
             }
@@ -292,7 +407,7 @@ Deno.serve(async (req) => {
             source_key: source.key,
             title: item.title.substring(0, 500),
             url: item.link,
-            excerpt: item.description?.substring(0, 1000) || null,
+            excerpt: item.excerpt?.substring(0, 1000) || null,
             image_url: item.imageUrl || null,
             published_at: publishedAt,
             author: item.author?.substring(0, 200) || null,
@@ -300,7 +415,6 @@ Deno.serve(async (req) => {
           
           if (insertError) {
             if (insertError.code === '23505') {
-              // Duplicate URL, skip
               itemsSkipped++;
             } else {
               console.error(`Insert error for ${item.link}:`, insertError);
@@ -345,7 +459,7 @@ Deno.serve(async (req) => {
     );
     
   } catch (error: unknown) {
-    console.error('RSS sync error:', error);
+    console.error('News sync error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     
     return new Response(

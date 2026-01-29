@@ -5,40 +5,33 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface StandingsRow {
-  position: number;
-  team_slug: string;
-  team_name: string;
-  played: number;
-  wins: number;
-  draws: number;
-  losses: number;
-  goals_for: number;
-  goals_against: number;
-  goal_diff: number;
-  points: number;
+interface NewsResult {
+  round?: number;
+  homeTeam?: string;
+  awayTeam?: string;
+  homeScore?: number;
+  awayScore?: number;
+  date?: string;
 }
 
-interface MatchRow {
-  round: string;
-  kickoff_at: string | null;
-  home_team_slug: string;
-  away_team_slug: string;
-  home_score: number | null;
-  away_score: number | null;
-  status: string;
-  stadium: string | null;
+interface ParsedNews {
+  title: string;
+  url: string;
+  date?: string;
+  matchResult?: NewsResult;
 }
 
 // Normaliza nome de time para slug
 function slugify(name: string): string {
   const map: Record<string, string> = {
-    'atlético-mg': 'atletico-mg',
-    'atlético-go': 'atletico-go',
-    'atlético-pr': 'athletico-pr',
+    'atletico-mg': 'atletico-mg',
+    'atletico-go': 'atletico-go',
+    'atletico-pr': 'athletico-pr',
     'athletico-pr': 'athletico-pr',
     'red bull bragantino': 'bragantino',
     'rb bragantino': 'bragantino',
+    'sao paulo': 'sao-paulo',
+    'america-mg': 'america-mg',
   };
   
   const slug = name
@@ -51,10 +44,18 @@ function slugify(name: string): string {
   return map[slug] || slug;
 }
 
+// Times do Brasileirão 2026
+const BRASILEIRAO_TEAMS = [
+  'Flamengo', 'Palmeiras', 'São Paulo', 'Fluminense', 'Corinthians',
+  'Internacional', 'Grêmio', 'Atlético-MG', 'Botafogo', 'Athletico-PR',
+  'Santos', 'Vasco', 'Fortaleza', 'Cruzeiro', 'Bahia',
+  'Bragantino', 'Vitória', 'Juventude', 'Cuiabá', 'Atlético-GO'
+];
+
 // Verifica rate limit (Token Bucket)
 async function checkRateLimit(supabase: any, sourceKey: string): Promise<boolean> {
   const BUCKET_SIZE = 10;
-  const REFILL_RATE = 1; // token por minuto
+  const REFILL_RATE = 1;
   
   const { data: state, error } = await supabase
     .from('br_rate_state')
@@ -67,21 +68,18 @@ async function checkRateLimit(supabase: any, sourceKey: string): Promise<boolean
     return true;
   }
   
-  // Check circuit breaker
   if (state.circuit_open && state.circuit_open_until) {
     const openUntil = new Date(state.circuit_open_until);
     if (openUntil > new Date()) {
       console.log('Circuit breaker is open until', openUntil);
       return false;
     }
-    // Circuit can be closed
     await supabase
       .from('br_rate_state')
       .update({ circuit_open: false, circuit_open_until: null })
       .eq('source_key', sourceKey);
   }
   
-  // Refill tokens
   const lastRefill = new Date(state.last_refill);
   const elapsedMinutes = (Date.now() - lastRefill.getTime()) / 60000;
   const refill = Math.floor(elapsedMinutes) * REFILL_RATE;
@@ -92,7 +90,6 @@ async function checkRateLimit(supabase: any, sourceKey: string): Promise<boolean
     return false;
   }
   
-  // Consume token
   tokens -= 1;
   await supabase
     .from('br_rate_state')
@@ -119,7 +116,6 @@ async function logFetch(
     duration_ms: durationMs,
   });
   
-  // Update source status
   if (success) {
     await supabase
       .from('br_sources')
@@ -146,9 +142,8 @@ async function logFetch(
       })
       .eq('key', sourceKey);
     
-    // Open circuit breaker after 5 consecutive failures
     if (newErrorCount >= 5) {
-      const openUntil = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+      const openUntil = new Date(Date.now() + 30 * 60 * 1000);
       await supabase
         .from('br_rate_state')
         .update({ circuit_open: true, circuit_open_until: openUntil.toISOString() })
@@ -158,63 +153,197 @@ async function logFetch(
   }
 }
 
-// Parse standings from CBF HTML (simplified parsing)
-function parseStandings(html: string): StandingsRow[] {
-  const standings: StandingsRow[] = [];
+// Parse news from CBF HTML page
+function parseCbfNewsPage(html: string): ParsedNews[] {
+  const news: ParsedNews[] = [];
   
-  // Mock data for now - real implementation would parse CBF HTML
-  // CBF uses complex JavaScript-rendered tables, so we use a simplified approach
-  const teams = [
-    { name: 'Flamengo', abbr: 'FLA' },
-    { name: 'Palmeiras', abbr: 'PAL' },
-    { name: 'São Paulo', abbr: 'SAO' },
-    { name: 'Fluminense', abbr: 'FLU' },
-    { name: 'Corinthians', abbr: 'COR' },
-    { name: 'Internacional', abbr: 'INT' },
-    { name: 'Grêmio', abbr: 'GRE' },
-    { name: 'Atlético-MG', abbr: 'CAM' },
-    { name: 'Botafogo', abbr: 'BOT' },
-    { name: 'Athletico-PR', abbr: 'CAP' },
-    { name: 'Santos', abbr: 'SAN' },
-    { name: 'Vasco', abbr: 'VAS' },
-    { name: 'Fortaleza', abbr: 'FOR' },
-    { name: 'Cruzeiro', abbr: 'CRU' },
-    { name: 'Bahia', abbr: 'BAH' },
-    { name: 'Bragantino', abbr: 'BRA' },
-    { name: 'Vitória', abbr: 'VIT' },
-    { name: 'Juventude', abbr: 'JUV' },
-    { name: 'Cuiabá', abbr: 'CUI' },
-    { name: 'Atlético-GO', abbr: 'ACG' },
-  ];
+  // Match article blocks - CBF uses <article> or <div class="news-item">
+  const articlePattern = /<article[^>]*>[\s\S]*?<\/article>/gi;
+  const divPattern = /<div[^>]*class="[^"]*(?:news|article|card)[^"]*"[^>]*>[\s\S]*?<\/div>/gi;
   
-  // Generate initial standings (will be updated by real sync)
-  teams.forEach((team, index) => {
-    standings.push({
-      position: index + 1,
-      team_slug: slugify(team.name),
-      team_name: team.name,
-      played: 0,
-      wins: 0,
-      draws: 0,
-      losses: 0,
-      goals_for: 0,
-      goals_against: 0,
-      goal_diff: 0,
-      points: 0,
-    });
+  const matches = html.match(articlePattern) || html.match(divPattern) || [];
+  
+  // Also try to find links with titles
+  const linkPattern = /<a[^>]+href="([^"]*\/noticias\/[^"]*)"[^>]*>[\s\S]*?<\/a>/gi;
+  const titlePattern = /<h[1-4][^>]*>([\s\S]*?)<\/h[1-4]>/gi;
+  
+  let linkMatch;
+  while ((linkMatch = linkPattern.exec(html)) !== null) {
+    const url = linkMatch[1];
+    const fullMatch = linkMatch[0];
+    
+    // Extract title from the link or nearby h tag
+    const titleMatch = fullMatch.match(/<h[1-4][^>]*>([\s\S]*?)<\/h[1-4]>/i) 
+      || fullMatch.match(/>([^<]{10,})</);
+    
+    if (titleMatch) {
+      const title = titleMatch[1].replace(/<[^>]*>/g, '').trim();
+      
+      if (title.length > 10) {
+        // Try to extract match result from title
+        const matchResult = parseMatchFromTitle(title);
+        
+        news.push({
+          title,
+          url: url.startsWith('http') ? url : `https://www.cbf.com.br${url}`,
+          matchResult,
+        });
+      }
+    }
+  }
+  
+  // Remove duplicates by URL
+  const seen = new Set<string>();
+  return news.filter(n => {
+    if (seen.has(n.url)) return false;
+    seen.add(n.url);
+    return true;
   });
-  
-  return standings;
 }
 
-// Parse matches from CBF HTML (simplified)
-function parseMatches(html: string): MatchRow[] {
-  const matches: MatchRow[] = [];
+// Parse match result from news title
+// Examples: "Análise do VAR: São Paulo (SP) X Flamengo (RJ) - 1ª Rodada"
+//           "Flamengo 2 x 1 Palmeiras - Melhores momentos"
+function parseMatchFromTitle(title: string): NewsResult | undefined {
+  // Pattern 1: "Team1 N x N Team2"
+  const scorePattern = /([A-ZÀ-Úa-zà-ú\s-]+)\s+(\d+)\s*x\s*(\d+)\s+([A-ZÀ-Úa-zà-ú\s-]+)/i;
+  const scoreMatch = title.match(scorePattern);
   
-  // Will be populated by real CBF sync
-  // For now, return empty - real data comes from CBF scraping
+  if (scoreMatch) {
+    return {
+      homeTeam: scoreMatch[1].trim(),
+      homeScore: parseInt(scoreMatch[2]),
+      awayScore: parseInt(scoreMatch[3]),
+      awayTeam: scoreMatch[4].trim(),
+    };
+  }
   
-  return matches;
+  // Pattern 2: "Team1 (UF) X Team2 (UF) - Nª Rodada"
+  const matchPattern = /([A-ZÀ-Úa-zà-ú\s-]+)\s*\([A-Z]{2}\)\s*[Xx]\s*([A-ZÀ-Úa-zà-ú\s-]+)\s*\([A-Z]{2}\)/;
+  const matchMatch = title.match(matchPattern);
+  
+  if (matchMatch) {
+    const roundMatch = title.match(/(\d+)[ªº]?\s*[Rr]odada/);
+    return {
+      homeTeam: matchMatch[1].trim(),
+      awayTeam: matchMatch[2].trim(),
+      round: roundMatch ? parseInt(roundMatch[1]) : undefined,
+    };
+  }
+  
+  return undefined;
+}
+
+// Ensure teams exist in database
+async function ensureTeamsExist(supabase: any): Promise<void> {
+  for (const teamName of BRASILEIRAO_TEAMS) {
+    const slug = slugify(teamName);
+    
+    await supabase
+      .from('football_teams')
+      .upsert({
+        slug,
+        name: teamName,
+        short_name: teamName.substring(0, 3).toUpperCase(),
+      }, { onConflict: 'slug' });
+  }
+}
+
+// Ensure standings exist with initial data
+async function ensureStandingsExist(supabase: any, competitionId: string, season: number): Promise<number> {
+  let processed = 0;
+  
+  for (let i = 0; i < BRASILEIRAO_TEAMS.length; i++) {
+    const teamName = BRASILEIRAO_TEAMS[i];
+    const slug = slugify(teamName);
+    
+    const { data: team } = await supabase
+      .from('football_teams')
+      .select('id')
+      .eq('slug', slug)
+      .single();
+    
+    if (team) {
+      await supabase
+        .from('football_standings')
+        .upsert({
+          competition_id: competitionId,
+          season,
+          position: i + 1,
+          team_id: team.id,
+          played: 0,
+          won: 0,
+          drawn: 0,
+          lost: 0,
+          goals_for: 0,
+          goals_against: 0,
+          goal_difference: 0,
+          points: 0,
+        }, { onConflict: 'competition_id,team_id,season' });
+      
+      processed++;
+    }
+  }
+  
+  return processed;
+}
+
+// Process match results from parsed news
+async function processMatchResults(
+  supabase: any, 
+  competitionId: string, 
+  season: number,
+  newsItems: ParsedNews[]
+): Promise<number> {
+  let processed = 0;
+  
+  for (const news of newsItems) {
+    if (!news.matchResult) continue;
+    
+    const { homeTeam, awayTeam, homeScore, awayScore, round } = news.matchResult;
+    
+    if (!homeTeam || !awayTeam) continue;
+    
+    // Find team IDs
+    const homeSlug = slugify(homeTeam);
+    const awaySlug = slugify(awayTeam);
+    
+    const { data: homeTeamData } = await supabase
+      .from('football_teams')
+      .select('id')
+      .eq('slug', homeSlug)
+      .single();
+    
+    const { data: awayTeamData } = await supabase
+      .from('football_teams')
+      .select('id')
+      .eq('slug', awaySlug)
+      .single();
+    
+    if (!homeTeamData || !awayTeamData) continue;
+    
+    // Upsert match
+    const matchData: any = {
+      competition_id: competitionId,
+      season,
+      home_team_id: homeTeamData.id,
+      away_team_id: awayTeamData.id,
+      status: homeScore !== undefined ? 'finished' : 'scheduled',
+    };
+    
+    if (round) matchData.round = `Rodada ${round}`;
+    if (homeScore !== undefined) matchData.home_score = homeScore;
+    if (awayScore !== undefined) matchData.away_score = awayScore;
+    
+    await supabase.from('football_matches').upsert(
+      matchData,
+      { onConflict: 'competition_id,home_team_id,away_team_id,season,round' }
+    );
+    
+    processed++;
+  }
+  
+  return processed;
 }
 
 Deno.serve(async (req) => {
@@ -229,7 +358,6 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
     
-    // Parse request
     const { action = 'standings', season = 2026 } = await req.json().catch(() => ({}));
     const sourceKey = action === 'matches' ? 'cbf_matches' : 'cbf_standings';
     
@@ -260,17 +388,29 @@ Deno.serve(async (req) => {
       );
     }
     
-    console.log(`Syncing from CBF: ${action}`);
+    console.log(`Syncing from CBF: ${action}, URL: ${source.url}`);
     
-    // Fetch CBF page
-    const cbfUrl = source.url.replace('/2026', `/${season}`);
+    // Ensure teams exist first
+    await ensureTeamsExist(supabase);
+    
+    // Get competition ID
+    const { data: competition } = await supabase
+      .from('football_competitions')
+      .select('id')
+      .eq('slug', 'brasileirao-serie-a')
+      .single();
+    
+    if (!competition) {
+      throw new Error('Competition brasileirao-serie-a not found');
+    }
+    
+    // Fetch CBF news page
     const headers: Record<string, string> = {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
       'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
     };
     
-    // Use ETag for caching
     if (source.last_etag) {
       headers['If-None-Match'] = source.last_etag;
     }
@@ -280,12 +420,11 @@ Deno.serve(async (req) => {
     
     let response: Response;
     try {
-      response = await fetch(cbfUrl, { headers });
+      response = await fetch(source.url, { headers });
     } catch (fetchError: unknown) {
       throw new Error(`Failed to fetch CBF: ${fetchError instanceof Error ? fetchError.message : 'Unknown error'}`);
     }
     
-    // Handle 304 Not Modified
     if (response.status === 304) {
       await logFetch(supabase, sourceKey, true, 'Not modified (304)', 0, Date.now() - startTime);
       return new Response(
@@ -312,99 +451,23 @@ Deno.serve(async (req) => {
     let itemsProcessed = 0;
     
     if (action === 'standings') {
-      const standings = parseStandings(html);
+      // Ensure initial standings exist
+      itemsProcessed = await ensureStandingsExist(supabase, competition.id, season);
       
-      // Upsert teams
-      for (const row of standings) {
-        await supabase
-          .from('football_teams')
-          .upsert({
-            slug: row.team_slug,
-            name: row.team_name,
-            short_name: row.team_name.substring(0, 3).toUpperCase(),
-          }, { onConflict: 'slug' });
-      }
+      // Parse news for any match results to update standings
+      const newsItems = parseCbfNewsPage(html);
+      console.log(`Parsed ${newsItems.length} news items from CBF`);
       
-      // Get competition ID
-      const { data: competition } = await supabase
-        .from('football_competitions')
-        .select('id')
-        .eq('slug', 'brasileirao-serie-a')
-        .single();
+      // Process any match results found
+      const matchesProcessed = await processMatchResults(supabase, competition.id, season, newsItems);
+      itemsProcessed += matchesProcessed;
       
-      if (competition) {
-        // Upsert standings
-        for (const row of standings) {
-          const { data: team } = await supabase
-            .from('football_teams')
-            .select('id')
-            .eq('slug', row.team_slug)
-            .single();
-          
-          if (team) {
-            await supabase
-              .from('football_standings')
-              .upsert({
-                competition_id: competition.id,
-                season,
-                position: row.position,
-                team_id: team.id,
-                played: row.played,
-                won: row.wins,
-                drawn: row.draws,
-                lost: row.losses,
-                goals_for: row.goals_for,
-                goals_against: row.goals_against,
-                goal_difference: row.goal_diff,
-                points: row.points,
-              }, { onConflict: 'competition_id,team_id,season' });
-            
-            itemsProcessed++;
-          }
-        }
-      }
     } else if (action === 'matches') {
-      const matches = parseMatches(html);
+      // Parse news for match information
+      const newsItems = parseCbfNewsPage(html);
+      console.log(`Parsed ${newsItems.length} news items from CBF`);
       
-      // Get competition ID
-      const { data: competition } = await supabase
-        .from('football_competitions')
-        .select('id')
-        .eq('slug', 'brasileirao-serie-a')
-        .single();
-      
-      if (competition) {
-        for (const match of matches) {
-          const { data: homeTeam } = await supabase
-            .from('football_teams')
-            .select('id')
-            .eq('slug', match.home_team_slug)
-            .single();
-          
-          const { data: awayTeam } = await supabase
-            .from('football_teams')
-            .select('id')
-            .eq('slug', match.away_team_slug)
-            .single();
-          
-          if (homeTeam && awayTeam) {
-            await supabase.from('football_matches').upsert({
-              competition_id: competition.id,
-              season,
-              round: match.round,
-              match_date: match.kickoff_at,
-              home_team_id: homeTeam.id,
-              away_team_id: awayTeam.id,
-              home_score: match.home_score,
-              away_score: match.away_score,
-              status: match.status,
-              venue: match.stadium,
-            }, { onConflict: 'competition_id,home_team_id,away_team_id,season,round' });
-            
-            itemsProcessed++;
-          }
-        }
-      }
+      itemsProcessed = await processMatchResults(supabase, competition.id, season, newsItems);
     }
     
     const duration = Date.now() - startTime;
