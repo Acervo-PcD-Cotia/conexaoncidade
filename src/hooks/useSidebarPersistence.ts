@@ -15,6 +15,7 @@ const ROUTE_TO_GROUP: Record<string, string> = {
   "/admin/stories": "conteudo",
   "/admin/podcasts": "conteudo",
   "/admin/editions": "conteudo",
+  "/admin/autopost-regional": "conteudo",
   
   // DISTRIBUIÇÃO & ALCANCE
   "/admin/social": "distribuicao",

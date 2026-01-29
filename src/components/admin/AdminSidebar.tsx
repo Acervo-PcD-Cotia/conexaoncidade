@@ -124,6 +124,7 @@ const contentItems: MenuItem[] = [
   { title: "Web Stories", url: "/admin/stories", icon: PlaySquare },
   { title: "Podcasts", url: "/admin/podcasts", icon: Mic },
   { title: "Edição Digital", url: "/admin/editions", icon: BookOpen },
+  { title: "Auto Post Regional", url: "/admin/autopost-regional", icon: MapPin, badge: "Grande Cotia", badgeColor: "bg-amber-500" },
 ];
 
 // 2️⃣ DISTRIBUIÇÃO & ALCANCE - Audiência e tráfego

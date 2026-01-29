@@ -84,6 +84,7 @@ import AutoPostDuplicates from "./pages/admin/autopost/AutoPostDuplicates";
 import AutoPostLogs from "./pages/admin/autopost/AutoPostLogs";
 import AutoPostReports from "./pages/admin/autopost/AutoPostReports";
 import AutoPostSettings from "./pages/admin/autopost/AutoPostSettings";
+import AutoPostRegional from "./pages/admin/autopost/AutoPostRegional";
 
 // Conexão Academy Pages
 import AcademyDashboard from "./pages/admin/academy/AcademyDashboard";
@@ -464,6 +465,9 @@ const App = () => (
                         <Route path="autopost/settings" element={<AutoPostSettings />} />
                         <Route path="autopost/sources/new" element={<AutoPostSourceForm />} />
                         <Route path="autopost/sources/:id/edit" element={<AutoPostSourceForm />} />
+                        
+                        {/* Auto Post Regional (Grande Cotia) */}
+                        <Route path="autopost-regional" element={<AutoPostRegional />} />
                         
                         {/* Conexão Academy Routes */}
                         <Route path="academy" element={<AcademyDashboard />} />
