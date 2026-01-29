@@ -1,153 +1,242 @@
 
-# Plano: Finalizar Itens Restantes do Auto Post Regional
+# Plano: Automatizar Geração de WebStories no Notícias AI
+
+## Contexto
+
+O módulo **Notícias AI** possui 5 modos de entrada de conteúdo:
+1. **Cadastro** - Detecção automática de modo
+2. **Cadastro Manual** - Campos estruturados 
+3. **JSON** - Importação via JSON
+4. **Link** - Extração de URL única
+5. **Lote** - Múltiplas URLs simultâneas
+
+A geração automática de WebStories já existe via edge function `generate-webstory`, mas precisa ser garantida em TODOS os fluxos e ter um controle explícito na UI.
+
+---
 
 ## Análise do Estado Atual
 
-### JÁ IMPLEMENTADO (Sprint 1-5)
-1. Edge Function `regional-process-item` - Completa com IA, SEO, tags
-2. Edge Function `regional-admin-tools` - Todas as actions (process_item, publish_item, etc.)
-3. Edge Function `regional-ingest` - Com TLS fallback, SSRF validation, backoff
-4. Hooks React - useProcessRegionalItem, usePublishRegionalItem, useProcessAllNew, useTestSelectors
-5. UI RegionalQueue - Com botões Processar/Publicar e preview com abas
-6. UI RegionalSourceEdit - Editor de fontes com seletores CSS
-7. Database columns - error_message, retry_count, processing_started_at
-8. Exportação no index.ts - RegionalSourceEdit já exportada
+### O que já existe ✅
+1. Edge function `generate-webstory` funcional (cria 5 slides padrão)
+2. Coluna `auto_generate_webstory` na tabela `news` (default: `true`)
+3. Código em `NoticiasAI.tsx` linha 310 que dispara geração após import
+4. Tabelas `web_stories` e `web_story_slides` configuradas
+
+### Problemas identificados 🔴
+1. **Toggle ausente na UI**: Não há switch para ativar/desativar WebStory na interface de entrada
+2. **Feedback ausente**: Usuário não sabe se WebStory foi gerada
+3. **Inconsistência**: O campo `auto_generate_webstory` não é passado no insert, depende do default do DB
 
 ---
 
-## ITENS RESTANTES (3-4 itens)
+## Implementação Proposta
 
-### 1. Rota de Edição de Fonte no App.tsx
-**Problema**: `RegionalSourceEdit` existe mas a rota `/admin/autopost-regional/fontes/:id/edit` não está registrada.
+### 1. Adicionar Toggle "Gerar WebStory" na UI de Entrada
 
-**Arquivo**: `src/App.tsx`
-- Adicionar rota: `<Route path="autopost-regional/fontes/:id/edit" element={<RegionalSourceEdit />} />`
-- Adicionar import de `RegionalSourceEdit` no bloco de imports regionais
+**Arquivo**: `src/components/admin/noticias-ai/NoticiasAIInput.tsx`
 
-### 2. Botão "Editar" na Tabela de Fontes
-**Problema**: `RegionalSources.tsx` não possui botão para navegar até a página de edição.
+Adicionar ao card de "Destaques" um novo toggle:
+```tsx
+<div className="flex items-center justify-between">
+  <div className="space-y-0.5">
+    <Label className="text-sm flex items-center gap-1.5">
+      <Wand2 className="h-3.5 w-3.5 text-purple-500" />
+      WebStory
+    </Label>
+    <p className="text-xs text-muted-foreground">Gerar WebStory automaticamente</p>
+  </div>
+  <Switch
+    checked={generateWebStory}
+    onCheckedChange={setGenerateWebStory}
+  />
+</div>
+```
 
-**Arquivo**: `src/pages/admin/autopost-regional/RegionalSources.tsx`
-- Adicionar botão com ícone `Settings` ou `Pencil` na coluna de ações
-- Link para `/admin/autopost-regional/fontes/${source.id}/edit`
+**Novo state**:
+```tsx
+const [generateWebStory, setGenerateWebStory] = useState(true); // Ativado por padrão
+```
 
-### 3. Hook useRegionalSource (verificar existência)
-**Status**: Já existe em `useRegionalAutoPost.ts` na linha 95
-
----
-
-## Verificação de Completude
-
-### Checklist (35 itens)
-
-#### Edge Functions (8/8) ✅
-- [x] Criar `regional-process-item`
-- [x] Implementar fetch de conteúdo completo
-- [x] Integrar Lovable AI para reescrita
-- [x] Integrar Gemini Image para imagens
-- [x] Adicionar action `process_item`
-- [x] Adicionar action `process_all_new`
-- [x] Adicionar action `publish_item`
-- [x] Adicionar action `test_selectors`
-
-#### Ingestão (6/6) ✅
-- [x] Tratamento TLS/SSL com fallback
-- [x] Backoff exponencial
-- [x] Parser listing otimizado
-- [x] Validação SSRF
-- [x] Rate limiting por fonte
-- [x] Timeout configurável
-
-#### Banco de Dados (4/4) ✅
-- [x] Coluna `error_message`
-- [x] Coluna `retry_count`
-- [x] Coluna `processing_started_at`
-- [x] Índices de performance
-
-#### Integração News (5/5) ✅
-- [x] Criar registro em `news`
-- [x] Gerar slug único
-- [x] Inserir 12 tags
-- [x] Linkar `news_tags`
-- [x] Atualizar status para `published`
-
-#### UI/Hooks (9/9) ✅
-- [x] Hook `useProcessRegionalItem`
-- [x] Hook `usePublishRegionalItem`
-- [x] Hook `useProcessAllNew`
-- [x] Hook `useTestSelectors`
-- [x] Botão Processar na fila
-- [x] Botão Publicar na fila
-- [x] Preview conteúdo reescrito
-- [x] Página `RegionalSourceEdit`
-- [x] Editor visual de selectors
-
-#### Automação - NÃO IMPLEMENTAR
-- [ ] Cron ingestão (2h) - Requer pg_cron via SQL manual
-- [ ] Cron processamento (30min) - Requer pg_cron via SQL manual
-- [ ] Auto-publish para fontes configuradas - Já funciona via mode=auto_publish
-
----
-
-## Implementação Necessária
-
-### Arquivo 1: src/App.tsx
-
-**Modificações**:
-1. Adicionar `RegionalSourceEdit` ao import existente (linha 88-94)
-2. Adicionar rota após linha 479
-
-### Arquivo 2: src/pages/admin/autopost-regional/RegionalSources.tsx
-
-**Modificações**:
-1. Adicionar import do ícone `Pencil` do lucide-react
-2. Adicionar botão de edição na coluna de ações (após ExternalLink)
-
----
-
-## Notas sobre Cron (Automação)
-
-O agendamento automático via `pg_cron` requer execução manual de SQL no Cloud View. Fornecerei o SQL para configurar:
-
-```sql
--- Habilitar extensões
-CREATE EXTENSION IF NOT EXISTS pg_cron;
-CREATE EXTENSION IF NOT EXISTS pg_net;
-
--- Cron de ingestão a cada 2 horas
-SELECT cron.schedule(
-  'regional-ingest-every-2h',
-  '0 */2 * * *',
-  $$
-  SELECT net.http_post(
-    url := 'https://qfavfwvsficnqaznincz.supabase.co/functions/v1/regional-ingest',
-    headers := '{"Content-Type": "application/json", "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."}'::jsonb,
-    body := '{}'::jsonb
-  );
-  $$
-);
-
--- Cron de processamento a cada 30 min
-SELECT cron.schedule(
-  'regional-process-every-30m',
-  '*/30 * * * *',
-  $$
-  SELECT net.http_post(
-    url := 'https://qfavfwvsficnqaznincz.supabase.co/functions/v1/regional-admin-tools',
-    headers := '{"Content-Type": "application/json", "Authorization": "Bearer ..."}'::jsonb,
-    body := '{"action": "process_all_new"}'::jsonb
-  );
-  $$
-);
+**Passar para onGenerate**:
+```tsx
+await onGenerate(processContent, mode, imageUrls, { ...highlights, generateWebStory });
 ```
 
 ---
 
-## Resumo das Alterações
+### 2. Atualizar Interface HighlightSettings
 
-| Arquivo | Tipo | Descrição |
-|---------|------|-----------|
-| src/App.tsx | Modificar | Adicionar import e rota para RegionalSourceEdit |
-| src/pages/admin/autopost-regional/RegionalSources.tsx | Modificar | Adicionar botão de edição na tabela |
+**Arquivo**: `src/components/admin/noticias-ai/NoticiasAIInput.tsx`
 
-**Total de mudanças**: 2 arquivos, ~15 linhas de código
+Expandir a interface:
+```typescript
+export interface HighlightSettings {
+  is_home_highlight: boolean;
+  is_urgent: boolean;
+  is_featured: boolean;
+  generateWebStory: boolean;  // NOVO
+}
+```
+
+---
+
+### 3. Garantir Passagem no Insert de Notícia
+
+**Arquivo**: `src/pages/admin/NoticiasAI.tsx`
+
+Modificar o insert para incluir explicitamente:
+```typescript
+const { data: news, error: newsError } = await supabase
+  .from('news')
+  .insert({
+    // ... campos existentes ...
+    auto_generate_webstory: true, // Forçar explicitamente
+  })
+  .select()
+  .single();
+```
+
+Ou, se houver preferência do usuário:
+```typescript
+auto_generate_webstory: article.generateWebStory ?? true,
+```
+
+---
+
+### 4. Adicionar Feedback Visual Após Geração
+
+**Arquivo**: `src/pages/admin/NoticiasAI.tsx`
+
+Após a chamada bem-sucedida do `generate-webstory`, mostrar toast com link:
+```typescript
+if (news?.auto_generate_webstory) {
+  supabase.functions.invoke('generate-webstory', {
+    body: { newsId: news.id }
+  }).then((response) => {
+    if (response.data?.success) {
+      toast({
+        title: '📱 WebStory gerada!',
+        description: 'Acesse a lista de stories para visualizar.',
+        action: (
+          <Button size="sm" variant="outline" onClick={() => navigate('/admin/stories')}>
+            Ver Stories
+          </Button>
+        ),
+      });
+    }
+  }).catch(err => console.error('WebStory generation failed:', err));
+}
+```
+
+---
+
+### 5. Atualizar Fluxo de Artigo Manual
+
+**Arquivo**: `src/pages/admin/NoticiasAI.tsx`
+
+Adicionar campo `generateWebStory` no `ManualData`:
+```typescript
+interface ManualData {
+  // ... campos existentes ...
+  generateWebStory?: boolean;
+}
+```
+
+E garantir que seja passado durante a importação.
+
+---
+
+### 6. Mostrar Badge "WebStory" na Lista de Artigos Processados
+
+**Arquivo**: `src/components/admin/noticias-ai/NoticiasAIJsonTab.tsx`
+
+Na lista de artigos, mostrar indicador:
+```tsx
+{article.generateWebStory !== false && (
+  <Badge variant="outline" className="text-xs text-purple-600 border-purple-300">
+    📱 WebStory
+  </Badge>
+)}
+```
+
+---
+
+## Resumo de Arquivos a Modificar
+
+| Arquivo | Mudança |
+|---------|---------|
+| `src/components/admin/noticias-ai/NoticiasAIInput.tsx` | Adicionar toggle WebStory, atualizar interface |
+| `src/pages/admin/NoticiasAI.tsx` | Incluir campo no insert, melhorar feedback |
+| `src/components/admin/noticias-ai/NoticiasAIJsonTab.tsx` | Badge indicador de WebStory |
+
+---
+
+## Fluxo Completo Após Implementação
+
+```text
+┌────────────────────────────────────────────────────────────────┐
+│                      Notícias AI                                │
+├────────────────────────────────────────────────────────────────┤
+│  [Cadastro] [Manual] [JSON] [Link] [Lote]                       │
+│                                                                 │
+│  ┌──────────────┐  ┌──────────────────────────────────────────┐│
+│  │ 📷 Imagens   │  │ ⭐ Destaques                              ││
+│  │              │  │   □ Home                                  ││
+│  │              │  │   □ Urgente                               ││
+│  │              │  │   □ Manchete                              ││
+│  │              │  │   ✓ 📱 WebStory [NOVO]                    ││
+│  └──────────────┘  └──────────────────────────────────────────┘│
+│                                                                 │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │ [Gerar Notícia]                                           │  │
+│  └──────────────────────────────────────────────────────────┘  │
+└────────────────────────────────────────────────────────────────┘
+                              ↓
+                    ┌─────────────────┐
+                    │ Processa com IA │
+                    └────────┬────────┘
+                             ↓
+                    ┌─────────────────┐
+                    │  Insert em news │
+                    │ auto_generate   │
+                    │ _webstory=true  │
+                    └────────┬────────┘
+                             ↓
+              ┌──────────────┴──────────────┐
+              ↓                             ↓
+     ┌─────────────────┐          ┌─────────────────┐
+     │ generate-webstory│          │ generate-podcast│
+     │  Edge Function  │          │  Edge Function  │
+     └────────┬────────┘          └─────────────────┘
+              ↓
+     ┌─────────────────┐
+     │ WebStory criada │
+     │   5 slides      │
+     │   status=pub    │
+     └─────────────────┘
+              ↓
+     Toast: "📱 WebStory gerada!"
+```
+
+---
+
+## Checklist de Implementação
+
+- [ ] Adicionar state `generateWebStory` em NoticiasAIInput
+- [ ] Adicionar toggle UI no card de Destaques
+- [ ] Expandir interface `HighlightSettings`
+- [ ] Passar campo para função `onGenerate`
+- [ ] Atualizar `ManualData` interface
+- [ ] Modificar insert para incluir `auto_generate_webstory`
+- [ ] Adicionar feedback visual com toast e link
+- [ ] Adicionar badge na lista de artigos JSON
+- [ ] Testar todos os 5 modos de entrada
+
+---
+
+## Benefícios
+
+1. **Automatização completa**: WebStory gerada automaticamente em TODOS os fluxos
+2. **Controle do usuário**: Toggle permite desativar quando não desejado
+3. **Feedback claro**: Usuário sabe que WebStory foi gerada
+4. **Consistência**: Comportamento uniforme em todos os modos de entrada
