@@ -60,7 +60,13 @@ verify_jwt = false
 [functions.autopost-ingest]
 verify_jwt = false
 
+[functions.autopost-extractor]
+verify_jwt = false
+
 [functions.autopost-rewrite]
+verify_jwt = false
+
+[functions.autopost-image-generator]
 verify_jwt = false
 
 [functions.autopost-publish]

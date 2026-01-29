@@ -585,6 +585,36 @@ export type Database = {
           },
         ]
       }
+      autopost_cluster_cities: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_central: boolean | null
+          name: string
+          priority: number | null
+          seo_terms: string[] | null
+          slug: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_central?: boolean | null
+          name: string
+          priority?: number | null
+          seo_terms?: string[] | null
+          slug: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_central?: boolean | null
+          name?: string
+          priority?: number | null
+          seo_terms?: string[] | null
+          slug?: string
+        }
+        Relationships: []
+      }
       autopost_ingest_items: {
         Row: {
           applied_rule_ids: string[] | null
@@ -869,6 +899,7 @@ export type Database = {
           author_name: string | null
           card_image_url: string | null
           category_id: string | null
+          cities_mentioned: string[] | null
           content_html: string
           created_at: string | null
           final_title: string
@@ -909,6 +940,7 @@ export type Database = {
           author_name?: string | null
           card_image_url?: string | null
           category_id?: string | null
+          cities_mentioned?: string[] | null
           content_html: string
           created_at?: string | null
           final_title: string
@@ -949,6 +981,7 @@ export type Database = {
           author_name?: string | null
           card_image_url?: string | null
           category_id?: string | null
+          cities_mentioned?: string[] | null
           content_html?: string
           created_at?: string | null
           final_title?: string
@@ -1253,6 +1286,7 @@ export type Database = {
         Row: {
           allowed_hours_end: number | null
           allowed_hours_start: number | null
+          city: string | null
           crawler_entry_url: string | null
           crawler_selectors: Json | null
           created_at: string | null
@@ -1293,6 +1327,7 @@ export type Database = {
         Insert: {
           allowed_hours_end?: number | null
           allowed_hours_start?: number | null
+          city?: string | null
           crawler_entry_url?: string | null
           crawler_selectors?: Json | null
           created_at?: string | null
@@ -1333,6 +1368,7 @@ export type Database = {
         Update: {
           allowed_hours_end?: number | null
           allowed_hours_start?: number | null
+          city?: string | null
           crawler_entry_url?: string | null
           crawler_selectors?: Json | null
           created_at?: string | null
