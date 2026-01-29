@@ -1,378 +1,186 @@
 
-# Plano de Implementacao: Fases 3 e 4 - Admin UI e Public UI
+# Plano de Correções e Melhorias: Módulo Brasileirão
 
-## Resumo
+## Resumo da Análise
 
-Este plano implementa as fases finais do modulo Brasileirao:
-- **Fase 3**: Painel administrativo de controle e monitoramento
-- **Fase 4**: UI publica com secoes de Noticias e Onde Assistir
+Após testes extensivos das Edge Functions, identifiquei os seguintes problemas e status:
 
----
+### Status Atual por Funcionalidade
 
-## FASE 3: Painel Admin
-
-### 3.1 Nova Pagina: BrasileiraoSync.tsx
-
-**Rota:** `/admin/esportes/brasileirao/sync`
-
-Dashboard de controle de sincronizacao com:
-
-| Secao | Componentes |
-|-------|-------------|
-| Status das Fontes | Cards para CBF, GE, oGol com indicadores online/erro/offline |
-| Metricas | KPI Cards: Noticias RSS hoje, Noticias IA, Jogos sync, Transmissoes |
-| Acoes | Botoes: Sync CBF (Tabela), Sync CBF (Jogos), Sync RSS, Gerar IA, Sync Transmissoes |
-| Logs | Lista das ultimas 20 sincronizacoes com filtro por fonte |
-
-**Hooks utilizados:**
-- `useBrSources()` - Status das fontes
-- `useBrFetchLogs()` - Logs de sincronizacao
-- `useSyncCbf()` - Mutation para sync CBF
-- `useSyncRss()` - Mutation para sync RSS
-- `useSyncBroadcasts()` - Mutation para transmissoes
-- `useGenerateAiNews()` - Mutation para gerar noticias
+| Funcionalidade | Status | Problema |
+|----------------|--------|----------|
+| **Geração IA** | ✅ FUNCIONANDO | Artigo criado com sucesso (Gemini 2.5 Flash) |
+| **Sync CBF** | ❌ FALHA | URL incorreta - retorna 404 |
+| **Sync RSS GE** | ❌ FALHA | URL incorreta + filtro de fonte não funciona |
+| **Sync RSS oGol** | ❌ FALHA | Site não permite scraping |
+| **Sync Transmissões** | ⚠️ NÃO TESTADO | Depende de jogos existentes |
+| **CRON Jobs** | ❌ NÃO IMPLEMENTADO | Falta criar |
 
 ---
 
-### 3.2 Nova Pagina: BrasileiraoBroadcasts.tsx
+## Problemas Identificados
 
-**Rota:** `/admin/esportes/brasileirao/transmissoes`
+### 1. URL da CBF Incorreta
 
-Editor manual de "Onde Assistir" com:
+**Problema:** A URL `https://www.cbf.com.br/futebol-brasileiro/competicoes/campeonato-brasileiro-serie-a/2026` retorna 404.
 
-| Secao | Funcionalidade |
-|-------|----------------|
-| Lista de Jogos | Proximos jogos da rodada atual |
-| Editor | Campos para TV Aberta, TV Fechada, Streaming |
-| Preview | Visualizacao de como aparece no site |
-| Sync | Botao para sincronizar automaticamente |
+**URL Correta:** `https://www.cbf.com.br/futebol-brasileiro/tabelas/campeonato-brasileiro/serie-a`
 
-**Hooks utilizados:**
-- `useBrBroadcasts()` - Lista de transmissoes
-- `useUpdateBroadcast()` - Mutation para salvar
-- `useUpcomingMatches()` (do useFootball) - Jogos proximos
+**Complicação:** O site da CBF usa JavaScript para renderizar a tabela (React/Next.js), impossibilitando scraping simples com fetch.
 
----
+**Solução:** Usar API alternativa ou scraping de páginas HTML estáticas da CBF (como notícias com resultados).
 
-### 3.3 Nova Pagina: BrasileiraoNews.tsx
+### 2. URL do GE RSS Incorreta
 
-**Rota:** `/admin/esportes/brasileirao/noticias`
+**Problema:** A URL `https://ge.globo.com/rss/futebol/brasileirao-serie-a/` retorna 400 Bad Request.
 
-Gerenciador de noticias geradas por IA:
+**URL Correta Encontrada:** `https://globoesporte.globo.com/ESP/Noticia/Rss/0,,AS0-4274,00.xml` (Futebol geral)
 
-| Secao | Funcionalidade |
-|-------|----------------|
-| Lista | Noticias geradas com status (draft/published) |
-| Filtros | Por tipo, status, data |
-| Acoes | Publicar, Despublicar, Editar, Regenerar |
-| Gerar | Botoes para gerar por tipo (recap, preview, etc) |
+**Nota:** Este feed está desatualizado (dados de 2008). O GE pode ter descontinuado RSS públicos.
 
-**Hooks utilizados:**
-- `useBrGeneratedNews()` - Lista de noticias
-- `useUpdateGeneratedNewsStatus()` - Mutation para status
-- `useGenerateAiNews()` - Mutation para gerar
+### 3. oGol Inacessível
+
+**Problema:** `https://www.ogol.com.br/rss.php` não permite scraping (bloqueado).
+
+### 4. Filtro de Source no RSS não Funciona
+
+**Problema:** A Edge Function filtra por `source_key` mas as fontes não são encontradas corretamente.
 
 ---
 
-### 3.4 Atualizacao: EsportesDashboard.tsx
+## Plano de Correções
 
-Adicionar links para as novas paginas:
+### Fase 1: Atualizar Fontes de Dados
 
-```
-- Sync & Monitoramento -> /admin/esportes/brasileirao/sync
-- Transmissoes -> /admin/esportes/brasileirao/transmissoes
-- Noticias IA -> /admin/esportes/brasileirao/noticias
-```
+1. **Atualizar URLs no banco:**
+   - CBF: usar nova URL ou fallback para API não-oficial
+   - GE: usar URL de futebol geral ou scraping de página HTML
+   - oGol: desabilitar ou substituir
 
----
+2. **Criar fonte alternativa: SofaScore/FlashScore**
+   - Adicionar `sofascore_api` como nova fonte
+   - API gratuita com dados de classificação e jogos
 
-## FASE 4: UI Publica
+### Fase 2: Melhorar Parser CBF
 
-### 4.1 Novo Componente: WhereToWatchCard.tsx
+Como a CBF usa JavaScript, temos duas opções:
 
-Card compacto mostrando canais de transmissao:
+**Opção A: Scraping de Notícias CBF (Recomendada)**
+- URL: `https://www.cbf.com.br/futebol-brasileiro/noticias/campeonato-brasileiro-serie-a`
+- Extrair resultados de jogos das notícias
+- Mais estável pois não depende de JavaScript
 
-```text
-+----------------------------------------+
-|  Onde Assistir                         |
-|  [Globo] [SporTV] [Premiere]           |
-|  [Globoplay] [Prime Video]             |
-+----------------------------------------+
+**Opção B: API Não-Oficial**
+- Usar endpoint interno da CBF se disponível
+- Exemplo: APIs usadas pelo app mobile
+
+### Fase 3: Implementar CRON
+
+Criar job de sincronização automática usando pg_cron:
+
+```sql
+-- A cada 2 horas: sync tabela
+-- A cada 15 minutos: sync RSS
+-- A cada hora: sync transmissões
+-- Diário às 06:00: gerar notícias IA
 ```
 
-**Props:**
-- `broadcast: BrBroadcast`
-- `variant: 'compact' | 'full'`
+### Fase 4: Fallback com Dados Mock
 
----
-
-### 4.2 Novo Componente: WhereToWatchSection.tsx
-
-Secao completa para listagem por rodada:
-
-| Elemento | Descricao |
-|----------|-----------|
-| Seletor de Rodada | Dropdown para escolher rodada |
-| Lista de Jogos | Cards com time vs time + canais |
-| Destaque | Proximo jogo em destaque |
-
----
-
-### 4.3 Novo Componente: ExternalNewsCard.tsx
-
-Card para noticias do GE/oGol:
-
-```text
-+----------------------------------------+
-| [Imagem]                               |
-| Titulo da Noticia                      |
-| Trecho...                              |
-| GE • 2 horas atras            [Ler ->] |
-+----------------------------------------+
-```
-
-**Props:**
-- `news: BrNewsItem`
-- `compact?: boolean`
-
----
-
-### 4.4 Novo Componente: GeneratedNewsCard.tsx
-
-Card para noticias geradas pelo portal:
-
-```text
-+----------------------------------------+
-| [Badge: Portal]                        |
-| Titulo da Noticia Gerada               |
-| Trecho do conteudo...                  |
-| Conexao na Cidade • 1 hora             |
-+----------------------------------------+
-```
-
-**Props:**
-- `news: BrGeneratedNews`
-- `showBadge?: boolean`
-
----
-
-### 4.5 Novo Componente: BrasileiraoNewsSection.tsx
-
-Secao de noticias com abas:
-
-```text
-+----------------------------------------+
-| [Portal] [GE] [oGol]                   |
-+----------------------------------------+
-| Lista de noticias conforme aba ativa   |
-+----------------------------------------+
-```
-
----
-
-### 4.6 Atualizacao: MatchDetailPage.tsx
-
-Adicionar card "Onde Assistir" no topo da pagina:
-
-**Mudancas:**
-1. Importar `useBrBroadcastByMatch` e `WhereToWatchCard`
-2. Buscar transmissao pelo `match.id`
-3. Renderizar card antes das estatisticas
-
----
-
-### 4.7 Atualizacao: BrasileiraoPage.tsx
-
-Adicionar novas abas e secoes:
-
-**Estrutura Nova:**
-
-```text
-+----------------------------------------+
-| [Tabela] [Jogos] [Noticias] [TV]       |
-+----------------------------------------+
-|                                        |
-|  Conteudo da aba ativa                 |
-|                                        |
-+----------------------------------------+
-```
-
-| Aba | Conteudo |
-|-----|----------|
-| Tabela | StandingsTable existente |
-| Jogos | MatchCards existentes |
-| Noticias | BrasileiraoNewsSection (novo) |
-| TV | WhereToWatchSection (novo) |
-
----
-
-### 4.8 Nova Pagina: GeneratedNewsDetail.tsx
-
-Pagina para exibir noticia gerada:
-
-**Rota:** `/esportes/brasileirao/noticia/:slug`
-
-| Secao | Conteudo |
-|-------|----------|
-| Header | Titulo, data, tipo |
-| Conteudo | HTML renderizado |
-| SEO | Meta tags otimizadas |
-| Relacionados | Link para jogo/rodada |
-
----
-
-## Arquivos a Criar
-
-### Admin (3 paginas):
-```text
-src/pages/admin/esportes/BrasileiraoSync.tsx
-src/pages/admin/esportes/BrasileiraoBroadcasts.tsx
-src/pages/admin/esportes/BrasileiraoNews.tsx
-```
-
-### Componentes Publicos (5 arquivos):
-```text
-src/components/esportes/WhereToWatchCard.tsx
-src/components/esportes/WhereToWatchSection.tsx
-src/components/esportes/ExternalNewsCard.tsx
-src/components/esportes/GeneratedNewsCard.tsx
-src/components/esportes/BrasileiraoNewsSection.tsx
-```
-
-### Pagina Publica (1 arquivo):
-```text
-src/pages/public/esportes/GeneratedNewsDetail.tsx
-```
+Enquanto as fontes reais não funcionam:
+- Manter dados mock dos 20 times do Brasileirão 2026
+- Permitir entrada manual via admin
 
 ---
 
 ## Arquivos a Modificar
 
-| Arquivo | Mudanca |
+| Arquivo | Mudança |
 |---------|---------|
-| `src/App.tsx` | Adicionar rotas admin e publica |
-| `src/pages/admin/esportes/EsportesDashboard.tsx` | Links para novas paginas |
-| `src/pages/public/esportes/BrasileiraoPage.tsx` | Adicionar abas e novas secoes |
-| `src/pages/public/esportes/MatchDetailPage.tsx` | Card onde assistir |
+| `supabase/functions/br-sync-cbf/index.ts` | Nova estratégia de scraping |
+| `supabase/functions/br-sync-news-rss/index.ts` | URLs corretas + fallback |
+| Banco (br_sources) | Atualizar URLs |
+| Novo: migration para pg_cron | Jobs de sincronização |
 
 ---
 
-## Rotas a Adicionar no App.tsx
+## Ação Imediata Recomendada
 
-### Admin:
-```text
-/admin/esportes/brasileirao/sync       -> BrasileiraoSync
-/admin/esportes/brasileirao/transmissoes -> BrasileiraoBroadcasts
-/admin/esportes/brasileirao/noticias   -> BrasileiraoNews
-```
+Como as fontes externas têm limitações, recomendo:
 
-### Publica:
-```text
-/esportes/brasileirao/noticia/:slug    -> GeneratedNewsDetail
-```
+1. **Atualizar br_sources** com URLs corretas
+2. **Implementar parser alternativo** usando notícias da CBF (HTML estático)
+3. **Criar CRON jobs** para sincronização automática
+4. **Usar GE como scraping de página** em vez de RSS
 
 ---
 
-## Secao Tecnica
+## Seção Técnica
 
-### Componente WhereToWatchCard - Estrutura
+### Nova Estratégia CBF
 
-```tsx
-interface WhereToWatchCardProps {
-  broadcast: BrBroadcast;
-  variant?: 'compact' | 'full';
-}
+Em vez de tentar parsear a tabela dinâmica, usar:
 
-// Badges de canais com cores distintas:
-// TV Aberta (verde): Globo, Band, Record
-// TV Fechada (azul): SporTV, Premiere, ESPN
-// Streaming (roxo): Globoplay, Prime Video, Star+
+```typescript
+// Fonte: Notícias da CBF com resultados
+const CBF_NEWS_URL = 'https://www.cbf.com.br/futebol-brasileiro/noticias/campeonato-brasileiro-serie-a';
+
+// Extrair títulos de notícias com resultados
+// Ex: "Análise do VAR: São Paulo (SP) X Flamengo (RJ) - 1ª Rodada"
+// Parsear times e rodada do título
 ```
 
-### BrasileiraoPage - Nova Estrutura com Tabs
+### Nova Estratégia GE
 
-```tsx
-<Tabs defaultValue="tabela">
-  <TabsList>
-    <TabsTrigger value="tabela">Tabela</TabsTrigger>
-    <TabsTrigger value="jogos">Jogos</TabsTrigger>
-    <TabsTrigger value="noticias">Noticias</TabsTrigger>
-    <TabsTrigger value="tv">Onde Assistir</TabsTrigger>
-  </TabsList>
-  
-  <TabsContent value="tabela">
-    {/* StandingsTable existente */}
-  </TabsContent>
-  
-  <TabsContent value="noticias">
-    <BrasileiraoNewsSection />
-  </TabsContent>
-  
-  <TabsContent value="tv">
-    <WhereToWatchSection />
-  </TabsContent>
-</Tabs>
+Scraping direto da página do Brasileirão:
+
+```typescript
+const GE_BRASILEIRAO_URL = 'https://ge.globo.com/futebol/brasileirao-serie-a/';
+
+// Parsear títulos de notícias da página
+// Extrair links e datas das matérias
+// Salvar como br_news_items
 ```
 
-### SEO para Noticias Geradas
+### CRON Jobs
 
-```tsx
-// Schema.org para artigos
-const schema = {
-  "@context": "https://schema.org",
-  "@type": "NewsArticle",
-  "headline": news.title,
-  "description": news.seo_description,
-  "datePublished": news.published_at,
-  "publisher": {
-    "@type": "Organization",
-    "name": "Portal Conexao na Cidade"
-  }
-};
+```sql
+-- Sync CBF a cada 2 horas
+SELECT cron.schedule('sync-cbf-standings', '0 */2 * * *', $$
+  SELECT net.http_post(
+    url := 'https://qfavfwvsficnqaznincz.supabase.co/functions/v1/br-sync-cbf',
+    headers := '{"Content-Type": "application/json", "Authorization": "Bearer anon_key"}'::jsonb,
+    body := '{"action": "standings"}'::jsonb
+  );
+$$);
+
+-- Sync GE a cada 30 minutos
+SELECT cron.schedule('sync-ge-news', '*/30 * * * *', $$
+  SELECT net.http_post(
+    url := 'https://qfavfwvsficnqaznincz.supabase.co/functions/v1/br-sync-news-rss',
+    headers := '{"Content-Type": "application/json", "Authorization": "Bearer anon_key"}'::jsonb,
+    body := '{}'::jsonb
+  );
+$$);
 ```
 
 ---
 
-## Ordem de Implementacao
+## O Que Já Funciona
 
-### Passo 1: Componentes Base (UI)
-1. WhereToWatchCard.tsx
-2. ExternalNewsCard.tsx
-3. GeneratedNewsCard.tsx
-
-### Passo 2: Secoes Compostas
-4. WhereToWatchSection.tsx
-5. BrasileiraoNewsSection.tsx
-
-### Passo 3: Paginas Admin
-6. BrasileiraoSync.tsx
-7. BrasileiraoBroadcasts.tsx
-8. BrasileiraoNews.tsx
-
-### Passo 4: Atualizacoes
-9. Atualizar EsportesDashboard.tsx
-10. Atualizar BrasileiraoPage.tsx com abas
-11. Atualizar MatchDetailPage.tsx
-
-### Passo 5: Nova Pagina Publica
-12. GeneratedNewsDetail.tsx
-
-### Passo 6: Rotas
-13. Atualizar App.tsx com todas as rotas
+1. **✅ Geração de Notícias IA** - Testado e criou artigo com sucesso
+2. **✅ Hooks React** - Todos os 14 hooks funcionando
+3. **✅ Admin UI** - 3 páginas de gestão criadas
+4. **✅ Public UI** - Abas e componentes implementados
+5. **✅ Sistema de Logs** - Registrando erros corretamente
+6. **✅ Rate Limiting** - Token bucket funcionando
+7. **✅ Circuit Breaker** - Proteção ativando após falhas
 
 ---
 
-## Criterios de Aceite
+## Próximos Passos
 
-| # | Criterio |
-|---|----------|
-| 1 | Admin pode ver status de todas as fontes |
-| 2 | Admin pode disparar sync manual de cada fonte |
-| 3 | Admin pode editar transmissoes manualmente |
-| 4 | Admin pode ver e gerenciar noticias geradas |
-| 5 | Usuario ve abas na pagina do Brasileirao |
-| 6 | Usuario ve noticias do GE/oGol |
-| 7 | Usuario ve noticias geradas pelo portal |
-| 8 | Usuario ve onde assistir por jogo |
-| 9 | Pagina de jogo mostra card onde assistir |
-| 10 | Noticias geradas tem SEO otimizado |
+1. Corrigir URLs e estratégia de scraping
+2. Implementar CRON para automação
+3. Adicionar fonte alternativa (API de futebol gratuita)
+4. Testar fluxo completo end-to-end
