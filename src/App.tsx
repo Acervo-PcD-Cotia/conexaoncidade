@@ -106,6 +106,14 @@ import EsportesDashboard from "./pages/admin/esportes/EsportesDashboard";
 import BrasileiraoHome from "./pages/admin/esportes/BrasileiraoHome";
 import EsportesEstatisticas from "./pages/admin/esportes/EsportesEstatisticas";
 
+// Public Esportes Pages
+import BrasileiraoPage from "./pages/public/esportes/BrasileiraoPage";
+import SerieDetailPage from "./pages/public/esportes/SerieDetailPage";
+import MatchDetailPage from "./pages/public/esportes/MatchDetailPage";
+import TeamDetailPage from "./pages/public/esportes/TeamDetailPage";
+import RoundPage from "./pages/public/esportes/RoundPage";
+import TopScorersPage from "./pages/public/esportes/TopScorersPage";
+
 // Publidoor Pages
 import PublidoorDashboard from "./pages/admin/publidoor/PublidoorDashboard";
 import PublidoorCreate from "./pages/admin/publidoor/PublidoorCreate";
@@ -363,6 +371,14 @@ const App = () => (
                       {/* Public Streaming Pages */}
                       <Route path="/radio" element={<RadioPage />} />
                       <Route path="/tv" element={<TvPage />} />
+                      
+                      {/* Public Esportes Routes */}
+                      <Route path="/esportes/brasileirao" element={<BrasileiraoPage />} />
+                      <Route path="/esportes/brasileirao/:serie" element={<SerieDetailPage />} />
+                      <Route path="/esportes/brasileirao/:serie/rodada/:round" element={<RoundPage />} />
+                      <Route path="/esportes/brasileirao/:serie/jogo/:slug" element={<MatchDetailPage />} />
+                      <Route path="/esportes/brasileirao/:serie/time/:slug" element={<TeamDetailPage />} />
+                      <Route path="/esportes/brasileirao/:serie/estatisticas/artilharia" element={<TopScorersPage />} />
                       
                       {/* Studio Guest Entry */}
                       <Route path="/studio/join/:token" element={<ConexaoStudioGuestEntry />} />

@@ -188,3 +188,6 @@ verify_jwt = false
 
 [functions.enem-correct-essay]
 verify_jwt = false
+
+[functions.football-api]
+verify_jwt = false
