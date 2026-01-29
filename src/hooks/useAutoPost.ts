@@ -645,3 +645,51 @@ export function useAutoPostScheduledPublishes() {
     }
   });
 }
+
+// =====================================================
+// CLUSTER CITIES (Grande Cotia Region)
+// =====================================================
+
+export interface ClusterCity {
+  id: string;
+  name: string;
+  slug: string;
+  is_central: boolean;
+  priority: number;
+  seo_terms: string[] | null;
+  created_at: string;
+}
+
+export function useClusterCities() {
+  return useQuery({
+    queryKey: ['autopost-cluster-cities'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('autopost_cluster_cities')
+        .select('*')
+        .order('priority')
+        .order('name');
+      
+      if (error) throw error;
+      return data as ClusterCity[];
+    },
+    staleTime: 24 * 60 * 60 * 1000, // 24 hours - cities rarely change
+  });
+}
+
+export function useCentralCity() {
+  return useQuery({
+    queryKey: ['autopost-central-city'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('autopost_cluster_cities')
+        .select('*')
+        .eq('is_central', true)
+        .single();
+      
+      if (error) throw error;
+      return data as ClusterCity;
+    },
+    staleTime: 24 * 60 * 60 * 1000,
+  });
+}

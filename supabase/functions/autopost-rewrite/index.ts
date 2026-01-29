@@ -51,22 +51,52 @@ serve(async (req) => {
       .update({ status: "processing" })
       .eq("id", item_id);
 
-    // Build the rewrite prompt
-    const systemPrompt = `Você é um editor jornalístico profissional brasileiro. Sua tarefa é reescrever notícias mantendo:
-- Tom jornalístico neutro e objetivo
-- Estrutura de pirâmide invertida (mais importante primeiro)
-- Parágrafos curtos e diretos
-- Linguagem acessível ao público geral
-- Fidelidade aos fatos originais
+    // Build the rewrite prompt with regional context for Grande Cotia
+    const clusterCities = [
+      "Cotia", "Itapevi", "Vargem Grande Paulista", "São Roque", "Ibiúna",
+      "Embu-Guaçu", "Embu das Artes", "Itapecerica da Serra", "São Lourenço da Serra",
+      "São Paulo", "Osasco", "Jandira", "Carapicuíba", "Barueri"
+    ];
+    
+    const systemPrompt = `Você é um editor jornalístico sênior do portal Conexão na Cidade.
 
-REGRAS DE SEO:
+SOBRE O PORTAL:
+O Conexão na Cidade é o principal portal de notícias da região de Cotia e municípios vizinhos, conhecida como "Grande Cotia" ou "Região Oeste da Grande São Paulo".
+
+MUNICÍPIOS DO CLUSTER:
+- Cotia (cidade central)
+- Itapevi, Vargem Grande Paulista, São Roque, Ibiúna
+- Embu-Guaçu, Embu das Artes, Itapecerica da Serra, São Lourenço da Serra
+- São Paulo, Osasco, Jandira, Carapicuíba, Barueri
+
+REGRAS DE REESCRITA:
+1. NUNCA copie o título ou estrutura original
+2. Crie um texto 100% novo, como um jornalista humano faria
+3. Mantenha fidelidade absoluta aos fatos e dados
+4. Use linguagem clara, natural e regional
+5. Insira contexto da região de Cotia quando fizer sentido
+6. Mencione impacto em cidades vizinhas se relevante
+
+TERMOS SEO REGIONAIS (usar naturalmente quando aplicável):
+- "região de Cotia"
+- "Grande Cotia"
+- "municípios vizinhos"
+- "{cidade} e região"
+
+ESTRUTURA DO ARTIGO:
+- Primeiro parágrafo: responda O QUÊ, QUEM, QUANDO, ONDE
+- Parágrafos curtos (2-4 frases)
+- Use subtítulos <h2> para dividir seções longas
+
+REGRAS SEO:
 - Título: 6-120 caracteres, com palavra-chave principal
 - Meta título: máximo 60 caracteres
-- Meta descrição: máximo 160 caracteres
+- Meta descrição: máximo 160 caracteres (call-to-action)
 - Resumo/excerpt: máximo 160 caracteres
-- Gere exatamente 12 tags relevantes
+- Exatamente 12 tags relevantes
+- Incluir nome da cidade nas tags quando identificável
 
-IMPORTANTE: Retorne APENAS um JSON válido, sem markdown ou texto adicional.`;
+IMPORTANTE: Retorne APENAS JSON válido, sem markdown ou texto adicional.`;
 
     const userPrompt = `Reescreva esta notícia:
 
@@ -76,6 +106,7 @@ CONTEÚDO ORIGINAL:
 ${item.original_content || item.original_excerpt || "Sem conteúdo disponível"}
 
 FONTE: ${item.source?.name || "Desconhecida"}
+CIDADE DA FONTE: ${item.source?.city || "Não especificada"}
 
 Retorne um JSON com esta estrutura exata:
 {
@@ -85,7 +116,8 @@ Retorne um JSON com esta estrutura exata:
   "meta_title": "título SEO (max 60 chars)",
   "meta_description": "descrição meta (max 160 chars)",
   "tags": ["tag1", "tag2", ... até 12 tags],
-  "slug": "url-amigavel-do-titulo"
+  "slug": "url-amigavel-do-titulo",
+  "cities_mentioned": ["Cotia", "outras cidades mencionadas"]
 }`;
 
     if (!lovableApiKey) {
@@ -146,13 +178,14 @@ Retorne um JSON com esta estrutura exata:
     const tags = Array.isArray(rewritten.tags) ? rewritten.tags.slice(0, 12) : [];
     const slug = rewritten.slug || generateSlug(finalTitle);
     const contentHtml = rewritten.content_html || `<p>${summary}</p>`;
+    const citiesMentioned = Array.isArray(rewritten.cities_mentioned) ? rewritten.cities_mentioned : [];
 
     // Generate source credit
     const sourceCredit = item.source?.credit_template
       ? item.source.credit_template.replace("{source_name}", item.source.name)
       : `Fonte: ${item.source?.name || "Não informada"}`;
 
-    // Create rewritten post
+    // Create rewritten post with cities mentioned
     const { data: post, error: postError } = await supabase
       .from("autopost_rewritten_posts")
       .insert({
@@ -165,6 +198,7 @@ Retorne um JSON com esta estrutura exata:
         seo_meta_title: metaTitle,
         seo_meta_description: metaDescription,
         tags,
+        cities_mentioned: citiesMentioned,
         source_credit: sourceCredit,
         source_url: item.original_url,
         hero_image_url: item.original_image_url,

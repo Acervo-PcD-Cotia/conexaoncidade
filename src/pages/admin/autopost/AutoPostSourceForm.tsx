@@ -24,11 +24,30 @@ import {
 import { useCategories } from "@/hooks/useCategories";
 import { supabase } from "@/integrations/supabase/client";
 
+// Grande Cotia cluster cities for the select
+const CLUSTER_CITIES = [
+  { value: "cotia", label: "Cotia" },
+  { value: "itapevi", label: "Itapevi" },
+  { value: "vargem-grande-paulista", label: "Vargem Grande Paulista" },
+  { value: "sao-roque", label: "São Roque" },
+  { value: "ibiuna", label: "Ibiúna" },
+  { value: "embu-guacu", label: "Embu-Guaçu" },
+  { value: "embu-das-artes", label: "Embu das Artes" },
+  { value: "itapecerica-da-serra", label: "Itapecerica da Serra" },
+  { value: "sao-lourenco-da-serra", label: "São Lourenço da Serra" },
+  { value: "sao-paulo", label: "São Paulo" },
+  { value: "osasco", label: "Osasco" },
+  { value: "jandira", label: "Jandira" },
+  { value: "carapicuiba", label: "Carapicuíba" },
+  { value: "barueri", label: "Barueri" },
+];
+
 const sourceSchema = z.object({
   name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
   site_url: z.string().url("URL inválida"),
   feed_url: z.string().url("URL do feed inválida").optional().or(z.literal("")),
   source_type: z.enum(["rss", "sitemap", "html_crawler", "api", "manual_url"]),
+  city: z.string().optional().nullable(),
   
   group_id: z.string().optional().nullable(),
   default_category_id: z.string().optional().nullable(),
@@ -66,6 +85,7 @@ export default function AutoPostSourceForm() {
       site_url: "",
       feed_url: "",
       source_type: "rss",
+      city: null,
       group_id: null,
       default_category_id: null,
       default_author: "",
@@ -86,6 +106,7 @@ export default function AutoPostSourceForm() {
         site_url: source.site_url,
         feed_url: source.feed_url || "",
         source_type: source.source_type || "rss",
+        city: source.city || null,
         group_id: source.group_id,
         default_category_id: source.default_category_id,
         default_author: source.default_author || "",
@@ -138,6 +159,7 @@ export default function AutoPostSourceForm() {
       site_url: data.site_url,
       feed_url: data.feed_url || null,
       source_type: data.source_type,
+      city: data.city || null,
       group_id: data.group_id || null,
       default_category_id: data.default_category_id || null,
       default_author: data.default_author || null,
@@ -240,6 +262,36 @@ export default function AutoPostSourceForm() {
                           <SelectItem value="manual_url">URL Manual</SelectItem>
                         </SelectContent>
                       </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cidade</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value || "none"}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione uma cidade" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">Não especificada</SelectItem>
+                          {CLUSTER_CITIES.map((city) => (
+                            <SelectItem key={city.value} value={city.value}>
+                              {city.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>Município da Grande Cotia</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
