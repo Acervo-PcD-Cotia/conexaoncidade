@@ -101,6 +101,11 @@ import EnemLessonPage from "./pages/admin/academy/EnemLesson";
 import EnemSubmissions from "./pages/admin/academy/EnemSubmissions";
 import EnemSubmissionDetail from "./pages/admin/academy/EnemSubmissionDetail";
 
+// Esportes Pages
+import EsportesDashboard from "./pages/admin/esportes/EsportesDashboard";
+import BrasileiraoHome from "./pages/admin/esportes/BrasileiraoHome";
+import EsportesEstatisticas from "./pages/admin/esportes/EsportesEstatisticas";
+
 // Publidoor Pages
 import PublidoorDashboard from "./pages/admin/publidoor/PublidoorDashboard";
 import PublidoorCreate from "./pages/admin/publidoor/PublidoorCreate";
@@ -447,6 +452,11 @@ const App = () => (
                         <Route path="academy/enem/:slug/semana/:weekNumber/aula/:lessonId" element={<EnemLessonPage />} />
                         <Route path="academy/enem/:slug/minhas-redacoes" element={<EnemSubmissions />} />
                         <Route path="academy/enem/:slug/redacao/:submissionId" element={<EnemSubmissionDetail />} />
+                        
+                        {/* Esportes Routes */}
+                        <Route path="esportes" element={<EsportesDashboard />} />
+                        <Route path="esportes/brasileirao" element={<BrasileiraoHome />} />
+                        <Route path="esportes/estatisticas" element={<EsportesEstatisticas />} />
                         
                         {/* Publidoor Routes */}
                         <Route path="publidoor" element={<PublidoorDashboard />} />

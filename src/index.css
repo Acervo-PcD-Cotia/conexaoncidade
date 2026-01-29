@@ -119,6 +119,45 @@
     --sidebar-ring: 25 95% 53%;
     --sidebar-active-bg: 200 50% 20%;
     --sidebar-hover: 200 50% 16%;
+
+    /* ============ PRESET TOKENS (default: institutional) ============ */
+    --card-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    --card-shadow-hover: 0 4px 12px rgba(0,0,0,0.12);
+    --border-strength: 0.08;
+    --glow-accent: none;
+  }
+
+  /* ============ THEME PRESETS ============ */
+  
+  /* Preset: Institutional - Suave, profissional, sombras leves */
+  html[data-preset="institutional"] {
+    --radius: 0.75rem;
+    --card-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    --card-shadow-hover: 0 4px 16px rgba(0,0,0,0.1);
+    --border-strength: 0.08;
+    --glow-accent: none;
+  }
+
+  html[data-preset="institutional"].dark {
+    --card-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    --card-shadow-hover: 0 6px 20px rgba(0,0,0,0.3);
+    --border-strength: 0.12;
+  }
+
+  /* Preset: Tech - Alto contraste, bordas nítidas, glow sutil */
+  html[data-preset="tech"] {
+    --radius: 0.5rem;
+    --card-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    --card-shadow-hover: 0 8px 24px rgba(0,0,0,0.18);
+    --border-strength: 0.15;
+    --glow-accent: 0 0 16px hsl(25 95% 53% / 0.2);
+  }
+
+  html[data-preset="tech"].dark {
+    --card-shadow: 0 2px 12px rgba(0,0,0,0.4);
+    --card-shadow-hover: 0 8px 32px rgba(0,0,0,0.5);
+    --border-strength: 0.2;
+    --glow-accent: 0 0 24px hsl(25 95% 55% / 0.25);
   }
 
   .dark {
