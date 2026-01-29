@@ -1,517 +1,414 @@
 
-# Plano: Redesign Completo do Dashboard — Estilo Institucional Premium
+# Plano: Redesign Completo do Dashboard — Estilo ITL Brasil
 
-## Resumo Executivo
+## Visao Geral
 
-Redesenhar completamente o layout do Dashboard (/admin) para um visual "quiet premium" institucional, inspirado no modelo ITL Brasil. O sistema de tema (light/dark/system) e tokens já existem e **não serão alterados**. O foco é reorganização estrutural, hierarquia visual e componentização premium.
+Redesenhar completamente o Dashboard administrativo para um visual limpo e moderno inspirado no painel ITL Brasil. O novo design terá:
 
----
-
-## 1. Análise do Estado Atual
-
-### Problemas Identificados
-
-| Problema | Localização | Impacto |
-|----------|-------------|---------|
-| Cards muito "gordos" | statsCards (p-6) | Visual pesado |
-| Grid desbalanceado | main grid 8/4 cols | Coluna lateral estreita |
-| Ícones grandes demais | h-6 w-6 nos stats | Desproporcionais |
-| "Ações Rápidas" ocupa muito espaço | grid-cols-4, cards grandes | Poluição visual |
-| Header com gradiente desnecessário | dashboard-header-premium | Visual não-institucional |
-| Badges de status hardcoded | text-emerald-700, etc. | Violação de tokens |
-
-### O Que Funciona
-
-- ✅ Tokens semânticos (primary, muted-foreground, border)
-- ✅ Ícones usando text-primary
-- ✅ Cards usando bg-card e border-border
-- ✅ Sistema de tema funcionando
+- Cards de KPI com fundos em gradiente suave (tons azuis/verdes)
+- Layout de duas colunas invertido (esquerda mais estreita, direita mais larga)
+- Painéis funcionais específicos: Acessibilidade, Mais Pesquisadas, Gestão de Usuários, Logs, Estatísticas
+- Visual clean com badges coloridos e hierarquia tipográfica clara
 
 ---
 
-## 2. Nova Estrutura do Dashboard
-
-### Layout em Grid 12 Colunas
+## 1. Novo Layout Estrutural
 
 ```text
-┌──────────────────────────────────────────────────────────────────────────────┐
-│ HEADER - Compacto, limpo, sem gradiente pesado                              │
-│ h-14 (reduzido de h-24)                                                     │
-│ Logo menor + Título + [Busca] [Alertas] [Nova Notícia]                      │
-├──────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  LINHA 1: KPI CARDS (4 colunas iguais)                                       │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐                        │
-│  │Publicadas│ │  Total   │ │ Stories  │ │  Views   │                        │
-│  │   12     │ │  1,247   │ │    18    │ │  45.2K   │                        │
-│  └──────────┘ └──────────┘ └──────────┘ └──────────┘                        │
-│  Cards compactos (p-4), ícone h-4 w-4, sem sombras pesadas                   │
-│                                                                              │
-│  LINHA 2: CORPO (8 cols principal + 4 cols lateral)                          │
-│  ┌───────────────────────────────────────────┐  ┌──────────────────────────┐│
-│  │ COLUNA PRINCIPAL (col-span-8)             │  │ COLUNA LATERAL (col-4)   ││
-│  │                                           │  │                          ││
-│  │ ┌───────────────────────────────────────┐ │  │ ┌──────────────────────┐ ││
-│  │ │ 📰 ARTIGOS RECENTES                   │ │  │ │ Produção Editorial   │ ││
-│  │ │ Lista compacta com badges + datas     │ │  │ │ • Rascunhos: 12     │ ││
-│  │ │ Sem cards internos, apenas linhas     │ │  │ │ • Em Revisão: 3     │ ││
-│  │ └───────────────────────────────────────┘ │  │ │ • Agendadas: 5      │ ││
-│  │                                           │  │ │ • Publicadas: 8     │ ││
-│  │ ┌───────────────────────────────────────┐ │  │ └──────────────────────┘ ││
-│  │ │ 🔥 MAIS LIDAS                         │ │  │                          ││
-│  │ │ Top 5 compacto com ranking medals     │ │  │ ┌──────────────────────┐ ││
-│  │ └───────────────────────────────────────┘ │  │ │ 📊 Audiência         │ ││
-│  │                                           │  │ │ Views | Online | Users│ ││
-│  │ ┌───────────────────────────────────────┐ │  │ └──────────────────────┘ ││
-│  │ │ ⚡ AÇÕES RÁPIDAS (grid compacto)      │ │  │                          ││
-│  │ │ Grid 6 cols com botões icon-only      │ │  │ ┌──────────────────────┐ ││
-│  │ └───────────────────────────────────────┘ │  │ │ 💰 Receita           │ ││
-│  │                                           │  │ │ Publidoor + Ads CTR  │ ││
-│  └───────────────────────────────────────────┘  │ └──────────────────────┘ ││
-│                                                  └──────────────────────────┘│
-└──────────────────────────────────────────────────────────────────────────────┘
++------------------------------------------------------------------+
+| HEADER: "Dashboard" | "Visão geral do sistema..."                |
++------------------------------------------------------------------+
+|                                                                  |
+| KPI CARDS (4 colunas iguais, gradientes azuis/verdes)            |
+| [Artigos Publicados] [Categorias] [Feeds RSS] [Importacoes Hoje] |
+|                                                                  |
++-------------------------+----------------------------------------+
+| COLUNA ESQUERDA (5 cols)|  COLUNA DIREITA (7 cols)               |
+|                         |                                        |
+| [Acessibilidade]        |  [Artigos Recentes]                    |
+|  - VLibras Toggle       |   - Lista com badges de categoria      |
+|  - Leitor de Página     |   - Indicador de tempo relativo        |
+|  - Controles Visuais    |   - Bullet colorido por status         |
+|                         |                                        |
+| [Mais Pesquisadas]      |                                        |
+|  - Top 3 com badges     |                                        |
+|    numerados (#1, #2)   |                                        |
+|  - Contagem de views    |                                        |
+|                         |                                        |
+| [Gestão de Usuários]    |                                        |
+|  - Novo Usuário         |                                        |
+|  - Listar Usuários      |                                        |
+|  - Permissões           |                                        |
+|                         |                                        |
++-------------------------+----------------------------------------+
+|                                                                  |
+| [Logs de Importação]            [Estatísticas Rápidas]           |
+|  - Lista de feeds               - Artigos esta semana: 21        |
+|  - Badge "Sucesso"              - Feeds ativos: 0                |
+|  - Timestamp                    - Média views/artigo: 139        |
+|                                 - Taxa sucesso RSS: 95% [bar]    |
++------------------------------------------------------------------+
 ```
 
 ---
 
-## 3. Novos Componentes Reutilizáveis
+## 2. Novos Componentes a Criar
 
-### 3.1 DashboardPanel
+### 2.1 GradientKpiCard
 
-Componente wrapper para painéis consistentes:
-
-```typescript
-interface DashboardPanelProps {
-  title: string;
-  description?: string;
-  icon?: LucideIcon;
-  action?: React.ReactNode;  // Botão "Ver todas" etc
-  children: React.ReactNode;
-  className?: string;
-}
-```
-
-**Estilos:**
-- Fundo: `bg-card`
-- Borda: `border border-border`
-- Header: `p-4 border-b border-border` (menor que p-5)
-- Título: `text-sm font-semibold` (não text-lg)
-- Ícone: `h-4 w-4 text-primary` (discreto)
-
-### 3.2 KpiCard
-
-Card de KPI padronizado e compacto:
+Card de KPI com fundo em gradiente suave:
 
 ```typescript
-interface KpiCardProps {
+interface GradientKpiCardProps {
   title: string;
   value: string | number;
+  subtitle?: string;
+  trend?: { value: string; positive?: boolean };
   icon: LucideIcon;
-  trend?: { value: number; label: string };
+  gradient: "blue" | "green" | "orange" | "purple";
 }
 ```
 
 **Estilos:**
-- Card: `bg-card border-border p-4` (não p-6)
-- Título: `text-xs font-medium text-muted-foreground uppercase`
-- Valor: `text-2xl font-bold` (não text-4xl)
-- Ícone: `h-4 w-4 text-primary` em container `p-2 bg-primary/10 rounded-lg`
-- Hover: apenas `hover:shadow-sm`, sem lift
+- Fundo: gradiente suave horizontal (ex: `from-blue-50 to-blue-100/50`)
+- Borda: `border border-blue-200/50`
+- Ícone: posicionado no canto superior direito, cor coordenada
+- Valor: `text-3xl font-bold text-foreground`
+- Subtitle: `text-xs text-muted-foreground`
+- Trend: texto pequeno verde/vermelho com seta
 
-### 3.3 CompactList
+### 2.2 AccessibilityPanel
 
-Lista compacta para itens com status:
+Painel de acessibilidade completo:
 
-```typescript
-interface CompactListProps {
-  items: Array<{
-    id: string;
-    title: string;
-    status?: string;
-    meta?: string;
-    href?: string;
-  }>;
-  emptyMessage?: string;
-}
-```
+- Toggle VLibras com descrição
+- Botão "Ler Página"
+- Controles visuais: Tamanho fonte (A-/100%/A+), Alto Contraste, Dislexia, Espaçamento
+- Link "Configurações de Acessibilidade"
 
-**Estilos:**
-- Item: `py-2 border-b border-border/50 last:border-0`
-- Título: `text-sm font-medium line-clamp-1`
-- Meta: `text-[10px] text-muted-foreground`
-- Hover: `hover:bg-muted/30`
+### 2.3 TrendingPanel
+
+Painel "Mais Pesquisadas":
+
+- Ícone de trending no header
+- Lista compacta com badges numerados (#1, #2, #3) em coral/laranja
+- Contagem de visualizações
+- Título truncado
+
+### 2.4 UserManagementPanel
+
+Links de gestão de usuários:
+
+- Ícone + texto para cada ação
+- Hover com background sutil
+- Links: Novo Usuário, Listar Usuários, Permissões
+
+### 2.5 ImportLogsPanel
+
+Logs de importação RSS:
+
+- Lista de feeds com nome + contagem
+- Badge "Sucesso" em verde
+- Timestamp relativo
+
+### 2.6 QuickStatsPanel
+
+Estatísticas rápidas:
+
+- Linhas de stat com label + valor
+- Valores numéricos alinhados à direita em cor destaque
+- Barra de progresso para taxas percentuais
+
+---
+
+## 3. Modificacoes por Arquivo
+
+### Arquivos a CRIAR
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `src/components/admin/dashboard/GradientKpiCard.tsx` | KPI com gradiente |
+| `src/components/admin/dashboard/AccessibilityPanel.tsx` | Painel de acessibilidade |
+| `src/components/admin/dashboard/TrendingPanel.tsx` | Mais pesquisadas |
+| `src/components/admin/dashboard/UserManagementPanel.tsx` | Gestão de usuários |
+| `src/components/admin/dashboard/ImportLogsPanel.tsx` | Logs de importação |
+| `src/components/admin/dashboard/QuickStatsPanel.tsx` | Estatísticas rápidas |
+| `src/components/admin/dashboard/RecentArticlesPanel.tsx` | Artigos recentes estilo ITL |
+
+### Arquivos a MODIFICAR
+
+| Arquivo | Mudanças |
+|---------|----------|
+| `src/pages/admin/Dashboard.tsx` | Layout completamente novo, remover componentes antigos, usar novos painéis |
+| `src/index.css` | Adicionar classes de gradiente para KPIs |
+
+### Arquivos que PODEM SER REMOVIDOS (apos migracao)
+
+| Arquivo | Motivo |
+|---------|--------|
+| `src/components/admin/dashboard/KpiCard.tsx` | Substituído por GradientKpiCard |
+| `src/components/admin/dashboard/QuickActionsGrid.tsx` | Não existe no novo design |
+| `src/components/admin/dashboard/DashboardProductionCard.tsx` | Substituído por novos painéis |
+| `src/components/admin/dashboard/DashboardAudienceCard.tsx` | Substituído por QuickStatsPanel |
+| `src/components/admin/dashboard/DashboardRevenueCard.tsx` | Pode ser integrado em stats |
 
 ---
 
 ## 4. Detalhes de Implementação
 
-### 4.1 Header Simplificado
+### 4.1 GradientKpiCard
 
-**Antes:**
-```tsx
-<header className="h-24 ... dashboard-header-premium">
+```typescript
+// Mapeamento de gradientes
+const gradients = {
+  blue: "from-blue-50 to-blue-100/30 border-blue-200/50",
+  green: "from-emerald-50 to-emerald-100/30 border-emerald-200/50",
+  orange: "from-orange-50 to-orange-100/30 border-orange-200/50",
+  purple: "from-violet-50 to-violet-100/30 border-violet-200/50",
+};
+
+const iconColors = {
+  blue: "text-blue-500 bg-blue-100",
+  green: "text-emerald-500 bg-emerald-100",
+  orange: "text-orange-500 bg-orange-100",
+  purple: "text-violet-500 bg-violet-100",
+};
 ```
 
-**Depois:**
+### 4.2 Header Simplificado
+
+**Antes:** Header com logo, busca, alertas, botão Nova Notícia
+
+**Depois:** Header mínimo apenas com título da página
 ```tsx
-<header className="h-14 shrink-0 flex items-center justify-between px-6 border-b border-border bg-card">
-  {/* Logo menor (h-8) + Título compacto */}
-  {/* Busca + Alertas + Nova Notícia (botões menores) */}
+<header className="px-6 py-4">
+  <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+  <p className="text-sm text-muted-foreground">
+    Visão geral do sistema de notícias Conexão na Cidade
+  </p>
 </header>
 ```
 
-### 4.2 KPI Cards Compactos
+### 4.3 Artigos Recentes (Novo Estilo)
 
-**Antes:**
+- Bullet colorido à esquerda (indicador de categoria/status)
+- Título em negrito
+- Badge de categoria escuro
+- Timestamp em texto muted
+
 ```tsx
-<Card className="...">
-  <CardContent className="p-6">
-    <div className="p-3 rounded-xl bg-primary/10">
-      <stat.icon className="h-6 w-6 text-primary" />
+<div className="flex items-start gap-3 py-3 border-b last:border-0">
+  <div className="w-2 h-2 mt-2 rounded-full bg-emerald-500" />
+  <div className="flex-1 min-w-0">
+    <p className="font-medium text-sm line-clamp-2">{title}</p>
+    <div className="flex items-center gap-2 mt-1">
+      <span className="px-2 py-0.5 text-xs bg-neutral-900 text-white rounded">
+        {category}
+      </span>
+      <span className="text-xs text-muted-foreground">{timeAgo}</span>
     </div>
-    <p className="dashboard-stat-xl">{value}</p>  {/* text-4xl */}
-  </CardContent>
-</Card>
+  </div>
+</div>
 ```
 
-**Depois:**
-```tsx
-<KpiCard
-  title="Publicadas Hoje"
-  value={12}
-  icon={Newspaper}
-/>
+### 4.4 Badges Numerados (Trending)
 
-// Internamente:
-<Card className="bg-card border-border">
-  <CardContent className="p-4">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-          {title}
-        </p>
-        <p className="text-2xl font-bold tabular-nums mt-1">{value}</p>
-      </div>
-      <div className="p-2 rounded-lg bg-primary/10">
-        <Icon className="h-4 w-4 text-primary" />
-      </div>
+```tsx
+<span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-coral-100 text-coral-600 text-xs font-bold">
+  #{index + 1}
+</span>
+```
+
+### 4.5 Painel de Acessibilidade
+
+Componentes:
+- Switch para VLibras
+- Botão "Ler Página" com ícone play
+- Slider/botões para tamanho de fonte (A-, 100%, A+)
+- Toggle para Alto Contraste
+- Toggle para Fonte Amigável à Dislexia
+- Select para Espaçamento de Linhas
+
+---
+
+## 5. Cores e Gradientes
+
+### Gradientes dos KPI Cards
+
+| Card | Gradiente |
+|------|-----------|
+| Artigos Publicados | blue: `from-sky-50 to-sky-100/30` |
+| Categorias | green: `from-teal-50 to-teal-100/30` |
+| Feeds RSS | blue: `from-blue-50 to-blue-100/30` |
+| Importações Hoje | purple: `from-violet-50 to-violet-100/30` |
+
+### Cores de Badge
+
+| Tipo | Cor |
+|------|-----|
+| Ranking (#1, #2, #3) | Coral/Salmon (`bg-[#FEE2E2]` `text-[#DC2626]`) |
+| Sucesso | Verde (`bg-emerald-100 text-emerald-700`) |
+| Categoria | Cinza escuro (`bg-neutral-800 text-white`) |
+
+---
+
+## 6. Layout Grid Final
+
+```tsx
+<div className="p-6 space-y-6">
+  {/* Header */}
+  <header>...</header>
+  
+  {/* KPI Cards - 4 colunas */}
+  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <GradientKpiCard gradient="blue" ... />
+    <GradientKpiCard gradient="green" ... />
+    <GradientKpiCard gradient="blue" ... />
+    <GradientKpiCard gradient="purple" ... />
+  </div>
+  
+  {/* Main Content - 5+7 colunas */}
+  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    {/* Coluna Esquerda */}
+    <div className="lg:col-span-5 space-y-6">
+      <AccessibilityPanel />
+      <TrendingPanel />
+      <UserManagementPanel />
     </div>
-  </CardContent>
-</Card>
-```
-
-### 4.3 Badges de Status (Corrigir Hardcoded)
-
-**Antes (hardcoded):**
-```tsx
-const styles: Record<string, string> = {
-  published: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-  draft: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-  ...
-};
-```
-
-**Depois (usando tokens):**
-```tsx
-const styles: Record<string, string> = {
-  published: "bg-money/10 text-money",
-  draft: "bg-muted text-muted-foreground",
-  scheduled: "bg-brand/10 text-brand",
-  review: "bg-primary/10 text-primary",
-};
-```
-
-### 4.4 Ações Rápidas Compactas
-
-**Antes:** Grid 4 cols com cards grandes contendo ícone + título + descrição
-
-**Depois:** Grid 6-8 cols com botões icon-only + tooltip
-
-```tsx
-<div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
-  {quickActions.map((action) => (
-    <Tooltip key={action.title}>
-      <TooltipTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-12 w-full flex flex-col gap-1 hover:bg-muted"
-          onClick={action.onClick}
-          asChild={!!action.href}
-        >
-          {action.href ? (
-            <Link to={action.href}>
-              <action.icon className="h-4 w-4 text-primary" />
-              <span className="text-[10px] text-muted-foreground truncate">
-                {action.title}
-              </span>
-            </Link>
-          ) : (
-            <>
-              <action.icon className="h-4 w-4 text-primary" />
-              <span className="text-[10px] text-muted-foreground truncate">
-                {action.title}
-              </span>
-            </>
-          )}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>{action.description}</TooltipContent>
-    </Tooltip>
-  ))}
+    
+    {/* Coluna Direita */}
+    <div className="lg:col-span-7">
+      <RecentArticlesPanel />
+    </div>
+  </div>
+  
+  {/* Footer Panels - 2 colunas */}
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <ImportLogsPanel />
+    <QuickStatsPanel />
+  </div>
 </div>
 ```
 
 ---
 
-## 5. Arquivos a Modificar
+## 7. Remocoes e Limpeza
 
-### Novos Arquivos
+### Elementos a Remover do Design Atual
 
-| Arquivo | Descrição |
-|---------|-----------|
-| `src/components/admin/dashboard/DashboardPanel.tsx` | Wrapper premium para painéis |
-| `src/components/admin/dashboard/KpiCard.tsx` | Card de KPI compacto padronizado |
-| `src/components/admin/dashboard/CompactList.tsx` | Lista compacta de itens |
-| `src/components/admin/dashboard/QuickActionsGrid.tsx` | Grid de ações compactas |
+- Header complexo com logo, busca global, alertas (mover para layout global)
+- KpiCard antigo (substituir por GradientKpiCard)
+- QuickActionsGrid (não existe no novo design)
+- DashboardProductionCard, DashboardAudienceCard, DashboardRevenueCard (consolidar em novos painéis)
+- Popover de alertas (mover para header global ou remover)
+- CommandDialog de busca (mover para componente global)
 
-### Arquivos a Modificar
+### CSS a Adicionar
 
-| Arquivo | Mudanças |
-|---------|----------|
-| `src/pages/admin/Dashboard.tsx` | Reestruturar layout completo, usar novos componentes |
-| `src/components/admin/dashboard/DashboardProductionCard.tsx` | Usar DashboardPanel, simplificar |
-| `src/components/admin/dashboard/DashboardRevenueCard.tsx` | Usar DashboardPanel, simplificar |
-| `src/components/admin/dashboard/DashboardAudienceCard.tsx` | Usar DashboardPanel, simplificar |
-| `src/index.css` | Ajustar `.dashboard-stat-xl` para text-2xl, remover gradientes desnecessários |
-
----
-
-## 6. Padronização de Espaçamento
-
-### Regras de Espaçamento
-
-| Elemento | Antes | Depois |
-|----------|-------|--------|
-| Header height | h-24 | h-14 |
-| Card padding | p-6 | p-4 |
-| Section gap | gap-6 | gap-4 |
-| Icon size (KPI) | h-6 w-6 | h-4 w-4 |
-| Icon container | p-3 | p-2 |
-| Título seção | text-lg | text-sm font-semibold |
-| Valor KPI | text-4xl | text-2xl |
-| Item lista | py-3 | py-2 |
-
-### Regras de Tipografia
-
-| Elemento | Classe |
-|----------|--------|
-| KPI Label | `text-xs font-medium text-muted-foreground uppercase tracking-wide` |
-| KPI Value | `text-2xl font-bold tabular-nums` |
-| Panel Title | `text-sm font-semibold` |
-| Panel Description | `text-xs text-muted-foreground` |
-| List Item Title | `text-sm font-medium` |
-| List Item Meta | `text-[10px] text-muted-foreground` |
-
----
-
-## 7. Tokens Utilizados (Sem Alteração)
-
-Os tokens existentes serão usados de forma consistente:
-
-| Token | Uso |
-|-------|-----|
-| `bg-card` | Fundo de todos os cards e painéis |
-| `bg-background` | Fundo geral da página |
-| `bg-muted` | Backgrounds hover e estados |
-| `border-border` | Todas as bordas |
-| `text-foreground` | Texto principal |
-| `text-muted-foreground` | Labels e meta |
-| `text-primary` | Ícones de destaque (laranja) |
-| `bg-primary/10` | Container de ícones |
-| `text-money` | Status "publicado", receita |
-| `text-brand` | Status "agendado" |
-
----
-
-## 8. Validação Visual
-
-### Checklist Modo Claro
-
-| Elemento | Esperado |
-|----------|----------|
-| Background geral | Cinza muito claro (#fafafa) |
-| Cards | Brancos com borda cinza sutil |
-| Ícones KPI | Laranja em fundo laranja/10 |
-| Valores | Preto (#1a1a1a) |
-| Labels | Cinza médio |
-| Bordas | Quase invisíveis |
-| Sombras | Mínimas (shadow-sm hover) |
-
-### Checklist Modo Escuro
-
-| Elemento | Esperado |
-|----------|----------|
-| Background geral | Cinza escuro profundo |
-| Cards | Cinza escuro com borda sutil |
-| Ícones KPI | Laranja brilhante |
-| Valores | Branco |
-| Labels | Cinza claro |
-
-### Visual "Quiet Premium"
-
-- [ ] Muito espaço em branco/superfície
-- [ ] Bordas sutis (apenas estruturais)
-- [ ] Sombras quase invisíveis
-- [ ] Cores apenas em ícones, badges, status
-- [ ] Tipografia com hierarquia clara
-- [ ] Cards não competem visualmente
-- [ ] Botão "Nova Notícia" destaque único
-
----
-
-## 9. Resultado Esperado
-
-```text
-✅ Header compacto (h-14) sem gradientes
-✅ KPI Cards pequenos (p-4, text-2xl, icon h-4)
-✅ Grid 8+4 com hierarquia clara
-✅ Artigos Recentes como lista compacta
-✅ Mais Lidas com ranking visual
-✅ Ações Rápidas em grid icon-only
-✅ Coluna lateral com Production/Audience/Revenue
-✅ Badges usando tokens (text-money, text-brand)
-✅ Zero cores hardcoded
-✅ Visual institucional premium
-✅ Funciona perfeitamente em Light/Dark/System
-```
-
----
-
-## 10. Componentes Detalhados
-
-### DashboardPanel.tsx
-
-```typescript
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { LucideIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-
-interface DashboardPanelProps {
-  title: string;
-  description?: string;
-  icon?: LucideIcon;
-  iconColor?: string;
-  action?: React.ReactNode;
-  children: React.ReactNode;
-  className?: string;
-  contentClassName?: string;
+```css
+/* Gradientes suaves para KPIs */
+.kpi-gradient-blue {
+  background: linear-gradient(135deg, hsl(200 85% 96%) 0%, hsl(200 80% 94% / 0.3) 100%);
+  border-color: hsl(200 70% 85% / 0.5);
 }
 
-export function DashboardPanel({
-  title,
-  description,
-  icon: Icon,
-  iconColor = "text-primary",
-  action,
-  children,
-  className,
-  contentClassName,
-}: DashboardPanelProps) {
-  return (
-    <Card className={cn("bg-card border-border", className)}>
-      <CardHeader className="p-4 border-b border-border flex-row items-center justify-between space-y-0">
-        <div className="flex items-center gap-2">
-          {Icon && (
-            <div className="p-1.5 rounded-md bg-muted">
-              <Icon className={cn("h-4 w-4", iconColor)} />
-            </div>
-          )}
-          <div>
-            <h3 className="text-sm font-semibold">{title}</h3>
-            {description && (
-              <p className="text-xs text-muted-foreground">{description}</p>
-            )}
-          </div>
-        </div>
-        {action}
-      </CardHeader>
-      <CardContent className={cn("p-4", contentClassName)}>
-        {children}
-      </CardContent>
-    </Card>
-  );
+.kpi-gradient-green {
+  background: linear-gradient(135deg, hsl(160 70% 95%) 0%, hsl(160 65% 92% / 0.3) 100%);
+  border-color: hsl(160 60% 80% / 0.5);
+}
+
+/* Badge de ranking coral */
+.badge-ranking {
+  background-color: hsl(0 85% 95%);
+  color: hsl(0 70% 50%);
 }
 ```
 
-### KpiCard.tsx
+---
 
-```typescript
-import { Card, CardContent } from "@/components/ui/card";
-import { LucideIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+## 8. Funcionalidades dos Paineis
 
-interface KpiCardProps {
-  title: string;
-  value: string | number;
-  icon: LucideIcon;
-  trend?: {
-    value: number;
-    label: string;
-  };
-  className?: string;
-}
+### AccessibilityPanel
+- Toggle VLibras: estado local + integração futura
+- Leitor de Página: botão que inicia leitura via Web Speech API
+- Tamanho Fonte: A-/100%/A+ que altera CSS root
+- Alto Contraste: toggle que adiciona classe ao body
+- Dislexia: toggle para fonte OpenDyslexic
+- Espaçamento: select 1x, 1.5x, 2x
 
-export function KpiCard({
-  title,
-  value,
-  icon: Icon,
-  trend,
-  className,
-}: KpiCardProps) {
-  const formattedValue = typeof value === "number"
-    ? value >= 1000
-      ? `${(value / 1000).toFixed(1)}K`
-      : value.toLocaleString('pt-BR')
-    : value;
+### TrendingPanel
+- Query: busca top 3-5 notícias por view_count
+- Exibe: ranking badge, título truncado, views
 
-  return (
-    <Card className={cn("bg-card border-border", className)}>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              {title}
-            </p>
-            <p className="text-2xl font-bold tabular-nums mt-1">{formattedValue}</p>
-            {trend && (
-              <p className={cn(
-                "text-[10px] mt-0.5",
-                trend.value >= 0 ? "text-money" : "text-destructive"
-              )}>
-                {trend.value >= 0 ? "+" : ""}{trend.value}% {trend.label}
-              </p>
-            )}
-          </div>
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Icon className="h-4 w-4 text-primary" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-```
+### UserManagementPanel
+- Links estáticos para:
+  - /admin/users/new
+  - /admin/users
+  - /admin/users/permissions
+
+### ImportLogsPanel
+- Query: últimos 5-10 registros de importação RSS
+- Exibe: nome do feed, status badge, timestamp
+
+### QuickStatsPanel
+- Queries agregadas:
+  - Artigos esta semana (count com filtro de data)
+  - Feeds ativos (count de feeds com enabled=true)
+  - Média views/artigo (avg de view_count)
+  - Taxa sucesso RSS (% de importações com sucesso)
+- Barra de progresso visual para taxa
+
+---
+
+## 9. Responsividade
+
+### Mobile (< 768px)
+- KPIs: 2 colunas
+- Main: 1 coluna (Acessibilidade em cima, Artigos embaixo)
+- Footer: 1 coluna
+
+### Tablet (768px - 1024px)
+- KPIs: 4 colunas
+- Main: 1 coluna ou 6+6
+- Footer: 2 colunas
+
+### Desktop (> 1024px)
+- KPIs: 4 colunas
+- Main: 5+7 colunas
+- Footer: 2 colunas
+
+---
+
+## 10. Resumo de Arquivos
+
+### Criar (7 arquivos)
+1. `GradientKpiCard.tsx`
+2. `AccessibilityPanel.tsx`
+3. `TrendingPanel.tsx`
+4. `UserManagementPanel.tsx`
+5. `ImportLogsPanel.tsx`
+6. `QuickStatsPanel.tsx`
+7. `RecentArticlesPanel.tsx`
+
+### Modificar (2 arquivos)
+1. `Dashboard.tsx` - reescrever completamente
+2. `index.css` - adicionar gradientes
+
+### Manter/Reutilizar
+- `DashboardPanel.tsx` - pode ser usado como wrapper
+- `CompactList.tsx` - pode ser útil internamente
 
 ---
 
 ## 11. Ordem de Implementação
 
-1. **Criar KpiCard.tsx** — componente base reutilizável
-2. **Criar DashboardPanel.tsx** — wrapper para painéis
-3. **Criar CompactList.tsx** — lista reutilizável
-4. **Criar QuickActionsGrid.tsx** — grid de ações
-5. **Refatorar Dashboard.tsx** — nova estrutura completa
-6. **Atualizar cards existentes** — usar DashboardPanel
-7. **Ajustar index.css** — remover estilos pesados
-8. **Teste visual** — Light/Dark/System
+1. Criar `GradientKpiCard.tsx`
+2. Criar `AccessibilityPanel.tsx`
+3. Criar `TrendingPanel.tsx`
+4. Criar `RecentArticlesPanel.tsx`
+5. Criar `UserManagementPanel.tsx`
+6. Criar `ImportLogsPanel.tsx`
+7. Criar `QuickStatsPanel.tsx`
+8. Atualizar `index.css` com gradientes
+9. Reescrever `Dashboard.tsx` usando novos componentes
+10. Testar responsividade
