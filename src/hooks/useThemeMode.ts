@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import type { ThemeMode, ThemePreset, ResolvedTheme } from "@/types/theme";
 
-export type ThemeMode = "light" | "dark" | "system";
-export type ResolvedTheme = "light" | "dark";
+export type { ThemeMode, ThemePreset, ResolvedTheme };
 
 export function useThemeMode() {
   const [mode, setModeState] = useState<ThemeMode>(() => {
@@ -12,6 +12,16 @@ export function useThemeMode() {
       }
     }
     return "system";
+  });
+
+  const [preset, setPresetState] = useState<ThemePreset>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("theme-preset") as ThemePreset;
+      if (stored && ["institutional", "tech"].includes(stored)) {
+        return stored;
+      }
+    }
+    return "institutional";
   });
 
   const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(() => {
@@ -48,10 +58,21 @@ export function useThemeMode() {
     root.classList.add(resolvedTheme);
   }, [resolvedTheme]);
 
+  // Apply preset attribute to document
+  useEffect(() => {
+    document.documentElement.setAttribute("data-preset", preset);
+  }, [preset]);
+
   // Persist mode to localStorage
   const setMode = useCallback((newMode: ThemeMode) => {
     setModeState(newMode);
     localStorage.setItem("theme-mode", newMode);
+  }, []);
+
+  // Persist preset to localStorage
+  const setPreset = useCallback((newPreset: ThemePreset) => {
+    setPresetState(newPreset);
+    localStorage.setItem("theme-preset", newPreset);
   }, []);
 
   // Toggle between light/dark (skips system)
@@ -62,6 +83,8 @@ export function useThemeMode() {
   return {
     mode,
     setMode,
+    preset,
+    setPreset,
     resolvedTheme,
     toggleTheme,
     systemTheme,

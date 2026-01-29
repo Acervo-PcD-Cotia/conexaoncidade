@@ -62,6 +62,7 @@ import {
   DollarSign,
   Bell,
   Globe,
+  Trophy,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useUserRole } from "@/hooks/useRequireRole";
@@ -211,6 +212,13 @@ const businessItems: MenuItem[] = [
   { title: "Geração Cotia", url: "#sso-gcotia", icon: ExternalLink, action: true },
 ];
 
+// Educação & Esportes - Módulos educacionais e esportivos
+const educationSportsItems: MenuItem[] = [
+  { title: "Esportes", url: "/admin/esportes", icon: Trophy },
+  { title: "Brasileirão", url: "/admin/esportes/brasileirao", icon: Trophy },
+  { title: "ENEM 2026", url: "/admin/academy/enem", icon: GraduationCap, badge: "Novo", badgeColor: "bg-primary" },
+];
+
 // Transporte Escolar
 const transporteEscolarItems: MenuItem[] = [
   { title: "Dashboard", url: "/admin/transporte-escolar", icon: LayoutDashboard },
@@ -292,6 +300,12 @@ const sidebarGroups: SidebarGroupConfig[] = [
     title: "Negócios",
     icon: Briefcase,
     items: businessItems,
+  },
+  {
+    id: "educacao-esportes",
+    title: "Educação & Esportes",
+    icon: Trophy,
+    items: educationSportsItems,
   },
   {
     id: "transporte",

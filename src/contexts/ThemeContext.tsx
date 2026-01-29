@@ -1,9 +1,12 @@
 import { createContext, useContext, ReactNode } from "react";
-import { useThemeMode, ThemeMode, ResolvedTheme } from "@/hooks/useThemeMode";
+import { useThemeMode } from "@/hooks/useThemeMode";
+import type { ThemeMode, ThemePreset, ResolvedTheme } from "@/types/theme";
 
 interface ThemeContextType {
   mode: ThemeMode;
   setMode: (mode: ThemeMode) => void;
+  preset: ThemePreset;
+  setPreset: (preset: ThemePreset) => void;
   resolvedTheme: ResolvedTheme;
   toggleTheme: () => void;
   systemTheme: ResolvedTheme;
