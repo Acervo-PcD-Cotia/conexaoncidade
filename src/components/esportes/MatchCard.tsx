@@ -16,14 +16,35 @@ import { cn } from "@/lib/utils";
 interface MatchCardProps {
   match: FootballMatch;
   showLeague?: boolean;
+  compact?: boolean;
+  showLiveIndicator?: boolean;
 }
 
-export function MatchCard({ match, showLeague = false }: MatchCardProps) {
+export function MatchCard({ match, showLeague = false, compact = false, showLiveIndicator = false }: MatchCardProps) {
   const statusColors = getStatusColor(match.status);
   const live = isMatchLive(match.status);
   const finished = isMatchFinished(match.status);
   
   const matchDate = new Date(match.match_date);
+  
+  if (compact) {
+    return (
+      <Link to={`/esportes/brasileirao/serie-a/jogo/${match.slug || match.id}`}>
+        <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <TeamBadge name={match.home_team?.name || "Casa"} logoUrl={match.home_team?.logo_url} size="xs" />
+              <span className="text-xs text-muted-foreground">vs</span>
+              <TeamBadge name={match.away_team?.name || "Fora"} logoUrl={match.away_team?.logo_url} size="xs" />
+            </div>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {format(matchDate, "HH:mm")}
+          </div>
+        </div>
+      </Link>
+    );
+  }
   
   return (
     <Link to={`/esportes/brasileirao/serie-a/jogo/${match.slug || match.id}`}>
