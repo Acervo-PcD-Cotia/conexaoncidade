@@ -1,248 +1,266 @@
 
-# Diagnostico Completo: O que Falta para Funcionar Perfeitamente
+# Plano de Implementacao: Dashboard Premium + Menus Especiais ENEM 2026 e Brasileirao
 
-## Visao Geral dos Modulos
+## Resumo Executivo
 
-| Modulo | Status | % Completo |
-|--------|--------|------------|
-| Esportes (Dashboard Admin) | Parcialmente funcional | 70% |
-| Brasileirao (Paginas Publicas) | Funcional sem dados | 80% |
-| ENEM 2026 (Redacao) | Funcional com lacunas | 65% |
-
----
-
-## 1. MODULO ESPORTES - O Que Falta
-
-### 1.1 Problema Critico: Rota 404
-
-**Problema identificado na imagem**: A rota `/admin/esportes/configurar` retorna 404.
-
-**Causa**: A pagina de configuracao nao existe, mas esta sendo referenciada em:
-- `EsportesDashboard.tsx` (linhas 21 e 117)
-
-**Solucao necessaria**:
-- Criar pagina `src/pages/admin/esportes/EsportesConfig.tsx`
-- Registrar rota no `App.tsx`
-
-### 1.2 Dados Zerados no Dashboard
-
-**Problema identificado na imagem**: Dashboard mostra 0 times, 0 jogos, mas competicoes = 2.
-
-**Causa**: A Edge Function `football-api` nunca foi executada para sincronizar dados.
-
-**Status atual do banco**:
-- `football_competitions`: 2 registros (Serie A e B)
-- `football_teams`: 0 registros
-- `football_matches`: 0 registros
-- `football_standings`: 0 registros
-- `football_player_stats`: 0 registros
-
-**Solucoes necessarias**:
-1. Criar pagina de configuracao com botao "Sincronizar Agora"
-2. Dashboard admin precisa usar os hooks `useFootball` para mostrar dados reais
-3. Trigger inicial de sincronizacao via Edge Function
-
-### 1.3 Dashboard Admin com Dados Estaticos
-
-**Problema**: `EsportesDashboard.tsx` e `BrasileiraoHome.tsx` mostram valores hardcoded (0, 20, 38).
-
-**Solucao**: Conectar ambas as paginas aos hooks:
-- `useLiveMatches()` - jogos ao vivo
-- `useTodayMatches()` - jogos de hoje
-- `useStandings()` - tabela de classificacao
-- `useCompetitions()` - competicoes
-
-### 1.4 Arquivos Faltando
-
-| Arquivo | Descricao |
-|---------|-----------|
-| `src/pages/admin/esportes/EsportesConfig.tsx` | Pagina de configuracao do modulo |
-| Rota em `App.tsx` | `<Route path="esportes/configurar" element={<EsportesConfig />} />` |
+Este plano abrange tres areas principais:
+1. **Dashboard Admin Premium** - Redesign com visual institucional moderno
+2. **Sistema de Temas Completo** - Claro/Escuro/Sistema ja implementado, apenas refinamentos
+3. **Menus Especiais Publicos** - Adicionar ENEM 2026 e Brasileirao na barra de servicos
 
 ---
 
-## 2. MODULO BRASILEIRAO (Publico) - O Que Falta
+## Diagnostico Atual
 
-### 2.1 Edge Function Precisa Ser Executada
+### O que ja existe e funciona:
+- Sistema de temas com 3 modos (light/dark/system) e 2 presets (institutional/tech)
+- ThemeToggle no header admin com dropdown funcional
+- Pagina `/admin/settings/appearance` com UI de cards para escolha de tema
+- Tokens CSS bem estruturados em `index.css` (light/dark)
+- Rotas publicas do Brasileirao (`/esportes/brasileirao/*`) implementadas
+- Dashboard atual com GradientKpiCard, RecentArticlesPanel, etc.
 
-A Edge Function `football-api` esta implementada corretamente, mas:
-- Nunca foi chamada para popular o banco
-- API-Football usa temporada 2025 no codigo (linha 18), confirmar se correto
-
-### 2.2 Paginas Publicas Prontas Mas Sem Dados
-
-Todas as paginas estao implementadas:
-- `/esportes/brasileirao` - Home
-- `/esportes/brasileirao/:serie` - Serie A/B
-- `/esportes/brasileirao/:serie/jogo/:slug` - Detalhe do jogo
-- `/esportes/brasileirao/:serie/time/:slug` - Detalhe do time
-- `/esportes/brasileirao/:serie/rodada/:round` - Rodada
-- `/esportes/brasileirao/:serie/estatisticas/artilharia` - Artilheiros
-
-**Problema**: Sem dados no banco, as paginas mostram estados vazios.
-
-### 2.3 Sincronizacao Inicial Necessaria
-
-Para popular os dados, e necessario:
-1. Chamar a Edge Function `football-api` com metodo POST
-2. Isso ira sincronizar: fixtures, standings, top scorers
+### O que falta ou precisa ajuste:
+- Dashboard nao tem busca global nem botao "Nova Noticia" no header
+- KPIs usam gradientes coloridos (conflita com visual "quiet premium")
+- Chips de servicos especiais nao incluem ENEM 2026 nem Brasileirao
+- Nao existe landing publica `/enem-2026`
 
 ---
 
-## 3. MODULO ENEM 2026 - O Que Falta
+## Fase 1: Menus Especiais - ENEM 2026 e Brasileirao (Prioridade Alta)
 
-### 3.1 Semanas Sem Aulas (Conteudo Incompleto)
+### 1.1 Atualizar Header.tsx - Barra de Servicos
 
-Das 10 semanas do modulo "Redacao Nota 1000", apenas 4 tem aulas cadastradas:
+**Arquivo:** `src/components/layout/Header.tsx`
 
-| Semana | Titulo | Aulas |
-|--------|--------|-------|
-| 1 | Como o ENEM Corrige | 5 |
-| 2 | Mapa da Redacao Nota 1000 | 4 |
-| 3 | Repertorio Inteligente | 0 |
-| 4 | Argumentacao de Alta Nota | 0 |
-| 5 | Proposta de Intervencao A.A.M.F.D | 5 |
-| 6 | Linguagem e Erros que Tiram 1000 | 0 |
-| 7 | Producao Orientada I | 3 |
-| 8 | Producao Orientada II | 0 |
-| 9 | Aluno como Corretor | 0 |
-| 10 | Simulacao ENEM 2026 | 0 |
-
-**Total**: 17 aulas em 4 semanas; 6 semanas vazias
-
-**Solucao**: Inserir conteudo nas semanas 3, 4, 6, 8, 9 e 10.
-
-### 3.2 Modulos Placeholder (Outras Areas)
-
-Os modulos de outras areas estao cadastrados mas marcados como "Em breve":
-- Linguagens e Codigos (placeholder)
-- Ciencias Humanas (placeholder)
-- Matematica (placeholder)
-- Ciencias da Natureza (placeholder)
-
-**Status**: Correto para MVP - focar apenas em Redacao.
-
-### 3.3 Edge Function ENEM Funcionando
-
-A Edge Function `enem-correct-essay` esta implementada corretamente:
-- IA Corretora com avaliacao das 5 competencias
-- IA Tutor com orientacao evolutiva
-- Integracao com Lovable AI (Gemini 2.5 Flash)
-
----
-
-## 4. RESUMO: Acoes Necessarias
-
-### 4.1 Prioridade CRITICA (Bloqueia uso)
-
-| # | Acao | Modulo | Esforco |
-|---|------|--------|---------|
-| 1 | Criar pagina `EsportesConfig.tsx` | Esportes | Medio |
-| 2 | Registrar rota `/admin/esportes/configurar` | Esportes | Pequeno |
-| 3 | Executar sincronizacao inicial da Edge Function | Brasileirao | Pequeno |
-
-### 4.2 Prioridade ALTA (Melhora experiencia)
-
-| # | Acao | Modulo | Esforco |
-|---|------|--------|---------|
-| 4 | Conectar `EsportesDashboard` aos hooks reais | Esportes | Medio |
-| 5 | Conectar `BrasileiraoHome` aos hooks reais | Esportes | Medio |
-| 6 | Inserir aulas nas semanas 3, 4, 6, 8, 9, 10 | ENEM | Grande |
-
-### 4.3 Prioridade MEDIA (Nice to have)
-
-| # | Acao | Modulo | Esforco |
-|---|------|--------|---------|
-| 7 | Adicionar cron job para sincronizacao automatica | Brasileirao | Medio |
-| 8 | Criar painel de admin para gerenciar aulas ENEM | ENEM | Grande |
-| 9 | Implementar notificacoes de jogos ao vivo | Brasileirao | Grande |
-
----
-
-## 5. Pagina de Configuracao do Modulo Esportes (Proposta)
-
-A pagina `EsportesConfig.tsx` deve conter:
+Adicionar dois novos chips na barra de servicos (linhas 268-313):
 
 ```text
-+------------------------------------------+
-|  Configuracao do Modulo Esportes         |
-+------------------------------------------+
-|                                          |
-|  Status da API                           |
-|  [x] RAPIDAPI_KEY configurada            |
-|  [ ] Dados sincronizados                 |
-|                                          |
-|  Sincronizacao                           |
-|  +----------------------------------+    |
-|  | Serie A: 0 times, 0 jogos        |    |
-|  | [  Sincronizar Serie A  ]        |    |
-|  +----------------------------------+    |
-|  +----------------------------------+    |
-|  | Serie B: 0 times, 0 jogos        |    |
-|  | [  Sincronizar Serie B  ]        |    |
-|  +----------------------------------+    |
-|                                          |
-|  Ultima Sincronizacao: Nunca            |
-|                                          |
-|  Configuracoes Avancadas                 |
-|  - Intervalo de atualizacao: 30 min     |
-|  - Temporada atual: 2025                |
-|                                          |
-+------------------------------------------+
+Chips atuais:
+[Apareca no Google] [Censo PcD] [Conexoes] [Web Radio/TV] [Fake News] [Transporte Escolar]
+
+Chips novos:
+[ENEM 2026] [Brasileirao]
+```
+
+**Especificacao dos chips:**
+- ENEM 2026: icone `GraduationCap`, cor indigo (azul educacional)
+- Brasileirao: icone `Trophy`, cor emerald (verde esportivo)
+
+### 1.2 Criar Landing Publica ENEM 2026
+
+**Arquivo novo:** `src/pages/public/Enem2026Landing.tsx`
+
+Estrutura da pagina:
+1. Hero com titulo "ENEM 2026" e subtitulo motivacional
+2. Card principal "Redacao Nota 1000" com CTA para `/admin/academy/enem/redacao-nota-1000`
+3. Grid de modulos "Em breve" (Linguagens, Humanas, Matematica, Natureza)
+4. Secao "Como funciona" com 3 passos
+5. FAQ basico
+6. CTA final para login/registro
+
+### 1.3 Registrar Rota Publica
+
+**Arquivo:** `src/App.tsx`
+
+Adicionar rota dentro do PublicLayout:
+```tsx
+<Route path="/enem-2026" element={<Enem2026Landing />} />
 ```
 
 ---
 
-## 6. Conteudo Faltando no ENEM (Semanas Vazias)
+## Fase 2: Dashboard Premium (Prioridade Alta)
 
-Para cada semana sem conteudo, seria necessario inserir:
+### 2.1 Atualizar Header do Dashboard
 
-### Semana 3: Repertorio Inteligente
-- Aula 1: O que e repertorio sociocultural (video)
-- Aula 2: Bancos de repertorio por tema (texto)
-- Aula 3: Como inserir repertorio sem parecer decorado (video)
-- Aula 4: Exercicio pratico de repertorio (exercicio)
+**Arquivo:** `src/pages/admin/Dashboard.tsx`
 
-### Semana 4: Argumentacao de Alta Nota
-- Aula 1: Estrutura da argumentacao (video)
-- Aula 2: Tipos de argumento (texto)
-- Aula 3: Profundidade vs superficialidade (video)
-- Aula 4: Pratica de argumentacao (exercicio)
+O header atual e simples. Vamos adicionar:
+- Subtitulo "Visao geral do sistema"
+- Botao "Nova Noticia" (usa `useNewsCreationModal`)
+- Busca global com Ctrl+K hint
 
-### Semana 6: Linguagem e Erros
-- Aula 1: Erros gramaticais que tiram nota (video)
-- Aula 2: Concordancia e regencia (texto)
-- Aula 3: Pontuacao estrategica (texto)
-- Aula 4: Exercicio de revisao (exercicio)
+### 2.2 Refinar KpiCards para Visual Premium
 
-### Semana 8: Producao Orientada II
-- Aula 1: Tema proposto + coletanea (texto)
-- Aula 2: Escrita da redacao (redacao)
-- Aula 3: Analise do modelo (video)
+**Arquivo:** `src/components/admin/dashboard/GradientKpiCard.tsx`
 
-### Semana 9: Aluno como Corretor
-- Aula 1: Como a banca corrige (video)
-- Aula 2: Pratica de correcao simulada (exercicio)
-- Aula 3: Identificando erros comuns (exercicio)
+Problema: Os gradientes coloridos competem visualmente.
 
-### Semana 10: Simulacao ENEM 2026
-- Aula 1: Instrucoes do simulado (texto)
-- Aula 2: Redacao final cronometrada (redacao)
-- Aula 3: Analise de resultado (texto)
+Solucao: Criar variante "premium" com:
+- Fundo neutro (`bg-card`)
+- Borda sutil
+- Icone em badge com cor de destaque (laranja) em baixa opacidade
+- Remover gradientes excessivos
+
+Nova variante:
+```tsx
+// Modo Premium: fundo neutro, icone com primary-soft
+const premiumStyle = "bg-card border border-border hover:shadow-md transition-shadow";
+```
+
+### 2.3 Reorganizar Layout do Dashboard
+
+**Arquivo:** `src/pages/admin/Dashboard.tsx`
+
+Layout atual:
+- 4 KPIs em linha
+- Grid 5+7 (Acessibilidade/Trending/Users | Artigos Recentes)
+- Footer 2 colunas (Logs | Stats)
+
+Layout Premium proposto:
+- Header compacto com acoes
+- 4 KPIs em linha (visual neutro)
+- Grid 8+4:
+  - Coluna principal (8): Artigos Recentes + Acoes Rapidas
+  - Coluna lateral (4): Mais Lidas + Estatisticas
+- Footer: Logs de Importacao (full width)
+
+### 2.4 Atualizar Componente QuickActionsGrid
+
+**Arquivo:** `src/components/admin/dashboard/QuickActionsGrid.tsx`
+
+Garantir que acoes usem `variant="outline"` para visual limpo, com icone e texto.
 
 ---
 
-## 7. Conclusao
+## Fase 3: Refinamentos do Sistema de Temas (Prioridade Media)
 
-### Para Esportes/Brasileirao funcionar:
-1. Criar pagina de configuracao (resolve 404)
-2. Sincronizar dados via Edge Function (popula banco)
-3. Conectar dashboards admin aos hooks reais
+### 3.1 Status Atual
 
-### Para ENEM 2026 funcionar:
-1. Inserir conteudo nas 6 semanas vazias
-2. Estrutura e Edge Functions ja estao prontas
-3. Fluxo de submissao e correcao IA funcionando
+O sistema ja esta implementado:
+- `ThemeProvider` em `src/contexts/ThemeContext.tsx`
+- `useThemeMode` hook com persistencia localStorage
+- `ThemeToggle` componente com modos e presets
+- Tokens CSS em `index.css` para light/dark
+- Presets "institutional" e "tech" via `data-preset`
 
-O modulo ENEM tem a estrutura completa, falta apenas conteudo pedagogico.
-O modulo Esportes tem as paginas publicas prontas, falta a pagina admin de configuracao e a sincronizacao inicial de dados.
+### 3.2 Pequenos Ajustes Necessarios
+
+**index.css** - Adicionar tokens faltantes:
+```css
+--primary-contrast: 0 0% 100%; /* texto sobre laranja */
+```
+
+**ThemeToggle.tsx** - Ja funciona, sem alteracoes necessarias.
+
+**AppearanceSettings.tsx** - Ja funciona, sem alteracoes necessarias.
+
+---
+
+## Fase 4: Atualizacao do Header Mobile
+
+### 4.1 Adicionar ENEM 2026 e Brasileirao no Menu Mobile
+
+**Arquivo:** `src/components/layout/Header.tsx`
+
+Na secao de "Special Links for Mobile" (linhas 70-118), adicionar:
+```tsx
+<Link to="/enem-2026" ...>
+  <GraduationCap /> ENEM 2026
+</Link>
+<Link to="/esportes/brasileirao" ...>
+  <Trophy /> Brasileirao
+</Link>
+```
+
+---
+
+## Arquivos a Criar/Modificar
+
+### Novos Arquivos:
+1. `src/pages/public/Enem2026Landing.tsx` - Landing publica ENEM
+
+### Arquivos a Modificar:
+1. `src/components/layout/Header.tsx` - Adicionar chips ENEM e Brasileirao
+2. `src/pages/admin/Dashboard.tsx` - Header com busca e "Nova Noticia"
+3. `src/components/admin/dashboard/GradientKpiCard.tsx` - Variante premium
+4. `src/App.tsx` - Registrar rota `/enem-2026`
+5. `src/index.css` - Token `--primary-contrast` (se necessario)
+
+---
+
+## Criterios de Aceite
+
+| # | Criterio | Status |
+|---|----------|--------|
+| 1 | Chips "ENEM 2026" e "Brasileirao" aparecem na barra de servicos (desktop) | A fazer |
+| 2 | Chips aparecem no menu mobile | A fazer |
+| 3 | Clique em ENEM 2026 abre `/enem-2026` | A fazer |
+| 4 | Clique em Brasileirao abre `/esportes/brasileirao` | A fazer |
+| 5 | Landing ENEM 2026 com hero, cards e CTA | A fazer |
+| 6 | Dashboard com header premium (busca + Nova Noticia) | A fazer |
+| 7 | KPIs com visual neutro/premium | A fazer |
+| 8 | Tema Claro/Escuro/Sistema funcionando | Ja funciona |
+| 9 | Toggle no header + pagina de aparencia | Ja funciona |
+| 10 | Visual respeita identidade laranja | Ja funciona |
+
+---
+
+## Ordem de Execucao
+
+1. Criar `Enem2026Landing.tsx`
+2. Registrar rota no `App.tsx`
+3. Atualizar `Header.tsx` (desktop + mobile)
+4. Refinar `GradientKpiCard.tsx`
+5. Atualizar `Dashboard.tsx` (header + layout)
+6. Testar todos os fluxos
+
+---
+
+## Secao Tecnica
+
+### Dependencias
+Nenhuma nova dependencia necessaria. Projeto ja possui:
+- lucide-react (icones)
+- react-router-dom (rotas)
+- Componentes UI Shadcn
+
+### Imports Necessarios no Header.tsx
+```tsx
+import { GraduationCap, Trophy } from "lucide-react";
+```
+
+### Estrutura da Landing ENEM 2026
+```tsx
+// Hero
+<section className="bg-gradient-to-br from-indigo-600 to-purple-700">
+  <h1>ENEM 2026</h1>
+  <p>Prepare-se para conquistar sua vaga</p>
+</section>
+
+// Modulo Principal
+<Card>
+  <CardHeader>Redacao Nota 1000</CardHeader>
+  <Button asChild><Link to="/admin/academy/enem/redacao-nota-1000">Comecar</Link></Button>
+</Card>
+
+// Modulos Em Breve
+<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+  {["Linguagens", "Humanas", "Matematica", "Natureza"].map(m => (
+    <Card className="opacity-60"><Badge>Em breve</Badge>{m}</Card>
+  ))}
+</div>
+```
+
+### Estilo dos Chips de Servico
+```tsx
+// ENEM 2026
+<Link
+  to="/enem-2026"
+  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-indigo-700 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-950/60 rounded-full hover:bg-indigo-200 dark:hover:bg-indigo-900/60 transition-colors border border-indigo-200 dark:border-indigo-800"
+>
+  <GraduationCap className="h-4 w-4" />
+  ENEM 2026
+</Link>
+
+// Brasileirao
+<Link
+  to="/esportes/brasileirao"
+  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/60 rounded-full hover:bg-emerald-200 dark:hover:bg-emerald-900/60 transition-colors border border-emerald-200 dark:border-emerald-800"
+>
+  <Trophy className="h-4 w-4" />
+  Brasileirao
+</Link>
+```
