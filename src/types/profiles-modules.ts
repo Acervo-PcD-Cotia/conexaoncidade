@@ -243,7 +243,7 @@ export interface QuickActionCard {
 export const PROFILE_QUICK_ACTIONS: Record<UserProfile, QuickActionCard[]> = {
   JORNALISTA: [
     { id: 'create-news', title: 'Criar Notícia', description: 'Publique uma nova matéria', icon: 'PenLine', href: '/admin/news/new', color: 'blue' },
-    { id: 'autopost-regional', title: 'Auto Post Regional', description: 'Notícias da Grande Cotia', icon: 'Zap', href: '/admin/autopost', color: 'amber', requiredModule: 'AUTOPOST' },
+    { id: 'autopost-regional', title: 'Auto Post Regional', description: 'Notícias da Grande Cotia', icon: 'MapPin', href: '/admin/autopost-regional', color: 'amber', requiredModule: 'AUTOPOST' },
     { id: 'schedule', title: 'Agendar Publicação', description: 'Programe posts para o futuro', icon: 'Calendar', href: '/admin/news?status=draft', color: 'green' },
     { id: 'seo', title: 'Revisar SEO', description: 'Otimize seu conteúdo', icon: 'Search', href: '/admin/seo', color: 'purple', requiredModule: 'SEO_TOOLS' },
   ],

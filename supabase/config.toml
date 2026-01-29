@@ -209,3 +209,9 @@ verify_jwt = false
 
 [functions.br-generate-news-ai]
 verify_jwt = false
+
+[functions.regional-ingest]
+verify_jwt = false
+
+[functions.regional-admin-tools]
+verify_jwt = false

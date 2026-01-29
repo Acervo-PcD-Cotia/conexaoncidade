@@ -84,7 +84,13 @@ import AutoPostDuplicates from "./pages/admin/autopost/AutoPostDuplicates";
 import AutoPostLogs from "./pages/admin/autopost/AutoPostLogs";
 import AutoPostReports from "./pages/admin/autopost/AutoPostReports";
 import AutoPostSettings from "./pages/admin/autopost/AutoPostSettings";
-import AutoPostRegional from "./pages/admin/autopost/AutoPostRegional";
+// Auto Post Regional Pages (Independent Module)
+import { 
+  RegionalDashboard, 
+  RegionalSources, 
+  RegionalQueue, 
+  RegionalLogs 
+} from "./pages/admin/autopost-regional";
 
 // Conexão Academy Pages
 import AcademyDashboard from "./pages/admin/academy/AcademyDashboard";
@@ -466,8 +472,11 @@ const App = () => (
                         <Route path="autopost/sources/new" element={<AutoPostSourceForm />} />
                         <Route path="autopost/sources/:id/edit" element={<AutoPostSourceForm />} />
                         
-                        {/* Auto Post Regional (Grande Cotia) */}
-                        <Route path="autopost-regional" element={<AutoPostRegional />} />
+                        {/* Auto Post Regional (Grande Cotia) - Módulo Independente */}
+                        <Route path="autopost-regional" element={<RegionalDashboard />} />
+                        <Route path="autopost-regional/fontes" element={<RegionalSources />} />
+                        <Route path="autopost-regional/fila" element={<RegionalQueue />} />
+                        <Route path="autopost-regional/logs" element={<RegionalLogs />} />
                         
                         {/* Conexão Academy Routes */}
                         <Route path="academy" element={<AcademyDashboard />} />

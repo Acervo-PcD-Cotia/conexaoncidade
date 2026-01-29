@@ -11045,6 +11045,202 @@ export type Database = {
           },
         ]
       }
+      regional_ingest_items: {
+        Row: {
+          canonical_url: string
+          content: string | null
+          created_at: string | null
+          draft_id: string | null
+          excerpt: string | null
+          generated_image_url: string | null
+          id: string
+          image_url: string | null
+          news_id: string | null
+          processed_at: string | null
+          published_at: string | null
+          published_at_portal: string | null
+          raw_payload: Json | null
+          rewritten_content: string | null
+          rewritten_title: string | null
+          seo_meta_description: string | null
+          seo_meta_title: string | null
+          source_id: string
+          status: string | null
+          title: string | null
+        }
+        Insert: {
+          canonical_url: string
+          content?: string | null
+          created_at?: string | null
+          draft_id?: string | null
+          excerpt?: string | null
+          generated_image_url?: string | null
+          id?: string
+          image_url?: string | null
+          news_id?: string | null
+          processed_at?: string | null
+          published_at?: string | null
+          published_at_portal?: string | null
+          raw_payload?: Json | null
+          rewritten_content?: string | null
+          rewritten_title?: string | null
+          seo_meta_description?: string | null
+          seo_meta_title?: string | null
+          source_id: string
+          status?: string | null
+          title?: string | null
+        }
+        Update: {
+          canonical_url?: string
+          content?: string | null
+          created_at?: string | null
+          draft_id?: string | null
+          excerpt?: string | null
+          generated_image_url?: string | null
+          id?: string
+          image_url?: string | null
+          news_id?: string | null
+          processed_at?: string | null
+          published_at?: string | null
+          published_at_portal?: string | null
+          raw_payload?: Json | null
+          rewritten_content?: string | null
+          rewritten_title?: string | null
+          seo_meta_description?: string | null
+          seo_meta_title?: string | null
+          source_id?: string
+          status?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "regional_ingest_items_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "regional_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      regional_ingest_runs: {
+        Row: {
+          created_at: string | null
+          finished_at: string | null
+          id: string
+          items_duplicated: number | null
+          items_errored: number | null
+          items_found: number | null
+          items_new: number | null
+          log: string | null
+          result: Json | null
+          source_id: string
+          started_at: string | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          finished_at?: string | null
+          id?: string
+          items_duplicated?: number | null
+          items_errored?: number | null
+          items_found?: number | null
+          items_new?: number | null
+          log?: string | null
+          result?: Json | null
+          source_id: string
+          started_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          finished_at?: string | null
+          id?: string
+          items_duplicated?: number | null
+          items_errored?: number | null
+          items_found?: number | null
+          items_new?: number | null
+          log?: string | null
+          result?: Json | null
+          source_id?: string
+          started_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "regional_ingest_runs_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "regional_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      regional_sources: {
+        Row: {
+          city: string
+          created_at: string | null
+          error_count: number | null
+          id: string
+          is_active: boolean | null
+          last_error: string | null
+          last_fetched_at: string | null
+          last_success_at: string | null
+          listing_url: string | null
+          mode: string | null
+          name: string
+          poll_interval_minutes: number | null
+          rate_limit_per_hour: number | null
+          rss_url: string | null
+          selectors: Json | null
+          source_url: string | null
+          tags_default: string[] | null
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          city: string
+          created_at?: string | null
+          error_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_error?: string | null
+          last_fetched_at?: string | null
+          last_success_at?: string | null
+          listing_url?: string | null
+          mode?: string | null
+          name: string
+          poll_interval_minutes?: number | null
+          rate_limit_per_hour?: number | null
+          rss_url?: string | null
+          selectors?: Json | null
+          source_url?: string | null
+          tags_default?: string[] | null
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          city?: string
+          created_at?: string | null
+          error_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_error?: string | null
+          last_fetched_at?: string | null
+          last_success_at?: string | null
+          listing_url?: string | null
+          mode?: string | null
+          name?: string
+          poll_interval_minutes?: number | null
+          rate_limit_per_hour?: number | null
+          rss_url?: string | null
+          selectors?: Json | null
+          source_url?: string | null
+          tags_default?: string[] | null
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       schools: {
         Row: {
           bairro: string
