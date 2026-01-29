@@ -185,3 +185,6 @@ verify_jwt = false
 
 [functions.streaming-gateway]
 verify_jwt = false
+
+[functions.enem-correct-essay]
+verify_jwt = false
