@@ -191,3 +191,15 @@ verify_jwt = false
 
 [functions.football-api]
 verify_jwt = false
+
+[functions.br-sync-cbf]
+verify_jwt = false
+
+[functions.br-sync-news-rss]
+verify_jwt = false
+
+[functions.br-sync-broadcasts]
+verify_jwt = false
+
+[functions.br-generate-news-ai]
+verify_jwt = false
