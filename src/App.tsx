@@ -105,6 +105,7 @@ import EnemSubmissionDetail from "./pages/admin/academy/EnemSubmissionDetail";
 import EsportesDashboard from "./pages/admin/esportes/EsportesDashboard";
 import BrasileiraoHome from "./pages/admin/esportes/BrasileiraoHome";
 import EsportesEstatisticas from "./pages/admin/esportes/EsportesEstatisticas";
+import EsportesConfig from "./pages/admin/esportes/EsportesConfig";
 
 // Public Esportes Pages
 import BrasileiraoPage from "./pages/public/esportes/BrasileiraoPage";
@@ -473,6 +474,7 @@ const App = () => (
                         <Route path="esportes" element={<EsportesDashboard />} />
                         <Route path="esportes/brasileirao" element={<BrasileiraoHome />} />
                         <Route path="esportes/estatisticas" element={<EsportesEstatisticas />} />
+                        <Route path="esportes/configurar" element={<EsportesConfig />} />
                         
                         {/* Publidoor Routes */}
                         <Route path="publidoor" element={<PublidoorDashboard />} />
