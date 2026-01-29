@@ -1,342 +1,586 @@
 
-# Plano: Redesign Premium do Admin Portal
+# Plano: Modulo Esportes Completo - Campeonato Brasileiro
 
-## Visão Geral
+## Visao Geral
 
-Este plano implementa um redesign completo do Admin do Portal Conexão na Cidade com:
-1. Sistema completo de temas (Light/Dark/System + Presets Institucional/Tech)
-2. Dashboard com visual premium moderno
-3. Módulos Esportes e ENEM 2026 integrados no menu com rotas funcionais
-
----
-
-## 1. Arquitetura de Temas
-
-### 1.1 Tipos e Estrutura
-
-Criar novo tipo para presets visuais:
-
-```typescript
-// src/types/theme.ts
-export type ThemeMode = "light" | "dark" | "system";
-export type ThemePreset = "institutional" | "tech";
-```
-
-### 1.2 Atualizar ThemeContext
-
-**Arquivo:** `src/contexts/ThemeContext.tsx`
-
-Adicionar suporte a presets:
-- Nova propriedade `preset` com persistência em `localStorage`
-- Aplicar `data-preset` no `documentElement`
-- Expor `preset`, `setPreset`
-
-### 1.3 Tokens CSS para Presets
-
-**Arquivo:** `src/index.css`
-
-Adicionar variações por preset:
-
-```css
-/* Preset Institucional - Mais suave, sombras leves */
-html[data-preset="institutional"] {
-  --radius: 0.75rem;
-  --shadow-card: 0 1px 3px rgba(0,0,0,0.08);
-  --border-opacity: 0.12;
-}
-
-/* Preset Tech - Alto contraste, bordas nítidas, glow sutil */
-html[data-preset="tech"] {
-  --radius: 0.5rem;
-  --shadow-card: 0 2px 8px rgba(0,0,0,0.15);
-  --border-opacity: 0.2;
-  --accent-glow: 0 0 12px hsl(25 95% 53% / 0.25);
-}
-```
+Implementar o modulo de esportes profissional focado no Campeonato Brasileiro (Serie A e B), com:
+- Edge Function para integracao com API-Football (RapidAPI)
+- Paginas publicas SEO-first com meta tags dinamicas
+- Sistema de cache inteligente (15s ao vivo, 5min jogos do dia, 30min tabela)
+- Componentes reutilizaveis (MatchCard, StandingsTable, TeamSearch)
+- Hook useFootball para gerenciamento de dados
+- Estrutura preparada para monetizacao Publidoor
 
 ---
 
-## 2. Controles de Tema na UI
-
-### 2.1 Atualizar ThemeToggle
-
-**Arquivo:** `src/components/admin/ThemeToggle.tsx`
-
-Adicionar dropdown expandido com:
-- Seção "Modo": Light / Dark / System
-- Seção "Estilo Visual": Institucional / Tech-Startup
-- Indicador visual do modo/preset atual
-
-### 2.2 Atualizar Página de Aparência
-
-**Arquivo:** `src/pages/admin/settings/AppearanceSettings.tsx`
-
-Adicionar:
-- Cards de seleção para Presets (Institucional/Tech)
-- Preview visual atualizado em tempo real
-- Descrição de cada preset
-
----
-
-## 3. Redesign do Dashboard
-
-### 3.1 Novo Layout Visual
-
-O Dashboard atual já possui boa estrutura. Refinamentos:
+## 1. Arquitetura Geral
 
 ```text
-+------------------------------------------------------------------+
-| Header: "Dashboard" + "Visão geral do sistema..."                |
-+------------------------------------------------------------------+
-|                                                                  |
-| KPIs (4 cards) - Manter GradientKpiCard com ajustes de tokens    |
-|                                                                  |
-+-------------------------+----------------------------------------+
-| Coluna Esquerda (5)     | Coluna Direita (7)                     |
-|                         |                                        |
-| [Acessibilidade]        | [Artigos Recentes]                     |
-| [Mais Pesquisadas]      |  - Refinado com tokens semânticos      |
-| [Gestão Usuários]       |                                        |
-+-------------------------+----------------------------------------+
-| [Logs de Importação]    | [Estatísticas Rápidas]                 |
-+------------------------------------------------------------------+
++---------------------------+       +------------------+       +------------------+
+|   Paginas Publicas SEO    |  -->  |   useFootball    |  -->  | Edge Functions   |
+|   /esportes/brasileirao/* |       |   (React Query)  |       | football-api     |
++---------------------------+       +------------------+       +------------------+
+                                            |                           |
+                                            v                           v
+                                    +------------------+       +------------------+
+                                    |   Componentes    |       |  football_*      |
+                                    |   Reutilizaveis  |       |  tables + cache  |
+                                    +------------------+       +------------------+
 ```
-
-### 3.2 Refatorar Componentes
-
-**Arquivos a modificar:**
-- `GradientKpiCard.tsx`: Usar tokens semânticos, remover cores hardcoded
-- `DashboardPanel.tsx`: Já existe, refinar estilos
-- `TrendingPanel.tsx`, `RecentArticlesPanel.tsx`: Substituir classes hardcoded
-
-**Regra:** Eliminar todas as classes como `text-sky-600`, `bg-emerald-100` e usar apenas tokens: `text-primary`, `bg-primary/10`, `text-muted-foreground`, etc.
-
-### 3.3 Sidebar (Já Implementada)
-
-A sidebar atual já possui:
-- Colapso/expansão com persistência
-- Tooltips no modo colapsado
-- Submenus em accordion
-- Destaque laranja no item ativo
-
-Nenhuma modificação necessária.
 
 ---
 
-## 4. Módulos Esportes e ENEM 2026
+## 2. Edge Function: football-api
 
-### 4.1 Adicionar ao Menu Sidebar
+### 2.1 Estrutura
 
-**Arquivo:** `src/components/admin/AdminSidebar.tsx`
+**Arquivo:** `supabase/functions/football-api/index.ts`
 
-Criar nova seção "Educação & Esportes":
+Endpoints:
+- `GET /fixtures` - Jogos por data/competicao/status
+- `GET /standings` - Tabela de classificacao
+- `GET /teams/:id` - Dados do time
+- `GET /players/top` - Artilharia/assistencias
+- `GET /h2h/:teamA/:teamB` - Historico de confrontos
+- `POST /sync` - Sincronizacao manual (admin)
+
+### 2.2 Cache Inteligente
 
 ```typescript
-const educationSportsItems: MenuItem[] = [
-  { title: "Esportes", url: "/admin/esportes", icon: Trophy },
-  { title: "ENEM 2026", url: "/admin/academy/enem", icon: GraduationCap, badge: "Novo" },
-];
+// Estrategia de cache por tipo de dado
+const CACHE_TTL = {
+  LIVE_MATCHES: 15,        // 15 segundos
+  TODAY_MATCHES: 300,      // 5 minutos
+  SCHEDULED_MATCHES: 600,  // 10 minutos
+  STANDINGS: 1800,         // 30 minutos
+  TEAM_INFO: 86400,        // 24 horas
+  PLAYER_STATS: 3600,      // 1 hora
+};
+```
 
-// Adicionar no sidebarGroups
-{
-  id: "educacao-esportes",
-  title: "Educação & Esportes",
-  icon: Trophy,
-  items: educationSportsItems,
+### 2.3 Integracao API-Football
+
+Requer secret: `RAPIDAPI_KEY`
+
+```typescript
+// Headers para API-Football (RapidAPI)
+const headers = {
+  'X-RapidAPI-Key': Deno.env.get('RAPIDAPI_KEY'),
+  'X-RapidAPI-Host': 'api-football-v1.p.rapidapi.com'
+};
+
+// Endpoints principais
+// GET /fixtures?league=71&season=2026 (Serie A = 71, Serie B = 72)
+// GET /standings?league=71&season=2026
+// GET /players/topscorers?league=71&season=2026
+```
+
+### 2.4 Logica de Cache
+
+```typescript
+async function getCachedOrFetch(cacheKey: string, ttlSeconds: number, fetchFn: () => Promise<any>) {
+  // 1. Verificar cache no Supabase (football_api_cache)
+  const cached = await supabase
+    .from('football_api_cache')
+    .select('data, expires_at')
+    .eq('cache_key', cacheKey)
+    .single();
+  
+  if (cached.data && new Date(cached.data.expires_at) > new Date()) {
+    return cached.data.data;
+  }
+  
+  // 2. Buscar da API externa
+  const freshData = await fetchFn();
+  
+  // 3. Salvar no cache
+  await supabase.from('football_api_cache').upsert({
+    cache_key: cacheKey,
+    data: freshData,
+    expires_at: new Date(Date.now() + ttlSeconds * 1000).toISOString()
+  });
+  
+  return freshData;
 }
 ```
 
-### 4.2 Rotas ENEM 2026 (Já Existentes)
+---
 
-As rotas ENEM já estão configuradas em `App.tsx`:
-- `/admin/academy/enem` → AcademyEnem
-- `/admin/academy/enem/:slug` → EnemModule
-- `/admin/academy/enem/:slug/semana/:weekNumber` → EnemWeek
-- `/admin/academy/enem/:slug/semana/:weekNumber/aula/:lessonId` → EnemLessonPage
-- `/admin/academy/enem/:slug/minhas-redacoes` → EnemSubmissions
-- `/admin/academy/enem/:slug/redacao/:submissionId` → EnemSubmissionDetail
+## 3. Hook useFootball
 
-### 4.3 Criar Páginas Base de Esportes
+**Arquivo:** `src/hooks/useFootball.ts`
 
-**Novos arquivos:**
-
-| Arquivo | Descrição |
-|---------|-----------|
-| `src/pages/admin/esportes/EsportesDashboard.tsx` | Dashboard do módulo |
-| `src/pages/admin/esportes/BrasileiraoHome.tsx` | Resultados/Jogos/Times |
-| `src/pages/admin/esportes/EsportesEstatisticas.tsx` | Estatísticas |
-
-**Estrutura do Dashboard:**
-- Cards KPI: Jogos Hoje, Partidas Semana, Times Cadastrados, Competições
-- Lista: Próximas Partidas
-- CTA: "Configurar Módulo"
-
-### 4.4 Adicionar Rotas de Esportes
-
-**Arquivo:** `src/App.tsx`
+### 3.1 Estrutura
 
 ```typescript
-// Esportes Routes
-<Route path="esportes" element={<EsportesDashboard />} />
-<Route path="esportes/brasileirao" element={<BrasileiraoHome />} />
-<Route path="esportes/estatisticas" element={<EsportesEstatisticas />} />
+// Tipos
+interface FootballMatch {
+  id: string;
+  homeTeam: FootballTeam;
+  awayTeam: FootballTeam;
+  homeScore: number | null;
+  awayScore: number | null;
+  status: 'scheduled' | 'live' | 'finished' | 'postponed';
+  matchDate: string;
+  round: number;
+  venue?: string;
+  elapsedTime?: number;
+}
+
+interface FootballTeam {
+  id: string;
+  name: string;
+  shortName: string;
+  slug: string;
+  logoUrl: string;
+  primaryColor: string;
+}
+
+interface StandingsEntry {
+  position: number;
+  team: FootballTeam;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifference: number;
+  points: number;
+  form: string;
+}
+```
+
+### 3.2 Hooks Exportados
+
+```typescript
+export function useMatches(options: { 
+  competitionSlug: string; 
+  date?: string; 
+  round?: number;
+  status?: 'live' | 'today' | 'scheduled' | 'finished';
+}) {
+  // React Query com refetch interval baseado no status
+  // Live: 15s, Today: 60s, Others: 5min
+}
+
+export function useStandings(competitionSlug: string) {
+  // Tabela com refetch a cada 30min
+}
+
+export function useTeam(teamSlug: string) {
+  // Dados do time + ultimos jogos + posicao
+}
+
+export function useMatchDetail(matchSlug: string) {
+  // Partida + stats + eventos + H2H
+}
+
+export function useTopScorers(competitionSlug: string) {
+  // Artilharia com refetch a cada 1h
+}
+
+export function useTeamSearch(query: string) {
+  // Busca de times com debounce
+}
+
+export function useFavoriteTeam(userId: string, teamId: string) {
+  // Gerenciamento de time favorito
+}
 ```
 
 ---
 
-## 5. Arquivos a Criar
+## 4. Componentes Visuais
 
-| Arquivo | Descrição |
+### 4.1 Novos Componentes
+
+| Componente | Descricao |
+|------------|-----------|
+| `MatchCard.tsx` | Card de partida com placar, status, times |
+| `LiveMatchCard.tsx` | Variante com animacao de ao vivo |
+| `StandingsTable.tsx` | Tabela com destaque G4/rebaixamento |
+| `TeamBadge.tsx` | Escudo + nome do time |
+| `TeamSearch.tsx` | Input com autocomplete |
+| `MatchStats.tsx` | Estatisticas da partida (posse, chutes, etc) |
+| `H2HHistory.tsx` | Historico de confrontos |
+| `PlayerStatsRow.tsx` | Linha de artilharia/assistencias |
+| `FormBadge.tsx` | Ultimos 5 jogos (VVVED) |
+| `RoundSelector.tsx` | Navegacao entre rodadas |
+| `CompetitionTabs.tsx` | Tabs Serie A/Serie B |
+
+### 4.2 MatchCard
+
+```tsx
+interface MatchCardProps {
+  match: FootballMatch;
+  variant?: 'compact' | 'full';
+  showRound?: boolean;
+  showVenue?: boolean;
+  onClick?: () => void;
+}
+
+// Layout compact:
+// [Logo] COR 2-1 PAL [Logo]  |  45' [Badge AO VIVO]
+
+// Layout full:
+// Rodada 15 • Arena Corinthians
+// [Logo Grande] Corinthians   2
+// [Logo Grande] Palmeiras     1
+// [Badge AO VIVO - 2o Tempo - 45']
+```
+
+### 4.3 StandingsTable
+
+```tsx
+interface StandingsTableProps {
+  standings: StandingsEntry[];
+  highlightTeamId?: string;
+  showForm?: boolean;
+  filter?: 'all' | 'home' | 'away' | 'last5';
+}
+
+// Visual:
+// - G4 (Libertadores): fundo verde sutil
+// - 5-6 (Pre-Libertadores): fundo azul sutil
+// - 7-12 (Sul-Americana): fundo laranja sutil
+// - Ultimos 4 (Rebaixamento): fundo vermelho sutil
+// - Time favorito/selecionado: borda primaria
+```
+
+### 4.4 TeamSearch
+
+```tsx
+interface TeamSearchProps {
+  onSelect: (team: FootballTeam) => void;
+  placeholder?: string;
+  autoFocus?: boolean;
+}
+
+// Comportamento:
+// - Debounce de 300ms
+// - Autocomplete com escudo + nome
+// - Destaca times do Brasileirao
+// - Ao selecionar, navega para /esportes/brasileirao/serie-a/time/[slug]
+```
+
+---
+
+## 5. Paginas Publicas SEO-First
+
+### 5.1 Estrutura de Rotas
+
+```text
+/esportes/brasileirao                     → Home do Brasileirao
+/esportes/brasileirao/serie-a             → Serie A (tabela + jogos)
+/esportes/brasileirao/serie-b             → Serie B
+/esportes/brasileirao/serie-a/rodada/:n   → Jogos da rodada N
+/esportes/brasileirao/serie-a/jogo/:slug  → Pagina da partida
+/esportes/brasileirao/serie-a/time/:slug  → Pagina do time
+/esportes/brasileirao/serie-a/estatisticas → Hub de estatisticas
+/esportes/brasileirao/serie-a/estatisticas/artilharia
+/esportes/brasileirao/serie-a/estatisticas/cartoes
+```
+
+### 5.2 Home do Brasileirao
+
+**Arquivo:** `src/pages/public/esportes/BrasileiraoPage.tsx`
+
+```tsx
+// Layout:
+// [Header com busca de time]
+// [Tabs: Ao Vivo | Jogos de Hoje | Rodada Atual | Tabela | Estatisticas]
+// [Filtro: Serie A | Serie B]
+
+// Helmet:
+<Helmet>
+  <title>Brasileirao 2026 - Jogos, Tabela e Resultados | Conexao na Cidade</title>
+  <meta name="description" content="Acompanhe o Campeonato Brasileiro 2026. Jogos ao vivo, tabela de classificacao, resultados e estatisticas da Serie A e Serie B." />
+  <script type="application/ld+json">
+    {JSON.stringify(sportsEventSchema)}
+  </script>
+</Helmet>
+```
+
+### 5.3 Pagina do Jogo
+
+**Arquivo:** `src/pages/public/esportes/MatchDetailPage.tsx`
+
+```tsx
+// Layout:
+// [Header com times + placar grande]
+// [Status: Ao Vivo / Encerrado / Agendado]
+// [Grid 2 colunas:
+//   - Estatisticas da partida
+//   - Eventos (gols, cartoes)
+// ]
+// [Historico H2H]
+// [Forma recente dos times]
+// [Slot de patrocinio Publidoor]
+
+// URL: /esportes/brasileirao/serie-a/jogo/corinthians-x-palmeiras-2026-05-15
+// Slug gerado: {home_slug}-x-{away_slug}-{YYYY-MM-DD}
+```
+
+### 5.4 Pagina do Time
+
+**Arquivo:** `src/pages/public/esportes/TeamDetailPage.tsx`
+
+```tsx
+// Layout:
+// [Header com escudo grande + nome + estadio]
+// [Cards: Posicao | Pontos | V/E/D | Ultimos 5]
+// [Proximo jogo destacado]
+// [Ultimos 5 jogos]
+// [Desempenho Casa/Fora]
+// [Artilheiro do time]
+// [Noticias relacionadas do portal]
+
+// SEO automatico:
+// Title: "Corinthians - Tabela, Jogos e Estatisticas | Brasileirao 2026"
+// Description gerada dinamicamente com posicao atual e forma
+```
+
+### 5.5 Schema.org
+
+```typescript
+// SportsEvent para jogos
+const matchSchema = {
+  "@context": "https://schema.org",
+  "@type": "SportsEvent",
+  "name": "Corinthians x Palmeiras",
+  "startDate": "2026-05-15T16:00:00-03:00",
+  "location": {
+    "@type": "Place",
+    "name": "Neo Quimica Arena",
+    "address": "Sao Paulo, Brasil"
+  },
+  "competitor": [
+    { "@type": "SportsTeam", "name": "Corinthians" },
+    { "@type": "SportsTeam", "name": "Palmeiras" }
+  ]
+};
+
+// SportsTeam para times
+const teamSchema = {
+  "@context": "https://schema.org",
+  "@type": "SportsTeam",
+  "name": "Sport Club Corinthians Paulista",
+  "sport": "Football",
+  "location": {
+    "@type": "Place",
+    "name": "Neo Quimica Arena"
+  }
+};
+```
+
+---
+
+## 6. Arquivos a Criar
+
+### 6.1 Edge Functions
+
+| Arquivo | Descricao |
 |---------|-----------|
-| `src/types/theme.ts` | Tipos ThemePreset |
-| `src/pages/admin/esportes/EsportesDashboard.tsx` | Dashboard Esportes |
-| `src/pages/admin/esportes/BrasileiraoHome.tsx` | Brasileirão |
-| `src/pages/admin/esportes/EsportesEstatisticas.tsx` | Estatísticas |
+| `supabase/functions/football-api/index.ts` | API principal de futebol |
 
-## 6. Arquivos a Modificar
+### 6.2 Hooks
 
-| Arquivo | Mudanças |
+| Arquivo | Descricao |
+|---------|-----------|
+| `src/hooks/useFootball.ts` | Hook principal de dados de futebol |
+
+### 6.3 Tipos
+
+| Arquivo | Descricao |
+|---------|-----------|
+| `src/types/football.ts` | Tipos TypeScript para o modulo |
+
+### 6.4 Componentes
+
+| Arquivo | Descricao |
+|---------|-----------|
+| `src/components/esportes/MatchCard.tsx` | Card de partida |
+| `src/components/esportes/LiveMatchCard.tsx` | Card ao vivo |
+| `src/components/esportes/StandingsTable.tsx` | Tabela de classificacao |
+| `src/components/esportes/TeamBadge.tsx` | Badge de time |
+| `src/components/esportes/TeamSearch.tsx` | Busca de times |
+| `src/components/esportes/MatchStats.tsx` | Stats da partida |
+| `src/components/esportes/H2HHistory.tsx` | Historico de confrontos |
+| `src/components/esportes/FormBadge.tsx` | Ultimos 5 jogos |
+| `src/components/esportes/PlayerStatsRow.tsx` | Estatisticas de jogador |
+| `src/components/esportes/RoundSelector.tsx` | Seletor de rodada |
+| `src/components/esportes/CompetitionHeader.tsx` | Header da competicao |
+
+### 6.5 Paginas Publicas
+
+| Arquivo | Descricao |
+|---------|-----------|
+| `src/pages/public/esportes/BrasileiraoPage.tsx` | Home do Brasileirao |
+| `src/pages/public/esportes/SerieDetailPage.tsx` | Pagina da Serie (A/B) |
+| `src/pages/public/esportes/MatchDetailPage.tsx` | Detalhe da partida |
+| `src/pages/public/esportes/TeamDetailPage.tsx` | Detalhe do time |
+| `src/pages/public/esportes/RoundPage.tsx` | Jogos da rodada |
+| `src/pages/public/esportes/StatsHubPage.tsx` | Hub de estatisticas |
+| `src/pages/public/esportes/TopScorersPage.tsx` | Artilharia |
+| `src/pages/public/esportes/CardsPage.tsx` | Cartoes |
+
+---
+
+## 7. Arquivos a Modificar
+
+| Arquivo | Mudancas |
 |---------|----------|
-| `src/contexts/ThemeContext.tsx` | Adicionar preset, setPreset, data-preset |
-| `src/hooks/useThemeMode.ts` | Adicionar lógica de preset |
-| `src/index.css` | Tokens para presets institutional/tech |
-| `src/components/admin/ThemeToggle.tsx` | Dropdown com Mode + Preset |
-| `src/pages/admin/settings/AppearanceSettings.tsx` | Cards de seleção de preset |
-| `src/components/admin/AdminSidebar.tsx` | Seção Educação & Esportes |
-| `src/App.tsx` | Rotas de Esportes + imports |
-| `src/components/admin/dashboard/GradientKpiCard.tsx` | Tokens semânticos |
-| `src/components/admin/dashboard/*.tsx` | Remover cores hardcoded |
+| `supabase/config.toml` | Adicionar football-api function |
+| `src/App.tsx` | Registrar rotas publicas de esportes |
+| `src/pages/admin/esportes/EsportesDashboard.tsx` | Conectar com dados reais |
+| `src/pages/admin/esportes/BrasileiraoHome.tsx` | Conectar com dados reais |
+| `src/pages/admin/esportes/EsportesEstatisticas.tsx` | Conectar com dados reais |
 
 ---
 
-## 7. Detalhes Técnicos
+## 8. Secrets Necessarios
 
-### 7.1 ThemeContext Atualizado
+A implementacao requer uma chave de API para API-Football (RapidAPI):
+
+| Secret | Descricao |
+|--------|-----------|
+| `RAPIDAPI_KEY` | Chave de acesso ao API-Football via RapidAPI |
+
+**Nota:** Sera solicitada a adicao desta secret antes de prosseguir.
+
+---
+
+## 9. Detalhes de Implementacao
+
+### 9.1 Refetch Intervals por Status
 
 ```typescript
-interface ThemeContextType {
-  mode: ThemeMode;
-  setMode: (mode: ThemeMode) => void;
-  preset: ThemePreset;
-  setPreset: (preset: ThemePreset) => void;
-  resolvedTheme: ResolvedTheme;
-  toggleTheme: () => void;
-  systemTheme: ResolvedTheme;
-}
+const getRefetchInterval = (status: string) => {
+  switch (status) {
+    case 'live':
+      return 15 * 1000;    // 15 segundos
+    case 'today':
+      return 60 * 1000;    // 1 minuto
+    case 'scheduled':
+      return 5 * 60 * 1000; // 5 minutos
+    default:
+      return 30 * 60 * 1000; // 30 minutos
+  }
+};
 ```
 
-### 7.2 Aplicação de Preset no DOM
+### 9.2 Destaques Visuais na Tabela
 
 ```typescript
-useEffect(() => {
-  document.documentElement.setAttribute('data-preset', preset);
-}, [preset]);
+const getPositionHighlight = (position: number, totalTeams: number) => {
+  if (position <= 4) return 'bg-green-500/10 border-l-2 border-l-green-500'; // G4
+  if (position <= 6) return 'bg-blue-500/10 border-l-2 border-l-blue-500';   // Pre-Liberta
+  if (position <= 12) return 'bg-orange-500/10 border-l-2 border-l-orange-500'; // Sula
+  if (position > totalTeams - 4) return 'bg-red-500/10 border-l-2 border-l-red-500'; // Z4
+  return '';
+};
 ```
 
-### 7.3 CSS Variables por Preset
+### 9.3 URL Slug para Jogos
 
-```css
-html[data-preset="institutional"] {
-  --card-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  --border-strength: 0.08;
-  --radius: 0.75rem;
-}
-
-html[data-preset="tech"] {
-  --card-shadow: 0 4px 12px rgba(0,0,0,0.12);
-  --border-strength: 0.15;
-  --radius: 0.5rem;
-  --glow-accent: 0 0 20px hsl(25 95% 53% / 0.2);
-}
-
-html[data-preset="tech"].dark {
-  --glow-accent: 0 0 24px hsl(25 95% 55% / 0.3);
-}
+```typescript
+const generateMatchSlug = (match: FootballMatch) => {
+  const date = format(new Date(match.matchDate), 'yyyy-MM-dd');
+  return `${match.homeTeam.slug}-x-${match.awayTeam.slug}-${date}`;
+  // Resultado: "corinthians-x-palmeiras-2026-05-15"
+};
 ```
 
-### 7.4 ThemeToggle com Preset
+### 9.4 Indicador Visual de Jogo Ao Vivo
 
 ```tsx
-// Seções no dropdown
-<DropdownMenuLabel>Modo</DropdownMenuLabel>
-<DropdownMenuItem onClick={() => setMode("light")}>
-  <Sun /> Claro
-</DropdownMenuItem>
-<DropdownMenuItem onClick={() => setMode("dark")}>
-  <Moon /> Escuro
-</DropdownMenuItem>
-<DropdownMenuItem onClick={() => setMode("system")}>
-  <Monitor /> Sistema
-</DropdownMenuItem>
+// LiveMatchCard inclui:
+// - Borda pulsante verde
+// - Badge "AO VIVO" animado
+// - Tempo decorrido atualizado
+// - Placar em destaque
 
-<DropdownMenuSeparator />
-
-<DropdownMenuLabel>Estilo Visual</DropdownMenuLabel>
-<DropdownMenuItem onClick={() => setPreset("institutional")}>
-  <Building2 /> Institucional
-</DropdownMenuItem>
-<DropdownMenuItem onClick={() => setPreset("tech")}>
-  <Sparkles /> Tech-Startup
-</DropdownMenuItem>
-```
-
-### 7.5 Página de Esportes (Estrutura)
-
-```tsx
-export default function EsportesDashboard() {
-  return (
-    <div className="p-6 space-y-6">
-      <header>
-        <h1 className="text-2xl font-bold">Esportes</h1>
-        <p className="text-muted-foreground">
-          Acompanhe resultados, jogos e estatísticas
-        </p>
-      </header>
-
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <GradientKpiCard title="Jogos Hoje" value={0} icon={Calendar} gradient="blue" />
-        <GradientKpiCard title="Partidas Semana" value={0} icon={Trophy} gradient="green" />
-        <GradientKpiCard title="Times" value={0} icon={Users} gradient="orange" />
-        <GradientKpiCard title="Competições" value={2} icon={Award} gradient="purple" />
-      </section>
-
-      <DashboardPanel title="Próximas Partidas" icon={Calendar}>
-        <EmptyState 
-          icon={Trophy}
-          title="Nenhuma partida agendada"
-          description="Configure o módulo para começar"
-          action={{ label: "Configurar", href: "/admin/esportes/configurar" }}
-        />
-      </DashboardPanel>
-    </div>
-  );
-}
+<div className="relative animate-pulse-border border-2 border-green-500">
+  <Badge className="absolute -top-2 -right-2 bg-red-500 animate-pulse">
+    AO VIVO
+  </Badge>
+  {/* ... */}
+</div>
 ```
 
 ---
 
-## 8. Checklist de Entrega
+## 10. Integracao com Publidoor (Slots de Monetizacao)
 
-- [ ] Tema: light/dark/system funcionando e persistindo
-- [ ] Preset: institucional/tech funcionando e persistindo
-- [ ] Header com controles de tema (Mode + Preset)
-- [ ] Página Aparência com seleção de preset
-- [ ] Dashboard usando tokens semânticos (sem cores hardcoded)
-- [ ] Sidebar com seção Educação & Esportes
-- [ ] Rotas e páginas base de Esportes funcionando
-- [ ] ENEM 2026 acessível via menu (rotas já existem)
+### 10.1 Locais de Patrocinio
+
+| Local | Tipo |
+|-------|------|
+| Header da competicao | Banner horizontal |
+| Pagina do jogo | Patrocinador da partida |
+| Pagina do time | Patrocinador do time |
+| Entre jogos na lista | Card patrocinado |
+| Jogos ao vivo | Oferta relampago |
+
+### 10.2 Componente de Slot
+
+```tsx
+<PublidoorSlot 
+  type="match_sponsor" 
+  context={{ matchId, homeTeam, awayTeam }}
+  fallback={null}
+/>
+```
 
 ---
 
-## 9. Ordem de Implementação
+## 11. Rotas a Registrar no App.tsx
 
-1. Atualizar `useThemeMode.ts` com suporte a preset
-2. Atualizar `ThemeContext.tsx` com preset
-3. Adicionar tokens CSS para presets em `index.css`
-4. Atualizar `ThemeToggle.tsx` com dropdown completo
-5. Atualizar `AppearanceSettings.tsx` com cards de preset
-6. Refatorar componentes do Dashboard (remover cores hardcoded)
-7. Criar páginas de Esportes
-8. Atualizar `AdminSidebar.tsx` com seção Educação & Esportes
-9. Adicionar rotas de Esportes em `App.tsx`
-10. Testar todos os modos/presets
+```tsx
+// Rotas publicas de Esportes (dentro do PublicLayout)
+<Route path="/esportes/brasileirao" element={<BrasileiraoPage />} />
+<Route path="/esportes/brasileirao/:serie" element={<SerieDetailPage />} />
+<Route path="/esportes/brasileirao/:serie/rodada/:round" element={<RoundPage />} />
+<Route path="/esportes/brasileirao/:serie/jogo/:slug" element={<MatchDetailPage />} />
+<Route path="/esportes/brasileirao/:serie/time/:slug" element={<TeamDetailPage />} />
+<Route path="/esportes/brasileirao/:serie/estatisticas" element={<StatsHubPage />} />
+<Route path="/esportes/brasileirao/:serie/estatisticas/artilharia" element={<TopScorersPage />} />
+<Route path="/esportes/brasileirao/:serie/estatisticas/cartoes" element={<CardsPage />} />
+```
+
+---
+
+## 12. Ordem de Implementacao
+
+1. Solicitar secret `RAPIDAPI_KEY`
+2. Criar `src/types/football.ts` (tipos TypeScript)
+3. Criar `supabase/functions/football-api/index.ts` (Edge Function)
+4. Atualizar `supabase/config.toml`
+5. Criar `src/hooks/useFootball.ts`
+6. Criar componentes base:
+   - TeamBadge, FormBadge
+   - MatchCard, LiveMatchCard
+   - StandingsTable
+   - TeamSearch
+7. Criar paginas publicas:
+   - BrasileiraoPage
+   - SerieDetailPage
+   - MatchDetailPage
+   - TeamDetailPage
+8. Registrar rotas em App.tsx
+9. Atualizar paginas admin para usar dados reais
+10. Testar fluxo completo
+
+---
+
+## 13. Resumo
+
+| Categoria | Quantidade |
+|-----------|------------|
+| Edge Functions | 1 |
+| Hooks | 1 (com 8 funcoes) |
+| Tipos | 1 arquivo |
+| Componentes | 11 |
+| Paginas Publicas | 8 |
+| Secrets | 1 (RAPIDAPI_KEY) |
