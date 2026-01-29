@@ -180,7 +180,7 @@ export default function EsportesConfig() {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">API ID:</span>
-                <span className="font-mono">{serieA?.api_id || "71"}</span>
+                <span className="font-mono">{serieA?.external_id || "71"}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Temporada:</span>
@@ -221,7 +221,7 @@ export default function EsportesConfig() {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">API ID:</span>
-                <span className="font-mono">{serieB?.api_id || "72"}</span>
+                <span className="font-mono">{serieB?.external_id || "72"}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Temporada:</span>
