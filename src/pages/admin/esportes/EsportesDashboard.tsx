@@ -46,7 +46,7 @@ export default function EsportesDashboard() {
 
   const handleQuickSync = async () => {
     try {
-      await syncMutation.mutateAsync();
+      await syncMutation.mutateAsync(undefined);
       toast({
         title: "Sincronização concluída!",
         description: "Dados do Brasileirão atualizados com sucesso.",

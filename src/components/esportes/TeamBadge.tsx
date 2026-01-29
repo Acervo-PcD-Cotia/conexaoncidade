@@ -3,18 +3,20 @@ import { cn } from "@/lib/utils";
 interface TeamBadgeProps {
   name: string;
   logoUrl?: string;
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
   showName?: boolean;
   className?: string;
 }
 
 const sizeClasses = {
+  xs: "h-4 w-4",
   sm: "h-6 w-6",
   md: "h-10 w-10",
   lg: "h-16 w-16",
 };
 
 const textSizeClasses = {
+  xs: "text-[10px]",
   sm: "text-xs",
   md: "text-sm",
   lg: "text-base",
