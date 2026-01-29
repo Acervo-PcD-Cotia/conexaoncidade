@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Upload, Sparkles, Trash2, Loader2, FileText, Link, Layers, Zap, X, Star, Home, AlertTriangle, Newspaper } from 'lucide-react';
+import { Upload, Sparkles, Trash2, Loader2, FileText, Link, Layers, Zap, X, Star, Home, AlertTriangle, Newspaper, Wand2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,6 +20,7 @@ export interface HighlightSettings {
   is_home_highlight: boolean;
   is_urgent: boolean;
   is_featured: boolean;
+  generateWebStory: boolean;
 }
 
 interface ManualFields {
@@ -81,6 +82,7 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
     is_home_highlight: false,
     is_urgent: false,
     is_featured: false,
+    generateWebStory: true, // WebStory habilitado por padrão
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -307,6 +309,7 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
       is_home_highlight: false,
       is_urgent: false,
       is_featured: false,
+      generateWebStory: true,
     });
   };
 
@@ -487,6 +490,21 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
                     id="highlight-featured"
                     checked={highlights.is_featured}
                     onCheckedChange={(checked) => setHighlights(prev => ({ ...prev, is_featured: checked }))}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between border-t pt-3">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="highlight-webstory" className="text-sm flex items-center gap-1.5">
+                      <Wand2 className="h-3.5 w-3.5 text-purple-500" />
+                      WebStory
+                    </Label>
+                    <p className="text-xs text-muted-foreground">Gerar WebStory automaticamente</p>
+                  </div>
+                  <Switch
+                    id="highlight-webstory"
+                    checked={highlights.generateWebStory}
+                    onCheckedChange={(checked) => setHighlights(prev => ({ ...prev, generateWebStory: checked }))}
                   />
                 </div>
               </div>
