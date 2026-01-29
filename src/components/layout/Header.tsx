@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Search, Sun, Moon, LogOut, LayoutDashboard, Newspaper, FolderOpen, Megaphone, Settings, ShieldCheck, Bus, MapPin, Accessibility, Users, Radio, Tv } from "lucide-react";
+import { Menu, X, Search, Sun, Moon, LogOut, LayoutDashboard, Newspaper, FolderOpen, Megaphone, Settings, ShieldCheck, Bus, MapPin, Accessibility, Users, Radio, Tv, GraduationCap, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTheme } from "@/hooks/useTheme";
@@ -114,6 +114,20 @@ export function Header() {
                   >
                     <Bus className="h-4 w-4" />
                     <VocabText term="school_transport" fallback="Transporte Escolar" />
+                  </Link>
+                  <Link
+                    to="/enem-2026"
+                    className="flex items-center gap-2 text-indigo-600 dark:text-indigo-500 hover:underline font-semibold"
+                  >
+                    <GraduationCap className="h-4 w-4" />
+                    ENEM 2026
+                  </Link>
+                  <Link
+                    to="/esportes/brasileirao"
+                    className="flex items-center gap-2 text-emerald-600 dark:text-emerald-500 hover:underline"
+                  >
+                    <Trophy className="h-4 w-4" />
+                    Brasileirão
                   </Link>
                 </div>
                 
@@ -309,6 +323,20 @@ export function Header() {
             >
               <Bus className="h-4 w-4" />
               <VocabText term="school_transport" fallback="Transporte Escolar" />
+            </Link>
+            <Link
+              to="/enem-2026"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-indigo-700 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-950/60 rounded-full hover:bg-indigo-200 dark:hover:bg-indigo-900/60 transition-colors border border-indigo-200 dark:border-indigo-800"
+            >
+              <GraduationCap className="h-4 w-4" />
+              ENEM 2026
+            </Link>
+            <Link
+              to="/esportes/brasileirao"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/60 rounded-full hover:bg-emerald-200 dark:hover:bg-emerald-900/60 transition-colors border border-emerald-200 dark:border-emerald-800"
+            >
+              <Trophy className="h-4 w-4" />
+              Brasileirão
             </Link>
           </div>
         </div>
