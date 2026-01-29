@@ -2034,6 +2034,265 @@ export type Database = {
           },
         ]
       }
+      br_broadcasts: {
+        Row: {
+          created_at: string | null
+          id: string
+          match_id: string
+          streaming: string[] | null
+          tv_closed: string[] | null
+          tv_open: string[] | null
+          updated_at: string | null
+          updated_from: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          match_id: string
+          streaming?: string[] | null
+          tv_closed?: string[] | null
+          tv_open?: string[] | null
+          updated_at?: string | null
+          updated_from?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          match_id?: string
+          streaming?: string[] | null
+          tv_closed?: string[] | null
+          tv_open?: string[] | null
+          updated_at?: string | null
+          updated_from?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "br_broadcasts_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: true
+            referencedRelation: "football_matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      br_fetch_logs: {
+        Row: {
+          duration_ms: number | null
+          fetched_at: string | null
+          id: string
+          items_processed: number | null
+          message: string | null
+          source_key: string
+          success: boolean
+        }
+        Insert: {
+          duration_ms?: number | null
+          fetched_at?: string | null
+          id?: string
+          items_processed?: number | null
+          message?: string | null
+          source_key: string
+          success: boolean
+        }
+        Update: {
+          duration_ms?: number | null
+          fetched_at?: string | null
+          id?: string
+          items_processed?: number | null
+          message?: string | null
+          source_key?: string
+          success?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "br_fetch_logs_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "br_sources"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      br_generated_news: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          news_type: string
+          published_at: string | null
+          related_match_id: string | null
+          related_round: number | null
+          seo_description: string | null
+          seo_title: string | null
+          slug: string
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          news_type: string
+          published_at?: string | null
+          related_match_id?: string | null
+          related_round?: number | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug: string
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          news_type?: string
+          published_at?: string | null
+          related_match_id?: string | null
+          related_round?: number | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug?: string
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "br_generated_news_related_match_id_fkey"
+            columns: ["related_match_id"]
+            isOneToOne: false
+            referencedRelation: "football_matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      br_news_items: {
+        Row: {
+          author: string | null
+          created_at: string | null
+          excerpt: string | null
+          id: string
+          image_url: string | null
+          published_at: string | null
+          source_key: string
+          title: string
+          url: string
+        }
+        Insert: {
+          author?: string | null
+          created_at?: string | null
+          excerpt?: string | null
+          id?: string
+          image_url?: string | null
+          published_at?: string | null
+          source_key: string
+          title: string
+          url: string
+        }
+        Update: {
+          author?: string | null
+          created_at?: string | null
+          excerpt?: string | null
+          id?: string
+          image_url?: string | null
+          published_at?: string | null
+          source_key?: string
+          title?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "br_news_items_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "br_sources"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      br_rate_state: {
+        Row: {
+          circuit_open: boolean | null
+          circuit_open_until: string | null
+          last_refill: string | null
+          source_key: string
+          tokens: number | null
+        }
+        Insert: {
+          circuit_open?: boolean | null
+          circuit_open_until?: string | null
+          last_refill?: string | null
+          source_key: string
+          tokens?: number | null
+        }
+        Update: {
+          circuit_open?: boolean | null
+          circuit_open_until?: string | null
+          last_refill?: string | null
+          source_key?: string
+          tokens?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "br_rate_state_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: true
+            referencedRelation: "br_sources"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      br_sources: {
+        Row: {
+          created_at: string | null
+          error_count: number | null
+          is_enabled: boolean | null
+          key: string
+          kind: string
+          last_error: string | null
+          last_etag: string | null
+          last_modified: string | null
+          last_success_at: string | null
+          name: string
+          scrape_interval_minutes: number | null
+          updated_at: string | null
+          url: string
+        }
+        Insert: {
+          created_at?: string | null
+          error_count?: number | null
+          is_enabled?: boolean | null
+          key: string
+          kind: string
+          last_error?: string | null
+          last_etag?: string | null
+          last_modified?: string | null
+          last_success_at?: string | null
+          name: string
+          scrape_interval_minutes?: number | null
+          updated_at?: string | null
+          url: string
+        }
+        Update: {
+          created_at?: string | null
+          error_count?: number | null
+          is_enabled?: boolean | null
+          key?: string
+          kind?: string
+          last_error?: string | null
+          last_etag?: string | null
+          last_modified?: string | null
+          last_success_at?: string | null
+          name?: string
+          scrape_interval_minutes?: number | null
+          updated_at?: string | null
+          url?: string
+        }
+        Relationships: []
+      }
       broadcast_analytics: {
         Row: {
           broadcast_id: string | null
