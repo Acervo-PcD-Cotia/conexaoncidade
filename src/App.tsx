@@ -93,6 +93,14 @@ import AcademyAdminCategories from "./pages/admin/academy/AcademyAdminCategories
 import AcademyAdminCourses from "./pages/admin/academy/AcademyAdminCourses";
 import AcademyAdminLessons from "./pages/admin/academy/AcademyAdminLessons";
 
+// ENEM 2026 Pages
+import AcademyEnem from "./pages/admin/academy/AcademyEnem";
+import EnemModule from "./pages/admin/academy/EnemModule";
+import EnemWeek from "./pages/admin/academy/EnemWeek";
+import EnemLessonPage from "./pages/admin/academy/EnemLesson";
+import EnemSubmissions from "./pages/admin/academy/EnemSubmissions";
+import EnemSubmissionDetail from "./pages/admin/academy/EnemSubmissionDetail";
+
 // Publidoor Pages
 import PublidoorDashboard from "./pages/admin/publidoor/PublidoorDashboard";
 import PublidoorCreate from "./pages/admin/publidoor/PublidoorCreate";
@@ -431,6 +439,14 @@ const App = () => (
                         <Route path="academy/admin/categorias" element={<AcademyAdminCategories />} />
                         <Route path="academy/admin/cursos" element={<AcademyAdminCourses />} />
                         <Route path="academy/admin/cursos/:id/aulas" element={<AcademyAdminLessons />} />
+                        
+                        {/* ENEM 2026 Routes */}
+                        <Route path="academy/enem" element={<AcademyEnem />} />
+                        <Route path="academy/enem/:slug" element={<EnemModule />} />
+                        <Route path="academy/enem/:slug/semana/:weekNumber" element={<EnemWeek />} />
+                        <Route path="academy/enem/:slug/semana/:weekNumber/aula/:lessonId" element={<EnemLessonPage />} />
+                        <Route path="academy/enem/:slug/minhas-redacoes" element={<EnemSubmissions />} />
+                        <Route path="academy/enem/:slug/redacao/:submissionId" element={<EnemSubmissionDetail />} />
                         
                         {/* Publidoor Routes */}
                         <Route path="publidoor" element={<PublidoorDashboard />} />

@@ -4957,6 +4957,379 @@ export type Database = {
           },
         ]
       }
+      enem_error_history: {
+        Row: {
+          competency: number
+          created_at: string | null
+          error_description: string | null
+          error_type: string
+          id: string
+          is_resolved: boolean | null
+          resolved_at: string | null
+          submission_id: string | null
+          user_id: string
+        }
+        Insert: {
+          competency: number
+          created_at?: string | null
+          error_description?: string | null
+          error_type: string
+          id?: string
+          is_resolved?: boolean | null
+          resolved_at?: string | null
+          submission_id?: string | null
+          user_id: string
+        }
+        Update: {
+          competency?: number
+          created_at?: string | null
+          error_description?: string | null
+          error_type?: string
+          id?: string
+          is_resolved?: boolean | null
+          resolved_at?: string | null
+          submission_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enem_error_history_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "enem_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      enem_lessons: {
+        Row: {
+          content_html: string | null
+          created_at: string | null
+          description: string | null
+          duration_minutes: number | null
+          id: string
+          is_mandatory: boolean | null
+          is_published: boolean | null
+          sort_order: number | null
+          title: string
+          type: string
+          updated_at: string | null
+          video_embed: string | null
+          video_url: string | null
+          week_id: string
+        }
+        Insert: {
+          content_html?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          is_mandatory?: boolean | null
+          is_published?: boolean | null
+          sort_order?: number | null
+          title: string
+          type?: string
+          updated_at?: string | null
+          video_embed?: string | null
+          video_url?: string | null
+          week_id: string
+        }
+        Update: {
+          content_html?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          is_mandatory?: boolean | null
+          is_published?: boolean | null
+          sort_order?: number | null
+          title?: string
+          type?: string
+          updated_at?: string | null
+          video_embed?: string | null
+          video_url?: string | null
+          week_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enem_lessons_week_id_fkey"
+            columns: ["week_id"]
+            isOneToOne: false
+            referencedRelation: "enem_weeks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      enem_modules: {
+        Row: {
+          cover_url: string | null
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          slug: string
+          sort_order: number | null
+          title: string
+          updated_at: string | null
+          year: number
+        }
+        Insert: {
+          cover_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          slug: string
+          sort_order?: number | null
+          title: string
+          updated_at?: string | null
+          year?: number
+        }
+        Update: {
+          cover_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          slug?: string
+          sort_order?: number | null
+          title?: string
+          updated_at?: string | null
+          year?: number
+        }
+        Relationships: []
+      }
+      enem_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          lesson_id: string
+          progress_percent: number | null
+          started_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          lesson_id: string
+          progress_percent?: number | null
+          started_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          lesson_id?: string
+          progress_percent?: number | null
+          started_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enem_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "enem_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      enem_submissions: {
+        Row: {
+          content: string
+          corrected_at: string | null
+          correction_status: string | null
+          created_at: string | null
+          diagnosis_level: string | null
+          diagnosis_recurring_error: string | null
+          diagnosis_strong_point: string | null
+          diagnosis_weak_point: string | null
+          feedback_corretora: Json | null
+          feedback_tutor: Json | null
+          id: string
+          lesson_id: string | null
+          score_c1: number | null
+          score_c2: number | null
+          score_c3: number | null
+          score_c4: number | null
+          score_c5: number | null
+          score_total: number | null
+          submitted_at: string | null
+          theme: string
+          updated_at: string | null
+          user_id: string
+          week_id: string | null
+          word_count: number | null
+        }
+        Insert: {
+          content: string
+          corrected_at?: string | null
+          correction_status?: string | null
+          created_at?: string | null
+          diagnosis_level?: string | null
+          diagnosis_recurring_error?: string | null
+          diagnosis_strong_point?: string | null
+          diagnosis_weak_point?: string | null
+          feedback_corretora?: Json | null
+          feedback_tutor?: Json | null
+          id?: string
+          lesson_id?: string | null
+          score_c1?: number | null
+          score_c2?: number | null
+          score_c3?: number | null
+          score_c4?: number | null
+          score_c5?: number | null
+          score_total?: number | null
+          submitted_at?: string | null
+          theme: string
+          updated_at?: string | null
+          user_id: string
+          week_id?: string | null
+          word_count?: number | null
+        }
+        Update: {
+          content?: string
+          corrected_at?: string | null
+          correction_status?: string | null
+          created_at?: string | null
+          diagnosis_level?: string | null
+          diagnosis_recurring_error?: string | null
+          diagnosis_strong_point?: string | null
+          diagnosis_weak_point?: string | null
+          feedback_corretora?: Json | null
+          feedback_tutor?: Json | null
+          id?: string
+          lesson_id?: string | null
+          score_c1?: number | null
+          score_c2?: number | null
+          score_c3?: number | null
+          score_c4?: number | null
+          score_c5?: number | null
+          score_total?: number | null
+          submitted_at?: string | null
+          theme?: string
+          updated_at?: string | null
+          user_id?: string
+          week_id?: string | null
+          word_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enem_submissions_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "enem_lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enem_submissions_week_id_fkey"
+            columns: ["week_id"]
+            isOneToOne: false
+            referencedRelation: "enem_weeks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      enem_weekly_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          lessons_completed: number | null
+          lessons_total: number | null
+          status: string | null
+          unlocked_at: string | null
+          user_id: string
+          week_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          lessons_completed?: number | null
+          lessons_total?: number | null
+          status?: string | null
+          unlocked_at?: string | null
+          user_id: string
+          week_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          lessons_completed?: number | null
+          lessons_total?: number | null
+          status?: string | null
+          unlocked_at?: string | null
+          user_id?: string
+          week_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enem_weekly_progress_week_id_fkey"
+            columns: ["week_id"]
+            isOneToOne: false
+            referencedRelation: "enem_weeks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      enem_weeks: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          module_id: string
+          title: string
+          unlock_date: string | null
+          unlock_rule: string | null
+          updated_at: string | null
+          week_number: number
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          module_id: string
+          title: string
+          unlock_date?: string | null
+          unlock_rule?: string | null
+          updated_at?: string | null
+          week_number: number
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          module_id?: string
+          title?: string
+          unlock_date?: string | null
+          unlock_rule?: string | null
+          updated_at?: string | null
+          week_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enem_weeks_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "enem_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_attendees: {
         Row: {
           checked_in: boolean | null
