@@ -45,8 +45,11 @@ export interface RegionalIngestItem {
   generated_image_url: string | null;
   processed_at: string | null;
   published_at_portal: string | null;
+  error_message: string | null;
+  retry_count: number | null;
+  processing_started_at: string | null;
   created_at: string;
-  regional_sources?: RegionalSource;
+  regional_sources?: { city: string; name: string };
 }
 
 export interface RegionalIngestRun {
@@ -323,6 +326,135 @@ export function useSkipRegionalItem() {
     },
     onError: (error) => {
       toast.error(`Erro: ${error.message}`);
+    },
+  });
+}
+
+// NEW HOOKS - Sprint 5
+
+export function useProcessRegionalItem() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (itemId: string) => {
+      const { data, error } = await supabase.functions.invoke('regional-admin-tools', {
+        body: { action: 'process_item', item_id: itemId },
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['regional-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['regional-stats'] });
+      toast.success(`Processado: ${data.title || 'Item processado com sucesso'}`);
+    },
+    onError: (error) => {
+      toast.error(`Erro ao processar: ${error.message}`);
+    },
+  });
+}
+
+export function usePublishRegionalItem() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (itemId: string) => {
+      const { data, error } = await supabase.functions.invoke('regional-admin-tools', {
+        body: { action: 'publish_item', item_id: itemId },
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['regional-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['regional-stats'] });
+      toast.success(`Publicado: ${data.slug || 'Notícia publicada com sucesso'}`);
+    },
+    onError: (error) => {
+      toast.error(`Erro ao publicar: ${error.message}`);
+    },
+  });
+}
+
+export function useProcessAllNew() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke('regional-admin-tools', {
+        body: { action: 'process_all_new' },
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['regional-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['regional-stats'] });
+      toast.success(`${data.processed} itens processados`);
+    },
+    onError: (error) => {
+      toast.error(`Erro: ${error.message}`);
+    },
+  });
+}
+
+export function useTestSelectors() {
+  return useMutation({
+    mutationFn: async ({ sourceId, selectors }: { sourceId: string; selectors: Record<string, string> }) => {
+      const { data, error } = await supabase.functions.invoke('regional-admin-tools', {
+        body: { action: 'test_selectors', source_id: sourceId, selectors },
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        toast.success(`Teste concluído: ${JSON.stringify(data.matches)}`);
+      }
+    },
+    onError: (error) => {
+      toast.error(`Erro no teste: ${error.message}`);
+    },
+  });
+}
+
+export function useCreateRegionalSource() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (source: Omit<RegionalSource, 'id' | 'created_at' | 'updated_at' | 'last_fetched_at' | 'last_success_at' | 'error_count' | 'last_error'>) => {
+      const { data, error } = await supabase
+        .from('regional_sources')
+        .insert({
+          city: source.city,
+          name: source.name,
+          type: source.type,
+          source_url: source.source_url,
+          rss_url: source.rss_url,
+          listing_url: source.listing_url,
+          selectors: source.selectors,
+          is_active: source.is_active,
+          mode: source.mode,
+          poll_interval_minutes: source.poll_interval_minutes,
+          rate_limit_per_hour: source.rate_limit_per_hour,
+          tags_default: source.tags_default,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['regional-sources'] });
+      toast.success('Fonte criada com sucesso');
+    },
+    onError: (error) => {
+      toast.error(`Erro ao criar fonte: ${error.message}`);
     },
   });
 }
