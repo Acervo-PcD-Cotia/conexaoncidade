@@ -28,12 +28,14 @@ export default function BrasileiraoPage() {
     "description": "Acompanhe o Campeonato Brasileiro Série A e B - Tabela, jogos ao vivo, estatísticas e muito mais.",
   };
 
+  const currentSeason = serieACompetition?.season || new Date().getFullYear();
+
   return (
     <>
       <Helmet>
-        <title>Brasileirão 2025 - Série A e B | Tabela, Jogos Ao Vivo</title>
+        <title>Brasileirão {currentSeason} - Série A e B | Tabela, Jogos Ao Vivo</title>
         <meta name="description" content="Acompanhe o Campeonato Brasileiro Série A e B. Tabela atualizada, jogos ao vivo, resultados, estatísticas e artilharia." />
-        <meta property="og:title" content="Brasileirão 2025 - Série A e B" />
+        <meta property="og:title" content={`Brasileirão ${currentSeason} - Série A e B`} />
         <meta property="og:description" content="Tabela, jogos ao vivo e estatísticas do Campeonato Brasileiro." />
         <script type="application/ld+json">{JSON.stringify(schema)}</script>
       </Helmet>
@@ -41,7 +43,7 @@ export default function BrasileiraoPage() {
       <div className="container mx-auto px-4 py-8 space-y-8">
         <CompetitionHeader 
           title="Campeonato Brasileiro" 
-          subtitle="Temporada 2025 • Série A e B"
+          subtitle={`Temporada ${currentSeason} • Série A e B`}
           currentSerie="serie-a"
         />
 
