@@ -89,7 +89,8 @@ import {
   RegionalDashboard, 
   RegionalSources, 
   RegionalQueue, 
-  RegionalLogs 
+  RegionalLogs,
+  RegionalSourceEdit,
 } from "./pages/admin/autopost-regional";
 
 // Conexão Academy Pages
@@ -475,6 +476,7 @@ const App = () => (
                         {/* Auto Post Regional (Grande Cotia) - Módulo Independente */}
                         <Route path="autopost-regional" element={<RegionalDashboard />} />
                         <Route path="autopost-regional/fontes" element={<RegionalSources />} />
+                        <Route path="autopost-regional/fontes/:id/edit" element={<RegionalSourceEdit />} />
                         <Route path="autopost-regional/fila" element={<RegionalQueue />} />
                         <Route path="autopost-regional/logs" element={<RegionalLogs />} />
                         

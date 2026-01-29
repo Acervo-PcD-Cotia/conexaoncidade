@@ -32,6 +32,7 @@ import {
   Rss,
   Globe,
   ExternalLink,
+  Pencil,
 } from 'lucide-react';
 import { 
   useRegionalSources, 
@@ -211,6 +212,16 @@ export default function RegionalSources() {
                             <Play className="h-4 w-4" />
                           </Button>
                         )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          asChild
+                          title="Editar fonte"
+                        >
+                          <Link to={`/admin/autopost-regional/fontes/${source.id}/edit`}>
+                            <Pencil className="h-4 w-4" />
+                          </Link>
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
