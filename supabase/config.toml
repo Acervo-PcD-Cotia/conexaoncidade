@@ -215,3 +215,6 @@ verify_jwt = false
 
 [functions.regional-admin-tools]
 verify_jwt = false
+
+[functions.regional-process-item]
+verify_jwt = false

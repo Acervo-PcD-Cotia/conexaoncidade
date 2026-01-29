@@ -11051,15 +11051,18 @@ export type Database = {
           content: string | null
           created_at: string | null
           draft_id: string | null
+          error_message: string | null
           excerpt: string | null
           generated_image_url: string | null
           id: string
           image_url: string | null
           news_id: string | null
           processed_at: string | null
+          processing_started_at: string | null
           published_at: string | null
           published_at_portal: string | null
           raw_payload: Json | null
+          retry_count: number | null
           rewritten_content: string | null
           rewritten_title: string | null
           seo_meta_description: string | null
@@ -11073,15 +11076,18 @@ export type Database = {
           content?: string | null
           created_at?: string | null
           draft_id?: string | null
+          error_message?: string | null
           excerpt?: string | null
           generated_image_url?: string | null
           id?: string
           image_url?: string | null
           news_id?: string | null
           processed_at?: string | null
+          processing_started_at?: string | null
           published_at?: string | null
           published_at_portal?: string | null
           raw_payload?: Json | null
+          retry_count?: number | null
           rewritten_content?: string | null
           rewritten_title?: string | null
           seo_meta_description?: string | null
@@ -11095,15 +11101,18 @@ export type Database = {
           content?: string | null
           created_at?: string | null
           draft_id?: string | null
+          error_message?: string | null
           excerpt?: string | null
           generated_image_url?: string | null
           id?: string
           image_url?: string | null
           news_id?: string | null
           processed_at?: string | null
+          processing_started_at?: string | null
           published_at?: string | null
           published_at_portal?: string | null
           raw_payload?: Json | null
+          retry_count?: number | null
           rewritten_content?: string | null
           rewritten_title?: string | null
           seo_meta_description?: string | null

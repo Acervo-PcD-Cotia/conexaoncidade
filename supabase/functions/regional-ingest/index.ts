@@ -29,16 +29,85 @@ interface ParsedItem {
   raw_payload: Record<string, unknown>;
 }
 
+// Helper: sleep for delay
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Helper: validate URL for SSRF
+function isValidSourceUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    // Block private IPs and localhost
+    if (parsed.hostname.match(/^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/)) {
+      return false;
+    }
+    // Only allow HTTP/HTTPS
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Helper: fetch with retry and TLS fallback
+async function fetchWithRetry(url: string, maxRetries = 3): Promise<Response> {
+  let lastError: Error | null = null;
+  
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; ConexaoNCidade/1.0)',
+          'Accept': 'application/rss+xml, application/xml, text/xml, */*',
+        },
+      });
+      
+      if (response.status === 429 || response.status === 503) {
+        console.log(`[Retry] Rate limited, waiting ${Math.pow(2, i)}s...`);
+        await sleep(Math.pow(2, i) * 1000);
+        continue;
+      }
+      
+      return response;
+    } catch (e) {
+      lastError = e instanceof Error ? e : new Error('Unknown error');
+      console.log(`[Retry] Attempt ${i + 1} failed: ${lastError.message}`);
+      
+      // Try HTTP fallback for TLS errors
+      if (i === 0 && (lastError.message.includes('TLS') || lastError.message.includes('SSL') || lastError.message.includes('certificate'))) {
+        const httpUrl = url.replace('https://', 'http://');
+        console.log(`[Retry] Trying HTTP fallback: ${httpUrl}`);
+        try {
+          return await fetch(httpUrl, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (compatible; ConexaoNCidade/1.0)',
+              'Accept': 'application/rss+xml, application/xml, text/xml, */*',
+            },
+          });
+        } catch (httpError) {
+          console.log(`[Retry] HTTP fallback failed`);
+        }
+      }
+      
+      await sleep(Math.pow(2, i) * 1000);
+    }
+  }
+  
+  throw lastError || new Error('Max retries exceeded');
+}
+
 // Parse RSS feed
 async function parseRSSFeed(rssUrl: string): Promise<ParsedItem[]> {
   console.log(`[RSS] Fetching: ${rssUrl}`);
   
-  const response = await fetch(rssUrl, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (compatible; ConexaoNCidade/1.0)',
-      'Accept': 'application/rss+xml, application/xml, text/xml, */*',
-    },
-  });
+  if (!isValidSourceUrl(rssUrl)) {
+    throw new Error('Invalid URL: blocked by SSRF protection');
+  }
+  
+  const response = await fetchWithRetry(rssUrl);
 
   if (!response.ok) {
     throw new Error(`RSS fetch failed: ${response.status} ${response.statusText}`);

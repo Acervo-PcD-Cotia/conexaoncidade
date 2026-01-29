@@ -26,6 +26,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs';
 import { 
   MapPin, 
   ArrowLeft, 
@@ -34,11 +40,20 @@ import {
   Eye,
   SkipForward,
   Search,
+  Sparkles,
+  Send,
+  Zap,
+  Image,
+  FileText,
+  Tags,
 } from 'lucide-react';
 import { 
   useRegionalQueue,
   useReprocessRegionalItem,
   useSkipRegionalItem,
+  useProcessRegionalItem,
+  usePublishRegionalItem,
+  useProcessAllNew,
   RegionalIngestItem,
 } from '@/hooks/useRegionalAutoPost';
 import { formatDistanceToNow } from 'date-fns';
@@ -52,14 +67,19 @@ export default function RegionalQueue() {
   const { data: queue, isLoading, refetch } = useRegionalQueue();
   const reprocessItem = useReprocessRegionalItem();
   const skipItem = useSkipRegionalItem();
+  const processItem = useProcessRegionalItem();
+  const publishItem = usePublishRegionalItem();
+  const processAllNew = useProcessAllNew();
 
   const filteredQueue = queue?.filter((item) => {
     const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
     const matchesSearch = !searchTerm || 
       item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.regional_sources as any)?.city?.toLowerCase().includes(searchTerm.toLowerCase());
+      item.regional_sources?.city?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesStatus && matchesSearch;
   });
+
+  const newItemsCount = queue?.filter(item => item.status === 'new').length || 0;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -102,10 +122,23 @@ export default function RegionalQueue() {
             </p>
           </div>
         </div>
-        <Button variant="outline" onClick={() => refetch()}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Atualizar
-        </Button>
+        <div className="flex items-center gap-2">
+          {newItemsCount > 0 && (
+            <Button 
+              variant="default"
+              onClick={() => processAllNew.mutate()}
+              disabled={processAllNew.isPending}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              <Zap className="h-4 w-4 mr-2" />
+              Processar Todos ({newItemsCount})
+            </Button>
+          )}
+          <Button variant="outline" onClick={() => refetch()}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Atualizar
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -168,18 +201,23 @@ export default function RegionalQueue() {
                     <TableCell>
                       <div className="max-w-md">
                         <p className="font-medium truncate">
-                          {item.title || 'Sem título'}
+                          {item.rewritten_title || item.title || 'Sem título'}
                         </p>
                         {item.excerpt && (
                           <p className="text-xs text-muted-foreground truncate">
                             {item.excerpt}
                           </p>
                         )}
+                        {item.error_message && (
+                          <p className="text-xs text-red-500 truncate mt-1">
+                            ⚠️ {item.error_message}
+                          </p>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">
-                        {(item.regional_sources as any)?.city || 'N/A'}
+                        {item.regional_sources?.city || 'N/A'}
                       </Badge>
                     </TableCell>
                     <TableCell>{getStatusBadge(item.status)}</TableCell>
@@ -190,6 +228,7 @@ export default function RegionalQueue() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
+                        {/* View Details */}
                         <Button
                           variant="ghost"
                           size="icon"
@@ -198,6 +237,8 @@ export default function RegionalQueue() {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
+                        
+                        {/* Open Original */}
                         <Button
                           variant="ghost"
                           size="icon"
@@ -208,17 +249,49 @@ export default function RegionalQueue() {
                             <ExternalLink className="h-4 w-4" />
                           </a>
                         </Button>
-                        {(item.status === 'new' || item.status === 'failed') && (
+                        
+                        {/* Process with AI - for new items */}
+                        {(item.status === 'new' || item.status === 'queued') && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => processItem.mutate(item.id)}
+                            disabled={processItem.isPending}
+                            title="Processar com IA"
+                            className="text-purple-500 hover:text-purple-700 hover:bg-purple-50"
+                          >
+                            <Sparkles className="h-4 w-4" />
+                          </Button>
+                        )}
+                        
+                        {/* Publish - for processed items */}
+                        {item.status === 'processed' && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => publishItem.mutate(item.id)}
+                            disabled={publishItem.isPending}
+                            title="Publicar agora"
+                            className="text-green-500 hover:text-green-700 hover:bg-green-50"
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                        )}
+                        
+                        {/* Reprocess - for failed items */}
+                        {item.status === 'failed' && (
                           <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => reprocessItem.mutate(item.id)}
                             disabled={reprocessItem.isPending}
-                            title="Reprocessar"
+                            title="Tentar novamente"
                           >
                             <RefreshCw className="h-4 w-4" />
                           </Button>
                         )}
+                        
+                        {/* Skip - for items not yet published/skipped */}
                         {item.status !== 'published' && item.status !== 'skipped' && (
                           <Button
                             variant="ghost"
@@ -242,71 +315,138 @@ export default function RegionalQueue() {
         </CardContent>
       </Card>
 
-      {/* Item Detail Dialog */}
+      {/* Item Detail Dialog with Tabs */}
       <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Detalhes do Item</DialogTitle>
             <DialogDescription>
-              Informações capturadas da fonte original
+              {selectedItem?.regional_sources?.city} - {getStatusBadge(selectedItem?.status || '')}
             </DialogDescription>
           </DialogHeader>
           
           {selectedItem && (
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Título</label>
-                <p className="font-medium">{selectedItem.title || 'Sem título'}</p>
-              </div>
+            <Tabs defaultValue="original" className="w-full">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="original" className="flex items-center gap-1">
+                  <FileText className="h-3 w-3" />
+                  Original
+                </TabsTrigger>
+                <TabsTrigger value="rewritten" className="flex items-center gap-1" disabled={!selectedItem.rewritten_content}>
+                  <Sparkles className="h-3 w-3" />
+                  Reescrito
+                </TabsTrigger>
+                <TabsTrigger value="seo" className="flex items-center gap-1" disabled={!selectedItem.seo_meta_title}>
+                  <Tags className="h-3 w-3" />
+                  SEO
+                </TabsTrigger>
+                <TabsTrigger value="image" className="flex items-center gap-1" disabled={!selectedItem.generated_image_url && !selectedItem.image_url}>
+                  <Image className="h-3 w-3" />
+                  Imagem
+                </TabsTrigger>
+              </TabsList>
               
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">URL Original</label>
-                <a 
-                  href={selectedItem.canonical_url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-blue-500 hover:underline text-sm block truncate"
-                >
-                  {selectedItem.canonical_url}
-                </a>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
+              <TabsContent value="original" className="mt-4 space-y-4">
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Status</label>
-                  <div className="mt-1">{getStatusBadge(selectedItem.status)}</div>
+                  <label className="text-sm font-medium text-muted-foreground">Título Original</label>
+                  <p className="font-medium">{selectedItem.title || 'Sem título'}</p>
                 </div>
+                
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Cidade</label>
-                  <p className="text-sm">{(selectedItem.regional_sources as any)?.city || 'N/A'}</p>
+                  <label className="text-sm font-medium text-muted-foreground">URL Original</label>
+                  <a 
+                    href={selectedItem.canonical_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline text-sm block truncate"
+                  >
+                    {selectedItem.canonical_url}
+                  </a>
                 </div>
-              </div>
-              
-              {selectedItem.excerpt && (
+                
+                {selectedItem.excerpt && (
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Resumo</label>
+                    <p className="text-sm">{selectedItem.excerpt}</p>
+                  </div>
+                )}
+                
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Resumo</label>
-                  <p className="text-sm">{selectedItem.excerpt}</p>
+                  <label className="text-sm font-medium text-muted-foreground">Payload Bruto</label>
+                  <pre className="mt-1 p-3 bg-muted rounded-lg text-xs overflow-auto max-h-48">
+                    {JSON.stringify(selectedItem.raw_payload, null, 2)}
+                  </pre>
                 </div>
-              )}
+              </TabsContent>
               
-              {selectedItem.image_url && (
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Imagem</label>
-                  <img 
-                    src={selectedItem.image_url} 
-                    alt="Preview" 
-                    className="mt-1 max-h-48 rounded-lg object-cover"
-                  />
-                </div>
-              )}
+              <TabsContent value="rewritten" className="mt-4 space-y-4">
+                {selectedItem.rewritten_title ? (
+                  <>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Título Reescrito</label>
+                      <p className="font-medium text-lg">{selectedItem.rewritten_title}</p>
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Conteúdo Reescrito</label>
+                      <div 
+                        className="mt-1 p-4 bg-muted/50 rounded-lg prose prose-sm max-h-80 overflow-auto"
+                        dangerouslySetInnerHTML={{ __html: selectedItem.rewritten_content || '' }}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-muted-foreground text-center py-8">
+                    Este item ainda não foi processado pela IA.
+                  </p>
+                )}
+              </TabsContent>
               
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Payload Bruto</label>
-                <pre className="mt-1 p-3 bg-muted rounded-lg text-xs overflow-auto max-h-48">
-                  {JSON.stringify(selectedItem.raw_payload, null, 2)}
-                </pre>
-              </div>
-            </div>
+              <TabsContent value="seo" className="mt-4 space-y-4">
+                {selectedItem.seo_meta_title ? (
+                  <>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Meta Title</label>
+                      <p className="font-medium">{selectedItem.seo_meta_title}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {selectedItem.seo_meta_title.length}/60 caracteres
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Meta Description</label>
+                      <p className="text-sm">{selectedItem.seo_meta_description}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {selectedItem.seo_meta_description?.length || 0}/155 caracteres
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-muted-foreground text-center py-8">
+                    Metadados SEO serão gerados após o processamento.
+                  </p>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="image" className="mt-4 space-y-4">
+                {(selectedItem.generated_image_url || selectedItem.image_url) ? (
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      {selectedItem.generated_image_url ? 'Imagem Gerada por IA' : 'Imagem Original'}
+                    </label>
+                    <img 
+                      src={selectedItem.generated_image_url || selectedItem.image_url || ''} 
+                      alt="Preview" 
+                      className="mt-2 rounded-lg max-h-64 object-cover w-full"
+                    />
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-center py-8">
+                    Nenhuma imagem disponível.
+                  </p>
+                )}
+              </TabsContent>
+            </Tabs>
           )}
         </DialogContent>
       </Dialog>
