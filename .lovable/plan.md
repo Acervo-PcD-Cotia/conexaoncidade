@@ -1,414 +1,342 @@
 
-# Plano: Redesign Completo do Dashboard — Estilo ITL Brasil
+# Plano: Redesign Premium do Admin Portal
 
-## Visao Geral
+## Visão Geral
 
-Redesenhar completamente o Dashboard administrativo para um visual limpo e moderno inspirado no painel ITL Brasil. O novo design terá:
-
-- Cards de KPI com fundos em gradiente suave (tons azuis/verdes)
-- Layout de duas colunas invertido (esquerda mais estreita, direita mais larga)
-- Painéis funcionais específicos: Acessibilidade, Mais Pesquisadas, Gestão de Usuários, Logs, Estatísticas
-- Visual clean com badges coloridos e hierarquia tipográfica clara
+Este plano implementa um redesign completo do Admin do Portal Conexão na Cidade com:
+1. Sistema completo de temas (Light/Dark/System + Presets Institucional/Tech)
+2. Dashboard com visual premium moderno
+3. Módulos Esportes e ENEM 2026 integrados no menu com rotas funcionais
 
 ---
 
-## 1. Novo Layout Estrutural
+## 1. Arquitetura de Temas
+
+### 1.1 Tipos e Estrutura
+
+Criar novo tipo para presets visuais:
+
+```typescript
+// src/types/theme.ts
+export type ThemeMode = "light" | "dark" | "system";
+export type ThemePreset = "institutional" | "tech";
+```
+
+### 1.2 Atualizar ThemeContext
+
+**Arquivo:** `src/contexts/ThemeContext.tsx`
+
+Adicionar suporte a presets:
+- Nova propriedade `preset` com persistência em `localStorage`
+- Aplicar `data-preset` no `documentElement`
+- Expor `preset`, `setPreset`
+
+### 1.3 Tokens CSS para Presets
+
+**Arquivo:** `src/index.css`
+
+Adicionar variações por preset:
+
+```css
+/* Preset Institucional - Mais suave, sombras leves */
+html[data-preset="institutional"] {
+  --radius: 0.75rem;
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.08);
+  --border-opacity: 0.12;
+}
+
+/* Preset Tech - Alto contraste, bordas nítidas, glow sutil */
+html[data-preset="tech"] {
+  --radius: 0.5rem;
+  --shadow-card: 0 2px 8px rgba(0,0,0,0.15);
+  --border-opacity: 0.2;
+  --accent-glow: 0 0 12px hsl(25 95% 53% / 0.25);
+}
+```
+
+---
+
+## 2. Controles de Tema na UI
+
+### 2.1 Atualizar ThemeToggle
+
+**Arquivo:** `src/components/admin/ThemeToggle.tsx`
+
+Adicionar dropdown expandido com:
+- Seção "Modo": Light / Dark / System
+- Seção "Estilo Visual": Institucional / Tech-Startup
+- Indicador visual do modo/preset atual
+
+### 2.2 Atualizar Página de Aparência
+
+**Arquivo:** `src/pages/admin/settings/AppearanceSettings.tsx`
+
+Adicionar:
+- Cards de seleção para Presets (Institucional/Tech)
+- Preview visual atualizado em tempo real
+- Descrição de cada preset
+
+---
+
+## 3. Redesign do Dashboard
+
+### 3.1 Novo Layout Visual
+
+O Dashboard atual já possui boa estrutura. Refinamentos:
 
 ```text
 +------------------------------------------------------------------+
-| HEADER: "Dashboard" | "Visão geral do sistema..."                |
+| Header: "Dashboard" + "Visão geral do sistema..."                |
 +------------------------------------------------------------------+
 |                                                                  |
-| KPI CARDS (4 colunas iguais, gradientes azuis/verdes)            |
-| [Artigos Publicados] [Categorias] [Feeds RSS] [Importacoes Hoje] |
+| KPIs (4 cards) - Manter GradientKpiCard com ajustes de tokens    |
 |                                                                  |
 +-------------------------+----------------------------------------+
-| COLUNA ESQUERDA (5 cols)|  COLUNA DIREITA (7 cols)               |
+| Coluna Esquerda (5)     | Coluna Direita (7)                     |
 |                         |                                        |
-| [Acessibilidade]        |  [Artigos Recentes]                    |
-|  - VLibras Toggle       |   - Lista com badges de categoria      |
-|  - Leitor de Página     |   - Indicador de tempo relativo        |
-|  - Controles Visuais    |   - Bullet colorido por status         |
-|                         |                                        |
-| [Mais Pesquisadas]      |                                        |
-|  - Top 3 com badges     |                                        |
-|    numerados (#1, #2)   |                                        |
-|  - Contagem de views    |                                        |
-|                         |                                        |
-| [Gestão de Usuários]    |                                        |
-|  - Novo Usuário         |                                        |
-|  - Listar Usuários      |                                        |
-|  - Permissões           |                                        |
-|                         |                                        |
+| [Acessibilidade]        | [Artigos Recentes]                     |
+| [Mais Pesquisadas]      |  - Refinado com tokens semânticos      |
+| [Gestão Usuários]       |                                        |
 +-------------------------+----------------------------------------+
-|                                                                  |
-| [Logs de Importação]            [Estatísticas Rápidas]           |
-|  - Lista de feeds               - Artigos esta semana: 21        |
-|  - Badge "Sucesso"              - Feeds ativos: 0                |
-|  - Timestamp                    - Média views/artigo: 139        |
-|                                 - Taxa sucesso RSS: 95% [bar]    |
+| [Logs de Importação]    | [Estatísticas Rápidas]                 |
 +------------------------------------------------------------------+
 ```
 
+### 3.2 Refatorar Componentes
+
+**Arquivos a modificar:**
+- `GradientKpiCard.tsx`: Usar tokens semânticos, remover cores hardcoded
+- `DashboardPanel.tsx`: Já existe, refinar estilos
+- `TrendingPanel.tsx`, `RecentArticlesPanel.tsx`: Substituir classes hardcoded
+
+**Regra:** Eliminar todas as classes como `text-sky-600`, `bg-emerald-100` e usar apenas tokens: `text-primary`, `bg-primary/10`, `text-muted-foreground`, etc.
+
+### 3.3 Sidebar (Já Implementada)
+
+A sidebar atual já possui:
+- Colapso/expansão com persistência
+- Tooltips no modo colapsado
+- Submenus em accordion
+- Destaque laranja no item ativo
+
+Nenhuma modificação necessária.
+
 ---
 
-## 2. Novos Componentes a Criar
+## 4. Módulos Esportes e ENEM 2026
 
-### 2.1 GradientKpiCard
+### 4.1 Adicionar ao Menu Sidebar
 
-Card de KPI com fundo em gradiente suave:
+**Arquivo:** `src/components/admin/AdminSidebar.tsx`
+
+Criar nova seção "Educação & Esportes":
 
 ```typescript
-interface GradientKpiCardProps {
-  title: string;
-  value: string | number;
-  subtitle?: string;
-  trend?: { value: string; positive?: boolean };
-  icon: LucideIcon;
-  gradient: "blue" | "green" | "orange" | "purple";
+const educationSportsItems: MenuItem[] = [
+  { title: "Esportes", url: "/admin/esportes", icon: Trophy },
+  { title: "ENEM 2026", url: "/admin/academy/enem", icon: GraduationCap, badge: "Novo" },
+];
+
+// Adicionar no sidebarGroups
+{
+  id: "educacao-esportes",
+  title: "Educação & Esportes",
+  icon: Trophy,
+  items: educationSportsItems,
 }
 ```
 
-**Estilos:**
-- Fundo: gradiente suave horizontal (ex: `from-blue-50 to-blue-100/50`)
-- Borda: `border border-blue-200/50`
-- Ícone: posicionado no canto superior direito, cor coordenada
-- Valor: `text-3xl font-bold text-foreground`
-- Subtitle: `text-xs text-muted-foreground`
-- Trend: texto pequeno verde/vermelho com seta
+### 4.2 Rotas ENEM 2026 (Já Existentes)
 
-### 2.2 AccessibilityPanel
+As rotas ENEM já estão configuradas em `App.tsx`:
+- `/admin/academy/enem` → AcademyEnem
+- `/admin/academy/enem/:slug` → EnemModule
+- `/admin/academy/enem/:slug/semana/:weekNumber` → EnemWeek
+- `/admin/academy/enem/:slug/semana/:weekNumber/aula/:lessonId` → EnemLessonPage
+- `/admin/academy/enem/:slug/minhas-redacoes` → EnemSubmissions
+- `/admin/academy/enem/:slug/redacao/:submissionId` → EnemSubmissionDetail
 
-Painel de acessibilidade completo:
+### 4.3 Criar Páginas Base de Esportes
 
-- Toggle VLibras com descrição
-- Botão "Ler Página"
-- Controles visuais: Tamanho fonte (A-/100%/A+), Alto Contraste, Dislexia, Espaçamento
-- Link "Configurações de Acessibilidade"
-
-### 2.3 TrendingPanel
-
-Painel "Mais Pesquisadas":
-
-- Ícone de trending no header
-- Lista compacta com badges numerados (#1, #2, #3) em coral/laranja
-- Contagem de visualizações
-- Título truncado
-
-### 2.4 UserManagementPanel
-
-Links de gestão de usuários:
-
-- Ícone + texto para cada ação
-- Hover com background sutil
-- Links: Novo Usuário, Listar Usuários, Permissões
-
-### 2.5 ImportLogsPanel
-
-Logs de importação RSS:
-
-- Lista de feeds com nome + contagem
-- Badge "Sucesso" em verde
-- Timestamp relativo
-
-### 2.6 QuickStatsPanel
-
-Estatísticas rápidas:
-
-- Linhas de stat com label + valor
-- Valores numéricos alinhados à direita em cor destaque
-- Barra de progresso para taxas percentuais
-
----
-
-## 3. Modificacoes por Arquivo
-
-### Arquivos a CRIAR
+**Novos arquivos:**
 
 | Arquivo | Descrição |
 |---------|-----------|
-| `src/components/admin/dashboard/GradientKpiCard.tsx` | KPI com gradiente |
-| `src/components/admin/dashboard/AccessibilityPanel.tsx` | Painel de acessibilidade |
-| `src/components/admin/dashboard/TrendingPanel.tsx` | Mais pesquisadas |
-| `src/components/admin/dashboard/UserManagementPanel.tsx` | Gestão de usuários |
-| `src/components/admin/dashboard/ImportLogsPanel.tsx` | Logs de importação |
-| `src/components/admin/dashboard/QuickStatsPanel.tsx` | Estatísticas rápidas |
-| `src/components/admin/dashboard/RecentArticlesPanel.tsx` | Artigos recentes estilo ITL |
+| `src/pages/admin/esportes/EsportesDashboard.tsx` | Dashboard do módulo |
+| `src/pages/admin/esportes/BrasileiraoHome.tsx` | Resultados/Jogos/Times |
+| `src/pages/admin/esportes/EsportesEstatisticas.tsx` | Estatísticas |
 
-### Arquivos a MODIFICAR
+**Estrutura do Dashboard:**
+- Cards KPI: Jogos Hoje, Partidas Semana, Times Cadastrados, Competições
+- Lista: Próximas Partidas
+- CTA: "Configurar Módulo"
+
+### 4.4 Adicionar Rotas de Esportes
+
+**Arquivo:** `src/App.tsx`
+
+```typescript
+// Esportes Routes
+<Route path="esportes" element={<EsportesDashboard />} />
+<Route path="esportes/brasileirao" element={<BrasileiraoHome />} />
+<Route path="esportes/estatisticas" element={<EsportesEstatisticas />} />
+```
+
+---
+
+## 5. Arquivos a Criar
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `src/types/theme.ts` | Tipos ThemePreset |
+| `src/pages/admin/esportes/EsportesDashboard.tsx` | Dashboard Esportes |
+| `src/pages/admin/esportes/BrasileiraoHome.tsx` | Brasileirão |
+| `src/pages/admin/esportes/EsportesEstatisticas.tsx` | Estatísticas |
+
+## 6. Arquivos a Modificar
 
 | Arquivo | Mudanças |
 |---------|----------|
-| `src/pages/admin/Dashboard.tsx` | Layout completamente novo, remover componentes antigos, usar novos painéis |
-| `src/index.css` | Adicionar classes de gradiente para KPIs |
-
-### Arquivos que PODEM SER REMOVIDOS (apos migracao)
-
-| Arquivo | Motivo |
-|---------|--------|
-| `src/components/admin/dashboard/KpiCard.tsx` | Substituído por GradientKpiCard |
-| `src/components/admin/dashboard/QuickActionsGrid.tsx` | Não existe no novo design |
-| `src/components/admin/dashboard/DashboardProductionCard.tsx` | Substituído por novos painéis |
-| `src/components/admin/dashboard/DashboardAudienceCard.tsx` | Substituído por QuickStatsPanel |
-| `src/components/admin/dashboard/DashboardRevenueCard.tsx` | Pode ser integrado em stats |
+| `src/contexts/ThemeContext.tsx` | Adicionar preset, setPreset, data-preset |
+| `src/hooks/useThemeMode.ts` | Adicionar lógica de preset |
+| `src/index.css` | Tokens para presets institutional/tech |
+| `src/components/admin/ThemeToggle.tsx` | Dropdown com Mode + Preset |
+| `src/pages/admin/settings/AppearanceSettings.tsx` | Cards de seleção de preset |
+| `src/components/admin/AdminSidebar.tsx` | Seção Educação & Esportes |
+| `src/App.tsx` | Rotas de Esportes + imports |
+| `src/components/admin/dashboard/GradientKpiCard.tsx` | Tokens semânticos |
+| `src/components/admin/dashboard/*.tsx` | Remover cores hardcoded |
 
 ---
 
-## 4. Detalhes de Implementação
+## 7. Detalhes Técnicos
 
-### 4.1 GradientKpiCard
+### 7.1 ThemeContext Atualizado
 
 ```typescript
-// Mapeamento de gradientes
-const gradients = {
-  blue: "from-blue-50 to-blue-100/30 border-blue-200/50",
-  green: "from-emerald-50 to-emerald-100/30 border-emerald-200/50",
-  orange: "from-orange-50 to-orange-100/30 border-orange-200/50",
-  purple: "from-violet-50 to-violet-100/30 border-violet-200/50",
-};
-
-const iconColors = {
-  blue: "text-blue-500 bg-blue-100",
-  green: "text-emerald-500 bg-emerald-100",
-  orange: "text-orange-500 bg-orange-100",
-  purple: "text-violet-500 bg-violet-100",
-};
+interface ThemeContextType {
+  mode: ThemeMode;
+  setMode: (mode: ThemeMode) => void;
+  preset: ThemePreset;
+  setPreset: (preset: ThemePreset) => void;
+  resolvedTheme: ResolvedTheme;
+  toggleTheme: () => void;
+  systemTheme: ResolvedTheme;
+}
 ```
 
-### 4.2 Header Simplificado
+### 7.2 Aplicação de Preset no DOM
 
-**Antes:** Header com logo, busca, alertas, botão Nova Notícia
-
-**Depois:** Header mínimo apenas com título da página
-```tsx
-<header className="px-6 py-4">
-  <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-  <p className="text-sm text-muted-foreground">
-    Visão geral do sistema de notícias Conexão na Cidade
-  </p>
-</header>
+```typescript
+useEffect(() => {
+  document.documentElement.setAttribute('data-preset', preset);
+}, [preset]);
 ```
 
-### 4.3 Artigos Recentes (Novo Estilo)
-
-- Bullet colorido à esquerda (indicador de categoria/status)
-- Título em negrito
-- Badge de categoria escuro
-- Timestamp em texto muted
-
-```tsx
-<div className="flex items-start gap-3 py-3 border-b last:border-0">
-  <div className="w-2 h-2 mt-2 rounded-full bg-emerald-500" />
-  <div className="flex-1 min-w-0">
-    <p className="font-medium text-sm line-clamp-2">{title}</p>
-    <div className="flex items-center gap-2 mt-1">
-      <span className="px-2 py-0.5 text-xs bg-neutral-900 text-white rounded">
-        {category}
-      </span>
-      <span className="text-xs text-muted-foreground">{timeAgo}</span>
-    </div>
-  </div>
-</div>
-```
-
-### 4.4 Badges Numerados (Trending)
-
-```tsx
-<span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-coral-100 text-coral-600 text-xs font-bold">
-  #{index + 1}
-</span>
-```
-
-### 4.5 Painel de Acessibilidade
-
-Componentes:
-- Switch para VLibras
-- Botão "Ler Página" com ícone play
-- Slider/botões para tamanho de fonte (A-, 100%, A+)
-- Toggle para Alto Contraste
-- Toggle para Fonte Amigável à Dislexia
-- Select para Espaçamento de Linhas
-
----
-
-## 5. Cores e Gradientes
-
-### Gradientes dos KPI Cards
-
-| Card | Gradiente |
-|------|-----------|
-| Artigos Publicados | blue: `from-sky-50 to-sky-100/30` |
-| Categorias | green: `from-teal-50 to-teal-100/30` |
-| Feeds RSS | blue: `from-blue-50 to-blue-100/30` |
-| Importações Hoje | purple: `from-violet-50 to-violet-100/30` |
-
-### Cores de Badge
-
-| Tipo | Cor |
-|------|-----|
-| Ranking (#1, #2, #3) | Coral/Salmon (`bg-[#FEE2E2]` `text-[#DC2626]`) |
-| Sucesso | Verde (`bg-emerald-100 text-emerald-700`) |
-| Categoria | Cinza escuro (`bg-neutral-800 text-white`) |
-
----
-
-## 6. Layout Grid Final
-
-```tsx
-<div className="p-6 space-y-6">
-  {/* Header */}
-  <header>...</header>
-  
-  {/* KPI Cards - 4 colunas */}
-  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-    <GradientKpiCard gradient="blue" ... />
-    <GradientKpiCard gradient="green" ... />
-    <GradientKpiCard gradient="blue" ... />
-    <GradientKpiCard gradient="purple" ... />
-  </div>
-  
-  {/* Main Content - 5+7 colunas */}
-  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-    {/* Coluna Esquerda */}
-    <div className="lg:col-span-5 space-y-6">
-      <AccessibilityPanel />
-      <TrendingPanel />
-      <UserManagementPanel />
-    </div>
-    
-    {/* Coluna Direita */}
-    <div className="lg:col-span-7">
-      <RecentArticlesPanel />
-    </div>
-  </div>
-  
-  {/* Footer Panels - 2 colunas */}
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <ImportLogsPanel />
-    <QuickStatsPanel />
-  </div>
-</div>
-```
-
----
-
-## 7. Remocoes e Limpeza
-
-### Elementos a Remover do Design Atual
-
-- Header complexo com logo, busca global, alertas (mover para layout global)
-- KpiCard antigo (substituir por GradientKpiCard)
-- QuickActionsGrid (não existe no novo design)
-- DashboardProductionCard, DashboardAudienceCard, DashboardRevenueCard (consolidar em novos painéis)
-- Popover de alertas (mover para header global ou remover)
-- CommandDialog de busca (mover para componente global)
-
-### CSS a Adicionar
+### 7.3 CSS Variables por Preset
 
 ```css
-/* Gradientes suaves para KPIs */
-.kpi-gradient-blue {
-  background: linear-gradient(135deg, hsl(200 85% 96%) 0%, hsl(200 80% 94% / 0.3) 100%);
-  border-color: hsl(200 70% 85% / 0.5);
+html[data-preset="institutional"] {
+  --card-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  --border-strength: 0.08;
+  --radius: 0.75rem;
 }
 
-.kpi-gradient-green {
-  background: linear-gradient(135deg, hsl(160 70% 95%) 0%, hsl(160 65% 92% / 0.3) 100%);
-  border-color: hsl(160 60% 80% / 0.5);
+html[data-preset="tech"] {
+  --card-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  --border-strength: 0.15;
+  --radius: 0.5rem;
+  --glow-accent: 0 0 20px hsl(25 95% 53% / 0.2);
 }
 
-/* Badge de ranking coral */
-.badge-ranking {
-  background-color: hsl(0 85% 95%);
-  color: hsl(0 70% 50%);
+html[data-preset="tech"].dark {
+  --glow-accent: 0 0 24px hsl(25 95% 55% / 0.3);
+}
+```
+
+### 7.4 ThemeToggle com Preset
+
+```tsx
+// Seções no dropdown
+<DropdownMenuLabel>Modo</DropdownMenuLabel>
+<DropdownMenuItem onClick={() => setMode("light")}>
+  <Sun /> Claro
+</DropdownMenuItem>
+<DropdownMenuItem onClick={() => setMode("dark")}>
+  <Moon /> Escuro
+</DropdownMenuItem>
+<DropdownMenuItem onClick={() => setMode("system")}>
+  <Monitor /> Sistema
+</DropdownMenuItem>
+
+<DropdownMenuSeparator />
+
+<DropdownMenuLabel>Estilo Visual</DropdownMenuLabel>
+<DropdownMenuItem onClick={() => setPreset("institutional")}>
+  <Building2 /> Institucional
+</DropdownMenuItem>
+<DropdownMenuItem onClick={() => setPreset("tech")}>
+  <Sparkles /> Tech-Startup
+</DropdownMenuItem>
+```
+
+### 7.5 Página de Esportes (Estrutura)
+
+```tsx
+export default function EsportesDashboard() {
+  return (
+    <div className="p-6 space-y-6">
+      <header>
+        <h1 className="text-2xl font-bold">Esportes</h1>
+        <p className="text-muted-foreground">
+          Acompanhe resultados, jogos e estatísticas
+        </p>
+      </header>
+
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <GradientKpiCard title="Jogos Hoje" value={0} icon={Calendar} gradient="blue" />
+        <GradientKpiCard title="Partidas Semana" value={0} icon={Trophy} gradient="green" />
+        <GradientKpiCard title="Times" value={0} icon={Users} gradient="orange" />
+        <GradientKpiCard title="Competições" value={2} icon={Award} gradient="purple" />
+      </section>
+
+      <DashboardPanel title="Próximas Partidas" icon={Calendar}>
+        <EmptyState 
+          icon={Trophy}
+          title="Nenhuma partida agendada"
+          description="Configure o módulo para começar"
+          action={{ label: "Configurar", href: "/admin/esportes/configurar" }}
+        />
+      </DashboardPanel>
+    </div>
+  );
 }
 ```
 
 ---
 
-## 8. Funcionalidades dos Paineis
+## 8. Checklist de Entrega
 
-### AccessibilityPanel
-- Toggle VLibras: estado local + integração futura
-- Leitor de Página: botão que inicia leitura via Web Speech API
-- Tamanho Fonte: A-/100%/A+ que altera CSS root
-- Alto Contraste: toggle que adiciona classe ao body
-- Dislexia: toggle para fonte OpenDyslexic
-- Espaçamento: select 1x, 1.5x, 2x
-
-### TrendingPanel
-- Query: busca top 3-5 notícias por view_count
-- Exibe: ranking badge, título truncado, views
-
-### UserManagementPanel
-- Links estáticos para:
-  - /admin/users/new
-  - /admin/users
-  - /admin/users/permissions
-
-### ImportLogsPanel
-- Query: últimos 5-10 registros de importação RSS
-- Exibe: nome do feed, status badge, timestamp
-
-### QuickStatsPanel
-- Queries agregadas:
-  - Artigos esta semana (count com filtro de data)
-  - Feeds ativos (count de feeds com enabled=true)
-  - Média views/artigo (avg de view_count)
-  - Taxa sucesso RSS (% de importações com sucesso)
-- Barra de progresso visual para taxa
+- [ ] Tema: light/dark/system funcionando e persistindo
+- [ ] Preset: institucional/tech funcionando e persistindo
+- [ ] Header com controles de tema (Mode + Preset)
+- [ ] Página Aparência com seleção de preset
+- [ ] Dashboard usando tokens semânticos (sem cores hardcoded)
+- [ ] Sidebar com seção Educação & Esportes
+- [ ] Rotas e páginas base de Esportes funcionando
+- [ ] ENEM 2026 acessível via menu (rotas já existem)
 
 ---
 
-## 9. Responsividade
+## 9. Ordem de Implementação
 
-### Mobile (< 768px)
-- KPIs: 2 colunas
-- Main: 1 coluna (Acessibilidade em cima, Artigos embaixo)
-- Footer: 1 coluna
-
-### Tablet (768px - 1024px)
-- KPIs: 4 colunas
-- Main: 1 coluna ou 6+6
-- Footer: 2 colunas
-
-### Desktop (> 1024px)
-- KPIs: 4 colunas
-- Main: 5+7 colunas
-- Footer: 2 colunas
-
----
-
-## 10. Resumo de Arquivos
-
-### Criar (7 arquivos)
-1. `GradientKpiCard.tsx`
-2. `AccessibilityPanel.tsx`
-3. `TrendingPanel.tsx`
-4. `UserManagementPanel.tsx`
-5. `ImportLogsPanel.tsx`
-6. `QuickStatsPanel.tsx`
-7. `RecentArticlesPanel.tsx`
-
-### Modificar (2 arquivos)
-1. `Dashboard.tsx` - reescrever completamente
-2. `index.css` - adicionar gradientes
-
-### Manter/Reutilizar
-- `DashboardPanel.tsx` - pode ser usado como wrapper
-- `CompactList.tsx` - pode ser útil internamente
-
----
-
-## 11. Ordem de Implementação
-
-1. Criar `GradientKpiCard.tsx`
-2. Criar `AccessibilityPanel.tsx`
-3. Criar `TrendingPanel.tsx`
-4. Criar `RecentArticlesPanel.tsx`
-5. Criar `UserManagementPanel.tsx`
-6. Criar `ImportLogsPanel.tsx`
-7. Criar `QuickStatsPanel.tsx`
-8. Atualizar `index.css` com gradientes
-9. Reescrever `Dashboard.tsx` usando novos componentes
-10. Testar responsividade
+1. Atualizar `useThemeMode.ts` com suporte a preset
+2. Atualizar `ThemeContext.tsx` com preset
+3. Adicionar tokens CSS para presets em `index.css`
+4. Atualizar `ThemeToggle.tsx` com dropdown completo
+5. Atualizar `AppearanceSettings.tsx` com cards de preset
+6. Refatorar componentes do Dashboard (remover cores hardcoded)
+7. Criar páginas de Esportes
+8. Atualizar `AdminSidebar.tsx` com seção Educação & Esportes
+9. Adicionar rotas de Esportes em `App.tsx`
+10. Testar todos os modos/presets
