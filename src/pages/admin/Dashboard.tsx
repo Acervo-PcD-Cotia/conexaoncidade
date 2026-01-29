@@ -1,11 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import {
   Newspaper,
   FileText,
   PlaySquare,
   Eye,
+  Plus,
+  Search,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useNewsCreationModal } from "@/contexts/NewsCreationModalContext";
 
 // Import new dashboard components
 import { GradientKpiCard } from "@/components/admin/dashboard/GradientKpiCard";
@@ -17,6 +23,8 @@ import { ImportLogsPanel } from "@/components/admin/dashboard/ImportLogsPanel";
 import { QuickStatsPanel } from "@/components/admin/dashboard/QuickStatsPanel";
 
 export default function Dashboard() {
+  const { openModal } = useNewsCreationModal();
+
   // Fetch operational stats
   const { data: stats } = useQuery({
     queryKey: ["admin-dashboard-stats"],
@@ -92,15 +100,35 @@ export default function Dashboard() {
 
   return (
     <div className="p-6 space-y-6 min-h-screen bg-background">
-      {/* Header */}
-      <header>
-        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">
-          Visão geral do sistema de notícias Conexão na Cidade
-        </p>
+      {/* Header Premium */}
+      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+          <p className="text-sm text-muted-foreground">
+            Visão geral do sistema de notícias Conexão na Cidade
+          </p>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          {/* Global Search */}
+          <div className="relative hidden sm:block">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Buscar... (Ctrl+K)"
+              className="w-64 pl-10 bg-card"
+            />
+          </div>
+          
+          {/* New News Button */}
+          <Button onClick={openModal} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Nova Notícia
+          </Button>
+        </div>
       </header>
 
-      {/* KPI Cards Row - 4 columns */}
+      {/* KPI Cards Row - 4 columns with premium variant */}
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {kpiCards.map((kpi) => (
           <GradientKpiCard
@@ -110,29 +138,30 @@ export default function Dashboard() {
             icon={kpi.icon}
             gradient={kpi.gradient}
             subtitle={kpi.subtitle}
+            variant="premium"
           />
         ))}
       </section>
 
-      {/* Main Content - 5+7 columns */}
+      {/* Main Content - 8+4 columns for premium layout */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column - 5 cols */}
-        <div className="lg:col-span-5 space-y-6">
+        {/* Main Column - 8 cols */}
+        <div className="lg:col-span-8 space-y-6">
+          <RecentArticlesPanel />
           <DashboardAccessibilityPanel />
-          <TrendingPanel />
-          <UserManagementPanel />
         </div>
 
-        {/* Right Column - 7 cols */}
-        <div className="lg:col-span-7">
-          <RecentArticlesPanel />
+        {/* Sidebar Column - 4 cols */}
+        <div className="lg:col-span-4 space-y-6">
+          <TrendingPanel />
+          <UserManagementPanel />
+          <QuickStatsPanel />
         </div>
       </section>
 
-      {/* Footer Panels - 2 columns */}
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Footer Panel - full width */}
+      <section>
         <ImportLogsPanel />
-        <QuickStatsPanel />
       </section>
     </div>
   );

@@ -115,6 +115,9 @@ import TeamDetailPage from "./pages/public/esportes/TeamDetailPage";
 import RoundPage from "./pages/public/esportes/RoundPage";
 import TopScorersPage from "./pages/public/esportes/TopScorersPage";
 
+// Public ENEM 2026 Page
+import Enem2026Landing from "./pages/public/Enem2026Landing";
+
 // Publidoor Pages
 import PublidoorDashboard from "./pages/admin/publidoor/PublidoorDashboard";
 import PublidoorCreate from "./pages/admin/publidoor/PublidoorCreate";
@@ -359,6 +362,9 @@ const App = () => (
                         
                         {/* Job Alerts */}
                         <Route path="/comunidade/alertas-vagas" element={<JobAlertsPage />} />
+                        
+                        {/* ENEM 2026 Public Landing */}
+                        <Route path="/enem-2026" element={<Enem2026Landing />} />
                       </Route>
                       <Route path="/story/:slug" element={<StoryViewer />} />
                       <Route path="/evento/:slug" element={<EventDetail />} />
