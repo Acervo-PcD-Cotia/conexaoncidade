@@ -1,160 +1,130 @@
 
 
-# Implementar Formato "Cidade | Categoria" em Todo o Sistema
+# Atualizar Formato para Incluir "Cotia | Categoria"
 
 ## Objetivo
 
-Garantir que **todas** as notícias (manual ou Notícias AI) exibam a categoria no formato **"Cidade | Categoria"** (ex: Cotia | Saúde, Itapevi | Educação, Carapicuíba | Esportes) em todo o portal.
+Modificar a lógica de exibição para que **TODAS** as notícias exibam o formato **"Cidade | Categoria"**, incluindo as notícias de Cotia.
+
+**Antes:** Cotia exibia apenas "Educação"
+**Depois:** Cotia exibirá "Cotia | Educação"
 
 ---
 
-## Situação Atual
+## Mudança Necessária
 
-### O que já existe (✅)
-- Utilitário `src/utils/categoryDisplay.ts` com lógica completa para detectar cidades e formatar "Cidade | Categoria"
-- Lista de cidades vizinhas (Osasco, Carapicuíba, Barueri, Itapevi, etc.)
-- Lista de bairros de Cotia (Granja Viana, Caucaia do Alto, etc.)
-- Funções `getCategoryDisplay()` e `getCategoryBadgeInfo()` prontas
+### Arquivo: `src/utils/categoryDisplay.ts`
 
-### O que NÃO está funcionando (❌)
-- **Nenhum componente** está usando essas funções
-- Os componentes exibem apenas `news.category?.name`
-- A lógica depende das **tags** para identificar a cidade, mas as tags não são carregadas em todas as queries
+A lógica atual só adiciona a cidade para cidades vizinhas. Precisamos modificar para:
+
+1. **Detectar qualquer cidade** nas tags (não apenas vizinhas)
+2. **Sempre exibir** no formato "Cidade | Categoria"
+
+### Nova Lógica
+
+| Tag encontrada | Exibição |
+|----------------|----------|
+| Cotia | Cotia \| Saúde |
+| Granja Viana | Cotia \| Educação |
+| Itapevi | Itapevi \| Esportes |
+| Osasco | Osasco \| Política |
+| São Paulo | São Paulo \| Brasil |
 
 ---
 
-## Plano de Implementação
+## Alterações Técnicas
 
-### Parte 1: Frontend — Integrar `getCategoryDisplay` nos Componentes
+### 1. Adicionar Cotia à lista de cidades reconhecidas
 
-**Arquivos a modificar:**
-
-| Componente | Arquivo | Uso Atual | Mudança |
-|------------|---------|-----------|---------|
-| NewsCard | `src/components/home/NewsCard.tsx` | `news.category?.name` | Usar `getCategoryDisplay()` |
-| NewsCardVisual | `src/components/home/NewsCardVisual.tsx` | `news.category?.name` | Usar `getCategoryDisplay()` |
-| HeroSection | `src/components/home/HeroSection.tsx` | `heroNews.category?.name` | Usar `getCategoryDisplay()` |
-| NewsDetail | `src/pages/NewsDetail.tsx` | `news.category.name` | Usar `getCategoryDisplay()` |
-| CategorySection | `src/components/home/CategorySection.tsx` | `category.name` | Usar `getCategoryDisplay()` |
-
-**Exemplo de mudança:**
-
-```text
-// Antes
-{news.category?.name || "Notícia"}
-
-// Depois
-import { getCategoryDisplay } from "@/utils/categoryDisplay";
-// ...
-{getCategoryDisplay(news.category?.name || "Notícia", news.tags?.map(t => t.name) || [])}
+```
+// Lista COMPLETA de cidades (incluindo Cotia)
+const ALL_CITIES = [
+  'cotia',  // Agora incluída!
+  'são paulo', 'osasco', 'carapicuíba', 'barueri', 'itapevi', 
+  'jandira', 'embu', 'embu das artes', 'taboão', 'taboão da serra',
+  'vargem grande', 'vargem grande paulista', 'ibiúna', 'mairinque',
+  'itapecerica', 'itapecerica da serra', 'são roque'
+];
 ```
 
-### Parte 2: Garantir que Tags sejam carregadas
+### 2. Mapear bairros de Cotia para "Cotia"
 
-**Arquivo:** `src/hooks/useNews.ts`
+```
+// Bairros que devem ser exibidos como "Cotia"
+const COTIA_NEIGHBORHOODS = [
+  'granja viana', 'caucaia do alto', 'jardim da glória',
+  'jardim são fernando', 'ressaca', 'patrimônio da lagoa'
+];
+```
 
-Atualmente, as tags só são carregadas no `useNewsBySlug`. Precisamos adicionar a busca de tags também em:
+### 3. Nova função `extractCityFromTags`
 
-1. `useNews()` - Lista principal de notícias
-2. `useFeaturedNews()` - Notícias em destaque
-3. `useMostReadNews()` - Mais lidas
-4. `useNewsByCategory()` - Por categoria
+```
+export function extractCityFromTags(tags: string[]): string | null {
+  for (const tag of tags) {
+    const normalizedTag = tag.toLowerCase().trim();
+    
+    // Se for bairro de Cotia, retorna "Cotia"
+    if (COTIA_NEIGHBORHOODS.some(n => normalizedTag.includes(n))) {
+      return 'Cotia';
+    }
+    
+    // Se for Cotia diretamente
+    if (normalizedTag.includes('cotia')) {
+      return 'Cotia';
+    }
+    
+    // Se for outra cidade conhecida
+    const foundCity = ALL_CITIES.find(city => 
+      normalizedTag.includes(city) || city.includes(normalizedTag)
+    );
+    
+    if (foundCity) {
+      // Capitalizar
+      return foundCity.split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+    }
+  }
+  return null;
+}
+```
 
-**Mudança:** Adicionar query para buscar tags após carregar cada notícia (similar ao padrão já usado em `useNewsBySlug`).
+### 4. Atualizar `getCategoryDisplay`
 
-### Parte 3: Regra Especial para Cotia
-
-**Lógica já implementada em `categoryDisplay.ts`:**
-
-```text
-- Se a notícia tiver tag de cidade vizinha (Itapevi, Osasco, etc.):
-  → Exibe: "Cidade | Categoria" (ex: "Itapevi | Educação")
+```
+export function getCategoryDisplay(category: string, tags: string[]): string {
+  const city = extractCityFromTags(tags);
   
-- Se a notícia for de Cotia ou sem cidade identificável:
-  → Exibe apenas: "Categoria" (ex: "Saúde")
+  // SEMPRE exibe "Cidade | Categoria" se encontrar cidade
+  if (city) {
+    return `${city} | ${category}`;
+  }
   
-- Se a tag for um bairro de Cotia (Granja Viana, Caucaia, etc.):
-  → Trata como Cotia, exibe apenas categoria
+  // Fallback: apenas categoria (para notícias sem tag de cidade)
+  return category;
+}
 ```
-
-### Parte 4: Atualizar Notícias AI
-
-**Arquivos a verificar:**
-
-1. `supabase/functions/noticias-ai-generate/index.ts` - Garantir que a primeira tag seja sempre a cidade
-2. `src/pages/admin/NoticiasAI.tsx` - Confirmar que as tags são salvas corretamente
-
-**Regra do Prompt Mestre v2 (já implementada):**
-- A primeira tag DEVE ser o nome da cidade
-- Tags entre 3 e 12
-
-### Parte 5: Atualizar Cadastro Manual
-
-**Arquivo:** `src/pages/admin/NewsEditor.tsx`
-
-Garantir que ao criar notícia manual:
-1. Campo de tags seja obrigatório (mínimo 3)
-2. Sugerir automaticamente a cidade como primeira tag
-
----
-
-## Resumo de Alterações por Arquivo
-
-| Arquivo | Tipo | Descrição |
-|---------|------|-----------|
-| `src/hooks/useNews.ts` | Hook | Adicionar busca de tags em todas as funções |
-| `src/components/home/NewsCard.tsx` | Componente | Integrar `getCategoryDisplay()` |
-| `src/components/home/NewsCardVisual.tsx` | Componente | Integrar `getCategoryDisplay()` |
-| `src/components/home/HeroSection.tsx` | Componente | Integrar `getCategoryDisplay()` |
-| `src/components/home/CategorySection.tsx` | Componente | Integrar `getCategoryDisplay()` |
-| `src/pages/NewsDetail.tsx` | Página | Integrar `getCategoryDisplay()` |
-| `src/pages/admin/NewsEditor.tsx` | Página | Adicionar validação de tags (cidade como primeira) |
-
----
-
-## Seção Técnica
-
-### Interface de Tags no NewsItem
-
-As tags já estão tipadas em `useNews.ts`:
-
-```typescript
-tags?: Array<{
-  id: string;
-  name: string;
-  slug: string;
-}>;
-```
-
-### Função getCategoryDisplay
-
-```typescript
-// Entrada
-getCategoryDisplay("Saúde", ["Itapevi", "Hospital", "Atendimento"])
-// Saída: "Itapevi | Saúde"
-
-getCategoryDisplay("Saúde", ["Cotia", "UBS", "Atendimento"])
-// Saída: "Saúde" (Cotia é cidade principal, não exibe)
-
-getCategoryDisplay("Educação", ["Granja Viana", "Escola"])
-// Saída: "Educação" (Granja Viana é bairro de Cotia)
-```
-
-### Otimização de Performance
-
-Para evitar N+1 queries ao buscar tags, podemos:
-1. Usar batch query para buscar todas as tags de uma vez
-2. Ou aceitar o custo adicional já que são poucas notícias por página
 
 ---
 
 ## Resultado Esperado
 
-Após implementação:
+| Tags | Categoria | Exibição Final |
+|------|-----------|----------------|
+| ["Cotia", "UBS"] | Saúde | **Cotia \| Saúde** |
+| ["Granja Viana", "Escola"] | Educação | **Cotia \| Educação** |
+| ["Itapevi", "Hospital"] | Saúde | **Itapevi \| Saúde** |
+| ["Osasco", "Prefeitura"] | Política | **Osasco \| Política** |
+| ["Brasil", "Economia"] | Brasil | **Brasil** (sem cidade) |
 
-- ✅ Cards de notícias exibirão "Itapevi | Educação" para notícias de Itapevi
-- ✅ Notícias de Cotia exibirão apenas "Educação"
-- ✅ Página de detalhe terá badge "Carapicuíba | Esportes"
-- ✅ HeroSection terá formato consistente
-- ✅ Tanto notícias manuais quanto AI seguirão o mesmo padrão
+---
+
+## Arquivos a Modificar
+
+| Arquivo | Mudança |
+|---------|---------|
+| `src/utils/categoryDisplay.ts` | Refatorar lógica para incluir Cotia no formato |
+
+Apenas **1 arquivo** precisa ser alterado. Os componentes já usam `getCategoryDisplay()` e receberão a mudança automaticamente.
 
