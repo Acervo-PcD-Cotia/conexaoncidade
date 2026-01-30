@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { Upload, Sparkles, Trash2, Loader2, FileText, Link, Layers, Zap, X, Star, Home, AlertTriangle, Newspaper, Wand2 } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Upload, Sparkles, Trash2, Loader2, FileText, Link, Layers, Zap, X, Star, Home, AlertTriangle, Newspaper, Wand2, Download, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,6 +12,199 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+
+// Template JSON completo para download
+const JSON_TEMPLATE = {
+  noticias: [
+    {
+      titulo: "Prefeitura anuncia novo programa de educação infantil para 2025",
+      slug: "prefeitura-novo-programa-educacao-infantil-2025",
+      subtitulo: "Iniciativa vai beneficiar mais de 5 mil crianças em escolas municipais",
+      chapeu: "EDUCAÇÃO",
+      resumo: "A Prefeitura Municipal apresentou hoje um novo programa de educação infantil que promete revolucionar o ensino nas escolas públicas. O projeto prevê investimentos de R$ 10 milhões.",
+      conteudo: "<p><strong>A Prefeitura Municipal apresentou hoje um novo programa de educação infantil que promete revolucionar o ensino.</strong></p><p>O projeto, batizado de 'Futuro Brilhante', prevê investimentos de R$ 10 milhões e beneficiará mais de 5 mil crianças matriculadas em escolas municipais.</p><p>Entre as principais ações estão a construção de novas salas de aula, capacitação de professores e distribuição de material didático gratuito.</p>",
+      categoria: "Educação",
+      tags: ["educação", "prefeitura", "escolas", "crianças", "investimento", "programa social", "ensino infantil", "2025", "municipal", "professores", "sala de aula", "didático"],
+      editor: "Redação Conexão na Cidade",
+      fonte: "https://prefeitura.gov.br/noticias/educacao-infantil",
+      destaque: "home",
+      generateWebStory: true,
+      imagem: {
+        hero: "https://exemplo.com/imagens/educacao-programa.jpg",
+        og: "https://exemplo.com/imagens/educacao-programa-og.jpg",
+        card: "https://exemplo.com/imagens/educacao-programa-card.jpg",
+        alt: "Crianças em sala de aula participando do novo programa educacional",
+        credito: "Foto: Assessoria de Imprensa / Prefeitura Municipal",
+        galeria: [
+          "https://exemplo.com/imagens/galeria/educacao-1.jpg",
+          "https://exemplo.com/imagens/galeria/educacao-2.jpg",
+          "https://exemplo.com/imagens/galeria/educacao-3.jpg"
+        ]
+      },
+      seo: {
+        meta_titulo: "Novo programa de educação infantil beneficiará 5 mil crianças | Portal",
+        meta_descricao: "Prefeitura anuncia investimento de R$ 10 milhões em programa educacional para escolas municipais. Saiba mais detalhes."
+      }
+    },
+    {
+      titulo: "Festival Gastronômico reúne 30 restaurantes no centro da cidade",
+      slug: "festival-gastronomico-30-restaurantes-centro",
+      subtitulo: "Evento acontece de 15 a 18 de março com entrada gratuita",
+      chapeu: "CULTURA",
+      resumo: "O tradicional Festival Gastronômico retorna este ano com 30 restaurantes participantes. O evento promete movimentar o centro da cidade durante quatro dias.",
+      conteudo: "<p><strong>O tradicional Festival Gastronômico retorna este ano maior e melhor.</strong></p><p>Com 30 restaurantes participantes, o evento promete movimentar o centro da cidade de 15 a 18 de março.</p><p>A entrada é gratuita e os pratos terão preços promocionais entre R$ 15 e R$ 45.</p>",
+      categoria: "Cultura",
+      tags: ["festival", "gastronomia", "restaurantes", "centro", "março", "eventos", "culinária", "comida", "chef", "gratuito", "promoção", "cidade"],
+      editor: "Maria Silva",
+      fonte: "https://cultura.gov.br/festival-gastronomico",
+      destaque: "featured",
+      generateWebStory: true,
+      imagem: {
+        hero: "https://exemplo.com/imagens/festival-food.jpg",
+        alt: "Pratos típicos sendo servidos durante o festival",
+        credito: "Foto: João Fotógrafo",
+        galeria: [
+          "https://exemplo.com/imagens/galeria/festival-1.jpg",
+          "https://exemplo.com/imagens/galeria/festival-2.jpg"
+        ]
+      },
+      seo: {
+        meta_titulo: "Festival Gastronômico 2025: 30 restaurantes, entrada grátis",
+        meta_descricao: "Festival reúne 30 restaurantes no centro com pratos de R$ 15 a R$ 45. De 15 a 18 de março."
+      }
+    }
+  ]
+};
+
+// Interface para erros de validação
+interface ValidationError {
+  field: string;
+  message: string;
+  type: 'error' | 'warning';
+  articleIndex?: number;
+}
+
+// Função de validação do JSON
+const validateNewsJson = (text: string): ValidationError[] => {
+  const errors: ValidationError[] = [];
+  
+  try {
+    const parsed = JSON.parse(text);
+    
+    // Verifica estrutura raiz
+    if (!parsed.noticias && !Array.isArray(parsed)) {
+      errors.push({ 
+        field: 'root', 
+        message: 'JSON deve ter objeto "noticias" ou ser um array', 
+        type: 'error' 
+      });
+      return errors;
+    }
+    
+    const articles = parsed.noticias || parsed;
+    
+    if (!Array.isArray(articles)) {
+      errors.push({ 
+        field: 'noticias', 
+        message: 'Campo "noticias" deve ser um array', 
+        type: 'error' 
+      });
+      return errors;
+    }
+    
+    articles.forEach((article: any, index: number) => {
+      // Campos obrigatórios
+      if (!article.titulo || article.titulo.length < 10) {
+        errors.push({ 
+          field: 'titulo', 
+          message: `Artigo ${index + 1}: Título obrigatório (min 10 caracteres)`, 
+          type: 'error', 
+          articleIndex: index 
+        });
+      }
+      
+      if (!article.slug) {
+        errors.push({ 
+          field: 'slug', 
+          message: `Artigo ${index + 1}: Slug obrigatório`, 
+          type: 'error', 
+          articleIndex: index 
+        });
+      } else if (!/^[a-z0-9-]+$/.test(article.slug)) {
+        errors.push({ 
+          field: 'slug', 
+          message: `Artigo ${index + 1}: Slug inválido (use apenas letras minúsculas, números e hífens)`, 
+          type: 'error', 
+          articleIndex: index 
+        });
+      }
+      
+      if (!article.resumo || article.resumo.length < 30) {
+        errors.push({ 
+          field: 'resumo', 
+          message: `Artigo ${index + 1}: Resumo obrigatório (min 30 caracteres)`, 
+          type: 'error', 
+          articleIndex: index 
+        });
+      }
+      
+      if (!article.conteudo || article.conteudo.length < 100) {
+        errors.push({ 
+          field: 'conteudo', 
+          message: `Artigo ${index + 1}: Conteúdo obrigatório (min 100 caracteres)`, 
+          type: 'error', 
+          articleIndex: index 
+        });
+      }
+      
+      if (!article.categoria) {
+        errors.push({ 
+          field: 'categoria', 
+          message: `Artigo ${index + 1}: Categoria obrigatória`, 
+          type: 'error', 
+          articleIndex: index 
+        });
+      }
+      
+      // Avisos (campos recomendados)
+      if (!article.tags || article.tags.length < 12) {
+        errors.push({ 
+          field: 'tags', 
+          message: `Artigo ${index + 1}: Recomendado 12 tags (atual: ${article.tags?.length || 0})`, 
+          type: 'warning', 
+          articleIndex: index 
+        });
+      }
+      
+      if (!article.imagem?.hero) {
+        errors.push({ 
+          field: 'imagem', 
+          message: `Artigo ${index + 1}: Imagem hero recomendada`, 
+          type: 'warning', 
+          articleIndex: index 
+        });
+      }
+      
+      if (article.destaque && !['none', 'home', 'featured', 'urgent'].includes(article.destaque)) {
+        errors.push({ 
+          field: 'destaque', 
+          message: `Artigo ${index + 1}: Destaque inválido (use: none, home, featured ou urgent)`, 
+          type: 'error', 
+          articleIndex: index 
+        });
+      }
+    });
+    
+  } catch (e) {
+    errors.push({ 
+      field: 'json', 
+      message: 'JSON inválido: verifique a sintaxe', 
+      type: 'error' 
+    });
+  }
+  
+  return errors;
+};
 
 type DetectedMode = 'exclusiva' | 'manual' | 'json' | 'url' | 'batch' | 'auto';
 type TabType = 'cadastro' | 'manual' | 'json' | 'link' | 'lote';
@@ -66,6 +259,7 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
   // JSON state
   const [jsonContent, setJsonContent] = useState('');
   const [jsonValid, setJsonValid] = useState<boolean | null>(null);
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   
   // Link state
   const [singleUrl, setSingleUrl] = useState('');
@@ -201,6 +395,39 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
       setJsonValid(false);
       return false;
     }
+  };
+
+  // Validação em tempo real (debounced)
+  useEffect(() => {
+    if (!jsonContent.trim()) {
+      setValidationErrors([]);
+      return;
+    }
+    
+    const timer = setTimeout(() => {
+      setValidationErrors(validateNewsJson(jsonContent));
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [jsonContent]);
+
+  const handleDownloadTemplate = () => {
+    const blob = new Blob([JSON.stringify(JSON_TEMPLATE, null, 2)], { 
+      type: 'application/json' 
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'template-noticias.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: 'Template baixado!',
+      description: 'Edite o arquivo e cole o conteúdo aqui',
+    });
   };
 
   const getContentAndMode = (): { content: string; mode: DetectedMode } => {
@@ -596,10 +823,30 @@ Dicas:
           </TabsContent>
 
           <TabsContent value="json" className="mt-4 space-y-3">
-            <div className="flex items-center gap-2">
+            {/* Header com badges e botões */}
+            <div className="flex flex-wrap items-center gap-2">
               <Badge variant={jsonValid === true ? 'default' : jsonValid === false ? 'destructive' : 'secondary'}>
                 {jsonValid === true ? '✓ JSON válido' : jsonValid === false ? '✗ JSON inválido' : 'Aguardando JSON'}
               </Badge>
+              
+              {validationErrors.length > 0 && (
+                <>
+                  <Badge variant="destructive">
+                    {validationErrors.filter(e => e.type === 'error').length} erro(s)
+                  </Badge>
+                  <Badge variant="outline" className="text-amber-600 border-amber-300">
+                    {validationErrors.filter(e => e.type === 'warning').length} aviso(s)
+                  </Badge>
+                </>
+              )}
+              
+              <div className="flex-1" />
+              
+              <Button variant="outline" size="sm" onClick={handleDownloadTemplate}>
+                <Download className="mr-1 h-4 w-4" />
+                Baixar Template
+              </Button>
+              
               <Button
                 variant="outline"
                 size="sm"
@@ -609,28 +856,67 @@ Dicas:
                 Validar
               </Button>
             </div>
+            
+            {/* Lista de erros de validação */}
+            {validationErrors.length > 0 && (
+              <div className="rounded-lg border p-3 space-y-1 max-h-32 overflow-y-auto bg-muted/30">
+                {validationErrors.map((err, idx) => (
+                  <div 
+                    key={idx} 
+                    className={`text-xs flex items-start gap-2 ${
+                      err.type === 'error' ? 'text-destructive' : 'text-amber-600'
+                    }`}
+                  >
+                    {err.type === 'error' ? (
+                      <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
+                    ) : (
+                      <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+                    )}
+                    <span><strong>{err.field}:</strong> {err.message}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {/* Textarea do JSON */}
             <Textarea
-              placeholder={`Cole o JSON aqui...
+              placeholder={`Cole o JSON aqui ou baixe o template de exemplo...
 
-Exemplo de estrutura:
+Estrutura esperada:
 {
-  "titulo": "Título da notícia",
-  "subtitulo": "Subtítulo opcional",
-  "chapeu": "CATEGORIA",
-  "conteudo": "Conteúdo da notícia...",
-  "editor": "Nome do Editor",
-  "fonte": "Fonte original",
-  "imagem_principal": "https://...",
-  "galeria": ["https://...", "https://..."]
-}
-
-Ou array de artigos: [ {...}, {...} ]`}
+  "noticias": [
+    {
+      "titulo": "Título da notícia (obrigatório, min 10 caracteres)",
+      "slug": "slug-da-noticia (obrigatório, letras minúsculas, números e hífens)",
+      "resumo": "Resumo com 30-300 caracteres (obrigatório)",
+      "conteudo": "<p><strong>Primeiro parágrafo em negrito.</strong></p><p>Conteúdo HTML...</p>",
+      "categoria": "Nome da categoria (obrigatório)",
+      "tags": ["tag1", "tag2", ...] (recomendado 12 tags),
+      "destaque": "none" | "home" | "featured" | "urgent",
+      "generateWebStory": true,
+      "imagem": {
+        "hero": "https://url-imagem-principal.jpg",
+        "alt": "Descrição da imagem",
+        "credito": "Foto: Nome do Fotógrafo",
+        "galeria": ["url1.jpg", "url2.jpg"]
+      },
+      "seo": {
+        "meta_titulo": "Título SEO (max 60 caracteres)",
+        "meta_descricao": "Descrição SEO (max 160 caracteres)"
+      }
+    }
+  ]
+}`}
               value={jsonContent}
               onChange={(e) => {
                 setJsonContent(e.target.value);
                 setJsonValid(null);
               }}
-              className="min-h-[200px] font-mono text-sm"
+              className={`min-h-[200px] font-mono text-sm ${
+                validationErrors.some(e => e.type === 'error') 
+                  ? 'border-destructive focus-visible:ring-destructive' 
+                  : ''
+              }`}
             />
           </TabsContent>
 
