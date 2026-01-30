@@ -8788,6 +8788,7 @@ export type Database = {
           meta_title: string | null
           og_image_url: string | null
           origin: Database["public"]["Enums"]["news_origin"] | null
+          original_published_at: string | null
           podcast_audio_url: string | null
           podcast_enabled: boolean | null
           podcast_generated_at: string | null
@@ -8851,6 +8852,7 @@ export type Database = {
           meta_title?: string | null
           og_image_url?: string | null
           origin?: Database["public"]["Enums"]["news_origin"] | null
+          original_published_at?: string | null
           podcast_audio_url?: string | null
           podcast_enabled?: boolean | null
           podcast_generated_at?: string | null
@@ -8914,6 +8916,7 @@ export type Database = {
           meta_title?: string | null
           og_image_url?: string | null
           origin?: Database["public"]["Enums"]["news_origin"] | null
+          original_published_at?: string | null
           podcast_audio_url?: string | null
           podcast_enabled?: boolean | null
           podcast_generated_at?: string | null
