@@ -1,106 +1,116 @@
 
-# Plano: Corrigir Edge Function generate-webstory
+# Plano: Corrigir Execução do Auto Post Regional
 
-## Diagnóstico Completo
+## Diagnóstico
 
-### Problema Identificado
-A edge function `generate-webstory` está falhando com erro 500 porque usa nomes de colunas incorretos que não existem no banco de dados.
-
-### Erros Encontrados
-
-| # | Código Atual | Código Correto | Tabela Afetada |
-|---|--------------|----------------|----------------|
-| 1 | `category: categoryName` | Remover campo | `web_stories` |
-| 2 | `background_url` | `background_image_url` | `web_story_slides` |
-| 3 | `slide_order` | `sort_order` | `web_story_slides` |
-
-### Teste Realizado
+### Erro Encontrado
 ```
-POST /generate-webstory {"newsId": "8f252d07-..."}
-→ 500 Error: "Could not find the 'category' column of 'web_stories'"
+[Regional Admin] Action: run_now, source_id: undefined
+Error: source_id is required
+```
+
+### Causa Raiz
+- O botão "Executar Ingestão" no Dashboard chama `runIngest.mutate(undefined)` sem passar um `source_id`
+- A edge function `regional-admin-tools` na ação `run_now` exige `source_id`
+- Porém, a edge function `regional-ingest` **suporta** ser chamada sem `source_id` (processa todas as fontes ativas)
+
+### Fluxo Atual (Quebrado)
+```text
+┌─────────────────────┐     ┌────────────────────────┐     ┌──────────────────┐
+│  Dashboard          │     │ regional-admin-tools   │     │ regional-ingest  │
+│  "Executar Ingestão"│────>│ action: run_now        │──X──│                  │
+│  source_id: null    │     │ ERROR: required        │     │                  │
+└─────────────────────┘     └────────────────────────┘     └──────────────────┘
 ```
 
 ---
 
-## Correções Necessárias
+## Solução Proposta
 
-### Arquivo: `supabase/functions/generate-webstory/index.ts`
+Adicionar nova ação `run_all` na edge function `regional-admin-tools` que chama `regional-ingest` sem filtro de fonte, processando **todas as fontes ativas**.
 
-**Correção 1 - Remover campo `category` do insert de web_stories (linha 72-85)**:
+### Arquivo: `supabase/functions/regional-admin-tools/index.ts`
+
+**Adicionar novo case `run_all` após o case `run_now`** (após linha 60):
+
 ```typescript
-// ANTES
-const { data: story, error: storyError } = await supabase
-  .from('web_stories')
-  .insert({
-    title: news.title,
-    slug: storySlug,
-    cover_image_url: news.featured_image_url,
-    status: 'published',
-    news_id: newsId,
-    category: categoryName,  // ❌ COLUNA NÃO EXISTE
-    published_at: new Date().toISOString(),
-  })
-  
-// DEPOIS
-const { data: story, error: storyError } = await supabase
-  .from('web_stories')
-  .insert({
-    title: news.title,
-    slug: storySlug,
-    cover_image_url: news.featured_image_url,
-    status: 'published',
-    news_id: newsId,
-    published_at: new Date().toISOString(),
-  })
-```
+case 'run_all': {
+  // Run ingestion for ALL active sources
+  const response = await fetch(`${supabaseUrl}/functions/v1/regional-ingest`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${supabaseKey}`,
+    },
+    body: JSON.stringify({}), // No source_id = all sources
+  });
 
-**Correção 2 - Corrigir campos dos slides (linha 98-141)**:
-```typescript
-// ANTES
-{
-  story_id: story.id,
-  slide_order: 0,           // ❌ CAMPO ERRADO
-  background_url: news.featured_image_url,  // ❌ CAMPO ERRADO
-  headline_text: news.title,
-  subheadline_text: categoryName.toUpperCase(),
-}
-
-// DEPOIS
-{
-  story_id: story.id,
-  sort_order: 0,           // ✅ CORRETO
-  background_image_url: news.featured_image_url,  // ✅ CORRETO
-  headline_text: news.title,
-  subheadline_text: categoryName.toUpperCase(),
+  const result = await response.json();
+  return new Response(JSON.stringify(result), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
 }
 ```
-
-Aplicar a mesma correção em todos os 5 slides.
 
 ---
 
-## Correção Adicional no Hook
+### Arquivo: `src/hooks/useRegionalAutoPost.ts`
 
-### Arquivo: `src/hooks/useWebStories.ts`
+**Modificar hook `useRunRegionalIngest`** para usar ação correta (linha 217-243):
 
-Ajustar a ordenação que usa `slide_order` (inexistente) para `sort_order`:
-
-**Linha 75**:
 ```typescript
-// ANTES
-.order("slide_order", { ascending: true })
+export function useRunRegionalIngest() {
+  const queryClient = useQueryClient();
 
-// DEPOIS  
-.order("sort_order", { ascending: true })
+  return useMutation({
+    mutationFn: async (sourceId?: string) => {
+      // Use 'run_all' when no sourceId, 'run_now' for specific source
+      const action = sourceId ? 'run_now' : 'run_all';
+      
+      const { data, error } = await supabase.functions.invoke('regional-admin-tools', {
+        body: { action, source_id: sourceId },
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['regional-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['regional-runs'] });
+      queryClient.invalidateQueries({ queryKey: ['regional-stats'] });
+      
+      if (data.results && data.results.length > 0) {
+        const totalNew = data.results.reduce((sum: number, r: any) => sum + (r.items_new || 0), 0);
+        const totalDup = data.results.reduce((sum: number, r: any) => sum + (r.items_duplicated || 0), 0);
+        toast.success(`Ingestão concluída: ${totalNew} novos, ${totalDup} duplicados`);
+      } else {
+        toast.success('Ingestão executada');
+      }
+    },
+    onError: (error) => {
+      toast.error(`Erro na ingestão: ${error.message}`);
+    },
+  });
+}
 ```
 
-**Linha 96**:
-```typescript
-// ANTES
-.order("slide_order", { ascending: true })
+---
 
-// DEPOIS
-.order("sort_order", { ascending: true })
+## Fluxo Corrigido
+
+```text
+┌─────────────────────┐     ┌────────────────────────┐     ┌──────────────────┐
+│  Dashboard          │     │ regional-admin-tools   │     │ regional-ingest  │
+│  "Executar Ingestão"│────>│ action: run_all        │────>│ source_id: null  │
+│  source_id: null    │     │ (no validation needed) │     │ = ALL sources    │
+└─────────────────────┘     └────────────────────────┘     └──────────────────┘
+                                                                    │
+                                                                    ▼
+                                                           ┌──────────────────┐
+                                                           │ Processa todas   │
+                                                           │ fontes ativas    │
+                                                           │ (13 prefeituras) │
+                                                           └──────────────────┘
 ```
 
 ---
@@ -109,15 +119,23 @@ Ajustar a ordenação que usa `slide_order` (inexistente) para `sort_order`:
 
 | Arquivo | Modificação |
 |---------|-------------|
-| `supabase/functions/generate-webstory/index.ts` | Remover `category`, corrigir `sort_order` e `background_image_url` |
-| `src/hooks/useWebStories.ts` | Corrigir ordenação para `sort_order` |
+| `supabase/functions/regional-admin-tools/index.ts` | Adicionar case `run_all` |
+| `src/hooks/useRegionalAutoPost.ts` | Usar `run_all` quando `sourceId` for undefined |
 
 ---
 
-## Resultado Esperado
+## Benefícios
 
-Após as correções:
-1. Edge function `generate-webstory` funcionará sem erros
-2. WebStories serão criadas automaticamente para novas notícias
-3. Os 5 slides padrão serão inseridos corretamente
-4. Stories aparecerão na página inicial e na listagem
+1. **Botão "Executar Ingestão" funcionará** - Processará todas as 13 prefeituras de uma vez
+2. **Mantém compatibilidade** - Execução individual por fonte continua funcionando
+3. **Feedback melhorado** - Mostra total de novos/duplicados de todas as fontes
+
+---
+
+## Problema Adicional: Encoding de Caracteres
+
+Observei nos screenshots que os títulos estão com encoding incorreto:
+- `inscri&#231;&#245;es` → deveria ser `inscrições`
+- `F&#233;rias` → deveria ser `Férias`
+
+Isso é um problema de parsing do RSS que exigiria decode de HTML entities. Posso adicionar isso ao plano se desejar.
