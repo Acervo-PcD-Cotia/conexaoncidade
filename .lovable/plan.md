@@ -1,374 +1,371 @@
 
+# Plano: Blindagem Definitiva do Módulo Notícias AI
 
-# Plano: Atualização Completa do Módulo Notícias AI
+## Análise da Situação Atual
 
-## Visão Geral
+Após análise detalhada do código, identifiquei que a maior parte da infraestrutura já está implementada:
 
-Este plano implementa as regras definitivas para o módulo **Notícias AI** conforme especificado, incluindo:
-- Whitelist fixa de 26 categorias
-- Fallback automático para "Geral" quando categoria não existir
-- Conversão de categorias inválidas em tags
-- Atualização do template JSON oficial
-- Validação aprimorada em tempo real
+### Já Implementado
+- Whitelist de 26 categorias em `src/constants/categories.ts`
+- Fallback para "Geral" quando categoria inválida
+- Conversão de categoria inválida em tag adicional
+- Template JSON oficial com estrutura correta
+- Validação em tempo real com erros/avisos
+- Detecção automática de modo (texto, URL, JSON, lote)
+- Geração de WebStory automática
+- Edge function com prompt atualizado
 
----
+### Lacunas Identificadas para Blindagem
 
-## 1. Cadastro das Categorias no Banco de Dados
-
-### Situação Atual
-O banco possui apenas 8 categorias:
-- Cultura, Educação, Esportes, Geral, Internacional, Meio Ambiente, Saúde, Tecnologia
-
-### Ação Necessária
-Adicionar as 18 categorias faltantes da whitelist:
-
-| Categorias a Adicionar |
-|------------------------|
-| Brasil |
-| Cidades |
-| Política |
-| Economia |
-| Justiça |
-| Segurança Pública |
-| Ciência |
-| Infraestrutura |
-| Entretenimento |
-| Comportamento |
-| Lifestyle |
-| Emprego & Renda |
-| Mobilidade Urbana |
-| Inclusão & PCD |
-| Projetos Sociais |
-| Inovação Pública |
-| Conexão Academy |
-| Web Rádio |
-| Web TV |
-
-**Método**: Migration SQL para inserir as novas categorias
+| # | Problema | Impacto |
+|---|----------|---------|
+| 1 | Validação de tags aceita menos de 3 | Artigos com poucas tags |
+| 2 | Validação de SEO não verifica limites | Títulos/descrições podem exceder limites |
+| 3 | Edge function recomenda 12 tags mas valida só warnings | Sem garantia de mínimo |
+| 4 | Validação de resumo não limita 160 chars | Resumos longos demais |
+| 5 | Template JSON mostra 12 tags, mas spec diz 3-12 | Confusão sobre mínimo |
+| 6 | Fallback de tags usa localizações genéricas (Ceará, Fortaleza) | Deveria usar contexto local |
 
 ---
 
-## 2. Whitelist de Categorias no Frontend
+## Alterações Propostas
 
-### Arquivo: `src/components/admin/noticias-ai/NoticiasAIInput.tsx`
+### 1. Atualizar Validação JSON com Regras Definitivas
 
-Criar constante com a lista oficial de categorias permitidas:
+**Arquivo:** `src/components/admin/noticias-ai/NoticiasAIInput.tsx`
 
-```typescript
-const ALLOWED_CATEGORIES = [
-  'Brasil', 'Cidades', 'Política', 'Economia', 'Justiça', 
-  'Segurança Pública', 'Saúde', 'Educação', 'Ciência', 
-  'Tecnologia', 'Meio Ambiente', 'Infraestrutura', 'Esportes',
-  'Entretenimento', 'Cultura', 'Comportamento', 'Lifestyle',
-  'Emprego & Renda', 'Mobilidade Urbana', 'Inclusão & PCD',
-  'Projetos Sociais', 'Inovação Pública', 'Conexão Academy',
-  'Web Rádio', 'Web TV', 'Geral'
-];
-```
-
-### Atualizar Validação JSON
-
-Na função `validateNewsJson`, adicionar verificação de categoria:
+Atualizar a função `validateNewsJson` para incluir:
 
 ```typescript
-// Validar categoria contra whitelist
-if (article.categoria) {
-  const normalizedCat = article.categoria.trim();
-  if (!ALLOWED_CATEGORIES.some(c => c.toLowerCase() === normalizedCat.toLowerCase())) {
-    errors.push({
-      field: 'categoria',
-      message: `Artigo ${index + 1}: Categoria "${article.categoria}" será convertida em tag (fallback: Geral)`,
-      type: 'warning',
-      articleIndex: index
-    });
-  }
+// REGRAS DEFINITIVAS DE VALIDAÇÃO
+
+// Tags: mínimo 3, máximo 12
+if (!article.tags || article.tags.length < 3) {
+  errors.push({
+    field: 'tags',
+    message: `Artigo ${index + 1}: Mínimo 3 tags obrigatórias (atual: ${article.tags?.length || 0})`,
+    type: 'error',
+    articleIndex: index
+  });
+} else if (article.tags.length > 12) {
+  errors.push({
+    field: 'tags',
+    message: `Artigo ${index + 1}: Máximo 12 tags permitidas (atual: ${article.tags.length})`,
+    type: 'error',
+    articleIndex: index
+  });
+}
+
+// Resumo: máximo 160 caracteres
+if (article.resumo && article.resumo.length > 160) {
+  errors.push({
+    field: 'resumo',
+    message: `Artigo ${index + 1}: Resumo excede 160 caracteres (atual: ${article.resumo.length})`,
+    type: 'warning',
+    articleIndex: index
+  });
+}
+
+// SEO: meta_titulo máximo 60 caracteres
+if (article.seo?.meta_titulo && article.seo.meta_titulo.length > 60) {
+  errors.push({
+    field: 'seo.meta_titulo',
+    message: `Artigo ${index + 1}: Meta título excede 60 caracteres (atual: ${article.seo.meta_titulo.length})`,
+    type: 'warning',
+    articleIndex: index
+  });
+}
+
+// SEO: meta_descricao máximo 160 caracteres
+if (article.seo?.meta_descricao && article.seo.meta_descricao.length > 160) {
+  errors.push({
+    field: 'seo.meta_descricao',
+    message: `Artigo ${index + 1}: Meta descrição excede 160 caracteres (atual: ${article.seo.meta_descricao.length})`,
+    type: 'warning',
+    articleIndex: index
+  });
+}
+
+// Título: máximo 100 caracteres
+if (article.titulo && article.titulo.length > 100) {
+  errors.push({
+    field: 'titulo',
+    message: `Artigo ${index + 1}: Título excede 100 caracteres (atual: ${article.titulo.length})`,
+    type: 'warning',
+    articleIndex: index
+  });
 }
 ```
 
----
+### 2. Atualizar Template JSON com Limites Claros
 
-## 3. Fallback para "Geral" + Conversão de Categoria Inválida em Tag
+**Arquivo:** `src/components/admin/noticias-ai/NoticiasAIInput.tsx`
 
-### Arquivo: `src/pages/admin/NoticiasAI.tsx`
-
-Atualizar a função `importArticle` para:
-1. Verificar se categoria está na whitelist
-2. Se não estiver, usar "Geral" como fallback
-3. Converter categoria inválida em tag adicional
+Atualizar o placeholder do textarea JSON para documentar os limites:
 
 ```typescript
-const importArticle = async (article: ManualData): Promise<boolean> => {
-  // Whitelist de categorias
-  const ALLOWED_CATEGORIES = [
-    'Brasil', 'Cidades', 'Política', 'Economia', 'Justiça', 
-    'Segurança Pública', 'Saúde', 'Educação', 'Ciência', 
-    'Tecnologia', 'Meio Ambiente', 'Infraestrutura', 'Esportes',
-    'Entretenimento', 'Cultura', 'Comportamento', 'Lifestyle',
-    'Emprego & Renda', 'Mobilidade Urbana', 'Inclusão & PCD',
-    'Projetos Sociais', 'Inovação Pública', 'Conexão Academy',
-    'Web Rádio', 'Web TV', 'Geral'
-  ];
-  
-  // Verificar se categoria é válida
-  const originalCategory = article.categoria?.trim() || '';
-  const isValidCategory = ALLOWED_CATEGORIES.some(
-    c => c.toLowerCase() === originalCategory.toLowerCase()
-  );
-  
-  // Categoria a usar (com fallback para Geral)
-  const categoryToUse = isValidCategory ? originalCategory : 'Geral';
-  
-  // Se categoria inválida, converter em tag
-  let extraTag: string | null = null;
-  if (!isValidCategory && originalCategory) {
-    extraTag = originalCategory;
-  }
-  
-  // Buscar ID da categoria
-  const { data: category } = await supabase
-    .from('categories')
-    .select('id')
-    .ilike('name', categoryToUse)
-    .single();
-  
-  // Se mesmo "Geral" não existir, criar
-  if (!category) {
-    console.error('Categoria Geral não encontrada no banco!');
-    // Fallback: buscar qualquer categoria ativa
-    const { data: fallbackCat } = await supabase
-      .from('categories')
-      .select('id')
-      .eq('is_active', true)
-      .limit(1)
-      .single();
-    // usar fallbackCat?.id
-  }
-  
-  // Adicionar tag extra se categoria foi convertida
-  let tags = article.tags || [];
-  if (extraTag && !tags.includes(extraTag)) {
-    tags = [extraTag, ...tags];
-  }
-  
-  // ... resto da função
-};
+placeholder={`Cole o JSON aqui...
+
+ESTRUTURA OFICIAL:
+{
+  "noticias": [{
+    "categoria": "Cidades",           // WHITELIST FIXA - ver lista abaixo
+    "titulo": "...",                   // Obrigatório, máx 100 caracteres
+    "slug": "titulo-em-kebab-case",   // Obrigatório, apenas a-z, 0-9 e hífen
+    "resumo": "...",                   // Obrigatório, máx 160 caracteres
+    "conteudo": "<p>...</p>",          // HTML, min 100 caracteres
+    "fonte": "https://...",            // URL da fonte original
+    "imagem": {
+      "hero": "https://...",           // Imagem principal
+      "og": "https://...",             // Imagem OG 1200x630 (opcional)
+      "card": "https://...",           // Imagem card 800x450 (opcional)
+      "alt": "Descrição",
+      "credito": "Foto: Nome"
+    },
+    "tags": ["tag1", ...],             // OBRIGATÓRIO: 3 a 12 tags
+    "seo": {
+      "meta_titulo": "...",            // máx 60 caracteres
+      "meta_descricao": "..."          // máx 160 caracteres
+    }
+  }]
+}
+
+CATEGORIAS PERMITIDAS (qualquer outra vira TAG):
+Brasil, Cidades, Política, Economia, Justiça, Segurança Pública, 
+Saúde, Educação, Ciência, Tecnologia, Meio Ambiente, Infraestrutura, 
+Esportes, Entretenimento, Cultura, Comportamento, Lifestyle, 
+Emprego & Renda, Mobilidade Urbana, Inclusão & PCD, Projetos Sociais, 
+Inovação Pública, Conexão Academy, Web Rádio, Web TV, Geral`}
 ```
 
----
+### 3. Atualizar Template JSON Download
 
-## 4. Atualização da Edge Function
+**Arquivo:** `src/components/admin/noticias-ai/NoticiasAIInput.tsx`
 
-### Arquivo: `supabase/functions/noticias-ai-generate/index.ts`
-
-Atualizar o `systemPrompt` para usar a whitelist correta:
-
-**Linha 648** (atual):
-```typescript
-- Categorias: Política, Economia, Esportes, Cultura, Tecnologia, Saúde, Educação, Cidade, Brasil, Mundo
-```
-
-**Nova versão**:
-```typescript
-- Categorias PERMITIDAS (usar apenas estas): Brasil, Cidades, Política, Economia, Justiça, Segurança Pública, Saúde, Educação, Ciência, Tecnologia, Meio Ambiente, Infraestrutura, Esportes, Entretenimento, Cultura, Comportamento, Lifestyle, Emprego & Renda, Mobilidade Urbana, Inclusão & PCD, Projetos Sociais, Inovação Pública, Conexão Academy, Web Rádio, Web TV, Geral
-- Se o tema não se encaixar em nenhuma categoria, use "Geral"
-- Temas específicos que não são categorias devem ir nas TAGS (ex: Futebol vai em tags, não em categoria)
-```
-
----
-
-## 5. Atualização do Template JSON Oficial
-
-### Arquivo: `src/components/admin/noticias-ai/NoticiasAIInput.tsx`
-
-Substituir `JSON_TEMPLATE` pelo formato oficial solicitado:
+Simplificar o template para seguir exatamente a especificação oficial:
 
 ```typescript
 const JSON_TEMPLATE = {
   noticias: [
     {
       categoria: "Cidades",
-      titulo: "Prefeitura anuncia novo programa de educação infantil para 2025",
-      slug: "prefeitura-novo-programa-educacao-infantil-2025",
-      resumo: "A Prefeitura Municipal apresentou hoje um novo programa que vai beneficiar mais de 5 mil crianças.",
-      conteudo: `<p><strong>A Prefeitura Municipal apresentou hoje um novo programa de educação infantil que promete revolucionar o ensino.</strong></p>
-<h2>Investimentos Previstos</h2>
-<p>O projeto, batizado de 'Futuro Brilhante', prevê investimentos de R$ 10 milhões e beneficiará mais de 5 mil crianças matriculadas em escolas municipais.</p>
-<p>Entre as principais ações estão:</p>
-<ul>
-  <li>Construção de novas salas de aula</li>
-  <li>Capacitação de professores</li>
-  <li>Distribuição de material didático gratuito</li>
-</ul>
-<h2>Declarações das Autoridades</h2>
-<blockquote><p>"Este é o maior investimento em educação da história do município"</p></blockquote>
-<p>O secretário de educação <strong>afirmou em entrevista coletiva.</strong></p>`,
-      fonte: "https://prefeitura.gov.br/noticias/educacao-infantil",
+      titulo: "Título da notícia (máximo 100 caracteres)",
+      slug: "titulo-da-noticia-em-kebab-case",
+      resumo: "Resumo com até 160 caracteres para exibição em cards e redes sociais.",
+      conteudo: "<p><strong>Primeiro parágrafo em negrito com informações principais.</strong></p><h2>Subtítulo</h2><p>Desenvolvimento do conteúdo...</p>",
+      fonte: "https://site-origem.com/noticia-original",
       imagem: {
-        hero: "https://exemplo.com/imagens/educacao-programa.jpg",
-        og: "https://exemplo.com/imagens/educacao-programa-og.jpg",
-        card: "https://exemplo.com/imagens/educacao-programa-card.jpg",
-        alt: "Crianças em sala de aula participando do novo programa educacional",
-        credito: "Foto: Assessoria de Imprensa / Prefeitura Municipal",
-        galeria: [
-          "https://exemplo.com/imagens/galeria/educacao-1.jpg",
-          "https://exemplo.com/imagens/galeria/educacao-2.jpg"
-        ]
+        hero: "https://exemplo.com/imagem-principal.jpg",
+        og: "https://exemplo.com/imagem-og-1200x630.jpg",
+        card: "https://exemplo.com/imagem-card-800x450.jpg",
+        alt: "Descrição acessível da imagem",
+        credito: "Foto: Nome do Fotógrafo / Agência"
       },
-      tags: ["Cotia", "educação", "prefeitura", "escolas", "crianças", "investimento", "programa social", "ensino infantil", "2025", "municipal", "professores", "didático"],
+      tags: ["Cotia", "Trânsito", "Mobilidade Urbana", "Prefeitura", "Obras", "Investimento"],
       seo: {
-        meta_titulo: "Novo programa de educação beneficiará 5 mil crianças",
-        meta_descricao: "Prefeitura anuncia investimento de R$ 10 milhões em programa educacional para escolas municipais."
-      }
-    },
-    {
-      categoria: "Cultura",
-      titulo: "Festival Gastronômico reúne 30 restaurantes no centro da cidade",
-      slug: "festival-gastronomico-30-restaurantes-centro",
-      resumo: "O tradicional Festival Gastronômico retorna este ano com 30 restaurantes participantes e entrada gratuita.",
-      conteudo: `<p><strong>O tradicional Festival Gastronômico retorna este ano maior e melhor, com 30 restaurantes participantes.</strong></p>
-<p>O evento promete movimentar o centro da cidade de 15 a 18 de março.</p>
-<h2>Preços e Horários</h2>
-<p>A entrada é gratuita e os pratos terão preços promocionais entre R$ 15 e R$ 45.</p>
-<ul>
-  <li>Sexta: 18h às 23h</li>
-  <li>Sábado: 12h às 23h</li>
-  <li>Domingo: 12h às 20h</li>
-</ul>`,
-      fonte: "https://cultura.gov.br/festival-gastronomico",
-      imagem: {
-        hero: "https://exemplo.com/imagens/festival-food.jpg",
-        alt: "Pratos típicos sendo servidos durante o festival",
-        credito: "Foto: João Fotógrafo",
-        galeria: [
-          "https://exemplo.com/imagens/galeria/festival-1.jpg",
-          "https://exemplo.com/imagens/galeria/festival-2.jpg"
-        ]
-      },
-      tags: ["festival", "gastronomia", "restaurantes", "centro", "março", "eventos", "culinária", "comida", "chef", "gratuito", "promoção", "cidade"],
-      seo: {
-        meta_titulo: "Festival Gastronômico 2025: 30 restaurantes, entrada grátis",
-        meta_descricao: "Festival reúne 30 restaurantes no centro com pratos de R$ 15 a R$ 45. De 15 a 18 de março."
+        meta_titulo: "Meta título otimizado (máx 60 caracteres)",
+        meta_descricao: "Meta descrição com palavras-chave para SEO (máx 160 caracteres)."
       }
     }
   ]
 };
 ```
 
----
+### 4. Blindar Lógica de Importação
 
-## 6. Resumo de Arquivos a Modificar
+**Arquivo:** `src/pages/admin/NoticiasAI.tsx`
 
-| # | Arquivo | Alteração |
-|---|---------|-----------|
-| 1 | **Migration SQL** | Inserir 18 novas categorias no banco |
-| 2 | `src/components/admin/noticias-ai/NoticiasAIInput.tsx` | Adicionar whitelist, atualizar validação e template JSON |
-| 3 | `src/pages/admin/NoticiasAI.tsx` | Adicionar lógica de fallback para "Geral" e conversão de categoria inválida em tag |
-| 4 | `supabase/functions/noticias-ai-generate/index.ts` | Atualizar systemPrompt com whitelist oficial |
-
----
-
-## 7. Fluxo de Processamento Atualizado
-
-```text
-┌────────────────────┐     ┌─────────────────────┐     ┌───────────────────┐
-│  Entrada JSON      │────>│  Validação Frontend │────>│ Edge Function AI  │
-│  categoria: "XYZ"  │     │  - Whitelist check  │     │ - Whitelist prompt│
-└────────────────────┘     │  - Warning se inv.  │     └───────────────────┘
-                           └─────────────────────┘              │
-                                                                 ▼
-┌────────────────────┐     ┌─────────────────────┐     ┌───────────────────┐
-│  Notícia Salva     │<────│  Importação         │<────│ JSON Processado   │
-│  category: "Geral" │     │  - Fallback Geral   │     │ categoria: "XYZ"  │
-│  tags: ["XYZ",...] │     │  - Cat→Tag convert  │     └───────────────────┘
-└────────────────────┘     └─────────────────────┘
-```
-
----
-
-## Seção Técnica Detalhada
-
-### Migration SQL para Categorias
-
-```sql
--- Inserir categorias faltantes (ignorar se já existir)
-INSERT INTO public.categories (name, slug, color, is_active, sort_order)
-VALUES 
-  ('Brasil', 'brasil', '#22c55e', true, 1),
-  ('Cidades', 'cidades', '#3b82f6', true, 2),
-  ('Política', 'politica', '#ef4444', true, 3),
-  ('Economia', 'economia', '#f59e0b', true, 4),
-  ('Justiça', 'justica', '#6366f1', true, 5),
-  ('Segurança Pública', 'seguranca-publica', '#dc2626', true, 6),
-  ('Ciência', 'ciencia', '#14b8a6', true, 7),
-  ('Infraestrutura', 'infraestrutura', '#64748b', true, 8),
-  ('Entretenimento', 'entretenimento', '#ec4899', true, 9),
-  ('Comportamento', 'comportamento', '#8b5cf6', true, 10),
-  ('Lifestyle', 'lifestyle', '#f97316', true, 11),
-  ('Emprego & Renda', 'emprego-renda', '#10b981', true, 12),
-  ('Mobilidade Urbana', 'mobilidade-urbana', '#0ea5e9', true, 13),
-  ('Inclusão & PCD', 'inclusao-pcd', '#a855f7', true, 14),
-  ('Projetos Sociais', 'projetos-sociais', '#84cc16', true, 15),
-  ('Inovação Pública', 'inovacao-publica', '#06b6d4', true, 16),
-  ('Conexão Academy', 'conexao-academy', '#7c3aed', true, 17),
-  ('Web Rádio', 'web-radio', '#f43f5e', true, 18),
-  ('Web TV', 'web-tv', '#e11d48', true, 19)
-ON CONFLICT (slug) DO NOTHING;
-```
-
-### Constante de Whitelist (compartilhada)
-
-Para evitar duplicação, criar um arquivo de constantes:
-
-**Novo arquivo**: `src/constants/categories.ts`
+Atualizar a função `importArticle` para garantir tags entre 3-12:
 
 ```typescript
-export const ALLOWED_CATEGORIES = [
-  'Brasil',
-  'Cidades', 
-  'Política',
-  'Economia',
-  'Justiça',
-  'Segurança Pública',
-  'Saúde',
-  'Educação',
-  'Ciência',
-  'Tecnologia',
-  'Meio Ambiente',
-  'Infraestrutura',
-  'Esportes',
-  'Entretenimento',
-  'Cultura',
-  'Comportamento',
-  'Lifestyle',
-  'Emprego & Renda',
-  'Mobilidade Urbana',
-  'Inclusão & PCD',
-  'Projetos Sociais',
-  'Inovação Pública',
-  'Conexão Academy',
-  'Web Rádio',
-  'Web TV',
-  'Geral'
-] as const;
+// Garantir entre 3 e 12 tags
+let tags = article.tags || [];
 
-export type AllowedCategory = typeof ALLOWED_CATEGORIES[number];
+// Se menos de 3 tags, complementar com tags contextuais
+if (tags.length < 3) {
+  const contextualTags = [
+    categoryToUse || 'Notícias',
+    'Cotia',
+    'São Paulo',
+    'Atualidades',
+    'Destaque'
+  ];
+  for (const ft of contextualTags) {
+    if (tags.length >= 3) break;
+    if (!tags.some(t => t.toLowerCase() === ft.toLowerCase())) {
+      tags.push(ft);
+    }
+  }
+}
 
-export const DEFAULT_CATEGORY = 'Geral';
+// Limitar a 12 tags
+tags = tags.slice(0, 12);
+```
 
-export const isValidCategory = (category: string): boolean => {
-  return ALLOWED_CATEGORIES.some(
-    c => c.toLowerCase() === category.toLowerCase().trim()
-  );
-};
+### 5. Reforçar Edge Function com Regras Absolutas
+
+**Arquivo:** `supabase/functions/noticias-ai-generate/index.ts`
+
+Atualizar o `systemPrompt` para ser mais explícito sobre os limites:
+
+```typescript
+const systemPrompt = `Você é um jornalista experiente seguindo o padrão editorial da Agência Brasil.
+
+## REGRAS ABSOLUTAS (NÃO VIOLAR):
+
+### CATEGORIAS (WHITELIST FIXA - NUNCA CRIAR NOVAS)
+Use APENAS estas categorias:
+Brasil, Cidades, Política, Economia, Justiça, Segurança Pública, Saúde, Educação, Ciência, Tecnologia, Meio Ambiente, Infraestrutura, Esportes, Entretenimento, Cultura, Comportamento, Lifestyle, Emprego & Renda, Mobilidade Urbana, Inclusão & PCD, Projetos Sociais, Inovação Pública, Conexão Academy, Web Rádio, Web TV, Geral
+
+Se o tema não se encaixar em nenhuma, use "Geral".
+Temas específicos (Futebol, ENEM, SUS, nomes de cidades, bairros) vão nas TAGS, não na categoria.
+
+### TAGS (OBRIGATÓRIO 3-12)
+- Mínimo: 3 tags
+- Máximo: 12 tags
+- Incluir: nomes de cidades, bairros, órgãos públicos, pessoas citadas, eventos, subtemas
+
+### LIMITES DE CARACTERES
+- Título: máximo 100 caracteres
+- Resumo/excerpt: máximo 160 caracteres
+- Meta título: máximo 60 caracteres  
+- Meta descrição: máximo 160 caracteres
+- Tags individuais: máximo 40 caracteres cada
+
+### FORMATAÇÃO DO CONTEÚDO
+1. LIDE (1º parágrafo) SEMPRE em <strong>texto completo</strong>
+2. Intertítulos: <h2>Título</h2>
+3. Citações longas: <blockquote><p>"texto"</p></blockquote>
+4. Atribuição: <strong>afirmou Fulano em entrevista.</strong>
+
+### PROIBIÇÕES
+- NÃO inclua URLs de imagens no texto
+- NÃO inclua tags <img>
+- NÃO invente informações
+- NÃO crie categorias novas
+`;
+```
+
+### 6. Atualizar Fallback de Tags com Contexto Local
+
+**Arquivo:** `supabase/functions/noticias-ai-generate/index.ts`
+
+Na função `ensureRequiredFields`, atualizar fallback:
+
+```typescript
+function ensureRequiredFields(article: NewsArticle, sourceUrl?: string): NewsArticle {
+  let tags = article.tags || [];
+  
+  // Garantir mínimo 3 tags, máximo 12
+  if (tags.length < 3) {
+    const fallbackTags = [
+      article.categoria || 'Notícias',
+      'Cotia',              // Cidade principal do portal
+      'São Paulo',          // Estado
+      'Atualidades',
+      'Destaque',
+      'Região Metropolitana'
+    ];
+    while (tags.length < 3 && fallbackTags.length > 0) {
+      const tag = fallbackTags.shift();
+      if (tag && !tags.some(t => t.toLowerCase() === tag.toLowerCase())) {
+        tags.push(tag);
+      }
+    }
+  }
+  
+  return {
+    ...article,
+    tags: tags.slice(0, 12),  // Garantir máximo 12
+    // ... resto dos campos
+  };
+}
 ```
 
 ---
 
-## Benefícios da Implementação
+## Resumo de Arquivos a Modificar
 
-1. **Consistência**: Todas as notícias terão categorias válidas do sistema
-2. **Sem Erros**: Fallback automático evita erros de categoria não encontrada
-3. **SEO Preservado**: Temas específicos são mantidos como tags (não perdidos)
-4. **Compatibilidade Google News**: Estrutura padronizada e previsível
-5. **Processamento em Lote Confiável**: Sem falhas por categoria inválida
+| # | Arquivo | Alterações |
+|---|---------|------------|
+| 1 | `src/components/admin/noticias-ai/NoticiasAIInput.tsx` | Validação de tags 3-12, SEO, limites de caracteres, placeholder atualizado, template simplificado |
+| 2 | `src/pages/admin/NoticiasAI.tsx` | Garantir tags 3-12 na importação, fallback contextual |
+| 3 | `supabase/functions/noticias-ai-generate/index.ts` | Prompt mais explícito, fallback de tags atualizado |
+
+---
+
+## Validação Pós-Implementação
+
+Após as alterações, o sistema garantirá:
+
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│                    REGRAS BLINDADAS                             │
+├─────────────────────────────────────────────────────────────────┤
+│ ✓ Categorias: APENAS 26 da whitelist (fallback → Geral)        │
+│ ✓ Categoria inválida → convertida em TAG automaticamente       │
+│ ✓ Tags: 3 mínimo, 12 máximo (erro se violar)                   │
+│ ✓ Título: máx 100 chars (warning se exceder)                   │
+│ ✓ Resumo: máx 160 chars (warning se exceder)                   │
+│ ✓ Meta título: máx 60 chars (warning se exceder)               │
+│ ✓ Meta descrição: máx 160 chars (warning se exceder)           │
+│ ✓ Tags incluem: cidades, bairros, órgãos, pessoas, eventos     │
+│ ✓ Fallback de tags contextualizado (Cotia, São Paulo)          │
+│ ✓ Compatível com Google News e Discover                        │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Seção Técnica
+
+### Fluxo de Validação Completo
+
+```text
+ENTRADA JSON
+    │
+    ▼
+┌───────────────────┐
+│ 1. Parse JSON     │
+│    - Estrutura    │
+│    - Sintaxe      │
+└────────┬──────────┘
+         │
+         ▼
+┌───────────────────┐
+│ 2. Validar Campos │
+│    Obrigatórios   │
+│    - titulo ≥ 10  │
+│    - slug válido  │
+│    - resumo ≥ 30  │
+│    - conteudo ≥100│
+│    - categoria    │
+└────────┬──────────┘
+         │
+         ▼
+┌───────────────────┐
+│ 3. Validar Limites│
+│    - titulo ≤ 100 │
+│    - resumo ≤ 160 │
+│    - meta_tit ≤60 │
+│    - meta_desc≤160│
+│    - tags 3-12    │
+└────────┬──────────┘
+         │
+         ▼
+┌───────────────────┐
+│ 4. Validar        │
+│    Categoria      │
+│    - Na whitelist?│
+│    - Warning se ≠ │
+└────────┬──────────┘
+         │
+         ▼
+┌───────────────────┐
+│ 5. Importação     │
+│    - Fallback     │
+│    - Cat→Tag conv │
+│    - Tags 3-12    │
+└───────────────────┘
+```
 
