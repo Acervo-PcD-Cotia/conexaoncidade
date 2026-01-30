@@ -640,19 +640,19 @@ Se a categoria original não estiver na whitelist:
 
 ## 5. CONTEÚDO HTML (OBRIGATÓRIO)
 O campo "conteudo" deve ser HTML válido usando APENAS estas tags:
-<p>, <h2>, <blockquote>, <strong>, <ul>, <li>
+&lt;p&gt;, &lt;h2&gt;, &lt;blockquote&gt;, &lt;strong&gt;, &lt;ul&gt;, &lt;li&gt;
 
 Regras:
 - O primeiro parágrafo deve ser o lide em negrito:
-  <p><strong>Lide completo com informações principais.</strong></p>
-- Intertítulos: usar <h2>...</h2>
-- Citações longas: usar <blockquote>...</blockquote>
-- Parágrafos sempre separados por <p>...</p>
+  &lt;p&gt;&lt;strong&gt;Lide completo com informações principais.&lt;/strong&gt;&lt;/p&gt;
+- Intertítulos: usar &lt;h2&gt;...&lt;/h2&gt;
+- Citações longas: usar &lt;blockquote&gt;...&lt;/blockquote&gt;
+- Parágrafos sempre separados por &lt;p&gt;...&lt;/p&gt;
 
 PROIBIÇÕES:
 - NÃO inclua URLs de imagens no conteúdo
 - NÃO inclua tags HTML fora da lista permitida
-- NÃO inclua array de "tags" dentro do conteúdo
+- NÃO inclua o array "tags" dentro do conteúdo
 
 ## 6. TAGS (OBRIGATÓRIO 3-12)
 - Mínimo: 3 tags
