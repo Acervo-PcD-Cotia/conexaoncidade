@@ -14,8 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ALLOWED_CATEGORIES, isValidCategory } from '@/constants/categories';
 
-// Template JSON completo para download - formato oficial
-// Template JSON oficial simplificado para download
+// Template JSON oficial do Prompt Mestre — Notícias AI
 const JSON_TEMPLATE = {
   noticias: [
     {
@@ -23,20 +22,23 @@ const JSON_TEMPLATE = {
       titulo: "Título da notícia (máximo 100 caracteres)",
       slug: "titulo-da-noticia-em-kebab-case",
       resumo: "Resumo com até 160 caracteres para exibição em cards e redes sociais.",
-      conteudo: "<p><strong>Primeiro parágrafo em negrito com informações principais.</strong></p><h2>Subtítulo</h2><p>Desenvolvimento do conteúdo...</p>",
-      fonte: "https://site-origem.com/noticia-original",
+      conteudo: "<p><strong>Primeiro parágrafo em negrito (Lide) com informações principais.</strong></p><h2>Subtítulo</h2><p>Desenvolvimento do conteúdo...</p>",
+      fonte: "https://prefeitura.gov.br/noticia-original",
       imagem: {
         hero: "https://exemplo.com/imagem-principal.jpg",
         og: "https://exemplo.com/imagem-og-1200x630.jpg",
         card: "https://exemplo.com/imagem-card-800x450.jpg",
         alt: "Descrição acessível da imagem",
-        credito: "Foto: Nome do Fotógrafo / Agência"
+        credito: "Foto: Prefeitura Municipal / Divulgação",
+        galeria: []
       },
       tags: ["Cotia", "São Paulo", "Prefeitura", "Investimento", "Obras", "Desenvolvimento"],
       seo: {
-        meta_titulo: "Meta título otimizado (máx 60 caracteres)",
-        meta_descricao: "Meta descrição com palavras-chave para SEO (máx 160 caracteres)."
-      }
+        meta_titulo: "Meta título (máx 60 caracteres)",
+        meta_descricao: "Meta descrição para SEO (máx 160 caracteres)."
+      },
+      destaque: "none",
+      generateWebStory: true
     }
   ]
 };
@@ -212,6 +214,16 @@ const validateNewsJson = (text: string): ValidationError[] => {
           field: 'destaque', 
           message: `Artigo ${index + 1}: Destaque inválido (use: none, home, featured ou urgent)`, 
           type: 'error', 
+          articleIndex: index 
+        });
+      }
+      
+      // Validar generateWebStory (deve ser boolean)
+      if (article.generateWebStory !== undefined && typeof article.generateWebStory !== 'boolean') {
+        errors.push({ 
+          field: 'generateWebStory', 
+          message: `Artigo ${index + 1}: generateWebStory deve ser true ou false`, 
+          type: 'warning', 
           articleIndex: index 
         });
       }
