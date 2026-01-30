@@ -14,15 +14,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ALLOWED_CATEGORIES, isValidCategory } from '@/constants/categories';
 
-// Template JSON oficial do Prompt Mestre — Notícias AI
+// Template JSON oficial do Prompt Mestre — Notícias AI (v2)
 const JSON_TEMPLATE = {
   noticias: [
     {
       categoria: "Cidades",
       titulo: "Título da notícia (máximo 100 caracteres)",
       slug: "titulo-da-noticia-em-kebab-case",
-      resumo: "Resumo com até 160 caracteres para exibição em cards e redes sociais.",
-      conteudo: "<p><strong>Primeiro parágrafo em negrito (Lide) com informações principais.</strong></p><h2>Subtítulo</h2><p>Desenvolvimento do conteúdo...</p>",
+      subtitulo: "Linha fina descritiva (máximo 160 caracteres)",
+      chapeu: "CIDADES",
+      resumo: "Resumo com até 160 caracteres para exibição em cards.",
+      conteudo: "<p><strong>Primeiro parágrafo em negrito (Lide).</strong></p><h2>Subtítulo</h2><p>Desenvolvimento...</p>",
       fonte: "https://prefeitura.gov.br/noticia-original",
       imagem: {
         hero: "https://exemplo.com/imagem-principal.jpg",
@@ -225,6 +227,30 @@ const validateNewsJson = (text: string): ValidationError[] => {
           message: `Artigo ${index + 1}: generateWebStory deve ser true ou false`, 
           type: 'warning', 
           articleIndex: index 
+        });
+      }
+      
+      // Subtítulo: máximo 160 caracteres
+      if (article.subtitulo && article.subtitulo.length > 160) {
+        errors.push({ 
+          field: 'subtitulo', 
+          message: `Artigo ${index + 1}: Subtítulo excede 160 caracteres (atual: ${article.subtitulo.length})`, 
+          type: 'warning', 
+          articleIndex: index 
+        });
+      }
+      
+      // Validar tags individuais (máximo 40 caracteres cada)
+      if (article.tags && Array.isArray(article.tags)) {
+        article.tags.forEach((tag: string, tagIndex: number) => {
+          if (tag && tag.length > 40) {
+            errors.push({
+              field: 'tags',
+              message: `Artigo ${index + 1}: Tag "${tag.substring(0, 20)}..." excede 40 caracteres`,
+              type: 'warning',
+              articleIndex: index
+            });
+          }
         });
       }
     });
