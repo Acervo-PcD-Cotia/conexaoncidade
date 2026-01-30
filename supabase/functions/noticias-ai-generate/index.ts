@@ -645,7 +645,9 @@ LIMITES:
 - Meta description: max 160 caracteres
 - Meta title: max 60 caracteres
 - Tags: EXATAMENTE 12 tags relevantes (nomes de pessoas, locais, temas, palavras-chave), max 40 chars cada
-- Categorias: Política, Economia, Esportes, Cultura, Tecnologia, Saúde, Educação, Cidade, Brasil, Mundo
+- Categorias PERMITIDAS (usar APENAS estas): Brasil, Cidades, Política, Economia, Justiça, Segurança Pública, Saúde, Educação, Ciência, Tecnologia, Meio Ambiente, Infraestrutura, Esportes, Entretenimento, Cultura, Comportamento, Lifestyle, Emprego & Renda, Mobilidade Urbana, Inclusão & PCD, Projetos Sociais, Inovação Pública, Conexão Academy, Web Rádio, Web TV, Geral
+- Se o tema não se encaixar em nenhuma categoria, use "Geral"
+- Temas específicos que não são categorias devem ir nas TAGS (ex: Futebol vai em tags, categoria seria Esportes)
 
 FORMATO JSON COMPLETO:
 {
