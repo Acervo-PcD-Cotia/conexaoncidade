@@ -219,8 +219,11 @@ export function useRunRegionalIngest() {
 
   return useMutation({
     mutationFn: async (sourceId?: string) => {
+      // Use 'run_all' when no sourceId, 'run_now' for specific source
+      const action = sourceId ? 'run_now' : 'run_all';
+      
       const { data, error } = await supabase.functions.invoke('regional-admin-tools', {
-        body: { action: 'run_now', source_id: sourceId },
+        body: { action, source_id: sourceId },
       });
 
       if (error) throw error;
@@ -231,9 +234,13 @@ export function useRunRegionalIngest() {
       queryClient.invalidateQueries({ queryKey: ['regional-runs'] });
       queryClient.invalidateQueries({ queryKey: ['regional-stats'] });
       
-      const result = data.results?.[0];
-      if (result) {
-        toast.success(`Ingestão concluída: ${result.items_new} novos, ${result.items_duplicated} duplicados`);
+      // Handle both single and multiple source results
+      if (data.results && data.results.length > 0) {
+        const totalNew = data.results.reduce((sum: number, r: any) => sum + (r.items_new || 0), 0);
+        const totalDup = data.results.reduce((sum: number, r: any) => sum + (r.items_duplicated || 0), 0);
+        toast.success(`Ingestão concluída: ${totalNew} novos, ${totalDup} duplicados`);
+      } else {
+        toast.success('Ingestão executada');
       }
     },
     onError: (error) => {

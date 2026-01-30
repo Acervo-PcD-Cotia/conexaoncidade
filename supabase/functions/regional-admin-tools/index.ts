@@ -60,6 +60,25 @@ Deno.serve(async (req) => {
         });
       }
 
+      case 'run_all': {
+        // Run ingestion for ALL active sources (no source_id filter)
+        console.log('[Regional Admin] Running ingestion for all active sources');
+        
+        const response = await fetch(`${supabaseUrl}/functions/v1/regional-ingest`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseKey}`,
+          },
+          body: JSON.stringify({}), // No source_id = all sources
+        });
+
+        const result = await response.json();
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       case 'pause_source': {
         if (!source_id) {
           throw new Error('source_id is required');
