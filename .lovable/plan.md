@@ -1,148 +1,123 @@
 
-# Plano: Blindagem Definitiva do Módulo Notícias AI
+# Plano: Implementação do Prompt Mestre — Módulo Notícias AI
 
 ## Análise da Situação Atual
 
-Após análise detalhada do código, identifiquei que a maior parte da infraestrutura já está implementada:
+O módulo Notícias AI já possui uma infraestrutura robusta com:
+- Whitelist de 26 categorias
+- Validação de tags (3-12)
+- Limites de caracteres para SEO
+- Fallback automático para "Geral"
+- Geração de WebStory habilitada por padrão
 
-### Já Implementado
-- Whitelist de 26 categorias em `src/constants/categories.ts`
-- Fallback para "Geral" quando categoria inválida
-- Conversão de categoria inválida em tag adicional
-- Template JSON oficial com estrutura correta
-- Validação em tempo real com erros/avisos
-- Detecção automática de modo (texto, URL, JSON, lote)
-- Geração de WebStory automática
-- Edge function com prompt atualizado
+### Lacunas Identificadas vs. Prompt Mestre
 
-### Lacunas Identificadas para Blindagem
-
-| # | Problema | Impacto |
-|---|----------|---------|
-| 1 | Validação de tags aceita menos de 3 | Artigos com poucas tags |
-| 2 | Validação de SEO não verifica limites | Títulos/descrições podem exceder limites |
-| 3 | Edge function recomenda 12 tags mas valida só warnings | Sem garantia de mínimo |
-| 4 | Validação de resumo não limita 160 chars | Resumos longos demais |
-| 5 | Template JSON mostra 12 tags, mas spec diz 3-12 | Confusão sobre mínimo |
-| 6 | Fallback de tags usa localizações genéricas (Ceará, Fortaleza) | Deveria usar contexto local |
+| # | Regra do Prompt Mestre | Status Atual | Ação Necessária |
+|---|------------------------|--------------|-----------------|
+| 1 | Sempre responder APENAS em JSON | ✅ Implementado | Nenhuma |
+| 2 | Whitelist fixa de 26 categorias | ✅ Implementado | Nenhuma |
+| 3 | Análise inteligente antes de usar "Geral" | ⚠️ Parcial | Reforçar no prompt |
+| 4 | Regra visual "Cidade \| Categoria" | ❌ Faltando | Implementar no frontend |
+| 5 | 1 cidade por resposta, até 12 notícias | ❌ Faltando | Adicionar ao prompt |
+| 6 | Mencionar Cotia em notícias de cidades vizinhas | ❌ Faltando | Adicionar ao prompt |
+| 7 | Crédito oficial (Prefeitura/Secretaria + URL) | ⚠️ Parcial | Reforçar padrão |
+| 8 | Campo `destaque` com valores padrão | ⚠️ Parcial | Adicionar ao template JSON |
+| 9 | Campo `generateWebStory: true` por padrão | ✅ Implementado | Nenhuma |
+| 10 | Nunca ultrapassar limites de caracteres | ⚠️ Warning, não erro | Manter (warning é adequado) |
 
 ---
 
 ## Alterações Propostas
 
-### 1. Atualizar Validação JSON com Regras Definitivas
+### 1. Atualizar Edge Function com Prompt Mestre Completo
 
-**Arquivo:** `src/components/admin/noticias-ai/NoticiasAIInput.tsx`
+**Arquivo:** `supabase/functions/noticias-ai-generate/index.ts`
 
-Atualizar a função `validateNewsJson` para incluir:
-
-```typescript
-// REGRAS DEFINITIVAS DE VALIDAÇÃO
-
-// Tags: mínimo 3, máximo 12
-if (!article.tags || article.tags.length < 3) {
-  errors.push({
-    field: 'tags',
-    message: `Artigo ${index + 1}: Mínimo 3 tags obrigatórias (atual: ${article.tags?.length || 0})`,
-    type: 'error',
-    articleIndex: index
-  });
-} else if (article.tags.length > 12) {
-  errors.push({
-    field: 'tags',
-    message: `Artigo ${index + 1}: Máximo 12 tags permitidas (atual: ${article.tags.length})`,
-    type: 'error',
-    articleIndex: index
-  });
-}
-
-// Resumo: máximo 160 caracteres
-if (article.resumo && article.resumo.length > 160) {
-  errors.push({
-    field: 'resumo',
-    message: `Artigo ${index + 1}: Resumo excede 160 caracteres (atual: ${article.resumo.length})`,
-    type: 'warning',
-    articleIndex: index
-  });
-}
-
-// SEO: meta_titulo máximo 60 caracteres
-if (article.seo?.meta_titulo && article.seo.meta_titulo.length > 60) {
-  errors.push({
-    field: 'seo.meta_titulo',
-    message: `Artigo ${index + 1}: Meta título excede 60 caracteres (atual: ${article.seo.meta_titulo.length})`,
-    type: 'warning',
-    articleIndex: index
-  });
-}
-
-// SEO: meta_descricao máximo 160 caracteres
-if (article.seo?.meta_descricao && article.seo.meta_descricao.length > 160) {
-  errors.push({
-    field: 'seo.meta_descricao',
-    message: `Artigo ${index + 1}: Meta descrição excede 160 caracteres (atual: ${article.seo.meta_descricao.length})`,
-    type: 'warning',
-    articleIndex: index
-  });
-}
-
-// Título: máximo 100 caracteres
-if (article.titulo && article.titulo.length > 100) {
-  errors.push({
-    field: 'titulo',
-    message: `Artigo ${index + 1}: Título excede 100 caracteres (atual: ${article.titulo.length})`,
-    type: 'warning',
-    articleIndex: index
-  });
-}
-```
-
-### 2. Atualizar Template JSON com Limites Claros
-
-**Arquivo:** `src/components/admin/noticias-ai/NoticiasAIInput.tsx`
-
-Atualizar o placeholder do textarea JSON para documentar os limites:
+Substituir o `systemPrompt` atual pelo Prompt Mestre oficial:
 
 ```typescript
-placeholder={`Cole o JSON aqui...
+const systemPrompt = `Você é a IA oficial de geração e reescrita de notícias do portal **Conexão na Cidade**.
 
-ESTRUTURA OFICIAL:
+## 1. FORMATO DE SAÍDA (OBRIGATÓRIO)
+Sempre responda EXCLUSIVAMENTE em JSON válido. Nunca escreva texto fora do JSON.
+
+## 2. CATEGORIAS (WHITELIST FIXA)
+Use SOMENTE uma destas categorias:
+Brasil, Cidades, Política, Economia, Justiça, Segurança Pública, Saúde, Educação, Ciência, Tecnologia, Meio Ambiente, Infraestrutura, Esportes, Entretenimento, Cultura, Comportamento, Lifestyle, Emprego & Renda, Mobilidade Urbana, Inclusão & PCD, Projetos Sociais, Inovação Pública, Conexão Academy, Web Rádio, Web TV, Geral
+
+## 3. REGRA DE CATEGORIA INTELIGENTE
+Antes de usar "Geral":
+1. Analise título e conteúdo semanticamente
+2. Tente encaixar a notícia em UMA categoria existente da whitelist
+3. Use palavras-chave e análise de contexto
+4. Só use "Geral" se NENHUMA categoria fizer sentido
+Se categoria não existe na whitelist → vira TAG + categoria = "Geral"
+
+## 4. REGRAS EDITORIAIS
+- Processar 1 cidade por resposta
+- Gerar até 12 notícias relevantes por resposta
+- Reescrever mantendo ~95-105% do tamanho original
+- NUNCA resumir ou omitir informações
+- SEMPRE mencionar "Cotia" no corpo das notícias de cidades vizinhas
+- Fonte sempre oficial (prefeitura, secretaria, governo)
+- Crédito de imagem: "Prefeitura/Secretaria/Agência + URL oficial"
+
+## 5. CONTEÚDO HTML (OBRIGATÓRIO)
+- Usar apenas: <p>, <h2>, <blockquote>, <strong>, <ul>, <li>
+- Primeiro parágrafo SEMPRE em: <p><strong>Lide completo</strong></p>
+- Citações: <blockquote><p>"texto"</p></blockquote>
+- NÃO incluir tags <img> ou URLs de imagens no conteúdo
+
+## 6. TAGS (OBRIGATÓRIO 3-12)
+- Mínimo: 3 tags
+- Máximo: 12 tags
+- SEMPRE incluir: cidade da notícia, Cotia, temas relevantes
+- Se categoria virar "Geral", a categoria original vira TAG
+
+## 7. LIMITES DE CARACTERES (VALIDAÇÃO OBRIGATÓRIA)
+- titulo: 10 a 100 caracteres
+- resumo: 30 a 160 caracteres
+- meta_titulo: máximo 60 caracteres
+- meta_descricao: máximo 160 caracteres
+- slug: apenas a-z, 0-9 e hífen
+NUNCA ultrapasse estes limites.
+
+## 8. FORMATO JSON DE SAÍDA
 {
   "noticias": [{
-    "categoria": "Cidades",           // WHITELIST FIXA - ver lista abaixo
-    "titulo": "...",                   // Obrigatório, máx 100 caracteres
-    "slug": "titulo-em-kebab-case",   // Obrigatório, apenas a-z, 0-9 e hífen
-    "resumo": "...",                   // Obrigatório, máx 160 caracteres
-    "conteudo": "<p>...</p>",          // HTML, min 100 caracteres
-    "fonte": "https://...",            // URL da fonte original
+    "categoria": "Categoria da whitelist",
+    "titulo": "Título (max 100 chars)",
+    "slug": "titulo-em-kebab-case",
+    "resumo": "Resumo (max 160 chars)",
+    "conteudo": "<p><strong>Lide.</strong></p>...",
+    "fonte": "URL oficial da fonte",
     "imagem": {
-      "hero": "https://...",           // Imagem principal
-      "og": "https://...",             // Imagem OG 1200x630 (opcional)
-      "card": "https://...",           // Imagem card 800x450 (opcional)
-      "alt": "Descrição",
-      "credito": "Foto: Nome"
+      "hero": "URL",
+      "og": "URL 1200x630",
+      "card": "URL 800x450",
+      "alt": "Descrição acessível",
+      "credito": "Prefeitura/Agência + URL"
     },
-    "tags": ["tag1", ...],             // OBRIGATÓRIO: 3 a 12 tags
+    "tags": ["cidade", "Cotia", "tema1", "..."],
     "seo": {
-      "meta_titulo": "...",            // máx 60 caracteres
-      "meta_descricao": "..."          // máx 160 caracteres
-    }
+      "meta_titulo": "Meta título (max 60)",
+      "meta_descricao": "Meta descrição (max 160)"
+    },
+    "destaque": "none",
+    "generateWebStory": true
   }]
 }
 
-CATEGORIAS PERMITIDAS (qualquer outra vira TAG):
-Brasil, Cidades, Política, Economia, Justiça, Segurança Pública, 
-Saúde, Educação, Ciência, Tecnologia, Meio Ambiente, Infraestrutura, 
-Esportes, Entretenimento, Cultura, Comportamento, Lifestyle, 
-Emprego & Renda, Mobilidade Urbana, Inclusão & PCD, Projetos Sociais, 
-Inovação Pública, Conexão Academy, Web Rádio, Web TV, Geral`}
+## REGRA FINAL ABSOLUTA
+Se qualquer regra acima for violada, a resposta é considerada inválida.
+Valide TUDO antes de responder. Responda APENAS com JSON válido.`;
 ```
 
-### 3. Atualizar Template JSON Download
+### 2. Atualizar Template JSON Oficial
 
 **Arquivo:** `src/components/admin/noticias-ai/NoticiasAIInput.tsx`
 
-Simplificar o template para seguir exatamente a especificação oficial:
+Adicionar os campos `destaque` e `generateWebStory` ao template:
 
 ```typescript
 const JSON_TEMPLATE = {
@@ -151,221 +126,221 @@ const JSON_TEMPLATE = {
       categoria: "Cidades",
       titulo: "Título da notícia (máximo 100 caracteres)",
       slug: "titulo-da-noticia-em-kebab-case",
-      resumo: "Resumo com até 160 caracteres para exibição em cards e redes sociais.",
-      conteudo: "<p><strong>Primeiro parágrafo em negrito com informações principais.</strong></p><h2>Subtítulo</h2><p>Desenvolvimento do conteúdo...</p>",
-      fonte: "https://site-origem.com/noticia-original",
+      resumo: "Resumo com até 160 caracteres para exibição em cards.",
+      conteudo: "<p><strong>Primeiro parágrafo em negrito (Lide).</strong></p><h2>Subtítulo</h2><p>Desenvolvimento...</p>",
+      fonte: "https://prefeitura.gov.br/noticia-original",
       imagem: {
         hero: "https://exemplo.com/imagem-principal.jpg",
         og: "https://exemplo.com/imagem-og-1200x630.jpg",
         card: "https://exemplo.com/imagem-card-800x450.jpg",
         alt: "Descrição acessível da imagem",
-        credito: "Foto: Nome do Fotógrafo / Agência"
+        credito: "Foto: Prefeitura Municipal / Divulgação",
+        galeria: []
       },
-      tags: ["Cotia", "Trânsito", "Mobilidade Urbana", "Prefeitura", "Obras", "Investimento"],
+      tags: ["Cotia", "São Paulo", "Prefeitura", "Investimento", "Obras", "Desenvolvimento"],
       seo: {
-        meta_titulo: "Meta título otimizado (máx 60 caracteres)",
-        meta_descricao: "Meta descrição com palavras-chave para SEO (máx 160 caracteres)."
-      }
+        meta_titulo: "Meta título (máx 60 caracteres)",
+        meta_descricao: "Meta descrição para SEO (máx 160 caracteres)."
+      },
+      destaque: "none",
+      generateWebStory: true
     }
   ]
 };
 ```
 
-### 4. Blindar Lógica de Importação
+### 3. Implementar Regra Visual "Cidade | Categoria"
+
+**Novo arquivo:** `src/utils/categoryDisplay.ts`
+
+Criar helper para exibição contextual de categoria:
+
+```typescript
+/**
+ * Regra visual: Cidade | Categoria
+ * - Notícias de cidades diferentes de Cotia: exibe "Cidade | Categoria"
+ * - Notícias de Cotia: exibe apenas a categoria
+ */
+export function getCategoryDisplay(
+  category: string, 
+  tags: string[], 
+  content?: string
+): string {
+  // Detectar cidade nas tags ou conteúdo
+  const cotiaKeywords = ['cotia', 'granja viana', 'caucaia do alto'];
+  const cityTags = tags.filter(t => 
+    !cotiaKeywords.some(k => t.toLowerCase().includes(k)) &&
+    // Lista de cidades da região que não são Cotia
+    ['são paulo', 'osasco', 'carapicuíba', 'barueri', 'itapevi', 
+     'jandira', 'embu', 'taboão', 'vargem grande', 'ibiúna'].some(c => 
+      t.toLowerCase().includes(c)
+    )
+  );
+  
+  // Se há cidade diferente de Cotia nas tags
+  if (cityTags.length > 0) {
+    return `${cityTags[0]} | ${category}`;
+  }
+  
+  // Caso padrão: apenas categoria
+  return category;
+}
+```
+
+### 4. Atualizar Validação JSON com Campo `destaque`
+
+**Arquivo:** `src/components/admin/noticias-ai/NoticiasAIInput.tsx`
+
+Validar o campo `destaque` e `generateWebStory`:
+
+```typescript
+// Na função validateNewsJson, adicionar:
+
+// Validar destaque
+if (article.destaque && !['none', 'home', 'featured', 'urgent'].includes(article.destaque)) {
+  errors.push({ 
+    field: 'destaque', 
+    message: `Artigo ${index + 1}: Destaque inválido (use: none, home, featured, urgent)`, 
+    type: 'error', 
+    articleIndex: index 
+  });
+}
+
+// Validar generateWebStory (deve ser boolean)
+if (article.generateWebStory !== undefined && typeof article.generateWebStory !== 'boolean') {
+  errors.push({ 
+    field: 'generateWebStory', 
+    message: `Artigo ${index + 1}: generateWebStory deve ser true ou false`, 
+    type: 'warning', 
+    articleIndex: index 
+  });
+}
+```
+
+### 5. Garantir WebStory Habilitado por Padrão na Importação
 
 **Arquivo:** `src/pages/admin/NoticiasAI.tsx`
 
-Atualizar a função `importArticle` para garantir tags entre 3-12:
+Na função `importArticle`, garantir valor padrão:
 
 ```typescript
-// Garantir entre 3 e 12 tags
-let tags = article.tags || [];
+// Garantir WebStory habilitado por padrão se não especificado
+const generateWebStory = article.generateWebStory ?? true;
 
-// Se menos de 3 tags, complementar com tags contextuais
-if (tags.length < 3) {
-  const contextualTags = [
-    categoryToUse || 'Notícias',
-    'Cotia',
-    'São Paulo',
-    'Atualidades',
-    'Destaque'
-  ];
-  for (const ft of contextualTags) {
-    if (tags.length >= 3) break;
-    if (!tags.some(t => t.toLowerCase() === ft.toLowerCase())) {
-      tags.push(ft);
-    }
-  }
-}
-
-// Limitar a 12 tags
-tags = tags.slice(0, 12);
-```
-
-### 5. Reforçar Edge Function com Regras Absolutas
-
-**Arquivo:** `supabase/functions/noticias-ai-generate/index.ts`
-
-Atualizar o `systemPrompt` para ser mais explícito sobre os limites:
-
-```typescript
-const systemPrompt = `Você é um jornalista experiente seguindo o padrão editorial da Agência Brasil.
-
-## REGRAS ABSOLUTAS (NÃO VIOLAR):
-
-### CATEGORIAS (WHITELIST FIXA - NUNCA CRIAR NOVAS)
-Use APENAS estas categorias:
-Brasil, Cidades, Política, Economia, Justiça, Segurança Pública, Saúde, Educação, Ciência, Tecnologia, Meio Ambiente, Infraestrutura, Esportes, Entretenimento, Cultura, Comportamento, Lifestyle, Emprego & Renda, Mobilidade Urbana, Inclusão & PCD, Projetos Sociais, Inovação Pública, Conexão Academy, Web Rádio, Web TV, Geral
-
-Se o tema não se encaixar em nenhuma, use "Geral".
-Temas específicos (Futebol, ENEM, SUS, nomes de cidades, bairros) vão nas TAGS, não na categoria.
-
-### TAGS (OBRIGATÓRIO 3-12)
-- Mínimo: 3 tags
-- Máximo: 12 tags
-- Incluir: nomes de cidades, bairros, órgãos públicos, pessoas citadas, eventos, subtemas
-
-### LIMITES DE CARACTERES
-- Título: máximo 100 caracteres
-- Resumo/excerpt: máximo 160 caracteres
-- Meta título: máximo 60 caracteres  
-- Meta descrição: máximo 160 caracteres
-- Tags individuais: máximo 40 caracteres cada
-
-### FORMATAÇÃO DO CONTEÚDO
-1. LIDE (1º parágrafo) SEMPRE em <strong>texto completo</strong>
-2. Intertítulos: <h2>Título</h2>
-3. Citações longas: <blockquote><p>"texto"</p></blockquote>
-4. Atribuição: <strong>afirmou Fulano em entrevista.</strong>
-
-### PROIBIÇÕES
-- NÃO inclua URLs de imagens no texto
-- NÃO inclua tags <img>
-- NÃO invente informações
-- NÃO crie categorias novas
-`;
-```
-
-### 6. Atualizar Fallback de Tags com Contexto Local
-
-**Arquivo:** `supabase/functions/noticias-ai-generate/index.ts`
-
-Na função `ensureRequiredFields`, atualizar fallback:
-
-```typescript
-function ensureRequiredFields(article: NewsArticle, sourceUrl?: string): NewsArticle {
-  let tags = article.tags || [];
-  
-  // Garantir mínimo 3 tags, máximo 12
-  if (tags.length < 3) {
-    const fallbackTags = [
-      article.categoria || 'Notícias',
-      'Cotia',              // Cidade principal do portal
-      'São Paulo',          // Estado
-      'Atualidades',
-      'Destaque',
-      'Região Metropolitana'
-    ];
-    while (tags.length < 3 && fallbackTags.length > 0) {
-      const tag = fallbackTags.shift();
-      if (tag && !tags.some(t => t.toLowerCase() === tag.toLowerCase())) {
-        tags.push(tag);
-      }
-    }
-  }
-  
-  return {
-    ...article,
-    tags: tags.slice(0, 12),  // Garantir máximo 12
-    // ... resto dos campos
-  };
-}
+// Na inserção:
+auto_generate_webstory: generateWebStory,
 ```
 
 ---
 
 ## Resumo de Arquivos a Modificar
 
-| # | Arquivo | Alterações |
-|---|---------|------------|
-| 1 | `src/components/admin/noticias-ai/NoticiasAIInput.tsx` | Validação de tags 3-12, SEO, limites de caracteres, placeholder atualizado, template simplificado |
-| 2 | `src/pages/admin/NoticiasAI.tsx` | Garantir tags 3-12 na importação, fallback contextual |
-| 3 | `supabase/functions/noticias-ai-generate/index.ts` | Prompt mais explícito, fallback de tags atualizado |
+| # | Arquivo | Alteração |
+|---|---------|-----------|
+| 1 | `supabase/functions/noticias-ai-generate/index.ts` | Substituir systemPrompt pelo Prompt Mestre completo |
+| 2 | `src/components/admin/noticias-ai/NoticiasAIInput.tsx` | Atualizar JSON_TEMPLATE com `destaque` e `generateWebStory` |
+| 3 | `src/utils/categoryDisplay.ts` | Criar helper para regra visual "Cidade \| Categoria" |
+| 4 | `src/pages/admin/NoticiasAI.tsx` | Garantir WebStory = true por padrão |
 
 ---
 
-## Validação Pós-Implementação
-
-Após as alterações, o sistema garantirá:
+## Regras Blindadas Após Implementação
 
 ```text
-┌─────────────────────────────────────────────────────────────────┐
-│                    REGRAS BLINDADAS                             │
-├─────────────────────────────────────────────────────────────────┤
-│ ✓ Categorias: APENAS 26 da whitelist (fallback → Geral)        │
-│ ✓ Categoria inválida → convertida em TAG automaticamente       │
-│ ✓ Tags: 3 mínimo, 12 máximo (erro se violar)                   │
-│ ✓ Título: máx 100 chars (warning se exceder)                   │
-│ ✓ Resumo: máx 160 chars (warning se exceder)                   │
-│ ✓ Meta título: máx 60 chars (warning se exceder)               │
-│ ✓ Meta descrição: máx 160 chars (warning se exceder)           │
-│ ✓ Tags incluem: cidades, bairros, órgãos, pessoas, eventos     │
-│ ✓ Fallback de tags contextualizado (Cotia, São Paulo)          │
-│ ✓ Compatível com Google News e Discover                        │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                 PROMPT MESTRE — REGRAS BLINDADAS                    │
+├─────────────────────────────────────────────────────────────────────┤
+│ ✓ Resposta SEMPRE em JSON válido (nunca texto livre)               │
+│ ✓ Categorias: APENAS 26 da whitelist                               │
+│ ✓ Análise inteligente antes de usar "Geral"                        │
+│ ✓ Categoria inválida → TAG + fallback "Geral"                      │
+│ ✓ Regra visual "Cidade | Categoria" para cidades vizinhas          │
+│ ✓ 1 cidade por resposta, até 12 notícias                           │
+│ ✓ Mencionar "Cotia" em notícias de cidades vizinhas                │
+│ ✓ Crédito oficial: Prefeitura/Secretaria + URL                     │
+│ ✓ Tags: 3 mínimo, 12 máximo (SEMPRE incluir cidade + Cotia)        │
+│ ✓ Limites SEO: titulo ≤100, resumo ≤160, meta ≤60/160              │
+│ ✓ Conteúdo HTML: Lide em <strong>, <h2>, <blockquote>              │
+│ ✓ destaque: none | home | featured | urgent                        │
+│ ✓ generateWebStory: true por padrão                                │
+│ ✓ NÃO incluir <img> ou URLs de imagem no conteúdo                  │
+│ ✓ Manter ~95-105% do tamanho original (nunca resumir)              │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## Seção Técnica
 
-### Fluxo de Validação Completo
+### Fluxo de Processamento Atualizado
 
 ```text
-ENTRADA JSON
-    │
-    ▼
-┌───────────────────┐
-│ 1. Parse JSON     │
-│    - Estrutura    │
-│    - Sintaxe      │
-└────────┬──────────┘
+ENTRADA (Texto/URL/JSON/Lote)
          │
          ▼
-┌───────────────────┐
-│ 2. Validar Campos │
-│    Obrigatórios   │
-│    - titulo ≥ 10  │
-│    - slug válido  │
-│    - resumo ≥ 30  │
-│    - conteudo ≥100│
-│    - categoria    │
-└────────┬──────────┘
-         │
-         ▼
-┌───────────────────┐
-│ 3. Validar Limites│
-│    - titulo ≤ 100 │
-│    - resumo ≤ 160 │
-│    - meta_tit ≤60 │
-│    - meta_desc≤160│
-│    - tags 3-12    │
-└────────┬──────────┘
-         │
-         ▼
-┌───────────────────┐
-│ 4. Validar        │
-│    Categoria      │
-│    - Na whitelist?│
-│    - Warning se ≠ │
-└────────┬──────────┘
-         │
-         ▼
-┌───────────────────┐
-│ 5. Importação     │
-│    - Fallback     │
-│    - Cat→Tag conv │
-│    - Tags 3-12    │
-└───────────────────┘
+┌────────────────────────┐
+│ 1. Detecção de Modo    │
+│    auto/url/batch/json │
+└──────────┬─────────────┘
+           │
+           ▼
+┌────────────────────────┐
+│ 2. Edge Function       │
+│    - Prompt Mestre     │
+│    - Análise semântica │
+│    - Whitelist check   │
+└──────────┬─────────────┘
+           │
+           ▼
+┌────────────────────────┐
+│ 3. Validação JSON      │
+│    - Tags 3-12         │
+│    - Limites chars     │
+│    - Categoria válida  │
+│    - destaque válido   │
+└──────────┬─────────────┘
+           │
+           ▼
+┌────────────────────────┐
+│ 4. Importação          │
+│    - Fallback Geral    │
+│    - Cat→Tag convert   │
+│    - WebStory = true   │
+│    - Cotia mencionada  │
+└──────────┬─────────────┘
+           │
+           ▼
+┌────────────────────────┐
+│ 5. Exibição Frontend   │
+│    - Cidade | Categoria│
+│    - (se cidade ≠ Cotia)│
+└────────────────────────┘
 ```
 
+### Interface NewsArticle Atualizada
+
+```typescript
+interface NewsArticle {
+  categoria: string;         // Da whitelist
+  titulo: string;            // 10-100 chars
+  slug: string;              // a-z, 0-9, hífen
+  resumo: string;            // 30-160 chars
+  conteudo: string;          // HTML com lide em <strong>
+  fonte: string;             // URL oficial
+  imagem: {
+    hero: string;            // Imagem principal
+    og?: string;             // 1200x630
+    card?: string;           // 800x450
+    alt: string;             // Acessibilidade
+    credito: string;         // Prefeitura/Agência + URL
+    galeria?: string[];      // Imagens adicionais
+  };
+  tags: string[];            // 3-12, inclui cidade + Cotia
+  seo: {
+    meta_titulo: string;     // max 60
+    meta_descricao: string;  // max 160
+  };
+  destaque: 'none' | 'home' | 'featured' | 'urgent';
+  generateWebStory: boolean; // default: true
+}
+```
