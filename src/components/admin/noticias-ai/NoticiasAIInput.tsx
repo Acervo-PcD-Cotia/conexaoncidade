@@ -12,23 +12,29 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { ALLOWED_CATEGORIES, isValidCategory } from '@/constants/categories';
 
-// Template JSON completo para download
+// Template JSON completo para download - formato oficial
 const JSON_TEMPLATE = {
   noticias: [
     {
+      categoria: "Cidades",
       titulo: "Prefeitura anuncia novo programa de educação infantil para 2025",
       slug: "prefeitura-novo-programa-educacao-infantil-2025",
-      subtitulo: "Iniciativa vai beneficiar mais de 5 mil crianças em escolas municipais",
-      chapeu: "EDUCAÇÃO",
-      resumo: "A Prefeitura Municipal apresentou hoje um novo programa de educação infantil que promete revolucionar o ensino nas escolas públicas. O projeto prevê investimentos de R$ 10 milhões.",
-      conteudo: "<p><strong>A Prefeitura Municipal apresentou hoje um novo programa de educação infantil que promete revolucionar o ensino.</strong></p><p>O projeto, batizado de 'Futuro Brilhante', prevê investimentos de R$ 10 milhões e beneficiará mais de 5 mil crianças matriculadas em escolas municipais.</p><p>Entre as principais ações estão a construção de novas salas de aula, capacitação de professores e distribuição de material didático gratuito.</p>",
-      categoria: "Educação",
-      tags: ["educação", "prefeitura", "escolas", "crianças", "investimento", "programa social", "ensino infantil", "2025", "municipal", "professores", "sala de aula", "didático"],
-      editor: "Redação Conexão na Cidade",
+      resumo: "A Prefeitura Municipal apresentou hoje um novo programa que vai beneficiar mais de 5 mil crianças.",
+      conteudo: `<p><strong>A Prefeitura Municipal apresentou hoje um novo programa de educação infantil que promete revolucionar o ensino.</strong></p>
+<h2>Investimentos Previstos</h2>
+<p>O projeto, batizado de 'Futuro Brilhante', prevê investimentos de R$ 10 milhões e beneficiará mais de 5 mil crianças matriculadas em escolas municipais.</p>
+<p>Entre as principais ações estão:</p>
+<ul>
+  <li>Construção de novas salas de aula</li>
+  <li>Capacitação de professores</li>
+  <li>Distribuição de material didático gratuito</li>
+</ul>
+<h2>Declarações das Autoridades</h2>
+<blockquote><p>"Este é o maior investimento em educação da história do município"</p></blockquote>
+<p>O secretário de educação <strong>afirmou em entrevista coletiva.</strong></p>`,
       fonte: "https://prefeitura.gov.br/noticias/educacao-infantil",
-      destaque: "home",
-      generateWebStory: true,
       imagem: {
         hero: "https://exemplo.com/imagens/educacao-programa.jpg",
         og: "https://exemplo.com/imagens/educacao-programa-og.jpg",
@@ -37,28 +43,30 @@ const JSON_TEMPLATE = {
         credito: "Foto: Assessoria de Imprensa / Prefeitura Municipal",
         galeria: [
           "https://exemplo.com/imagens/galeria/educacao-1.jpg",
-          "https://exemplo.com/imagens/galeria/educacao-2.jpg",
-          "https://exemplo.com/imagens/galeria/educacao-3.jpg"
+          "https://exemplo.com/imagens/galeria/educacao-2.jpg"
         ]
       },
+      tags: ["Cotia", "educação", "prefeitura", "escolas", "crianças", "investimento", "programa social", "ensino infantil", "2025", "municipal", "professores", "didático"],
       seo: {
-        meta_titulo: "Novo programa de educação infantil beneficiará 5 mil crianças | Portal",
-        meta_descricao: "Prefeitura anuncia investimento de R$ 10 milhões em programa educacional para escolas municipais. Saiba mais detalhes."
+        meta_titulo: "Novo programa de educação beneficiará 5 mil crianças",
+        meta_descricao: "Prefeitura anuncia investimento de R$ 10 milhões em programa educacional para escolas municipais."
       }
     },
     {
+      categoria: "Cultura",
       titulo: "Festival Gastronômico reúne 30 restaurantes no centro da cidade",
       slug: "festival-gastronomico-30-restaurantes-centro",
-      subtitulo: "Evento acontece de 15 a 18 de março com entrada gratuita",
-      chapeu: "CULTURA",
-      resumo: "O tradicional Festival Gastronômico retorna este ano com 30 restaurantes participantes. O evento promete movimentar o centro da cidade durante quatro dias.",
-      conteudo: "<p><strong>O tradicional Festival Gastronômico retorna este ano maior e melhor.</strong></p><p>Com 30 restaurantes participantes, o evento promete movimentar o centro da cidade de 15 a 18 de março.</p><p>A entrada é gratuita e os pratos terão preços promocionais entre R$ 15 e R$ 45.</p>",
-      categoria: "Cultura",
-      tags: ["festival", "gastronomia", "restaurantes", "centro", "março", "eventos", "culinária", "comida", "chef", "gratuito", "promoção", "cidade"],
-      editor: "Maria Silva",
+      resumo: "O tradicional Festival Gastronômico retorna este ano com 30 restaurantes participantes e entrada gratuita.",
+      conteudo: `<p><strong>O tradicional Festival Gastronômico retorna este ano maior e melhor, com 30 restaurantes participantes.</strong></p>
+<p>O evento promete movimentar o centro da cidade de 15 a 18 de março.</p>
+<h2>Preços e Horários</h2>
+<p>A entrada é gratuita e os pratos terão preços promocionais entre R$ 15 e R$ 45.</p>
+<ul>
+  <li>Sexta: 18h às 23h</li>
+  <li>Sábado: 12h às 23h</li>
+  <li>Domingo: 12h às 20h</li>
+</ul>`,
       fonte: "https://cultura.gov.br/festival-gastronomico",
-      destaque: "featured",
-      generateWebStory: true,
       imagem: {
         hero: "https://exemplo.com/imagens/festival-food.jpg",
         alt: "Pratos típicos sendo servidos durante o festival",
@@ -68,6 +76,7 @@ const JSON_TEMPLATE = {
           "https://exemplo.com/imagens/galeria/festival-2.jpg"
         ]
       },
+      tags: ["festival", "gastronomia", "restaurantes", "centro", "março", "eventos", "culinária", "comida", "chef", "gratuito", "promoção", "cidade"],
       seo: {
         meta_titulo: "Festival Gastronômico 2025: 30 restaurantes, entrada grátis",
         meta_descricao: "Festival reúne 30 restaurantes no centro com pratos de R$ 15 a R$ 45. De 15 a 18 de março."
@@ -163,6 +172,13 @@ const validateNewsJson = (text: string): ValidationError[] => {
           message: `Artigo ${index + 1}: Categoria obrigatória`, 
           type: 'error', 
           articleIndex: index 
+        });
+      } else if (!isValidCategory(article.categoria)) {
+        errors.push({
+          field: 'categoria',
+          message: `Artigo ${index + 1}: Categoria "${article.categoria}" será convertida em tag (fallback: Geral)`,
+          type: 'warning',
+          articleIndex: index
         });
       }
       

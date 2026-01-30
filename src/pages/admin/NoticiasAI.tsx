@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNoticiasAIProgress } from '@/hooks/useNoticiasAIProgress';
 import { Card } from '@/components/ui/card';
+import { ALLOWED_CATEGORIES, DEFAULT_CATEGORY, isValidCategory } from '@/constants/categories';
 
 import { NoticiasAIHeader } from '@/components/admin/noticias-ai/NoticiasAIHeader';
 import { NoticiasAIInput, HighlightSettings } from '@/components/admin/noticias-ai/NoticiasAIInput';
@@ -203,25 +204,55 @@ export default function NoticiasAI() {
     if (!user) return false;
     
     try {
-      // Get category ID
-      const { data: category } = await supabase
+      // Verificar se categoria é válida na whitelist
+      const originalCategory = article.categoria?.trim() || '';
+      const validCategory = isValidCategory(originalCategory);
+      const categoryToUse = validCategory ? originalCategory : DEFAULT_CATEGORY;
+      
+      // Se categoria inválida, converter em tag adicional
+      let extraTag: string | null = null;
+      if (!validCategory && originalCategory) {
+        extraTag = originalCategory;
+        console.log(`Categoria "${originalCategory}" inválida, convertendo em tag e usando "${categoryToUse}"`);
+      }
+      
+      // Get category ID from database
+      let category = null;
+      const { data: categoryData } = await supabase
         .from('categories')
         .select('id')
-        .ilike('name', article.categoria)
+        .ilike('name', categoryToUse)
         .single();
+      
+      category = categoryData;
+      
+      // Se mesmo "Geral" não existir, buscar qualquer categoria ativa
+      if (!category) {
+        console.warn(`Categoria "${categoryToUse}" não encontrada, buscando fallback`);
+        const { data: fallbackCat } = await supabase
+          .from('categories')
+          .select('id')
+          .eq('is_active', true)
+          .limit(1)
+          .single();
+        category = fallbackCat;
+      }
 
       // Fallbacks for required fields
       const subtitle = article.subtitulo || article.resumo?.substring(0, 100) || null;
       // ALWAYS use Redação Conexão na Cidade, ignoring any editor from source
       const editorName = 'Redação Conexão na Cidade';
-      const chapeu = article.chapeu || article.categoria?.toUpperCase() || null;
+      const chapeu = article.chapeu || categoryToUse?.toUpperCase() || null;
       const sanitizedSource = sanitizeSource(article.fonte);
       
-      // Ensure at least 12 tags
+      // Ensure at least 12 tags - adicionar extraTag se existir
       let tags = article.tags || [];
+      if (extraTag && !tags.includes(extraTag)) {
+        tags = [extraTag, ...tags];
+      }
       if (tags.length < 12) {
         const fallbackTags = [
-          article.categoria || 'Notícias',
+          categoryToUse || 'Notícias',
           'Brasil',
           'Ceará', 
           'Fortaleza',
