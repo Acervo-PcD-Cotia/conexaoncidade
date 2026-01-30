@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { getCategoryDisplay } from "@/utils/categoryDisplay";
 
 const statusColors: Record<string, string> = {
   published: "bg-emerald-500",
@@ -35,7 +36,8 @@ export function RecentArticlesPanel() {
           status, 
           published_at, 
           updated_at,
-          category:categories(name, slug)
+          category:categories(name, slug),
+          news_tags(tags(name))
         `)
         .order("updated_at", { ascending: false })
         .limit(8);
@@ -43,7 +45,6 @@ export function RecentArticlesPanel() {
       return data;
     },
   });
-
   return (
     <Card className="bg-card border-border h-full flex flex-col">
       <CardHeader className="p-4 border-b border-border flex-row items-center justify-between space-y-0">
@@ -99,7 +100,10 @@ export function RecentArticlesPanel() {
                     {/* Category Badge */}
                     {article.category && (
                       <span className="px-2 py-0.5 text-[10px] font-medium bg-neutral-800 text-white rounded">
-                        {article.category.name}
+                        {(() => {
+                          const tags = (article as any).news_tags?.map((nt: any) => nt.tags?.name).filter(Boolean) || [];
+                          return getCategoryDisplay(article.category.name, tags);
+                        })()}
                       </span>
                     )}
                     {/* Timestamp */}

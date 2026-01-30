@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Plus, Eye, Edit, Trash2, MoreHorizontal, PlaySquare } from "lucide-react";
+import { Plus, Eye, Edit, Trash2, MoreHorizontal, PlaySquare, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -22,6 +24,7 @@ import { toast } from "sonner";
 
 export default function StoriesList() {
   const queryClient = useQueryClient();
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const { data: stories, isLoading } = useQuery({
     queryKey: ["admin-stories"],
@@ -54,6 +57,63 @@ export default function StoriesList() {
     },
   });
 
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      // Delete slides first (foreign key constraint)
+      for (const id of ids) {
+        await supabase.from("web_story_slides").delete().eq("story_id", id);
+      }
+      // Then delete stories
+      const { error } = await supabase
+        .from("web_stories")
+        .delete()
+        .in("id", ids);
+      if (error) throw error;
+
+      // Verify deletion
+      const { data: remaining } = await supabase
+        .from("web_stories")
+        .select("id")
+        .in("id", ids);
+
+      if (remaining && remaining.length > 0) {
+        throw new Error(`${remaining.length} story(ies) não puderam ser excluídas.`);
+      }
+
+      return ids.length;
+    },
+    onSuccess: (deletedCount) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-stories"] });
+      toast.success(`${deletedCount} story(ies) excluída(s) com sucesso`);
+      setSelectedIds(new Set());
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Erro ao excluir stories");
+    },
+  });
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (selectedIds.size === stories?.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(stories?.map(s => s.id)));
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (confirm(`Tem certeza que deseja excluir ${selectedIds.size} story(ies) e todos os slides?`)) {
+      bulkDeleteMutation.mutate([...selectedIds]);
+    }
+  };
+
   const statusColors: Record<string, string> = {
     published: "bg-green-100 text-green-700",
     draft: "bg-yellow-100 text-yellow-700",
@@ -81,10 +141,43 @@ export default function StoriesList() {
         </Button>
       </div>
 
+      {/* Bulk Actions Bar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-4 p-4 bg-muted rounded-lg border">
+          <span className="font-medium">
+            {selectedIds.size} story(ies) selecionada(s)
+          </span>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleBulkDelete}
+            disabled={bulkDeleteMutation.isPending}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Excluir selecionadas
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelectedIds(new Set())}
+          >
+            <X className="mr-2 h-4 w-4" />
+            Cancelar
+          </Button>
+        </div>
+      )}
+
       <div className="rounded-lg border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[50px]">
+                <Checkbox
+                  checked={stories?.length ? selectedIds.size === stories.length : false}
+                  onCheckedChange={toggleAll}
+                  aria-label="Selecionar todas"
+                />
+              </TableHead>
               <TableHead className="w-20">Cover</TableHead>
               <TableHead>Título</TableHead>
               <TableHead>Slides</TableHead>
@@ -97,19 +190,26 @@ export default function StoriesList() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="py-8 text-center">
+                <TableCell colSpan={8} className="py-8 text-center">
                   Carregando...
                 </TableCell>
               </TableRow>
             ) : stories?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="py-8 text-center">
+                <TableCell colSpan={8} className="py-8 text-center">
                   Nenhuma story encontrada
                 </TableCell>
               </TableRow>
             ) : (
               stories?.map((story) => (
-                <TableRow key={story.id}>
+                <TableRow key={story.id} className={selectedIds.has(story.id) ? "bg-muted/50" : ""}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedIds.has(story.id)}
+                      onCheckedChange={() => toggleSelection(story.id)}
+                      aria-label={`Selecionar ${story.title}`}
+                    />
+                  </TableCell>
                   <TableCell>
                     <div className="h-12 w-12 overflow-hidden rounded-lg border">
                       {story.cover_image_url ? (

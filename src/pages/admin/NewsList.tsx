@@ -24,6 +24,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useNewsCreationModal } from "@/contexts/NewsCreationModalContext";
+import { getCategoryDisplay } from "@/utils/categoryDisplay";
 
 export default function NewsList() {
   const [search, setSearch] = useState("");
@@ -37,7 +38,7 @@ export default function NewsList() {
     queryFn: async () => {
       let query = supabase
         .from("news")
-        .select("*, categories(name)")
+        .select("*, categories(name), news_tags(tags(name))")
         .order("created_at", { ascending: false });
 
       if (search) {
@@ -49,7 +50,6 @@ export default function NewsList() {
       return data;
     },
   });
-
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("news").delete().eq("id", id);
@@ -310,7 +310,10 @@ export default function NewsList() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    {item.categories?.name || "-"}
+                    {(() => {
+                      const tags = (item as any).news_tags?.map((nt: any) => nt.tags?.name).filter(Boolean) || [];
+                      return getCategoryDisplay(item.categories?.name || "Geral", tags);
+                    })()}
                   </TableCell>
                   <TableCell>
                     {(item as any).origin === 'ai' ? (
