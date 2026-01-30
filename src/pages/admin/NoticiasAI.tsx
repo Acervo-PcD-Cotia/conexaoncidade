@@ -245,33 +245,33 @@ export default function NoticiasAI() {
       const chapeu = article.chapeu || categoryToUse?.toUpperCase() || null;
       const sanitizedSource = sanitizeSource(article.fonte);
       
-      // Ensure at least 12 tags - adicionar extraTag se existir
+      // REGRA BLINDADA: Garantir entre 3 e 12 tags
       let tags = article.tags || [];
+      
+      // Se categoria inválida foi convertida, adicionar como tag
       if (extraTag && !tags.includes(extraTag)) {
         tags = [extraTag, ...tags];
       }
-      if (tags.length < 12) {
-        const fallbackTags = [
+      
+      // Se menos de 3 tags, complementar com tags contextuais (Cotia/SP)
+      if (tags.length < 3) {
+        const contextualTags = [
           categoryToUse || 'Notícias',
-          'Brasil',
-          'Ceará', 
-          'Fortaleza',
+          'Cotia',               // Cidade principal do portal
+          'São Paulo',           // Estado
           'Atualidades',
           'Destaque',
-          'Cobertura',
-          'Reportagem',
-          'Informação',
-          'Cidade',
-          'Região',
-          'Local',
+          'Região Metropolitana',
         ];
-        for (const ft of fallbackTags) {
-          if (tags.length >= 12) break;
+        for (const ft of contextualTags) {
+          if (tags.length >= 3) break;
           if (!tags.some(t => t.toLowerCase() === ft.toLowerCase())) {
             tags.push(ft);
           }
         }
       }
+      
+      // Limitar a 12 tags (máximo)
       tags = tags.slice(0, 12);
 
       // Insert news with extended fields, fallbacks, gallery and boolean highlights

@@ -15,71 +15,27 @@ import { useToast } from '@/hooks/use-toast';
 import { ALLOWED_CATEGORIES, isValidCategory } from '@/constants/categories';
 
 // Template JSON completo para download - formato oficial
+// Template JSON oficial simplificado para download
 const JSON_TEMPLATE = {
   noticias: [
     {
       categoria: "Cidades",
-      titulo: "Prefeitura anuncia novo programa de educação infantil para 2025",
-      slug: "prefeitura-novo-programa-educacao-infantil-2025",
-      resumo: "A Prefeitura Municipal apresentou hoje um novo programa que vai beneficiar mais de 5 mil crianças.",
-      conteudo: `<p><strong>A Prefeitura Municipal apresentou hoje um novo programa de educação infantil que promete revolucionar o ensino.</strong></p>
-<h2>Investimentos Previstos</h2>
-<p>O projeto, batizado de 'Futuro Brilhante', prevê investimentos de R$ 10 milhões e beneficiará mais de 5 mil crianças matriculadas em escolas municipais.</p>
-<p>Entre as principais ações estão:</p>
-<ul>
-  <li>Construção de novas salas de aula</li>
-  <li>Capacitação de professores</li>
-  <li>Distribuição de material didático gratuito</li>
-</ul>
-<h2>Declarações das Autoridades</h2>
-<blockquote><p>"Este é o maior investimento em educação da história do município"</p></blockquote>
-<p>O secretário de educação <strong>afirmou em entrevista coletiva.</strong></p>`,
-      fonte: "https://prefeitura.gov.br/noticias/educacao-infantil",
+      titulo: "Título da notícia (máximo 100 caracteres)",
+      slug: "titulo-da-noticia-em-kebab-case",
+      resumo: "Resumo com até 160 caracteres para exibição em cards e redes sociais.",
+      conteudo: "<p><strong>Primeiro parágrafo em negrito com informações principais.</strong></p><h2>Subtítulo</h2><p>Desenvolvimento do conteúdo...</p>",
+      fonte: "https://site-origem.com/noticia-original",
       imagem: {
-        hero: "https://exemplo.com/imagens/educacao-programa.jpg",
-        og: "https://exemplo.com/imagens/educacao-programa-og.jpg",
-        card: "https://exemplo.com/imagens/educacao-programa-card.jpg",
-        alt: "Crianças em sala de aula participando do novo programa educacional",
-        credito: "Foto: Assessoria de Imprensa / Prefeitura Municipal",
-        galeria: [
-          "https://exemplo.com/imagens/galeria/educacao-1.jpg",
-          "https://exemplo.com/imagens/galeria/educacao-2.jpg"
-        ]
+        hero: "https://exemplo.com/imagem-principal.jpg",
+        og: "https://exemplo.com/imagem-og-1200x630.jpg",
+        card: "https://exemplo.com/imagem-card-800x450.jpg",
+        alt: "Descrição acessível da imagem",
+        credito: "Foto: Nome do Fotógrafo / Agência"
       },
-      tags: ["Cotia", "educação", "prefeitura", "escolas", "crianças", "investimento", "programa social", "ensino infantil", "2025", "municipal", "professores", "didático"],
+      tags: ["Cotia", "São Paulo", "Prefeitura", "Investimento", "Obras", "Desenvolvimento"],
       seo: {
-        meta_titulo: "Novo programa de educação beneficiará 5 mil crianças",
-        meta_descricao: "Prefeitura anuncia investimento de R$ 10 milhões em programa educacional para escolas municipais."
-      }
-    },
-    {
-      categoria: "Cultura",
-      titulo: "Festival Gastronômico reúne 30 restaurantes no centro da cidade",
-      slug: "festival-gastronomico-30-restaurantes-centro",
-      resumo: "O tradicional Festival Gastronômico retorna este ano com 30 restaurantes participantes e entrada gratuita.",
-      conteudo: `<p><strong>O tradicional Festival Gastronômico retorna este ano maior e melhor, com 30 restaurantes participantes.</strong></p>
-<p>O evento promete movimentar o centro da cidade de 15 a 18 de março.</p>
-<h2>Preços e Horários</h2>
-<p>A entrada é gratuita e os pratos terão preços promocionais entre R$ 15 e R$ 45.</p>
-<ul>
-  <li>Sexta: 18h às 23h</li>
-  <li>Sábado: 12h às 23h</li>
-  <li>Domingo: 12h às 20h</li>
-</ul>`,
-      fonte: "https://cultura.gov.br/festival-gastronomico",
-      imagem: {
-        hero: "https://exemplo.com/imagens/festival-food.jpg",
-        alt: "Pratos típicos sendo servidos durante o festival",
-        credito: "Foto: João Fotógrafo",
-        galeria: [
-          "https://exemplo.com/imagens/galeria/festival-1.jpg",
-          "https://exemplo.com/imagens/galeria/festival-2.jpg"
-        ]
-      },
-      tags: ["festival", "gastronomia", "restaurantes", "centro", "março", "eventos", "culinária", "comida", "chef", "gratuito", "promoção", "cidade"],
-      seo: {
-        meta_titulo: "Festival Gastronômico 2025: 30 restaurantes, entrada grátis",
-        meta_descricao: "Festival reúne 30 restaurantes no centro com pratos de R$ 15 a R$ 45. De 15 a 18 de março."
+        meta_titulo: "Meta título otimizado (máx 60 caracteres)",
+        meta_descricao: "Meta descrição com palavras-chave para SEO (máx 160 caracteres)."
       }
     }
   ]
@@ -182,16 +138,65 @@ const validateNewsJson = (text: string): ValidationError[] => {
         });
       }
       
-      // Avisos (campos recomendados)
-      if (!article.tags || article.tags.length < 12) {
+      // REGRAS DEFINITIVAS DE VALIDAÇÃO DE TAGS (3-12)
+      if (!article.tags || article.tags.length < 3) {
         errors.push({ 
           field: 'tags', 
-          message: `Artigo ${index + 1}: Recomendado 12 tags (atual: ${article.tags?.length || 0})`, 
+          message: `Artigo ${index + 1}: Mínimo 3 tags obrigatórias (atual: ${article.tags?.length || 0})`, 
+          type: 'error', 
+          articleIndex: index 
+        });
+      } else if (article.tags.length > 12) {
+        errors.push({ 
+          field: 'tags', 
+          message: `Artigo ${index + 1}: Máximo 12 tags permitidas (atual: ${article.tags.length})`, 
+          type: 'error', 
+          articleIndex: index 
+        });
+      }
+      
+      // LIMITES DE CARACTERES SEO
+      // Título: máximo 100 caracteres
+      if (article.titulo && article.titulo.length > 100) {
+        errors.push({ 
+          field: 'titulo', 
+          message: `Artigo ${index + 1}: Título excede 100 caracteres (atual: ${article.titulo.length})`, 
           type: 'warning', 
           articleIndex: index 
         });
       }
       
+      // Resumo: máximo 160 caracteres
+      if (article.resumo && article.resumo.length > 160) {
+        errors.push({ 
+          field: 'resumo', 
+          message: `Artigo ${index + 1}: Resumo excede 160 caracteres (atual: ${article.resumo.length})`, 
+          type: 'warning', 
+          articleIndex: index 
+        });
+      }
+      
+      // SEO: meta_titulo máximo 60 caracteres
+      if (article.seo?.meta_titulo && article.seo.meta_titulo.length > 60) {
+        errors.push({ 
+          field: 'seo.meta_titulo', 
+          message: `Artigo ${index + 1}: Meta título excede 60 caracteres (atual: ${article.seo.meta_titulo.length})`, 
+          type: 'warning', 
+          articleIndex: index 
+        });
+      }
+      
+      // SEO: meta_descricao máximo 160 caracteres
+      if (article.seo?.meta_descricao && article.seo.meta_descricao.length > 160) {
+        errors.push({ 
+          field: 'seo.meta_descricao', 
+          message: `Artigo ${index + 1}: Meta descrição excede 160 caracteres (atual: ${article.seo.meta_descricao.length})`, 
+          type: 'warning', 
+          articleIndex: index 
+        });
+      }
+      
+      // Imagem hero recomendada
       if (!article.imagem?.hero) {
         errors.push({ 
           field: 'imagem', 
@@ -201,6 +206,7 @@ const validateNewsJson = (text: string): ValidationError[] => {
         });
       }
       
+      // Destaque inválido
       if (article.destaque && !['none', 'home', 'featured', 'urgent'].includes(article.destaque)) {
         errors.push({ 
           field: 'destaque', 
