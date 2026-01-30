@@ -1,92 +1,160 @@
 
-# PATCH FINAL — Notícias AI (Prompt Mestre v2)
 
-## Problema Identificado
+# Implementar Formato "Cidade | Categoria" em Todo o Sistema
 
-**Localização:** `supabase/functions/noticias-ai-generate/index.ts`, linhas 641-655
+## Objetivo
 
-**Causa:** As tags HTML no `systemPrompt` estão escritas como texto literal (`<p>`, `<h2>`, etc.) em vez de entidades HTML. Quando o prompt é enviado para a IA, essas tags podem ser interpretadas como markup real ou filtradas, deixando a IA sem instrução clara sobre a formatação HTML esperada.
+Garantir que **todas** as notícias (manual ou Notícias AI) exibam a categoria no formato **"Cidade | Categoria"** (ex: Cotia | Saúde, Itapevi | Educação, Carapicuíba | Esportes) em todo o portal.
 
-**Trecho Atual (problemático):**
-```typescript
-## 5. CONTEÚDO HTML (OBRIGATÓRIO)
-O campo "conteudo" deve ser HTML válido usando APENAS estas tags:
-<p>, <h2>, <blockquote>, <strong>, <ul>, <li>
+---
 
-Regras:
-- O primeiro parágrafo deve ser o lide em negrito:
-  <p><strong>Lide completo com informações principais.</strong></p>
-- Intertítulos: usar <h2>...</h2>
-- Citações longas: usar <blockquote>...</blockquote>
-- Parágrafos sempre separados por <p>...</p>
+## Situação Atual
+
+### O que já existe (✅)
+- Utilitário `src/utils/categoryDisplay.ts` com lógica completa para detectar cidades e formatar "Cidade | Categoria"
+- Lista de cidades vizinhas (Osasco, Carapicuíba, Barueri, Itapevi, etc.)
+- Lista de bairros de Cotia (Granja Viana, Caucaia do Alto, etc.)
+- Funções `getCategoryDisplay()` e `getCategoryBadgeInfo()` prontas
+
+### O que NÃO está funcionando (❌)
+- **Nenhum componente** está usando essas funções
+- Os componentes exibem apenas `news.category?.name`
+- A lógica depende das **tags** para identificar a cidade, mas as tags não são carregadas em todas as queries
+
+---
+
+## Plano de Implementação
+
+### Parte 1: Frontend — Integrar `getCategoryDisplay` nos Componentes
+
+**Arquivos a modificar:**
+
+| Componente | Arquivo | Uso Atual | Mudança |
+|------------|---------|-----------|---------|
+| NewsCard | `src/components/home/NewsCard.tsx` | `news.category?.name` | Usar `getCategoryDisplay()` |
+| NewsCardVisual | `src/components/home/NewsCardVisual.tsx` | `news.category?.name` | Usar `getCategoryDisplay()` |
+| HeroSection | `src/components/home/HeroSection.tsx` | `heroNews.category?.name` | Usar `getCategoryDisplay()` |
+| NewsDetail | `src/pages/NewsDetail.tsx` | `news.category.name` | Usar `getCategoryDisplay()` |
+| CategorySection | `src/components/home/CategorySection.tsx` | `category.name` | Usar `getCategoryDisplay()` |
+
+**Exemplo de mudança:**
+
+```text
+// Antes
+{news.category?.name || "Notícia"}
+
+// Depois
+import { getCategoryDisplay } from "@/utils/categoryDisplay";
+// ...
+{getCategoryDisplay(news.category?.name || "Notícia", news.tags?.map(t => t.name) || [])}
 ```
 
----
+### Parte 2: Garantir que Tags sejam carregadas
 
-## Solução: Usar Entidades HTML
+**Arquivo:** `src/hooks/useNews.ts`
 
-**Substituir** a seção 5 completa (linhas 641-655) pela versão com entidades HTML blindadas:
+Atualmente, as tags só são carregadas no `useNewsBySlug`. Precisamos adicionar a busca de tags também em:
 
-```typescript
-## 5. CONTEÚDO HTML (OBRIGATÓRIO)
-O campo "conteudo" deve ser HTML válido usando APENAS estas tags:
-&lt;p&gt;, &lt;h2&gt;, &lt;blockquote&gt;, &lt;strong&gt;, &lt;ul&gt;, &lt;li&gt;
+1. `useNews()` - Lista principal de notícias
+2. `useFeaturedNews()` - Notícias em destaque
+3. `useMostReadNews()` - Mais lidas
+4. `useNewsByCategory()` - Por categoria
 
-Regras:
-- O primeiro parágrafo deve ser o lide em negrito:
-  &lt;p&gt;&lt;strong&gt;Lide completo com informações principais.&lt;/strong&gt;&lt;/p&gt;
-- Intertítulos: usar &lt;h2&gt;...&lt;/h2&gt;
-- Citações longas: usar &lt;blockquote&gt;...&lt;/blockquote&gt;
-- Parágrafos sempre separados por &lt;p&gt;...&lt;/p&gt;
+**Mudança:** Adicionar query para buscar tags após carregar cada notícia (similar ao padrão já usado em `useNewsBySlug`).
 
-PROIBIÇÕES:
-- NÃO inclua URLs de imagens no conteúdo
-- NÃO inclua tags HTML fora da lista permitida
-- NÃO inclua o array "tags" dentro do conteúdo
+### Parte 3: Regra Especial para Cotia
+
+**Lógica já implementada em `categoryDisplay.ts`:**
+
+```text
+- Se a notícia tiver tag de cidade vizinha (Itapevi, Osasco, etc.):
+  → Exibe: "Cidade | Categoria" (ex: "Itapevi | Educação")
+  
+- Se a notícia for de Cotia ou sem cidade identificável:
+  → Exibe apenas: "Categoria" (ex: "Saúde")
+  
+- Se a tag for um bairro de Cotia (Granja Viana, Caucaia, etc.):
+  → Trata como Cotia, exibe apenas categoria
 ```
 
+### Parte 4: Atualizar Notícias AI
+
+**Arquivos a verificar:**
+
+1. `supabase/functions/noticias-ai-generate/index.ts` - Garantir que a primeira tag seja sempre a cidade
+2. `src/pages/admin/NoticiasAI.tsx` - Confirmar que as tags são salvas corretamente
+
+**Regra do Prompt Mestre v2 (já implementada):**
+- A primeira tag DEVE ser o nome da cidade
+- Tags entre 3 e 12
+
+### Parte 5: Atualizar Cadastro Manual
+
+**Arquivo:** `src/pages/admin/NewsEditor.tsx`
+
+Garantir que ao criar notícia manual:
+1. Campo de tags seja obrigatório (mínimo 3)
+2. Sugerir automaticamente a cidade como primeira tag
+
 ---
 
-## Arquivo a Modificar
+## Resumo de Alterações por Arquivo
 
-| Arquivo | Linhas | Ação |
-|---------|--------|------|
-| `supabase/functions/noticias-ai-generate/index.ts` | 641-655 | Substituir tags HTML por entidades HTML |
-
----
-
-## Alterações Detalhadas
-
-### Antes vs. Depois
-
-| Linha | Antes (Literal) | Depois (Entidade) |
-|-------|-----------------|-------------------|
-| 643 | `<p>, <h2>, <blockquote>, <strong>, <ul>, <li>` | `&lt;p&gt;, &lt;h2&gt;, &lt;blockquote&gt;, &lt;strong&gt;, &lt;ul&gt;, &lt;li&gt;` |
-| 647 | `<p><strong>Lide completo...</strong></p>` | `&lt;p&gt;&lt;strong&gt;Lide completo...&lt;/strong&gt;&lt;/p&gt;` |
-| 648 | `<h2>...</h2>` | `&lt;h2&gt;...&lt;/h2&gt;` |
-| 649 | `<blockquote>...</blockquote>` | `&lt;blockquote&gt;...&lt;/blockquote&gt;` |
-| 650 | `<p>...</p>` | `&lt;p&gt;...&lt;/p&gt;` |
-| 655 | `array de "tags"` | `o array "tags"` (pequena correção textual) |
+| Arquivo | Tipo | Descrição |
+|---------|------|-----------|
+| `src/hooks/useNews.ts` | Hook | Adicionar busca de tags em todas as funções |
+| `src/components/home/NewsCard.tsx` | Componente | Integrar `getCategoryDisplay()` |
+| `src/components/home/NewsCardVisual.tsx` | Componente | Integrar `getCategoryDisplay()` |
+| `src/components/home/HeroSection.tsx` | Componente | Integrar `getCategoryDisplay()` |
+| `src/components/home/CategorySection.tsx` | Componente | Integrar `getCategoryDisplay()` |
+| `src/pages/NewsDetail.tsx` | Página | Integrar `getCategoryDisplay()` |
+| `src/pages/admin/NewsEditor.tsx` | Página | Adicionar validação de tags (cidade como primeira) |
 
 ---
 
 ## Seção Técnica
 
-### Por que entidades HTML?
+### Interface de Tags no NewsItem
 
-Quando strings contendo `<p>` são processadas em diferentes contextos (logging, parsing, rendering), elas podem ser:
-- Interpretadas como markup
-- Sanitizadas/removidas por segurança
-- Escapadas de forma inconsistente
+As tags já estão tipadas em `useNews.ts`:
 
-Usar entidades HTML (`&lt;` = `<`, `&gt;` = `>`) garante que:
-- O texto é preservado literalmente
-- A IA recebe a instrução completa
-- Não há risco de injection ou sanitização
+```typescript
+tags?: Array<{
+  id: string;
+  name: string;
+  slug: string;
+}>;
+```
 
-### Validação Pós-Deploy
+### Função getCategoryDisplay
 
-Após aplicar o patch, testar com uma entrada simples para verificar se a IA:
-1. Retorna JSON válido
-2. O campo `conteudo` contém tags HTML corretas
-3. O lide está em negrito (`<p><strong>...</strong></p>`)
+```typescript
+// Entrada
+getCategoryDisplay("Saúde", ["Itapevi", "Hospital", "Atendimento"])
+// Saída: "Itapevi | Saúde"
+
+getCategoryDisplay("Saúde", ["Cotia", "UBS", "Atendimento"])
+// Saída: "Saúde" (Cotia é cidade principal, não exibe)
+
+getCategoryDisplay("Educação", ["Granja Viana", "Escola"])
+// Saída: "Educação" (Granja Viana é bairro de Cotia)
+```
+
+### Otimização de Performance
+
+Para evitar N+1 queries ao buscar tags, podemos:
+1. Usar batch query para buscar todas as tags de uma vez
+2. Ou aceitar o custo adicional já que são poucas notícias por página
+
+---
+
+## Resultado Esperado
+
+Após implementação:
+
+- ✅ Cards de notícias exibirão "Itapevi | Educação" para notícias de Itapevi
+- ✅ Notícias de Cotia exibirão apenas "Educação"
+- ✅ Página de detalhe terá badge "Carapicuíba | Esportes"
+- ✅ HeroSection terá formato consistente
+- ✅ Tanto notícias manuais quanto AI seguirão o mesmo padrão
+
