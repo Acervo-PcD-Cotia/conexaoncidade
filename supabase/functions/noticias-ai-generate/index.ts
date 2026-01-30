@@ -91,27 +91,22 @@ function sanitizeContent(content: string, sourceUrl?: string): string {
 }
 
 // Helper: Ensure article has all required fields with fallbacks
+// REGRA BLINDADA: Garantir mínimo 3 tags, máximo 12 tags
 function ensureRequiredFields(article: NewsArticle, sourceUrl?: string): NewsArticle {
-  // Generate exactly 12 tags if we have fewer
   let tags = article.tags || [];
-  if (tags.length < 12) {
-    // Pad with category-based tags
-    const categoryTags = [
+  
+  // Se menos de 3 tags, complementar com tags contextuais (Cotia/SP)
+  if (tags.length < 3) {
+    const fallbackTags = [
       article.categoria || 'Notícias',
-      'Brasil',
-      'Ceará',
-      'Fortaleza',
+      'Cotia',                    // Cidade principal do portal
+      'São Paulo',                // Estado
       'Atualidades',
-      'Informação',
       'Destaque',
-      'Cobertura',
-      'Reportagem',
-      'Jornalismo',
-      'Cidade',
-      'Região',
+      'Região Metropolitana',
     ];
-    while (tags.length < 12 && categoryTags.length > 0) {
-      const tag = categoryTags.shift();
+    while (tags.length < 3 && fallbackTags.length > 0) {
+      const tag = fallbackTags.shift();
       if (tag && !tags.some(t => t.toLowerCase() === tag.toLowerCase())) {
         tags.push(tag);
       }
@@ -120,7 +115,7 @@ function ensureRequiredFields(article: NewsArticle, sourceUrl?: string): NewsArt
   
   return {
     ...article,
-    tags: tags.slice(0, 12),
+    tags: tags.slice(0, 12),  // Limitar a 12 tags (máximo)
     subtitulo: article.subtitulo || article.resumo?.substring(0, 100) || 'Saiba mais sobre esta notícia',
     chapeu: article.chapeu || article.categoria?.toUpperCase() || 'NOTÍCIAS',
     // ALWAYS force editor to Redação Conexão na Cidade, ignoring AI response
@@ -614,62 +609,66 @@ serve(async (req) => {
     
     const systemPrompt = `Você é um jornalista experiente seguindo o padrão editorial da Agência Brasil.
 
-REGRAS CRÍTICAS:
-1. REESCREVA mantendo APROXIMADAMENTE O MESMO TAMANHO da matéria original
-2. NÃO INCLUA URLs de imagens no texto - as imagens são tratadas separadamente
-3. NÃO INCLUA tags <img> no conteúdo
-4. NÃO CRIE conteúdo novo ou invente informações
-5. PRESERVE todos os dados factuais: nomes, datas, locais, valores
+## REGRAS ABSOLUTAS (NÃO VIOLAR):
 
-REGRAS DE FORMATAÇÃO AGÊNCIA BRASIL:
-1. LIDE (1º parágrafo) SEMPRE em <strong>texto completo do lide</strong>
-2. CITAÇÕES de fontes: "declaração", <strong>afirmou Fulano em entrevista.</strong>
-3. LINKS externos: <a href="url"><strong>texto do link</strong></a> (negrito + sublinhado)
-4. INTERTÍTULOS: <h2>Título da Seção</h2> (sem decoração, sem negrito extra)
-5. BLOCKQUOTES para citações longas: <blockquote><p>"citação completa aqui"</p></blockquote>
-6. PARÁGRAFOS separados por <p>...</p>
-7. LISTAS quando apropriado: <ul><li>item</li></ul>
+### CATEGORIAS (WHITELIST FIXA - NUNCA CRIAR NOVAS)
+Use APENAS estas categorias:
+Brasil, Cidades, Política, Economia, Justiça, Segurança Pública, Saúde, Educação, Ciência, Tecnologia, Meio Ambiente, Infraestrutura, Esportes, Entretenimento, Cultura, Comportamento, Lifestyle, Emprego & Renda, Mobilidade Urbana, Inclusão & PCD, Projetos Sociais, Inovação Pública, Conexão Academy, Web Rádio, Web TV, Geral
 
-ESTRUTURA DA NOTÍCIA:
-- Lide (quem, o quê, quando, onde, como, por quê) - OBRIGATORIAMENTE EM NEGRITO
-- Desenvolvimento com intertítulos H2
-- Citações de especialistas/autoridades
-- Contexto e repercussão
-- Conclusão ou próximos passos
+Se o tema não se encaixar em nenhuma, use "Geral".
+Temas específicos (Futebol, ENEM, SUS, nomes de cidades, bairros) vão nas TAGS, não na categoria.
 
-LIMITES:
-- Se a matéria original tem ~500 palavras, a reescrita deve ter ~450-550 palavras
-- Se tem ~1000 palavras, deve ter ~900-1100 palavras
-- Título: max 100 caracteres
-- Resumo/excerpt: max 160 caracteres
-- Meta description: max 160 caracteres
-- Meta title: max 60 caracteres
-- Tags: EXATAMENTE 12 tags relevantes (nomes de pessoas, locais, temas, palavras-chave), max 40 chars cada
-- Categorias PERMITIDAS (usar APENAS estas): Brasil, Cidades, Política, Economia, Justiça, Segurança Pública, Saúde, Educação, Ciência, Tecnologia, Meio Ambiente, Infraestrutura, Esportes, Entretenimento, Cultura, Comportamento, Lifestyle, Emprego & Renda, Mobilidade Urbana, Inclusão & PCD, Projetos Sociais, Inovação Pública, Conexão Academy, Web Rádio, Web TV, Geral
-- Se o tema não se encaixar em nenhuma categoria, use "Geral"
-- Temas específicos que não são categorias devem ir nas TAGS (ex: Futebol vai em tags, categoria seria Esportes)
+### TAGS (OBRIGATÓRIO 3-12)
+- Mínimo: 3 tags (OBRIGATÓRIO)
+- Máximo: 12 tags
+- Incluir: nomes de cidades, bairros, órgãos públicos, pessoas citadas, eventos, subtemas
+- Tags individuais: máximo 40 caracteres cada
 
-FORMATO JSON COMPLETO:
+### LIMITES DE CARACTERES (RIGOROSOS)
+- Título: máximo 100 caracteres
+- Resumo/excerpt: máximo 160 caracteres
+- Meta título: máximo 60 caracteres  
+- Meta descrição: máximo 160 caracteres
+
+### FORMATAÇÃO DO CONTEÚDO
+1. LIDE (1º parágrafo) SEMPRE em <strong>texto completo</strong>
+2. Intertítulos: <h2>Título</h2>
+3. Citações longas: <blockquote><p>"texto"</p></blockquote>
+4. Atribuição: <strong>afirmou Fulano em entrevista.</strong>
+5. Parágrafos: <p>...</p>
+6. Listas: <ul><li>item</li></ul>
+
+### PROIBIÇÕES
+- NÃO inclua URLs de imagens no texto
+- NÃO inclua tags <img>
+- NÃO invente informações
+- NÃO crie categorias novas
+
+### TAMANHO
+- Mantenha ~95-105% do tamanho original
+- Preserve todos os dados factuais
+
+FORMATO JSON:
 {
   "noticias": [{
-    "titulo": "Título da notícia (max 100 chars)",
+    "titulo": "Título (max 100 chars)",
     "slug": "titulo-em-kebab-case",
-    "subtitulo": "Linha fina descritiva que complementa o título",
-    "chapeu": "CATEGORIA EM MAIÚSCULAS",
+    "subtitulo": "Linha fina descritiva",
+    "chapeu": "CATEGORIA",
     "resumo": "Resumo breve (max 160 chars)",
-    "conteudo": "<p><strong>Lide completo em negrito com todas as informações principais.</strong></p><h2>Intertítulo</h2><p>Desenvolvimento...</p><blockquote><p>\\"Citação longa\\"</p></blockquote><p>O ministro <strong>afirmou em entrevista.</strong></p>",
-    "categoria": "Nome da categoria",
-    "tags": ["tag1", "tag2", "tag3", "tag4", "tag5", "tag6", "tag7", "tag8", "tag9", "tag10", "tag11", "tag12"],
+    "conteudo": "<p><strong>Lide em negrito.</strong></p><h2>Intertítulo</h2><p>Desenvolvimento...</p>",
+    "categoria": "Nome da categoria (da whitelist)",
+    "tags": ["tag1", "tag2", "tag3", "..."],
     "imagem": {
-      "hero": "URL da imagem principal",
-      "og": "URL imagem OG 1200x630",
-      "card": "URL imagem card 800x450",
-      "alt": "Descrição acessível da imagem",
-      "credito": "AGÊNCIA/FOTÓGRAFO/PROIBIDA REPRODUÇÃO"
+      "hero": "URL",
+      "og": "URL OG 1200x630",
+      "card": "URL card 800x450",
+      "alt": "Descrição acessível",
+      "credito": "Fonte da imagem"
     },
     "seo": {
-      "meta_titulo": "Meta título otimizado (max 60 chars)",
-      "meta_descricao": "Meta descrição com palavras-chave (max 160 chars)"
+      "meta_titulo": "Meta título (max 60 chars)",
+      "meta_descricao": "Meta descrição (max 160 chars)"
     },
     "fonte": "URL da fonte original"
   }]
