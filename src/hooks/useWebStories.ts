@@ -72,7 +72,7 @@ export function useStoryBySlug(slug: string) {
         .from("web_story_slides")
         .select("*")
         .eq("story_id", story.id)
-        .order("slide_order", { ascending: true });
+        .order("sort_order", { ascending: true });
 
       if (slidesError) throw slidesError;
 
@@ -93,7 +93,7 @@ export function useStorySlides(storyId: string) {
         .from("web_story_slides")
         .select("*")
         .eq("story_id", storyId)
-        .order("slide_order", { ascending: true });
+        .order("sort_order", { ascending: true });
 
       if (error) throw error;
       return data as WebStorySlide[];

@@ -78,7 +78,6 @@ serve(async (req) => {
         cover_image_url: news.featured_image_url,
         status: 'published',
         news_id: newsId,
-        category: categoryName,
         published_at: new Date().toISOString(),
       })
       .select()
@@ -99,40 +98,40 @@ serve(async (req) => {
       // Slide 1: Cover
       {
         story_id: story.id,
-        slide_order: 0,
-        background_url: news.featured_image_url,
+        sort_order: 0,
+        background_image_url: news.featured_image_url,
         headline_text: news.title,
         subheadline_text: categoryName.toUpperCase(),
       },
       // Slide 2: Context
       {
         story_id: story.id,
-        slide_order: 1,
-        background_url: news.featured_image_url,
+        sort_order: 1,
+        background_image_url: news.featured_image_url,
         headline_text: 'Entenda o caso',
         subheadline_text: news.excerpt || 'Confira os detalhes desta notícia',
       },
       // Slide 3: Highlight
       {
         story_id: story.id,
-        slide_order: 2,
-        background_url: news.featured_image_url,
+        sort_order: 2,
+        background_image_url: news.featured_image_url,
         headline_text: 'Destaques',
         subheadline_text: 'Os pontos principais desta história',
       },
       // Slide 4: Know More
       {
         story_id: story.id,
-        slide_order: 3,
-        background_url: news.featured_image_url,
+        sort_order: 3,
+        background_image_url: news.featured_image_url,
         headline_text: 'Saiba mais',
         subheadline_text: 'Acompanhe no Portal Conexão',
       },
       // Slide 5: CTA
       {
         story_id: story.id,
-        slide_order: 4,
-        background_url: news.featured_image_url,
+        sort_order: 4,
+        background_image_url: news.featured_image_url,
         headline_text: 'Leia a matéria completa',
         subheadline_text: 'Toque para acessar',
         cta_url: `/noticia/${news.slug}`,
