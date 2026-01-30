@@ -92,8 +92,8 @@ export function useNews(limit?: number) {
 
       if (error) throw error;
       
-      // Fetch authors separately
-      const newsWithAuthors = await Promise.all(
+      // Fetch authors and tags separately
+      const newsWithDetails = await Promise.all(
         (data || []).map(async (item) => {
           let author = null;
           if (item.author_id) {
@@ -104,11 +104,20 @@ export function useNews(limit?: number) {
               .maybeSingle();
             author = authorData;
           }
-          return { ...item, author } as NewsItem;
+          
+          // Fetch tags for city detection
+          const { data: tagsData } = await supabase
+            .from('news_tags')
+            .select('tag:tags(id, name, slug)')
+            .eq('news_id', item.id);
+          
+          const tags = tagsData?.map((t) => t.tag).filter(Boolean) || [];
+          
+          return { ...item, author, tags } as NewsItem;
         })
       );
       
-      return newsWithAuthors;
+      return newsWithDetails;
     },
   });
 }
@@ -250,8 +259,8 @@ export function useNewsByCategory(categorySlug: string, limit?: number) {
 
       if (error) throw error;
       
-      // Fetch authors separately
-      const newsWithAuthors = await Promise.all(
+      // Fetch authors and tags separately
+      const newsWithDetails = await Promise.all(
         (data || []).map(async (item) => {
           let author = null;
           if (item.author_id) {
@@ -262,11 +271,20 @@ export function useNewsByCategory(categorySlug: string, limit?: number) {
               .maybeSingle();
             author = authorData;
           }
-          return { ...item, author } as NewsItem;
+          
+          // Fetch tags for city detection
+          const { data: tagsData } = await supabase
+            .from('news_tags')
+            .select('tag:tags(id, name, slug)')
+            .eq('news_id', item.id);
+          
+          const tags = tagsData?.map((t) => t.tag).filter(Boolean) || [];
+          
+          return { ...item, author, tags } as NewsItem;
         })
       );
       
-      return newsWithAuthors;
+      return newsWithDetails;
     },
     enabled: !!categorySlug,
   });
@@ -383,7 +401,21 @@ export function useFeaturedNews(limit = 5) {
         .limit(limit);
 
       if (error) throw error;
-      return (data || []) as unknown as NewsItem[];
+      
+      // Fetch tags for city detection
+      const newsWithTags = await Promise.all(
+        (data || []).map(async (item) => {
+          const { data: tagsData } = await supabase
+            .from('news_tags')
+            .select('tag:tags(id, name, slug)')
+            .eq('news_id', item.id);
+          
+          const tags = tagsData?.map((t) => t.tag).filter(Boolean) || [];
+          return { ...item, tags } as NewsItem;
+        })
+      );
+      
+      return newsWithTags;
     },
   });
 }
@@ -404,7 +436,21 @@ export function useMostReadNews(limit = 10) {
         .limit(limit);
 
       if (error) throw error;
-      return (data || []) as unknown as NewsItem[];
+      
+      // Fetch tags for city detection
+      const newsWithTags = await Promise.all(
+        (data || []).map(async (item) => {
+          const { data: tagsData } = await supabase
+            .from('news_tags')
+            .select('tag:tags(id, name, slug)')
+            .eq('news_id', item.id);
+          
+          const tags = tagsData?.map((t) => t.tag).filter(Boolean) || [];
+          return { ...item, tags } as NewsItem;
+        })
+      );
+      
+      return newsWithTags;
     },
   });
 }

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { useFeaturedNews, useNews } from "@/hooks/useNews";
 import { WebStoriesSidebar } from "@/components/home/WebStoriesSidebar";
+import { getCategoryDisplay } from "@/utils/categoryDisplay";
 
 function formatTimeAgo(date: string) {
   const now = new Date();
@@ -45,6 +46,12 @@ export function HeroSection() {
 
   const heroNews = allNews[0];
   const sideNews = allNews.slice(1, 3);
+
+  // Get formatted category display with city prefix for neighboring cities
+  const getNewsCategory = (news: typeof heroNews) => {
+    const tagNames = news?.tags?.map(t => t.name) || [];
+    return getCategoryDisplay(news?.category?.name || "Notícia", tagNames);
+  };
 
   const handleTTS = (e: React.MouseEvent, text: string) => {
     e.preventDefault();
@@ -114,7 +121,7 @@ export function HeroSection() {
               }}
               className="text-xs font-semibold"
             >
-              {heroNews.category?.name || "Notícia"}
+              {getNewsCategory(heroNews)}
             </Badge>
           </div>
 
@@ -199,7 +206,7 @@ export function HeroSection() {
                       color: "white",
                     }}
                   >
-                    {news.category?.name || "Notícia"}
+                    {getNewsCategory(news)}
                   </Badge>
                   <h4 className="font-heading text-sm font-bold leading-snug line-clamp-2 group-hover:text-primary transition-colors">
                     {truncateText(news.title, 70)}

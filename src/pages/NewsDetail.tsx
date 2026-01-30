@@ -23,6 +23,7 @@ import { useReadingTracker } from '@/hooks/useReadingTracker';
 import { useNewsAnalytics } from '@/hooks/useNewsAnalytics';
 import { useAuth } from '@/contexts/AuthContext';
 import { getNewsHeaderColor } from '@/lib/colorUtils';
+import { getCategoryDisplay } from '@/utils/categoryDisplay';
 
 // Error Boundary para capturar erros de renderização
 interface ErrorBoundaryProps {
@@ -344,7 +345,7 @@ function NewsDetailContent({ news }: NewsDetailContentProps) {
                 <Badge
                   className="mb-4 bg-red-600 hover:bg-red-700 text-white border-0 text-xs uppercase tracking-widest px-3 py-1"
                 >
-                  {news.category.name}
+                  {getCategoryDisplay(news.category.name, news.tags?.map(t => t.name) || [])}
                 </Badge>
               </Link>
             )}
