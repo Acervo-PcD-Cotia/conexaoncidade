@@ -1,48 +1,52 @@
 /**
  * Regra visual: Cidade | Categoria
- * Para notícias de cidades vizinhas (diferentes de Cotia), exibe "Cidade | Categoria"
- * Para notícias de Cotia, exibe apenas a categoria
+ * TODAS as notícias exibem "Cidade | Categoria" quando há tag de cidade
  */
 
-// Lista de cidades da região que NÃO são Cotia
-const NEIGHBORING_CITIES = [
+// Lista COMPLETA de cidades reconhecidas (incluindo Cotia)
+const ALL_CITIES = [
+  'cotia',
   'são paulo', 'osasco', 'carapicuíba', 'barueri', 'itapevi', 
   'jandira', 'embu', 'embu das artes', 'taboão', 'taboão da serra',
   'vargem grande', 'vargem grande paulista', 'ibiúna', 'mairinque',
-  'itapecerica', 'itapecerica da serra', 'são roque', 'raposo tavares'
+  'itapecerica', 'itapecerica da serra', 'são roque', 'raposo tavares',
+  'embu-guaçu', 'são lourenço da serra'
 ];
 
-// Palavras-chave que indicam Cotia (cidade principal do portal)
-const COTIA_KEYWORDS = [
-  'cotia', 'granja viana', 'caucaia do alto', 'jardim da glória',
+// Bairros de Cotia que devem ser exibidos como "Cotia"
+const COTIA_NEIGHBORHOODS = [
+  'granja viana', 'caucaia do alto', 'jardim da glória',
   'jardim são fernando', 'ressaca', 'patrimônio da lagoa'
 ];
 
 /**
- * Verifica se uma tag representa uma cidade vizinha (não Cotia)
- */
-export function isNeighboringCity(tag: string): boolean {
-  const normalizedTag = tag.toLowerCase().trim();
-  
-  // Se for Cotia ou bairro de Cotia, não é cidade vizinha
-  if (COTIA_KEYWORDS.some(k => normalizedTag.includes(k))) {
-    return false;
-  }
-  
-  // Se for uma das cidades vizinhas conhecidas
-  return NEIGHBORING_CITIES.some(city => 
-    normalizedTag.includes(city) || city.includes(normalizedTag)
-  );
-}
-
-/**
- * Extrai a cidade principal das tags (se houver cidade vizinha)
+ * Extrai a cidade das tags
+ * - Bairros de Cotia retornam "Cotia"
+ * - Tag "Cotia" retorna "Cotia"
+ * - Outras cidades retornam capitalizadas
  */
 export function extractCityFromTags(tags: string[]): string | null {
   for (const tag of tags) {
-    if (isNeighboringCity(tag)) {
+    const normalizedTag = tag.toLowerCase().trim();
+    
+    // Se for bairro de Cotia, retorna "Cotia"
+    if (COTIA_NEIGHBORHOODS.some(n => normalizedTag.includes(n))) {
+      return 'Cotia';
+    }
+    
+    // Se for Cotia diretamente
+    if (normalizedTag.includes('cotia')) {
+      return 'Cotia';
+    }
+    
+    // Se for outra cidade conhecida
+    const foundCity = ALL_CITIES.find(city => 
+      normalizedTag.includes(city) || city.includes(normalizedTag)
+    );
+    
+    if (foundCity) {
       // Capitalizar o nome da cidade
-      return tag
+      return foundCity
         .split(' ')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
         .join(' ');
@@ -53,8 +57,7 @@ export function extractCityFromTags(tags: string[]): string | null {
 
 /**
  * Retorna a exibição formatada da categoria
- * - Notícias de cidades diferentes de Cotia: "Cidade | Categoria"
- * - Notícias de Cotia: apenas a categoria
+ * SEMPRE exibe "Cidade | Categoria" quando há cidade identificada
  * 
  * @param category - Categoria da notícia (da whitelist)
  * @param tags - Array de tags da notícia
@@ -63,18 +66,38 @@ export function extractCityFromTags(tags: string[]): string | null {
 export function getCategoryDisplay(category: string, tags: string[]): string {
   const city = extractCityFromTags(tags);
   
+  // SEMPRE exibe "Cidade | Categoria" se encontrar cidade
   if (city) {
     return `${city} | ${category}`;
   }
   
+  // Fallback: apenas categoria (para notícias sem tag de cidade)
   return category;
 }
 
 /**
- * Verifica se a notícia é de uma cidade vizinha
+ * Verifica se uma tag representa uma cidade conhecida
+ */
+export function isKnownCity(tag: string): boolean {
+  const normalizedTag = tag.toLowerCase().trim();
+  
+  // Verifica bairros de Cotia
+  if (COTIA_NEIGHBORHOODS.some(n => normalizedTag.includes(n))) {
+    return true;
+  }
+  
+  // Verifica cidades
+  return ALL_CITIES.some(city => 
+    normalizedTag.includes(city) || city.includes(normalizedTag)
+  );
+}
+
+/**
+ * Verifica se a notícia é de uma cidade vizinha (não Cotia)
  */
 export function isFromNeighboringCity(tags: string[]): boolean {
-  return tags.some(tag => isNeighboringCity(tag));
+  const city = extractCityFromTags(tags);
+  return city !== null && city !== 'Cotia';
 }
 
 /**
