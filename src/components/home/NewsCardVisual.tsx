@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { cn } from "@/lib/utils";
 import type { NewsItem } from "@/hooks/useNews";
+import { getCategoryDisplay } from "@/utils/categoryDisplay";
 
 interface NewsCardVisualProps {
   news: NewsItem;
@@ -36,6 +37,10 @@ export function NewsCardVisual({
   priority = false,
   className 
 }: NewsCardVisualProps) {
+  // Get formatted category display with city prefix for neighboring cities
+  const tagNames = news.tags?.map(t => t.name) || [];
+  const categoryDisplay = getCategoryDisplay(news.category?.name || "Notícia", tagNames);
+
   const handleTTS = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -84,7 +89,7 @@ export function NewsCardVisual({
             color: "white",
           }}
         >
-          {news.category?.name || "Notícia"}
+          {categoryDisplay}
         </Badge>
 
         {/* Urgent badge */}

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { getCategoryDisplay } from "@/utils/categoryDisplay";
 
 interface NewsCardProps {
   news: {
@@ -13,6 +14,7 @@ interface NewsCardProps {
     publishedAt?: string;
     published_at?: string;
     slug: string;
+    tags?: Array<{ id: string; name: string; slug: string }>;
   };
   variant?: "default" | "horizontal" | "compact" | "mini" | "numbered" | "headline";
   number?: number;
@@ -34,6 +36,10 @@ export function NewsCard({ news, variant = "default", number }: NewsCardProps) {
   const imageUrl = news.featuredImageUrl || news.featured_image_url;
   const publishedAt = news.publishedAt || news.published_at;
   const categoryColor = news.category?.color || "hsl(var(--primary))";
+  
+  // Get formatted category display with city prefix for neighboring cities
+  const tagNames = news.tags?.map(t => t.name) || [];
+  const categoryDisplay = getCategoryDisplay(news.category?.name || "Notícia", tagNames);
 
   // Mini variant - just title and time
   if (variant === "mini") {
@@ -81,7 +87,7 @@ export function NewsCard({ news, variant = "default", number }: NewsCardProps) {
             color: categoryColor,
           }}
         >
-          {news.category?.name || "Notícia"}
+          {categoryDisplay}
         </Badge>
         <h2 className="font-heading text-lg font-bold leading-tight group-hover:text-primary">
           {news.title}
@@ -117,7 +123,7 @@ export function NewsCard({ news, variant = "default", number }: NewsCardProps) {
                 className="mb-1 text-[10px] px-1.5 py-0"
                 style={{ borderColor: categoryColor, color: categoryColor }}
               >
-                {news.category?.name || "Notícia"}
+                {categoryDisplay}
               </Badge>
               <h3 className="font-heading text-sm font-medium leading-tight line-clamp-2 group-hover:text-primary">
                 {news.title}
@@ -179,7 +185,7 @@ export function NewsCard({ news, variant = "default", number }: NewsCardProps) {
             className="mb-1.5 text-[10px] px-1.5 py-0"
             style={{ borderColor: categoryColor, color: categoryColor }}
           >
-            {news.category?.name || "Notícia"}
+            {categoryDisplay}
           </Badge>
           <h3 className="mb-1.5 font-heading text-base font-semibold leading-tight line-clamp-2 group-hover:text-primary">
             {news.title}

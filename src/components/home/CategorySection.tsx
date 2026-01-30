@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useNewsByCategory } from "@/hooks/useNews";
+import { getCategoryDisplay } from "@/utils/categoryDisplay";
 
 interface CategorySectionProps {
   title: string;
@@ -86,7 +87,7 @@ export function CategorySection({ title, slug }: CategorySectionProps) {
                   className="mb-1.5 text-[10px]"
                   style={{ backgroundColor: categoryColor, color: "white" }}
                 >
-                  {mainNews.category?.name || title}
+                  {getCategoryDisplay(mainNews.category?.name || title, mainNews.tags?.map(t => t.name) || [])}
                 </Badge>
                 <h3 className="font-heading text-base font-bold leading-tight line-clamp-2 md:text-lg">
                   {mainNews.title}
