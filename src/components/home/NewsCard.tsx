@@ -15,6 +15,7 @@ interface NewsCardProps {
     published_at?: string;
     slug: string;
     tags?: Array<{ id: string; name: string; slug: string }>;
+    source?: string | null;
   };
   variant?: "default" | "horizontal" | "compact" | "mini" | "numbered" | "headline";
   number?: number;
@@ -37,9 +38,10 @@ export function NewsCard({ news, variant = "default", number }: NewsCardProps) {
   const publishedAt = news.publishedAt || news.published_at;
   const categoryColor = news.category?.color || "hsl(var(--primary))";
   
-  // Get formatted category display with city prefix for neighboring cities
+  // Get formatted category display with city prefix (priority: source URL > tags)
   const tagNames = news.tags?.map(t => t.name) || [];
-  const categoryDisplay = getCategoryDisplay(news.category?.name || "Notícia", tagNames);
+  const source = news.source;
+  const categoryDisplay = getCategoryDisplay(news.category?.name || "Notícia", tagNames, source);
 
   // Mini variant - just title and time
   if (variant === "mini") {

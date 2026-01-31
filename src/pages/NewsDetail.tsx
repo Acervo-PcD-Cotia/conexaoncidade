@@ -345,7 +345,7 @@ function NewsDetailContent({ news }: NewsDetailContentProps) {
                 <Badge
                   className="mb-4 bg-red-600 hover:bg-red-700 text-white border-0 text-xs uppercase tracking-widest px-3 py-1"
                 >
-                  {getCategoryDisplay(news.category.name, news.tags?.map(t => t.name) || [])}
+                  {getCategoryDisplay(news.category.name, news.tags?.map(t => t.name) || [], news.source)}
                 </Badge>
               </Link>
             )}

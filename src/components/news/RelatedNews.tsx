@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { NewsItem } from '@/hooks/useNews';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { getCategoryDisplay } from '@/utils/categoryDisplay';
 
 interface RelatedNewsProps {
   news: NewsItem[];
@@ -46,7 +47,7 @@ export function RelatedNews({ news }: RelatedNewsProps) {
                     className="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 text-white"
                     style={{ backgroundColor: item.category.color }}
                   >
-                    {item.category.name}
+                    {getCategoryDisplay(item.category.name, item.tags?.map(t => t.name) || [], item.source)}
                   </span>
                 )}
                 <h4 className="text-sm font-semibold line-clamp-3 group-hover:text-primary transition-colors leading-snug">
