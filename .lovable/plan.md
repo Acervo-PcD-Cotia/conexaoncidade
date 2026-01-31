@@ -1,204 +1,97 @@
 
-# Corrigir Detecção de Cidade via URL da Fonte + Notícias Relacionadas
+# Corrigir Regra: Categoria Oculta no Menu Também Oculta as Notícias
 
 ## Problema Identificado
 
-### 1. Detecção de cidade inconsistente
-A função `getCategoryDisplay` usa apenas **tags** para identificar a cidade, mas as tags podem estar incorretas ou ausentes. 
+Atualmente, quando uma categoria é desativada (`is_active = false`) no painel administrativo:
+- A categoria desaparece do **menu** do site (Header e Footer)
+- Porém, as **notícias dessa categoria continuam aparecendo** normalmente no portal
 
-**Solução**: Usar o campo `source` (URL da fonte) como **fonte primária** para identificar a cidade, pois cada prefeitura tem um domínio único.
-
-### 2. Notícias Relacionadas não exibem "Cidade | Categoria"
-O componente `RelatedNews.tsx` exibe apenas `{item.category.name}` e não usa a função `getCategoryDisplay()`.
+Isso acontece porque as queries que buscam notícias não verificam se a categoria associada está ativa.
 
 ---
 
-## Mapeamento de Domínios para Cidades
+## Solução Proposta
 
-| Domínio | Cidade |
-|---------|--------|
-| `noticias.itapevi.sp.gov.br` | Itapevi |
-| `vargemgrandepaulista.sp.gov.br` | Vargem Grande Paulista |
-| `saoroque.sp.gov.br` | São Roque |
-| `ibiuna.sp.gov.br` | Ibiúna |
-| `embuguacu.sp.gov.br` | Embu-Guaçu |
-| `cidadeembudasartes.sp.gov.br` | Embu das Artes |
-| `itapecerica.sp.gov.br` | Itapecerica da Serra |
-| `saolourencodaserra.sp.gov.br` | São Lourenço da Serra |
-| `prefeitura.sp.gov.br` | São Paulo |
-| `osasco.sp.gov.br` | Osasco |
-| `jandira.sp.gov.br` | Jandira |
-| `carapicuiba.sp.gov.br` | Carapicuíba |
-| `barueri.sp.gov.br` | Barueri |
-| `cotia.sp.gov.br` | Cotia |
+Adicionar filtro nas queries de notícias para verificar se `categories.is_active = true`, garantindo que:
+
+1. Notícias de categorias desativadas **não apareçam** na Home
+2. Notícias de categorias desativadas **não apareçam** nos destaques
+3. Notícias de categorias desativadas **não apareçam** nas "Mais Lidas"
+4. Notícias de categorias desativadas **não apareçam** nas "Relacionadas"
+5. A página individual da notícia continue acessível (para quem tem o link direto)
 
 ---
 
-## Plano de Implementação
+## Impacto nas Funções
 
-### Parte 1: Atualizar `categoryDisplay.ts`
+| Hook/Função | Arquivo | Precisa Filtrar? |
+|-------------|---------|------------------|
+| `useNews` | `src/hooks/useNews.ts` | Sim |
+| `useFeaturedNews` | `src/hooks/useNews.ts` | Sim |
+| `useMostReadNews` | `src/hooks/useNews.ts` | Sim |
+| `useRelatedNews` | `src/hooks/useNews.ts` | Sim |
+| `useNewsByCategory` | `src/hooks/useNews.ts` | Já filtra pela categoria |
+| `useNewsBySlug` | `src/hooks/useNews.ts` | Não (acesso direto) |
+| `useNewsById` | `src/hooks/useNews.ts` | Não (acesso direto) |
 
-Adicionar nova função `extractCityFromSource(sourceUrl: string)` que:
-1. Extrai o domínio da URL da fonte
-2. Mapeia para a cidade correspondente
-3. Retorna a cidade formatada
+---
 
-```typescript
-const SOURCE_DOMAIN_TO_CITY: Record<string, string> = {
-  'noticias.itapevi.sp.gov.br': 'Itapevi',
-  'itapevi.sp.gov.br': 'Itapevi',
-  'vargemgrandepaulista.sp.gov.br': 'Vargem Grande Paulista',
-  'saoroque.sp.gov.br': 'São Roque',
-  'ibiuna.sp.gov.br': 'Ibiúna',
-  'embuguacu.sp.gov.br': 'Embu-Guaçu',
-  'cidadeembudasartes.sp.gov.br': 'Embu das Artes',
-  'itapecerica.sp.gov.br': 'Itapecerica da Serra',
-  'saolourencodaserra.sp.gov.br': 'São Lourenço da Serra',
-  'prefeitura.sp.gov.br': 'São Paulo',
-  'osasco.sp.gov.br': 'Osasco',
-  'jandira.sp.gov.br': 'Jandira',
-  'portal.jandira.sp.gov.br': 'Jandira',
-  'carapicuiba.sp.gov.br': 'Carapicuíba',
-  'barueri.sp.gov.br': 'Barueri',
-  'portal.barueri.sp.gov.br': 'Barueri',
-  'cotia.sp.gov.br': 'Cotia',
-};
+## Abordagem Técnica
 
-export function extractCityFromSource(sourceUrl: string | null): string | null {
-  if (!sourceUrl) return null;
-  
-  try {
-    const url = new URL(sourceUrl);
-    const hostname = url.hostname.toLowerCase();
-    
-    for (const [domain, city] of Object.entries(SOURCE_DOMAIN_TO_CITY)) {
-      if (hostname.includes(domain) || hostname.endsWith(domain)) {
-        return city;
-      }
-    }
-  } catch {
-    // URL inválida, tentar match parcial
-    const lowercaseSource = sourceUrl.toLowerCase();
-    for (const [domain, city] of Object.entries(SOURCE_DOMAIN_TO_CITY)) {
-      if (lowercaseSource.includes(domain)) {
-        return city;
-      }
-    }
-  }
-  
-  return null;
-}
-```
-
-Atualizar `getCategoryDisplay` para aceitar `source`:
+O Supabase permite filtrar por campos relacionados usando a sintaxe `column.nestedColumn`. Como o select já inclui `category:categories(...)`, podemos adicionar filtro:
 
 ```typescript
-export function getCategoryDisplay(
-  category: string, 
-  tags: string[], 
-  source?: string | null
-): string {
-  // 1. Prioridade: detectar cidade pela URL da fonte
-  const cityFromSource = extractCityFromSource(source || null);
-  if (cityFromSource) {
-    return `${cityFromSource} | ${category}`;
-  }
-  
-  // 2. Fallback: detectar cidade pelas tags
-  const cityFromTags = extractCityFromTags(tags);
-  if (cityFromTags) {
-    return `${cityFromTags} | ${category}`;
-  }
-  
-  // 3. Fallback final: apenas categoria
-  return category;
-}
-```
-
-### Parte 2: Atualizar `useRelatedNews` para buscar tags e source
-
-Modificar a query para incluir tags e o campo `source`:
-
-```typescript
-const { data: taggedNews } = await supabase
+// Antes
+const { data } = await supabase
   .from('news')
-  .select(`
-    *,
-    category:categories(id, name, slug, color),
-    news_tags(tag:tags(id, name, slug))
-  `)
-  // ... resto da query
+  .select(`*, category:categories(id, name, slug, color)`)
+  .eq('status', 'published')
+  .is('deleted_at', null)
+  .order('published_at', { ascending: false });
+
+// Depois
+const { data } = await supabase
+  .from('news')
+  .select(`*, category:categories!inner(id, name, slug, color, is_active)`)
+  .eq('status', 'published')
+  .is('deleted_at', null)
+  .eq('category.is_active', true)  // Filtra apenas categorias ativas
+  .order('published_at', { ascending: false });
 ```
 
-Depois mapear as tags:
-
-```typescript
-const mappedNews = taggedNews.map(item => ({
-  ...item,
-  tags: item.news_tags?.map(nt => nt.tag).filter(Boolean) || []
-}));
-```
-
-### Parte 3: Atualizar `RelatedNews.tsx`
-
-```typescript
-import { getCategoryDisplay } from '@/utils/categoryDisplay';
-
-// No badge de categoria:
-<span
-  className="..."
-  style={{ backgroundColor: item.category.color }}
->
-  {getCategoryDisplay(
-    item.category.name,
-    item.tags?.map(t => t.name) || [],
-    item.source
-  )}
-</span>
-```
-
-### Parte 4: Atualizar todos os componentes para passar `source`
-
-Garantir que todos os componentes que usam `getCategoryDisplay` passem o campo `source`:
-
-| Componente | Mudança |
-|------------|---------|
-| `NewsCard.tsx` | Adicionar `news.source` como 3º parâmetro |
-| `NewsCardVisual.tsx` | Adicionar `news.source` como 3º parâmetro |
-| `HeroSection.tsx` | Adicionar `heroNews.source` como 3º parâmetro |
-| `CategorySection.tsx` | Adicionar `news.source` como 3º parâmetro |
-| `NewsDetail.tsx` | Adicionar `news.source` como 3º parâmetro |
-| `RelatedNews.tsx` | Adicionar `item.source` como 3º parâmetro |
-| `NewsList.tsx` (admin) | Adicionar `item.source` como 3º parâmetro |
-| `RecentArticlesPanel.tsx` (admin) | Adicionar `article.source` como 3º parâmetro |
+**Nota:** O modificador `!inner` força um INNER JOIN, garantindo que apenas notícias com categorias ativas sejam retornadas.
 
 ---
 
-## Resumo de Alterações
+## Arquivos a Modificar
 
-| Arquivo | Tipo | Descrição |
-|---------|------|-----------|
-| `src/utils/categoryDisplay.ts` | Modificar | Adicionar mapeamento de domínios, função `extractCityFromSource`, atualizar `getCategoryDisplay` |
-| `src/hooks/useNews.ts` | Modificar | Atualizar `useRelatedNews` para buscar tags |
-| `src/components/news/RelatedNews.tsx` | Modificar | Usar `getCategoryDisplay` com source |
-| `src/components/home/NewsCard.tsx` | Modificar | Passar `source` para `getCategoryDisplay` |
-| `src/components/home/NewsCardVisual.tsx` | Modificar | Passar `source` para `getCategoryDisplay` |
-| `src/components/home/HeroSection.tsx` | Modificar | Passar `source` para `getCategoryDisplay` |
-| `src/components/home/CategorySection.tsx` | Modificar | Passar `source` para `getCategoryDisplay` |
-| `src/pages/NewsDetail.tsx` | Modificar | Passar `source` para `getCategoryDisplay` |
-| `src/pages/admin/NewsList.tsx` | Modificar | Passar `source` para `getCategoryDisplay` |
-| `src/components/admin/dashboard/RecentArticlesPanel.tsx` | Modificar | Passar `source` para `getCategoryDisplay` |
+| Arquivo | Mudança |
+|---------|---------|
+| `src/hooks/useNews.ts` | Adicionar filtro `category.is_active = true` em 4 funções |
 
 ---
 
 ## Resultado Esperado
 
-| Fonte (source) | Categoria | Exibição |
-|----------------|-----------|----------|
-| `https://www.embuguacu.sp.gov.br/...` | Política | **Embu-Guaçu \| Política** |
-| `https://cidadeembudasartes.sp.gov.br/...` | Cultura | **Embu das Artes \| Cultura** |
-| `https://www.saoroque.sp.gov.br/...` | Educação | **São Roque \| Educação** |
-| `https://cotia.sp.gov.br/...` | Saúde | **Cotia \| Saúde** |
-| `null` (sem fonte) + Tag "Cotia" | Cidades | **Cotia \| Cidades** |
+### Antes (Problema)
+| Categoria | is_active | Notícias no Menu | Notícias no Site |
+|-----------|-----------|------------------|------------------|
+| Saúde | true | Visível | Visível |
+| Esportes | **false** | Oculto | **Visível** (BUG!) |
 
-A detecção via `source` é **100% precisa** pois cada prefeitura tem seu próprio domínio.
+### Depois (Corrigido)
+| Categoria | is_active | Notícias no Menu | Notícias no Site |
+|-----------|-----------|------------------|------------------|
+| Saúde | true | Visível | Visível |
+| Esportes | **false** | Oculto | **Oculto** |
+
+---
+
+## Considerações
+
+1. **Notícias sem categoria:** Continuarão aparecendo normalmente (usando INNER JOIN exclui estas também - será necessário decidir o comportamento desejado)
+
+2. **Acesso direto por URL:** A página individual da notícia (`/noticia/slug`) continuará acessível para quem tem o link - isso é intencional para não quebrar links externos
+
+3. **Admin:** O painel administrativo continuará mostrando todas as notícias, independente da categoria estar ativa ou não
