@@ -36,6 +36,7 @@ export function RecentArticlesPanel() {
           status, 
           published_at, 
           updated_at,
+          source,
           category:categories(name, slug),
           news_tags(tags(name))
         `)
@@ -102,7 +103,7 @@ export function RecentArticlesPanel() {
                       <span className="px-2 py-0.5 text-[10px] font-medium bg-neutral-800 text-white rounded">
                         {(() => {
                           const tags = (article as any).news_tags?.map((nt: any) => nt.tags?.name).filter(Boolean) || [];
-                          return getCategoryDisplay(article.category.name, tags);
+                          return getCategoryDisplay(article.category.name, tags, (article as any).source);
                         })()}
                       </span>
                     )}

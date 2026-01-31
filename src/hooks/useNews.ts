@@ -326,7 +326,18 @@ export function useRelatedNews(
             .limit(limit);
 
           if (taggedNews) {
-            results = taggedNews as unknown as NewsItem[];
+            // Fetch tags for each news item
+            const newsWithTags = await Promise.all(
+              taggedNews.map(async (item) => {
+                const { data: tagsData } = await supabase
+                  .from('news_tags')
+                  .select('tag:tags(id, name, slug)')
+                  .eq('news_id', item.id);
+                const tags = tagsData?.map((t) => t.tag).filter(Boolean) || [];
+                return { ...item, tags } as NewsItem;
+              })
+            );
+            results = newsWithTags;
           }
         }
       }
@@ -351,7 +362,18 @@ export function useRelatedNews(
           .limit(needed);
 
         if (categoryNews) {
-          results = [...results, ...(categoryNews as unknown as NewsItem[])];
+          // Fetch tags for each news item
+          const newsWithTags = await Promise.all(
+            categoryNews.map(async (item) => {
+              const { data: tagsData } = await supabase
+                .from('news_tags')
+                .select('tag:tags(id, name, slug)')
+                .eq('news_id', item.id);
+              const tags = tagsData?.map((t) => t.tag).filter(Boolean) || [];
+              return { ...item, tags } as NewsItem;
+            })
+          );
+          results = [...results, ...newsWithTags];
         }
       }
 
@@ -374,7 +396,18 @@ export function useRelatedNews(
           .limit(needed);
 
         if (latestNews) {
-          results = [...results, ...(latestNews as unknown as NewsItem[])];
+          // Fetch tags for each news item
+          const newsWithTags = await Promise.all(
+            latestNews.map(async (item) => {
+              const { data: tagsData } = await supabase
+                .from('news_tags')
+                .select('tag:tags(id, name, slug)')
+                .eq('news_id', item.id);
+              const tags = tagsData?.map((t) => t.tag).filter(Boolean) || [];
+              return { ...item, tags } as NewsItem;
+            })
+          );
+          results = [...results, ...newsWithTags];
         }
       }
 

@@ -47,10 +47,10 @@ export function HeroSection() {
   const heroNews = allNews[0];
   const sideNews = allNews.slice(1, 3);
 
-  // Get formatted category display with city prefix for neighboring cities
+  // Get formatted category display with city prefix (priority: source URL > tags)
   const getNewsCategory = (news: typeof heroNews) => {
     const tagNames = news?.tags?.map(t => t.name) || [];
-    return getCategoryDisplay(news?.category?.name || "Notícia", tagNames);
+    return getCategoryDisplay(news?.category?.name || "Notícia", tagNames, news?.source);
   };
 
   const handleTTS = (e: React.MouseEvent, text: string) => {

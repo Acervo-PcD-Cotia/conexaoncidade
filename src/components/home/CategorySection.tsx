@@ -87,7 +87,7 @@ export function CategorySection({ title, slug }: CategorySectionProps) {
                   className="mb-1.5 text-[10px]"
                   style={{ backgroundColor: categoryColor, color: "white" }}
                 >
-                  {getCategoryDisplay(mainNews.category?.name || title, mainNews.tags?.map(t => t.name) || [])}
+                  {getCategoryDisplay(mainNews.category?.name || title, mainNews.tags?.map(t => t.name) || [], mainNews.source)}
                 </Badge>
                 <h3 className="font-heading text-base font-bold leading-tight line-clamp-2 md:text-lg">
                   {mainNews.title}

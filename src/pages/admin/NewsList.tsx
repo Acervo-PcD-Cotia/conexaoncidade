@@ -38,7 +38,7 @@ export default function NewsList() {
     queryFn: async () => {
       let query = supabase
         .from("news")
-        .select("*, categories(name), news_tags(tags(name))")
+        .select("*, categories(name), news_tags(tags(name)), source")
         .order("created_at", { ascending: false });
 
       if (search) {
@@ -312,7 +312,7 @@ export default function NewsList() {
                   <TableCell>
                     {(() => {
                       const tags = (item as any).news_tags?.map((nt: any) => nt.tags?.name).filter(Boolean) || [];
-                      return getCategoryDisplay(item.categories?.name || "Geral", tags);
+                      return getCategoryDisplay(item.categories?.name || "Geral", tags, item.source);
                     })()}
                   </TableCell>
                   <TableCell>

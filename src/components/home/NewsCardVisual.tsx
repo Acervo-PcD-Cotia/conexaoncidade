@@ -37,9 +37,9 @@ export function NewsCardVisual({
   priority = false,
   className 
 }: NewsCardVisualProps) {
-  // Get formatted category display with city prefix for neighboring cities
+  // Get formatted category display with city prefix (priority: source URL > tags)
   const tagNames = news.tags?.map(t => t.name) || [];
-  const categoryDisplay = getCategoryDisplay(news.category?.name || "Notícia", tagNames);
+  const categoryDisplay = getCategoryDisplay(news.category?.name || "Notícia", tagNames, news.source);
 
   const handleTTS = (e: React.MouseEvent) => {
     e.preventDefault();
