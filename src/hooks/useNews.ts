@@ -78,10 +78,11 @@ export function useNews(limit?: number) {
         .from('news')
         .select(`
           *,
-          category:categories(id, name, slug, color)
+          category:categories!inner(id, name, slug, color, is_active)
         `)
         .eq('status', 'published')
         .is('deleted_at', null)
+        .eq('category.is_active', true)
         .order('published_at', { ascending: false });
 
       if (limit) {
@@ -317,11 +318,12 @@ export function useRelatedNews(
             .from('news')
             .select(`
               *,
-              category:categories(id, name, slug, color)
+              category:categories!inner(id, name, slug, color, is_active)
             `)
             .in('id', uniqueIds)
             .eq('status', 'published')
             .is('deleted_at', null)
+            .eq('category.is_active', true)
             .order('published_at', { ascending: false })
             .limit(limit);
 
@@ -351,11 +353,12 @@ export function useRelatedNews(
           .from('news')
           .select(`
             *,
-            category:categories(id, name, slug, color)
+            category:categories!inner(id, name, slug, color, is_active)
           `)
           .eq('category_id', categoryId)
           .eq('status', 'published')
           .is('deleted_at', null)
+          .eq('category.is_active', true)
           .neq('id', newsId)
           .not('id', 'in', `(${existingIds.join(',') || 'null'})`)
           .order('published_at', { ascending: false })
@@ -386,10 +389,11 @@ export function useRelatedNews(
           .from('news')
           .select(`
             *,
-            category:categories(id, name, slug, color)
+            category:categories!inner(id, name, slug, color, is_active)
           `)
           .eq('status', 'published')
           .is('deleted_at', null)
+          .eq('category.is_active', true)
           .neq('id', newsId)
           .not('id', 'in', `(${existingIds.join(',') || 'null'})`)
           .order('published_at', { ascending: false })
@@ -425,10 +429,11 @@ export function useFeaturedNews(limit = 5) {
         .from('news')
         .select(`
           *,
-          category:categories(id, name, slug, color)
+          category:categories!inner(id, name, slug, color, is_active)
         `)
         .eq('status', 'published')
         .is('deleted_at', null)
+        .eq('category.is_active', true)
         .or('is_home_highlight.eq.true,is_urgent.eq.true,is_featured.eq.true,highlight.in.(home,featured,urgent)')
         .order('published_at', { ascending: false })
         .limit(limit);
@@ -461,10 +466,11 @@ export function useMostReadNews(limit = 10) {
         .from('news')
         .select(`
           *,
-          category:categories(id, name, slug, color)
+          category:categories!inner(id, name, slug, color, is_active)
         `)
         .eq('status', 'published')
         .is('deleted_at', null)
+        .eq('category.is_active', true)
         .order('view_count', { ascending: false })
         .limit(limit);
 
