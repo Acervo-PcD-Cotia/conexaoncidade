@@ -1,157 +1,176 @@
 
+# Corrigir Detecção de Cidade via URL da Fonte + Notícias Relacionadas
 
-# Plano de Implementação: Correção de Datas, Exclusão em Massa de WebStories e Cidade | Categoria no Dashboard
+## Problema Identificado
 
-## Resumo do que precisa ser feito
+### 1. Detecção de cidade inconsistente
+A função `getCategoryDisplay` usa apenas **tags** para identificar a cidade, mas as tags podem estar incorretas ou ausentes. 
 
-1. **Corrigir datas de publicação** das 60 notícias publicadas em 30/01/2026 — usar a data original da fonte
-2. **Criar função excluir em massa** para WebStories (similar ao que já existe em NewsList)
-3. **Aplicar lógica "Cidade | Categoria"** no Dashboard e lista de notícias admin
+**Solução**: Usar o campo `source` (URL da fonte) como **fonte primária** para identificar a cidade, pois cada prefeitura tem um domínio único.
 
----
-
-## Parte 1: Correção de Datas de Publicação
-
-### Problema Identificado
-- As notícias publicadas em 30/01/2026 estão usando a data do momento da publicação no sistema
-- A data original da fonte (ex: 27/01/2026 no caso de São Roque) está sendo perdida
-- Existem **60 notícias** afetadas
-
-### Solução Proposta
-Criar uma edge function que:
-1. Busca todas as notícias de 30/01/2026 que têm URL de fonte válida
-2. Acessa cada fonte via Firecrawl para extrair a data original
-3. Atualiza o campo `published_at` com a data correta
-
-### Arquivos a Criar/Modificar
-
-| Arquivo | Ação | Descrição |
-|---------|------|-----------|
-| `supabase/functions/fix-publication-dates/index.ts` | Criar | Edge function para correção das datas |
-| Migração SQL | Criar | Adicionar coluna `original_published_at` na tabela `news` para preservar data original |
-
-### Fluxo da Edge Function
-
-```text
-1. Buscar notícias de 30/01/2026 com campo `source` preenchido
-2. Para cada notícia:
-   a. Acessar URL da fonte (usar Firecrawl com formato markdown)
-   b. Extrair data do padrão "DD MMM YYYY" (ex: "27 JAN 2026")
-   c. Atualizar `published_at` com a data extraída
-3. Retornar relatório com sucesso/falhas
-```
-
-### Migração do Banco de Dados
-
-Adicionar coluna para preservar a data original da fonte:
-
-```sql
-ALTER TABLE news ADD COLUMN IF NOT EXISTS original_published_at TIMESTAMPTZ;
-```
+### 2. Notícias Relacionadas não exibem "Cidade | Categoria"
+O componente `RelatedNews.tsx` exibe apenas `{item.category.name}` e não usa a função `getCategoryDisplay()`.
 
 ---
 
-## Parte 2: Exclusão em Massa de WebStories
+## Mapeamento de Domínios para Cidades
 
-### Situação Atual
-- **NewsList** já tem exclusão em massa implementada
-- **StoriesList** só tem exclusão individual
+| Domínio | Cidade |
+|---------|--------|
+| `noticias.itapevi.sp.gov.br` | Itapevi |
+| `vargemgrandepaulista.sp.gov.br` | Vargem Grande Paulista |
+| `saoroque.sp.gov.br` | São Roque |
+| `ibiuna.sp.gov.br` | Ibiúna |
+| `embuguacu.sp.gov.br` | Embu-Guaçu |
+| `cidadeembudasartes.sp.gov.br` | Embu das Artes |
+| `itapecerica.sp.gov.br` | Itapecerica da Serra |
+| `saolourencodaserra.sp.gov.br` | São Lourenço da Serra |
+| `prefeitura.sp.gov.br` | São Paulo |
+| `osasco.sp.gov.br` | Osasco |
+| `jandira.sp.gov.br` | Jandira |
+| `carapicuiba.sp.gov.br` | Carapicuíba |
+| `barueri.sp.gov.br` | Barueri |
+| `cotia.sp.gov.br` | Cotia |
 
-### Arquivos a Modificar
+---
 
-| Arquivo | Mudança |
-|---------|---------|
-| `src/pages/admin/StoriesList.tsx` | Adicionar checkbox, seleção múltipla e botão de exclusão em massa |
+## Plano de Implementação
 
-### Componentes a Adicionar
+### Parte 1: Atualizar `categoryDisplay.ts`
 
-1. **Estado de seleção**: `useState<Set<string>>`
-2. **Checkbox no cabeçalho**: Selecionar/desselecionar todos
-3. **Checkbox por linha**: Seleção individual
-4. **Barra de ações em massa**: Exibida quando há seleção
-5. **Mutation de exclusão em massa**: Similar ao padrão de NewsList
-
-### Exemplo de Código (baseado no NewsList)
+Adicionar nova função `extractCityFromSource(sourceUrl: string)` que:
+1. Extrai o domínio da URL da fonte
+2. Mapeia para a cidade correspondente
+3. Retorna a cidade formatada
 
 ```typescript
-const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+const SOURCE_DOMAIN_TO_CITY: Record<string, string> = {
+  'noticias.itapevi.sp.gov.br': 'Itapevi',
+  'itapevi.sp.gov.br': 'Itapevi',
+  'vargemgrandepaulista.sp.gov.br': 'Vargem Grande Paulista',
+  'saoroque.sp.gov.br': 'São Roque',
+  'ibiuna.sp.gov.br': 'Ibiúna',
+  'embuguacu.sp.gov.br': 'Embu-Guaçu',
+  'cidadeembudasartes.sp.gov.br': 'Embu das Artes',
+  'itapecerica.sp.gov.br': 'Itapecerica da Serra',
+  'saolourencodaserra.sp.gov.br': 'São Lourenço da Serra',
+  'prefeitura.sp.gov.br': 'São Paulo',
+  'osasco.sp.gov.br': 'Osasco',
+  'jandira.sp.gov.br': 'Jandira',
+  'portal.jandira.sp.gov.br': 'Jandira',
+  'carapicuiba.sp.gov.br': 'Carapicuíba',
+  'barueri.sp.gov.br': 'Barueri',
+  'portal.barueri.sp.gov.br': 'Barueri',
+  'cotia.sp.gov.br': 'Cotia',
+};
 
-const bulkDeleteMutation = useMutation({
-  mutationFn: async (ids: string[]) => {
-    // Deletar slides primeiro (foreign key)
-    for (const id of ids) {
-      await supabase.from("web_story_slides").delete().eq("story_id", id);
+export function extractCityFromSource(sourceUrl: string | null): string | null {
+  if (!sourceUrl) return null;
+  
+  try {
+    const url = new URL(sourceUrl);
+    const hostname = url.hostname.toLowerCase();
+    
+    for (const [domain, city] of Object.entries(SOURCE_DOMAIN_TO_CITY)) {
+      if (hostname.includes(domain) || hostname.endsWith(domain)) {
+        return city;
+      }
     }
-    // Depois deletar as stories
-    const { error } = await supabase.from("web_stories").delete().in("id", ids);
-    if (error) throw error;
-    return ids.length;
-  },
-  onSuccess: (count) => {
-    queryClient.invalidateQueries({ queryKey: ["admin-stories"] });
-    toast.success(`${count} story(ies) excluída(s)`);
-    setSelectedIds(new Set());
-  },
-});
+  } catch {
+    // URL inválida, tentar match parcial
+    const lowercaseSource = sourceUrl.toLowerCase();
+    for (const [domain, city] of Object.entries(SOURCE_DOMAIN_TO_CITY)) {
+      if (lowercaseSource.includes(domain)) {
+        return city;
+      }
+    }
+  }
+  
+  return null;
+}
 ```
 
----
+Atualizar `getCategoryDisplay` para aceitar `source`:
 
-## Parte 3: Lógica "Cidade | Categoria" no Dashboard e Admin
-
-### Arquivos a Modificar
-
-| Arquivo | Mudança |
-|---------|---------|
-| `src/pages/admin/NewsList.tsx` | Usar `getCategoryDisplay()` na coluna de categoria + carregar tags |
-| `src/components/admin/dashboard/RecentArticlesPanel.tsx` | Usar `getCategoryDisplay()` no badge de categoria + carregar tags |
-
-### Mudanças Necessárias
-
-#### 1. NewsList.tsx
-
-**Query atual:**
 ```typescript
-supabase.from("news").select("*, categories(name)")
+export function getCategoryDisplay(
+  category: string, 
+  tags: string[], 
+  source?: string | null
+): string {
+  // 1. Prioridade: detectar cidade pela URL da fonte
+  const cityFromSource = extractCityFromSource(source || null);
+  if (cityFromSource) {
+    return `${cityFromSource} | ${category}`;
+  }
+  
+  // 2. Fallback: detectar cidade pelas tags
+  const cityFromTags = extractCityFromTags(tags);
+  if (cityFromTags) {
+    return `${cityFromTags} | ${category}`;
+  }
+  
+  // 3. Fallback final: apenas categoria
+  return category;
+}
 ```
 
-**Query atualizada:**
+### Parte 2: Atualizar `useRelatedNews` para buscar tags e source
+
+Modificar a query para incluir tags e o campo `source`:
+
 ```typescript
-supabase.from("news").select("*, categories(name), news_tags(tags(name))")
+const { data: taggedNews } = await supabase
+  .from('news')
+  .select(`
+    *,
+    category:categories(id, name, slug, color),
+    news_tags(tag:tags(id, name, slug))
+  `)
+  // ... resto da query
 ```
 
-**Exibição da categoria:**
+Depois mapear as tags:
+
 ```typescript
-// Antes
-{item.categories?.name || "-"}
-
-// Depois
-import { getCategoryDisplay } from "@/utils/categoryDisplay";
-const tags = item.news_tags?.map(nt => nt.tags?.name).filter(Boolean) || [];
-{getCategoryDisplay(item.categories?.name || "Geral", tags)}
+const mappedNews = taggedNews.map(item => ({
+  ...item,
+  tags: item.news_tags?.map(nt => nt.tag).filter(Boolean) || []
+}));
 ```
 
-#### 2. RecentArticlesPanel.tsx
+### Parte 3: Atualizar `RelatedNews.tsx`
 
-**Query atualizada:**
 ```typescript
-supabase.from("news").select(`
-  id, title, slug, status, published_at, updated_at,
-  category:categories(name, slug),
-  news_tags(tags(name))
-`)
+import { getCategoryDisplay } from '@/utils/categoryDisplay';
+
+// No badge de categoria:
+<span
+  className="..."
+  style={{ backgroundColor: item.category.color }}
+>
+  {getCategoryDisplay(
+    item.category.name,
+    item.tags?.map(t => t.name) || [],
+    item.source
+  )}
+</span>
 ```
 
-**Badge de categoria:**
-```typescript
-// Antes
-{article.category.name}
+### Parte 4: Atualizar todos os componentes para passar `source`
 
-// Depois
-import { getCategoryDisplay } from "@/utils/categoryDisplay";
-const tags = article.news_tags?.map(nt => nt.tags?.name).filter(Boolean) || [];
-{getCategoryDisplay(article.category?.name || "Geral", tags)}
-```
+Garantir que todos os componentes que usam `getCategoryDisplay` passem o campo `source`:
+
+| Componente | Mudança |
+|------------|---------|
+| `NewsCard.tsx` | Adicionar `news.source` como 3º parâmetro |
+| `NewsCardVisual.tsx` | Adicionar `news.source` como 3º parâmetro |
+| `HeroSection.tsx` | Adicionar `heroNews.source` como 3º parâmetro |
+| `CategorySection.tsx` | Adicionar `news.source` como 3º parâmetro |
+| `NewsDetail.tsx` | Adicionar `news.source` como 3º parâmetro |
+| `RelatedNews.tsx` | Adicionar `item.source` como 3º parâmetro |
+| `NewsList.tsx` (admin) | Adicionar `item.source` como 3º parâmetro |
+| `RecentArticlesPanel.tsx` (admin) | Adicionar `article.source` como 3º parâmetro |
 
 ---
 
@@ -159,55 +178,27 @@ const tags = article.news_tags?.map(nt => nt.tags?.name).filter(Boolean) || [];
 
 | Arquivo | Tipo | Descrição |
 |---------|------|-----------|
-| `supabase/functions/fix-publication-dates/index.ts` | Criar | Edge function para corrigir datas |
-| Migração SQL | Criar | Adicionar `original_published_at` à tabela news |
-| `src/pages/admin/StoriesList.tsx` | Modificar | Adicionar exclusão em massa |
-| `src/pages/admin/NewsList.tsx` | Modificar | Aplicar formato "Cidade \| Categoria" |
-| `src/components/admin/dashboard/RecentArticlesPanel.tsx` | Modificar | Aplicar formato "Cidade \| Categoria" |
+| `src/utils/categoryDisplay.ts` | Modificar | Adicionar mapeamento de domínios, função `extractCityFromSource`, atualizar `getCategoryDisplay` |
+| `src/hooks/useNews.ts` | Modificar | Atualizar `useRelatedNews` para buscar tags |
+| `src/components/news/RelatedNews.tsx` | Modificar | Usar `getCategoryDisplay` com source |
+| `src/components/home/NewsCard.tsx` | Modificar | Passar `source` para `getCategoryDisplay` |
+| `src/components/home/NewsCardVisual.tsx` | Modificar | Passar `source` para `getCategoryDisplay` |
+| `src/components/home/HeroSection.tsx` | Modificar | Passar `source` para `getCategoryDisplay` |
+| `src/components/home/CategorySection.tsx` | Modificar | Passar `source` para `getCategoryDisplay` |
+| `src/pages/NewsDetail.tsx` | Modificar | Passar `source` para `getCategoryDisplay` |
+| `src/pages/admin/NewsList.tsx` | Modificar | Passar `source` para `getCategoryDisplay` |
+| `src/components/admin/dashboard/RecentArticlesPanel.tsx` | Modificar | Passar `source` para `getCategoryDisplay` |
 
 ---
 
-## Ordem de Implementação
+## Resultado Esperado
 
-1. **Migração SQL** — adicionar coluna `original_published_at`
-2. **Edge Function** — criar função para correção de datas
-3. **StoriesList** — adicionar exclusão em massa
-4. **NewsList + RecentArticlesPanel** — aplicar "Cidade | Categoria"
+| Fonte (source) | Categoria | Exibição |
+|----------------|-----------|----------|
+| `https://www.embuguacu.sp.gov.br/...` | Política | **Embu-Guaçu \| Política** |
+| `https://cidadeembudasartes.sp.gov.br/...` | Cultura | **Embu das Artes \| Cultura** |
+| `https://www.saoroque.sp.gov.br/...` | Educação | **São Roque \| Educação** |
+| `https://cotia.sp.gov.br/...` | Saúde | **Cotia \| Saúde** |
+| `null` (sem fonte) + Tag "Cotia" | Cidades | **Cotia \| Cidades** |
 
----
-
-## Seção Técnica
-
-### Padrão de Detecção de Data nas Fontes
-
-Os portais de prefeituras geralmente exibem datas em formato visual:
-
-```text
-JAN
-27
-27 JAN 2026
-```
-
-Regex para extração:
-```javascript
-const dateMatch = markdown.match(/(\d{1,2})\s+(JAN|FEV|MAR|ABR|MAI|JUN|JUL|AGO|SET|OUT|NOV|DEZ)\s+(\d{4})/i);
-if (dateMatch) {
-  const [, day, month, year] = dateMatch;
-  const monthMap = { JAN: 0, FEV: 1, MAR: 2, ABR: 3, MAI: 4, JUN: 5, JUL: 6, AGO: 7, SET: 8, OUT: 9, NOV: 10, DEZ: 11 };
-  return new Date(parseInt(year), monthMap[month.toUpperCase()], parseInt(day));
-}
-```
-
-### Dependências de Foreign Key (WebStories)
-
-A exclusão em massa de WebStories precisa deletar primeiro os slides (`web_story_slides`) antes de deletar a story principal, pois existe uma FK constraint.
-
-### Formato Final de Categoria no Admin
-
-| Tags | Categoria | Exibição |
-|------|-----------|----------|
-| ["Cotia", "UBS"] | Saúde | **Cotia \| Saúde** |
-| ["Itapevi", "Hospital"] | Saúde | **Itapevi \| Saúde** |
-| ["Embu-Guaçu", "CMDCA"] | Política | **Embu-Guaçu \| Política** |
-| [] (sem tags) | Geral | **Geral** |
-
+A detecção via `source` é **100% precisa** pois cada prefeitura tem seu próprio domínio.
