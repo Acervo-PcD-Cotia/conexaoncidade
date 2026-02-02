@@ -63,6 +63,7 @@ import {
   Bell,
   Globe,
   Trophy,
+  Wrench,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useUserRole } from "@/hooks/useRequireRole";
@@ -125,6 +126,7 @@ const contentItems: MenuItem[] = [
   { title: "Podcasts", url: "/admin/podcasts", icon: Mic },
   { title: "Edição Digital", url: "/admin/editions", icon: BookOpen },
   { title: "Auto Post Regional", url: "/admin/autopost-regional", icon: MapPin, badge: "Grande Cotia", badgeColor: "bg-amber-500" },
+  { title: "Correção de Conteúdo", url: "/admin/content-fix", icon: Wrench, badge: "Novo", badgeColor: "bg-primary" },
 ];
 
 // 2️⃣ DISTRIBUIÇÃO & ALCANCE - Audiência e tráfego
