@@ -409,7 +409,8 @@ Deno.serve(async (req) => {
             meta_description: rewritten.metaDescription,
             source: item.canonical_url,
             status: 'published',
-            published_at: new Date().toISOString(),
+            published_at: item.published_at || new Date().toISOString(),
+            original_published_at: item.published_at || null,
             origin: 'autopost',
             category_id: categoryId,
           })

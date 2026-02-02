@@ -162,7 +162,12 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { dryRun = true, limit = 10 } = await req.json().catch(() => ({}));
+    const { 
+      dryRun = true, 
+      limit = 50, 
+      daysBack = 30,
+      onlyMissing = true 
+    } = await req.json().catch(() => ({}));
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -170,19 +175,26 @@ Deno.serve(async (req) => {
     const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Find news published on 30/01/2026 with valid source URLs
-    const startDate = '2026-01-30T00:00:00Z';
-    const endDate = '2026-01-30T23:59:59Z';
+    // Calculate date range dynamically
+    const endDate = new Date().toISOString();
+    const startDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString();
 
     console.log(`Fetching news from ${startDate} to ${endDate}`);
+    console.log(`Options: dryRun=${dryRun}, limit=${limit}, onlyMissing=${onlyMissing}`);
 
-    const { data: newsItems, error: fetchError } = await supabase
+    let query = supabase
       .from('news')
-      .select('id, title, source, published_at')
-      .gte('published_at', startDate)
-      .lte('published_at', endDate)
-      .not('source', 'is', null)
-      .limit(limit);
+      .select('id, title, source, published_at, created_at, original_published_at')
+      .gte('created_at', startDate)
+      .lte('created_at', endDate)
+      .not('source', 'is', null);
+
+    // Filter only news without original date (the ones that need correction)
+    if (onlyMissing) {
+      query = query.is('original_published_at', null);
+    }
+
+    const { data: newsItems, error: fetchError } = await query.limit(limit);
 
     if (fetchError) {
       throw new Error(`Error fetching news: ${fetchError.message}`);
