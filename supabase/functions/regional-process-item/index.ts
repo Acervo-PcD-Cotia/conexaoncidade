@@ -99,6 +99,37 @@ function extractText(html: string): string {
     .trim();
 }
 
+// Validate image URL and try alternative extensions
+async function validateImageUrl(url: string): Promise<string | null> {
+  if (!url) return null;
+  
+  // Try original URL first
+  try {
+    const response = await fetch(url, { method: 'HEAD' });
+    if (response.ok) return url;
+  } catch {}
+  
+  // Try swapping .jpeg <-> .jpg
+  const altUrl = url.endsWith('.jpeg') 
+    ? url.replace(/\.jpeg$/i, '.jpg')
+    : url.endsWith('.jpg') 
+    ? url.replace(/\.jpg$/i, '.jpeg')
+    : null;
+    
+  if (altUrl) {
+    try {
+      const response = await fetch(altUrl, { method: 'HEAD' });
+      if (response.ok) {
+        console.log(`[Image] Fixed extension: ${url} -> ${altUrl}`);
+        return altUrl;
+      }
+    } catch {}
+  }
+  
+  console.log(`[Image] URL not accessible: ${url}`);
+  return null;
+}
+
 // Fetch full content from URL
 async function fetchFullContent(url: string): Promise<{ content: string; images: string[] }> {
   console.log(`[Fetch] Getting content from: ${url}`);
@@ -392,6 +423,11 @@ Deno.serve(async (req) => {
         
         categoryId = category?.id || null;
         
+        // Validate image URL (try alternative extensions if needed)
+        const candidateImageUrl = generatedImageUrl || images[0] || item.image_url;
+        const validatedImageUrl = await validateImageUrl(candidateImageUrl);
+        const finalImageUrl = validatedImageUrl || candidateImageUrl;
+        
         // Create news entry
         const { data: newsEntry, error: newsError } = await supabase
           .from('news')
@@ -400,9 +436,9 @@ Deno.serve(async (req) => {
             slug: slug,
             content: rewritten.content,
             excerpt: rewritten.summary || extractText(rewritten.content).substring(0, 160),
-            featured_image_url: generatedImageUrl || images[0] || item.image_url,
-            og_image_url: generatedImageUrl || images[0] || item.image_url,
-            card_image_url: generatedImageUrl || images[0] || item.image_url,
+            featured_image_url: finalImageUrl,
+            og_image_url: finalImageUrl,
+            card_image_url: finalImageUrl,
             image_alt: `Imagem ilustrativa: ${source.city}`,
             image_credit: 'IA | Conexão na Cidade',
             meta_title: rewritten.metaTitle,

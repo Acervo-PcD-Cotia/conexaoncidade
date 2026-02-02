@@ -430,21 +430,23 @@ function NewsDetailContent({ news }: NewsDetailContentProps) {
           )}
 
           {/* 2. Audio Block - UOL/Trinity Audio Style (BEFORE summary) */}
-          <NewsAudioBlock
-            newsId={news.id}
-            audioUrl={news.audio_url}
-            audioStatus={news.audio_status}
-            audioDuration={news.audio_duration_seconds}
-            transcriptText={news.transcript_text}
-            contentHtml={news.content}
-            spotifyUrl={news.spotify_url}
-            podcastStatus={news.podcast_status}
-            podcastAudioUrl={news.podcast_audio_url}
-            className="mb-6"
-            onAudioPlay={trackAudioPlay}
-            onAudioStop={trackAudioStop}
-            onPodcastPlay={trackPodcastPlay}
-          />
+          <div id="accessibility">
+            <NewsAudioBlock
+              newsId={news.id}
+              audioUrl={news.audio_url}
+              audioStatus={news.audio_status}
+              audioDuration={news.audio_duration_seconds}
+              transcriptText={news.transcript_text}
+              contentHtml={news.content}
+              spotifyUrl={news.spotify_url}
+              podcastStatus={news.podcast_status}
+              podcastAudioUrl={news.podcast_audio_url}
+              className="mb-6"
+              onAudioPlay={trackAudioPlay}
+              onAudioStop={trackAudioStop}
+              onPodcastPlay={trackPodcastPlay}
+            />
+          </div>
 
           {/* 3. Summary Block - UOL Style (AFTER audio, BEFORE content) */}
           <NewsContentNavigator
