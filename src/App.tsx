@@ -93,6 +93,14 @@ import {
   RegionalSourceEdit,
 } from "./pages/admin/autopost-regional";
 
+// Content Fix Module
+import {
+  ContentFixDashboard,
+  ImageFixer,
+  DateFixer,
+  ContentValidator,
+} from "./modules/content-fix/pages";
+
 // Conexão Academy Pages
 import AcademyDashboard from "./pages/admin/academy/AcademyDashboard";
 import AcademyCourse from "./pages/admin/academy/AcademyCourse";
@@ -479,6 +487,12 @@ const App = () => (
                         <Route path="autopost-regional/fontes/:id/edit" element={<RegionalSourceEdit />} />
                         <Route path="autopost-regional/fila" element={<RegionalQueue />} />
                         <Route path="autopost-regional/logs" element={<RegionalLogs />} />
+                        
+                        {/* Content Fix Module */}
+                        <Route path="content-fix" element={<ContentFixDashboard />} />
+                        <Route path="content-fix/images" element={<ImageFixer />} />
+                        <Route path="content-fix/dates" element={<DateFixer />} />
+                        <Route path="content-fix/validator" element={<ContentValidator />} />
                         
                         {/* Conexão Academy Routes */}
                         <Route path="academy" element={<AcademyDashboard />} />
