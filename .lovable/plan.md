@@ -1,235 +1,275 @@
 
-# Plano: Importacao/Correcao de Imagens e Datas no Noticias AI
+# Novo Modulo: Correcao de Conteudo
 
-## Resumo do Problema
+## Objetivo
 
-Com base na analise da noticia "Festival Gastronomico de Cotia":
-
-| Campo | Valor no Banco | Valor Correto |
-|-------|----------------|---------------|
-| Imagem | `festival-gastronomico_0001.jpeg` (quebrada) | `chef-placing-herb-gourmet-meal-1512x1080.jpg` |
-| Data | 02/02/2026 12:32 | **19/01/2026** (fonte original) |
-| `original_published_at` | NULL | 19/01/2026 |
-
-**Estatisticas atuais do banco:**
-- 105 noticias publicadas
-- 29 sem imagem valida
-- 60 sem `original_published_at`
+Criar um modulo dedicado no menu **Conteudo** para centralizar todas as ferramentas de correcao e validacao de noticias:
+- Correcao de imagens
+- Correcao de datas
+- Validacao de URLs
+- Verificacao de integridade
 
 ---
 
-## Solucao Proposta
-
-### 1. Dialog de Correcao de Imagem (Similar ao DateCorrectionDialog)
-
-Criar um novo componente `ImageCorrectionDialog` que permite:
-
-**Modo 1: Buscar imagem da fonte automaticamente**
-- Usa Firecrawl para acessar a URL fonte
-- Extrai todas as imagens do artigo original
-- Apresenta galeria para o usuario escolher a melhor
-
-**Modo 2: Definir URL manualmente**
-- Campo de input para colar URL da imagem
-- Preview da imagem antes de confirmar
-- Validacao HEAD request para verificar se URL funciona
-
----
-
-### 2. Integracao com Lista de Noticias (NewsList.tsx)
-
-Adicionar botao "Corrigir Imagens" na barra de acoes em lote:
+## Arquitetura Proposta
 
 ```text
-[Excluir] [Corrigir Datas] [Corrigir Imagens] [Cancelar]
+src/
+├── modules/
+│   └── content-fix/                    # Novo modulo
+│       ├── pages/
+│       │   ├── index.tsx               # Export barrel
+│       │   ├── ContentFixDashboard.tsx # Dashboard central
+│       │   ├── ImageFixer.tsx          # Ferramenta de imagens
+│       │   ├── DateFixer.tsx           # Ferramenta de datas
+│       │   └── ContentValidator.tsx    # Verificador de integridade
+│       ├── components/
+│       │   ├── NewsSelector.tsx        # Seletor de noticias com filtros
+│       │   ├── ImageFixPanel.tsx       # Painel de correcao de imagem
+│       │   ├── DateFixPanel.tsx        # Painel de correcao de data
+│       │   └── FixProgressCard.tsx     # Card de progresso
+│       ├── hooks/
+│       │   ├── useNewsWithIssues.ts    # Query de noticias com problemas
+│       │   └── useContentFixStats.ts   # Estatisticas de correcao
+│       └── types.ts                    # Tipos do modulo
 ```
 
 ---
 
-### 3. Edge Function para Extracao de Imagens
+## Posicionamento no Menu
 
-Criar `fix-news-images` que:
-1. Recebe array de `newsIds`
-2. Acessa URL fonte via Firecrawl
-3. Extrai imagens do conteudo (og:image, article images)
-4. Retorna lista de URLs candidatas
-5. Opcionalmente aplica correcao automatica
+O novo modulo sera inserido no menu **Conteudo** apos "Auto Post Regional":
 
----
-
-### 4. Validacao de Imagem durante Importacao JSON
-
-Modificar o fluxo de importacao no `NoticiasAI.tsx`:
-
-**Antes de inserir no banco:**
-1. Fazer HEAD request na URL da imagem
-2. Se falhar, tentar extensoes alternativas (.jpg/.jpeg)
-3. Se ainda falhar, marcar como "imagem invalida"
-4. Mostrar alerta ao usuario antes da importacao
+| Item Atual | Posicao |
+|------------|---------|
+| Dashboard | 1 |
+| Noticias | 2 |
+| Nova Noticia | 3 |
+| Noticias IA | 4 |
+| Notas Rapidas | 5 |
+| Web Stories | 6 |
+| Podcasts | 7 |
+| Edicao Digital | 8 |
+| Auto Post Regional | 9 |
+| **Correcao de Conteudo** | **10** (NOVO) |
 
 ---
 
-## Arquivos a Criar/Modificar
+## Paginas do Modulo
 
-| Arquivo | Acao | Descricao |
-|---------|------|-----------|
-| `src/components/admin/ImageCorrectionDialog.tsx` | Criar | Modal para correcao de imagens em lote |
-| `src/pages/admin/NewsList.tsx` | Modificar | Adicionar botao "Corrigir Imagens" |
-| `supabase/functions/fix-news-images/index.ts` | Criar | Edge function para extracao de imagens via Firecrawl |
-| `src/pages/admin/NoticiasAI.tsx` | Modificar | Adicionar validacao de imagem antes da importacao |
-| `src/components/admin/noticias-ai/NoticiasAIJsonTab.tsx` | Modificar | Indicador visual de imagens invalidas |
+### 1. Dashboard Central (`ContentFixDashboard.tsx`)
+
+Layout estilo "Centro de Comando" com:
+
+**KPIs no topo:**
+- Noticias sem imagem valida
+- Noticias com data errada (future dates)
+- Noticias sem `original_published_at`
+- URLs de fonte invalidas
+
+**Cards de Acesso Rapido:**
+- Corrigir Imagens → `/admin/content-fix/images`
+- Corrigir Datas → `/admin/content-fix/dates`
+- Verificar Integridade → `/admin/content-fix/validator`
+
+**Lista de Alertas:**
+- Top 10 noticias mais urgentes para correcao
 
 ---
 
-## Detalhes de Implementacao
+### 2. Correcao de Imagens (`ImageFixer.tsx`)
 
-### ImageCorrectionDialog.tsx
+Interface dedicada com:
+
+**Filtros:**
+- Apenas sem imagem
+- Apenas com imagem invalida
+- Por categoria
+- Por data de publicacao
+
+**Tabela de Noticias:**
+- Checkbox para selecao multipla
+- Thumbnail atual (ou placeholder)
+- Titulo
+- Status da imagem (valida/invalida/ausente)
+- Data de publicacao
+
+**Acoes em Lote:**
+- Botao "Corrigir Selecionadas"
+- Abre `ImageCorrectionDialog` existente
+
+---
+
+### 3. Correcao de Datas (`DateFixer.tsx`)
+
+Interface similar com:
+
+**Filtros:**
+- Datas futuras (erros de importacao)
+- Sem `original_published_at`
+- Por range de datas
+- Por categoria
+
+**Tabela de Noticias:**
+- Checkbox para selecao multipla
+- Titulo
+- Data atual
+- `original_published_at`
+- Fonte
+
+**Acoes em Lote:**
+- Botao "Corrigir Selecionadas"
+- Abre `DateCorrectionDialog` existente
+
+---
+
+### 4. Verificador de Integridade (`ContentValidator.tsx`)
+
+Ferramenta de diagnostico:
+
+**Verificacoes:**
+- URLs de imagens retornando 404
+- URLs de fonte inacessiveis
+- Conteudo duplicado (por titulo similar)
+- Noticias sem categoria
+- Noticias sem tags
+
+**Resultado:**
+- Lista com status de cada verificacao
+- Botao para corrigir problemas encontrados
+
+---
+
+## Alteracoes em Arquivos Existentes
+
+### AdminSidebar.tsx
+
+Adicionar item no array `contentItems`:
 
 ```typescript
-interface ImageCorrectionDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  selectedNews: Array<{
-    id: string;
-    title: string;
-    featured_image_url: string | null;
-    source: string | null;
-  }>;
-  onSuccess: () => void;
-}
-
-type CorrectionMode = "auto" | "manual";
-
-// Estados:
-// - mode: "auto" | "manual"
-// - manualUrl: string
-// - isProcessing: boolean
-// - extractedImages: string[] (para modo auto)
-// - selectedImageUrl: string | null
-// - results: ProcessResult[]
+const contentItems: MenuItem[] = [
+  // ... itens existentes ...
+  { title: "Auto Post Regional", url: "/admin/autopost-regional", icon: MapPin, badge: "Grande Cotia", badgeColor: "bg-amber-500" },
+  { title: "Correcao de Conteudo", url: "/admin/content-fix", icon: Wrench, badge: "Novo", badgeColor: "bg-primary" },  // NOVO
+];
 ```
 
-**UI do Dialog:**
-1. RadioGroup: "Buscar da fonte" vs "Definir manualmente"
-2. Se modo auto: galeria de imagens extraidas com selecao
-3. Se modo manual: input de URL + preview
-4. Lista de noticias selecionadas
-5. Botao "Corrigir Imagens"
-6. Progress bar durante processamento
-7. Resultados ao final
+### App.tsx
 
----
-
-### fix-news-images Edge Function
+Adicionar rotas:
 
 ```typescript
-// Entrada:
-{
-  newsIds: string[],
-  mode: "extract" | "validate" | "apply",
-  imageUrl?: string  // Para modo "apply" manual
-}
-
-// Saida (modo extract):
-{
-  success: true,
-  results: [{
-    id: "...",
-    title: "...",
-    currentImage: "...",
-    extractedImages: ["url1", "url2", ...],
-    recommendedImage: "url1",
-    status: "success" | "error"
-  }]
-}
-
-// Logica de extracao:
-// 1. Firecrawl scrape da fonte
-// 2. Buscar og:image no metadata
-// 3. Buscar todas <img> no conteudo
-// 4. Filtrar logos/icones
-// 5. Ordenar por tamanho estimado
-// 6. Validar URLs com HEAD request
+// Content Fix Module
+<Route path="content-fix" element={<ContentFixDashboard />} />
+<Route path="content-fix/images" element={<ImageFixer />} />
+<Route path="content-fix/dates" element={<DateFixer />} />
+<Route path="content-fix/validator" element={<ContentValidator />} />
 ```
 
 ---
 
-### Validacao na Importacao JSON
+## Componentes Reutilizados
 
-Modificar `NoticiasAI.tsx` funcao `importArticle()`:
-
-```typescript
-// Antes de inserir:
-async function validateImageBeforeImport(imageUrl: string): Promise<{
-  valid: boolean;
-  correctedUrl: string | null;
-}> {
-  // 1. HEAD request
-  // 2. Se 404, tentar .jpg <-> .jpeg
-  // 3. Retornar URL corrigida ou null
-}
-
-// No importArticle():
-const imageValidation = await validateImageBeforeImport(article.imagem.hero);
-const finalImageUrl = imageValidation.correctedUrl || article.imagem.hero;
-
-// Insert com imagem validada
-.insert({
-  featured_image_url: finalImageUrl,
-  og_image_url: finalImageUrl,
-  card_image_url: finalImageUrl,
-  // ...
-})
-```
+| Componente | Origem | Uso |
+|------------|--------|-----|
+| `DateCorrectionDialog` | Existente | Chamado pelo DateFixer |
+| `ImageCorrectionDialog` | Existente | Chamado pelo ImageFixer |
+| `fix-publication-dates` | Edge Function | Backend de datas |
+| `fix-news-images` | Edge Function | Backend de imagens |
 
 ---
 
-### Indicador Visual no NoticiasAIJsonTab
+## Queries para Deteccao de Problemas
 
-Adicionar badge de "Imagem Invalida" ao lado da thumbnail:
-
-```tsx
-{!imageValid && (
-  <Badge variant="destructive" className="absolute top-1 right-1 text-xs">
-    Imagem invalida
-  </Badge>
-)}
-```
-
----
-
-## Correcao Imediata da Noticia Especifica
-
-Para corrigir a noticia do Festival Gastronomico:
+### Noticias sem imagem valida
 
 ```sql
-UPDATE news 
-SET 
-  featured_image_url = 'https://cotia.sp.gov.br/wp-content/uploads/2026/01/chef-placing-herb-gourmet-meal-1512x1080.jpg',
-  og_image_url = 'https://cotia.sp.gov.br/wp-content/uploads/2026/01/chef-placing-herb-gourmet-meal-1512x1080.jpg',
-  card_image_url = 'https://cotia.sp.gov.br/wp-content/uploads/2026/01/chef-placing-herb-gourmet-meal-1512x1080.jpg',
-  published_at = '2026-01-19T12:00:00Z',
-  original_published_at = '2026-01-19T12:00:00Z'
-WHERE slug = 'festival-gastronomico-de-cotia-une-sabores-desconto-e-incentivo-a-economia-local';
+SELECT * FROM news 
+WHERE status = 'published' 
+AND (featured_image_url IS NULL 
+     OR featured_image_url = '' 
+     OR featured_image_url LIKE '%_0001%')
+ORDER BY published_at DESC;
+```
+
+### Noticias com data futura
+
+```sql
+SELECT * FROM news 
+WHERE status = 'published' 
+AND published_at > NOW()
+ORDER BY published_at DESC;
+```
+
+### Noticias sem original_published_at
+
+```sql
+SELECT * FROM news 
+WHERE status = 'published' 
+AND original_published_at IS NULL
+AND source IS NOT NULL
+ORDER BY published_at DESC;
 ```
 
 ---
 
-## Resumo das Funcionalidades
+## Arquivos a Criar
 
-| Funcionalidade | Antes | Depois |
-|---------------|-------|--------|
-| Correcao de imagem em lote | Nao existia | Via dialog visual |
-| Extracao automatica de imagem | Nao existia | Via Firecrawl |
-| Validacao de imagem na importacao | Nao existia | HEAD request + fallback |
-| Indicador de imagem invalida | Nao existia | Badge visual no preview |
-| Correcao manual de URL | Nao existia | Input + preview |
+| Arquivo | Descricao |
+|---------|-----------|
+| `src/modules/content-fix/pages/index.tsx` | Barrel export |
+| `src/modules/content-fix/pages/ContentFixDashboard.tsx` | Dashboard central |
+| `src/modules/content-fix/pages/ImageFixer.tsx` | Pagina de correcao de imagens |
+| `src/modules/content-fix/pages/DateFixer.tsx` | Pagina de correcao de datas |
+| `src/modules/content-fix/pages/ContentValidator.tsx` | Verificador de integridade |
+| `src/modules/content-fix/components/NewsIssueCard.tsx` | Card de problema detectado |
+| `src/modules/content-fix/components/FixStatsGrid.tsx` | Grid de KPIs |
+| `src/modules/content-fix/hooks/useNewsWithIssues.ts` | Hook para buscar noticias com problemas |
+
+---
+
+## Arquivos a Modificar
+
+| Arquivo | Alteracao |
+|---------|-----------|
+| `src/components/admin/AdminSidebar.tsx` | Adicionar item no menu Conteudo |
+| `src/App.tsx` | Adicionar rotas do modulo |
+
+---
+
+## Fluxo de Uso
+
+```text
+Usuario acessa:
+  /admin/content-fix
+       │
+       ▼
+  ┌─────────────────────────────────────────┐
+  │         Dashboard de Correcao           │
+  │  ┌─────┐  ┌─────┐  ┌─────┐  ┌─────┐    │
+  │  │ 29  │  │ 12  │  │ 60  │  │  5  │    │
+  │  │ Img │  │Data │  │Orig │  │ URL │    │
+  │  └──┬──┘  └──┬──┘  └──┬──┘  └──┬──┘    │
+  └─────│───────│───────│───────│──────────┘
+        │       │       │       │
+        ▼       ▼       ▼       ▼
+  /images   /dates   /dates   /validator
+        │       │               │
+        ▼       ▼               ▼
+  ImageCorrectionDialog    ContentValidator
+  DateCorrectionDialog
+```
 
 ---
 
 ## Resultado Esperado
 
-1. **Noticia do Festival Gastronomico**: imagem e data corrigidas
-2. **Novas importacoes**: imagens validadas automaticamente
-3. **Noticias existentes**: ferramenta em lote para corrigir
-4. **UX**: feedback visual claro sobre status das imagens
+Apos implementacao:
+
+| Antes | Depois |
+|-------|--------|
+| Ferramentas espalhadas na lista de noticias | Hub centralizado |
+| Sem visibilidade de problemas | Dashboard com KPIs |
+| Correcao item a item | Correcao em lote com filtros |
+| Sem verificacao de integridade | Diagnostico automatico |
+
