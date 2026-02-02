@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, Search, Eye, Edit, Trash2, MoreHorizontal, Copy, Bot, FileEdit, X, CalendarClock } from "lucide-react";
+import { Plus, Search, Eye, Edit, Trash2, MoreHorizontal, Copy, Bot, FileEdit, X, CalendarClock, ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,11 +26,13 @@ import { toast } from "sonner";
 import { useNewsCreationModal } from "@/contexts/NewsCreationModalContext";
 import { getCategoryDisplay } from "@/utils/categoryDisplay";
 import { DateCorrectionDialog } from "@/components/admin/DateCorrectionDialog";
+import { ImageCorrectionDialog } from "@/components/admin/ImageCorrectionDialog";
 
 export default function NewsList() {
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [dateCorrectionOpen, setDateCorrectionOpen] = useState(false);
+  const [imageCorrectionOpen, setImageCorrectionOpen] = useState(false);
   const { openModal } = useNewsCreationModal();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -253,6 +255,14 @@ export default function NewsList() {
             Corrigir Datas
           </Button>
           <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setImageCorrectionOpen(true)}
+          >
+            <ImageIcon className="mr-2 h-4 w-4" />
+            Corrigir Imagens
+          </Button>
+          <Button
             variant="ghost"
             size="sm"
             onClick={() => setSelectedIds(new Set())}
@@ -415,6 +425,24 @@ export default function NewsList() {
             id: n.id,
             title: n.title,
             published_at: n.published_at,
+            source: n.source,
+          })) || []
+        }
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["admin-news"] });
+          setSelectedIds(new Set());
+        }}
+      />
+
+      {/* Image Correction Dialog */}
+      <ImageCorrectionDialog
+        open={imageCorrectionOpen}
+        onOpenChange={setImageCorrectionOpen}
+        selectedNews={
+          news?.filter((n) => selectedIds.has(n.id)).map((n) => ({
+            id: n.id,
+            title: n.title,
+            featured_image_url: n.featured_image_url,
             source: n.source,
           })) || []
         }
