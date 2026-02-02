@@ -166,7 +166,8 @@ Deno.serve(async (req) => {
       dryRun = true, 
       limit = 50, 
       daysBack = 30,
-      onlyMissing = true 
+      onlyMissing = true,
+      targetDate = null // New: filter by specific published_at date (YYYY-MM-DD format)
     } = await req.json().catch(() => ({}));
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -179,15 +180,26 @@ Deno.serve(async (req) => {
     const endDate = new Date().toISOString();
     const startDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString();
 
-    console.log(`Fetching news from ${startDate} to ${endDate}`);
-    console.log(`Options: dryRun=${dryRun}, limit=${limit}, onlyMissing=${onlyMissing}`);
+    console.log(`Options: dryRun=${dryRun}, limit=${limit}, onlyMissing=${onlyMissing}, targetDate=${targetDate}`);
 
     let query = supabase
       .from('news')
       .select('id, title, source, published_at, created_at, original_published_at')
-      .gte('created_at', startDate)
-      .lte('created_at', endDate)
       .not('source', 'is', null);
+
+    // If targetDate provided, filter by that specific published_at date
+    if (targetDate) {
+      console.log(`Filtering by targetDate: ${targetDate}`);
+      query = query
+        .gte('published_at', `${targetDate}T00:00:00Z`)
+        .lt('published_at', `${targetDate}T23:59:59Z`);
+    } else {
+      // Otherwise use created_at date range
+      console.log(`Fetching news from ${startDate} to ${endDate}`);
+      query = query
+        .gte('created_at', startDate)
+        .lte('created_at', endDate);
+    }
 
     // Filter only news without original date (the ones that need correction)
     if (onlyMissing) {
