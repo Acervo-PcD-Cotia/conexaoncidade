@@ -167,7 +167,8 @@ Deno.serve(async (req) => {
       limit = 50, 
       daysBack = 30,
       onlyMissing = true,
-      targetDate = null // New: filter by specific published_at date (YYYY-MM-DD format)
+      targetDate = null, // Filter by specific published_at date (YYYY-MM-DD format)
+      newsIds = null // NEW: Array of specific news IDs to process
     } = await req.json().catch(() => ({}));
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -180,15 +181,20 @@ Deno.serve(async (req) => {
     const endDate = new Date().toISOString();
     const startDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString();
 
-    console.log(`Options: dryRun=${dryRun}, limit=${limit}, onlyMissing=${onlyMissing}, targetDate=${targetDate}`);
+    console.log(`Options: dryRun=${dryRun}, limit=${limit}, onlyMissing=${onlyMissing}, targetDate=${targetDate}, newsIds=${newsIds?.length || 0}`);
 
     let query = supabase
       .from('news')
       .select('id, title, source, published_at, created_at, original_published_at')
       .not('source', 'is', null);
 
-    // If targetDate provided, filter by that specific published_at date
-    if (targetDate) {
+    // If newsIds provided, filter by those specific IDs
+    if (newsIds && Array.isArray(newsIds) && newsIds.length > 0) {
+      console.log(`Processing specific news IDs: ${newsIds.length} items`);
+      query = query.in('id', newsIds);
+    } else if (targetDate) {
+
+      // If targetDate provided, filter by that specific published_at date
       console.log(`Filtering by targetDate: ${targetDate}`);
       query = query
         .gte('published_at', `${targetDate}T00:00:00Z`)
