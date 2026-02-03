@@ -3690,6 +3690,230 @@ export type Database = {
           },
         ]
       }
+      campaign_proof_analytics: {
+        Row: {
+          avg_time: string | null
+          bounce_rate: number | null
+          campaign_proof_id: string
+          entrances: number | null
+          new_users: number | null
+          notes: string | null
+          pageviews: number | null
+          sessions: number | null
+          show_on_pdf: boolean
+          unique_pageviews: number | null
+          updated_at: string
+          users: number | null
+        }
+        Insert: {
+          avg_time?: string | null
+          bounce_rate?: number | null
+          campaign_proof_id: string
+          entrances?: number | null
+          new_users?: number | null
+          notes?: string | null
+          pageviews?: number | null
+          sessions?: number | null
+          show_on_pdf?: boolean
+          unique_pageviews?: number | null
+          updated_at?: string
+          users?: number | null
+        }
+        Update: {
+          avg_time?: string | null
+          bounce_rate?: number | null
+          campaign_proof_id?: string
+          entrances?: number | null
+          new_users?: number | null
+          notes?: string | null
+          pageviews?: number | null
+          sessions?: number | null
+          show_on_pdf?: boolean
+          unique_pageviews?: number | null
+          updated_at?: string
+          users?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_proof_analytics_campaign_proof_id_fkey"
+            columns: ["campaign_proof_id"]
+            isOneToOne: true
+            referencedRelation: "campaign_proofs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_proof_assets: {
+        Row: {
+          asset_type: string
+          campaign_proof_id: string
+          caption: string | null
+          created_at: string
+          file_path: string
+          file_url: string | null
+          id: string
+          sort_order: number
+        }
+        Insert: {
+          asset_type: string
+          campaign_proof_id: string
+          caption?: string | null
+          created_at?: string
+          file_path: string
+          file_url?: string | null
+          id?: string
+          sort_order?: number
+        }
+        Update: {
+          asset_type?: string
+          campaign_proof_id?: string
+          caption?: string | null
+          created_at?: string
+          file_path?: string
+          file_url?: string | null
+          id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_proof_assets_campaign_proof_id_fkey"
+            columns: ["campaign_proof_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_proofs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_proof_channels: {
+        Row: {
+          campaign_proof_id: string
+          channel_metric: string | null
+          channel_name: string
+          channel_value: string | null
+          created_at: string
+          id: string
+          sort_order: number
+        }
+        Insert: {
+          campaign_proof_id: string
+          channel_metric?: string | null
+          channel_name: string
+          channel_value?: string | null
+          created_at?: string
+          id?: string
+          sort_order?: number
+        }
+        Update: {
+          campaign_proof_id?: string
+          channel_metric?: string | null
+          channel_name?: string
+          channel_value?: string | null
+          created_at?: string
+          id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_proof_channels_campaign_proof_id_fkey"
+            columns: ["campaign_proof_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_proofs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_proof_documents: {
+        Row: {
+          campaign_proof_id: string
+          created_at: string
+          doc_type: string
+          file_path: string
+          file_size: number | null
+          file_url: string | null
+          id: string
+          version: number
+        }
+        Insert: {
+          campaign_proof_id: string
+          created_at?: string
+          doc_type: string
+          file_path: string
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          version?: number
+        }
+        Update: {
+          campaign_proof_id?: string
+          created_at?: string
+          doc_type?: string
+          file_path?: string
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_proof_documents_campaign_proof_id_fkey"
+            columns: ["campaign_proof_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_proofs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_proofs: {
+        Row: {
+          campaign_name: string
+          client_name: string
+          created_at: string
+          created_by: string | null
+          end_date: string
+          id: string
+          insertion_order: string
+          internal_code: string | null
+          internal_number: string | null
+          site_domain: string
+          site_name: string
+          start_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_name: string
+          client_name: string
+          created_at?: string
+          created_by?: string | null
+          end_date: string
+          id?: string
+          insertion_order: string
+          internal_code?: string | null
+          internal_number?: string | null
+          site_domain?: string
+          site_name?: string
+          start_date: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_name?: string
+          client_name?: string
+          created_at?: string
+          created_by?: string | null
+          end_date?: string
+          id?: string
+          insertion_order?: string
+          internal_code?: string | null
+          internal_number?: string | null
+          site_domain?: string
+          site_name?: string
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       campaigns: {
         Row: {
           category_id: string | null
