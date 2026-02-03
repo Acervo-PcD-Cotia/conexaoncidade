@@ -1,6 +1,8 @@
+import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { trackCampaignEvent } from '@/lib/trackCampaignEvent';
 
 interface LoginPanelAdProps {
   className?: string;
@@ -87,35 +89,24 @@ export function LoginPanelAd({ className }: LoginPanelAdProps) {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Record impression
-  const recordImpression = async () => {
-    if (!campaign) return;
-    
-    try {
-      await supabase.from('campaign_events').insert([{
-        campaign_id: campaign.id,
-        event_type: 'impression' as const,
-        channel_type: 'login_panel' as const,
-        session_id: getSessionId(),
-      }]);
-    } catch (error) {
-      console.error('Failed to record impression:', error);
+  // Track impression on mount
+  useEffect(() => {
+    if (campaign) {
+      trackCampaignEvent({
+        campaignId: campaign.id,
+        channelType: 'login_panel',
+        eventType: 'impression',
+      });
     }
-  };
+  }, [campaign]);
 
-  const handleClick = async () => {
+  const handleClick = () => {
     if (!campaign) return;
-    
-    try {
-      await supabase.from('campaign_events').insert([{
-        campaign_id: campaign.id,
-        event_type: 'click' as const,
-        channel_type: 'login_panel' as const,
-        session_id: getSessionId(),
-      }]);
-    } catch (error) {
-      console.error('Failed to record click:', error);
-    }
+    trackCampaignEvent({
+      campaignId: campaign.id,
+      channelType: 'login_panel',
+      eventType: 'click',
+    });
   };
 
   if (isLoading || !campaign) {
@@ -131,7 +122,6 @@ export function LoginPanelAd({ className }: LoginPanelAdProps) {
           rel="noopener noreferrer"
           className="block w-full h-full"
           onClick={handleClick}
-          onLoad={() => recordImpression()}
         >
           <img
             src={campaign.asset.file_url}
@@ -152,7 +142,7 @@ export function LoginPanelAd({ className }: LoginPanelAdProps) {
           )}
         </a>
       ) : (
-        <div className="w-full h-full" onLoad={() => recordImpression()}>
+        <div className="w-full h-full">
           <img
             src={campaign.asset.file_url}
             alt={campaign.asset.alt_text || campaign.name}
@@ -176,14 +166,4 @@ export function LoginPanelAd({ className }: LoginPanelAdProps) {
       </div>
     </div>
   );
-}
-
-// Generate/get session ID for tracking
-function getSessionId(): string {
-  let sessionId = sessionStorage.getItem('session_id');
-  if (!sessionId) {
-    sessionId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    sessionStorage.setItem('session_id', sessionId);
-  }
-  return sessionId;
 }

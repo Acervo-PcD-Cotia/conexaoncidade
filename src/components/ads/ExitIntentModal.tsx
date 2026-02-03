@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useExitIntentCampaigns } from '@/hooks/useExitIntent';
+import { trackCampaignEvent } from '@/lib/trackCampaignEvent';
 
 const SESSION_KEY = 'exit_intent_shown';
 
@@ -51,7 +52,12 @@ export function ExitIntentModal({ className }: ExitIntentModalProps) {
   };
 
   const handleCTAClick = (campaignId: string, ctaUrl?: string) => {
-    recordEvent(campaignId, 'cta_click');
+    trackCampaignEvent({
+      campaignId,
+      channelType: 'exit_intent',
+      eventType: 'cta_click',
+      metadata: { cta_url: ctaUrl },
+    });
     if (ctaUrl) {
       window.open(ctaUrl, '_blank');
     }
@@ -59,7 +65,11 @@ export function ExitIntentModal({ className }: ExitIntentModalProps) {
   };
 
   const handleImpression = (campaignId: string) => {
-    recordEvent(campaignId, 'impression');
+    trackCampaignEvent({
+      campaignId,
+      channelType: 'exit_intent',
+      eventType: 'impression',
+    });
   };
 
   if (!isVisible || isLoading || campaigns.length === 0) {

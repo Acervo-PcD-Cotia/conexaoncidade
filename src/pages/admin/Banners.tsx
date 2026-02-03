@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Edit, Trash2, ExternalLink, GripVertical, AlertTriangle, Calendar, Clock } from "lucide-react";
+import { Plus, Edit, Trash2, ExternalLink, GripVertical, AlertTriangle, Calendar, Clock, Link as LinkIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,6 +69,8 @@ interface BannerForm {
   is_active: boolean;
   starts_at: string;
   ends_at: string;
+  campaign_id: string;
+  managed_by_campaign: boolean;
 }
 
 const defaultForm: BannerForm = {
@@ -80,6 +82,8 @@ const defaultForm: BannerForm = {
   is_active: true,
   starts_at: "",
   ends_at: "",
+  campaign_id: "",
+  managed_by_campaign: false,
 };
 
 interface SortableRowProps {
@@ -249,6 +253,19 @@ export default function Banners() {
   const activeBannerCount = banners?.filter((b) => b.is_active).length || 0;
   const isAtLimit = activeBannerCount >= MAX_BANNERS;
 
+  // Fetch campaigns 360 for integration
+  const { data: campaigns360 } = useQuery({
+    queryKey: ["campaigns-360-list"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("campaigns_unified")
+        .select("id, name, status")
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const saveMutation = useMutation({
     mutationFn: async (data: BannerForm) => {
       const payload = {
@@ -260,6 +277,8 @@ export default function Banners() {
         is_active: data.is_active,
         starts_at: data.starts_at || null,
         ends_at: data.ends_at || null,
+        campaign_id: data.campaign_id || null,
+        managed_by_campaign: data.managed_by_campaign,
       };
 
       if (data.id) {
@@ -331,6 +350,8 @@ export default function Banners() {
       is_active: banner.is_active,
       starts_at: banner.starts_at ? format(new Date(banner.starts_at), "yyyy-MM-dd'T'HH:mm") : "",
       ends_at: banner.ends_at ? format(new Date(banner.ends_at), "yyyy-MM-dd'T'HH:mm") : "",
+      campaign_id: (banner as typeof banner & { campaign_id?: string }).campaign_id || "",
+      managed_by_campaign: (banner as typeof banner & { managed_by_campaign?: boolean }).managed_by_campaign || false,
     });
     setOpen(true);
   };
@@ -512,6 +533,43 @@ export default function Banners() {
                       onCheckedChange={(checked) => setForm({ ...form, is_active: checked })}
                     />
                     <Label>Banner ativo</Label>
+                  </div>
+
+                  {/* Integração 360 */}
+                  <div className="rounded-lg border p-4 bg-muted/50">
+                    <h4 className="font-medium mb-3 flex items-center gap-2">
+                      <LinkIcon className="h-4 w-4" />
+                      Vincular a Campanha 360
+                    </h4>
+                    <div className="flex items-center gap-4 mb-3">
+                      <Switch
+                        checked={form.managed_by_campaign}
+                        onCheckedChange={(checked) => {
+                          setForm({ ...form, managed_by_campaign: checked, campaign_id: checked ? form.campaign_id : "" });
+                        }}
+                      />
+                      <Label>Gerenciado por campanha</Label>
+                    </div>
+                    {form.managed_by_campaign && (
+                      <Select 
+                        value={form.campaign_id} 
+                        onValueChange={(v) => setForm({...form, campaign_id: v})}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecionar campanha" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {campaigns360?.map(c => (
+                            <SelectItem key={c.id} value={c.id}>
+                              {c.name} {c.status === 'active' ? '(Ativa)' : `(${c.status})`}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Quando vinculado, métricas são consolidadas no painel de Campanhas 360.
+                    </p>
                   </div>
 
                   <Button type="submit" className="w-full" disabled={saveMutation.isPending}>

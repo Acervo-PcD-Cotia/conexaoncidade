@@ -13,6 +13,7 @@ import {
   ArrowRight,
   Calendar,
   Target,
+  Megaphone,
 } from 'lucide-react';
 import { AdminLoadingState } from '@/components/admin/AdminLoadingState';
 
@@ -20,14 +21,18 @@ export default function CampaignsHub() {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['campaigns-stats'],
     queryFn: async () => {
-      const [googleMapsLeads, bannerCampaigns] = await Promise.all([
+      const [googleMapsLeads, bannerCampaigns, campaigns360] = await Promise.all([
         supabase.from('campaign_leads').select('id', { count: 'exact', head: true }),
         supabase.from('banner_campaigns').select('id, status, budget_total, budget_spent'),
+        supabase.from('campaigns_unified').select('id, status'),
       ]);
 
       const activeBannerCampaigns = bannerCampaigns.data?.filter(c => c.status === 'active') || [];
       const totalBudget = bannerCampaigns.data?.reduce((acc, c) => acc + (c.budget_total || 0), 0) || 0;
       const totalSpent = bannerCampaigns.data?.reduce((acc, c) => acc + (c.budget_spent || 0), 0) || 0;
+      
+      const campaigns360Active = campaigns360.data?.filter(c => c.status === 'active').length || 0;
+      const campaigns360Total = campaigns360.data?.length || 0;
 
       return {
         googleMapsLeads: googleMapsLeads.count || 0,
@@ -35,11 +40,28 @@ export default function CampaignsHub() {
         bannerCampaignsActive: activeBannerCampaigns.length,
         totalBudget,
         totalSpent,
+        campaigns360Active,
+        campaigns360Total,
       };
     },
   });
 
   const campaigns = [
+    {
+      id: 'unified-360',
+      title: 'Campanhas 360',
+      description: 'Sistema unificado para Ads, Publidoor, WebStories, Push, Newsletter e mais',
+      icon: Megaphone,
+      color: 'text-purple-500',
+      bgColor: 'bg-purple-100 dark:bg-purple-900/30',
+      href: '/admin/campaigns/unified',
+      stats: [
+        { label: 'Ativas', value: stats?.campaigns360Active || 0 },
+        { label: 'Total', value: stats?.campaigns360Total || 0 },
+      ],
+      status: 'active',
+      badge: 'Novo',
+    },
     {
       id: 'google-maps',
       title: 'Google Maps para Negócios',
@@ -139,22 +161,27 @@ export default function CampaignsHub() {
 
       {/* Campaign Cards */}
       <div className="grid md:grid-cols-2 gap-6">
-        {campaigns.map((campaign) => {
-          const Icon = campaign.icon;
-          return (
-            <Card key={campaign.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className={`p-3 rounded-lg ${campaign.bgColor}`}>
-                    <Icon className={`h-6 w-6 ${campaign.color}`} />
+          {campaigns.map((campaign) => {
+            const Icon = campaign.icon;
+            return (
+              <Card key={campaign.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className={`p-3 rounded-lg ${campaign.bgColor}`}>
+                      <Icon className={`h-6 w-6 ${campaign.color}`} />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {campaign.badge && (
+                        <Badge className="bg-purple-500">{campaign.badge}</Badge>
+                      )}
+                      <Badge variant={campaign.status === 'active' ? 'default' : 'secondary'}>
+                        {campaign.status === 'active' ? 'Ativa' : 'Pausada'}
+                      </Badge>
+                    </div>
                   </div>
-                  <Badge variant={campaign.status === 'active' ? 'default' : 'secondary'}>
-                    {campaign.status === 'active' ? 'Ativa' : 'Pausada'}
-                  </Badge>
-                </div>
-                <CardTitle className="mt-4">{campaign.title}</CardTitle>
-                <CardDescription>{campaign.description}</CardDescription>
-              </CardHeader>
+                  <CardTitle className="mt-4">{campaign.title}</CardTitle>
+                  <CardDescription>{campaign.description}</CardDescription>
+                </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
                   <div className="flex gap-4">

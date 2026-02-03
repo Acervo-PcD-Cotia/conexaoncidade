@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { trackCampaignEvent, getSessionId } from '@/lib/trackCampaignEvent';
 
 interface InlineAdSlotProps {
   /** Position in the article (e.g., after paragraph 3) */
@@ -85,20 +87,26 @@ export function InlineAdSlot({ position = 1, category, className }: InlineAdSlot
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  const recordEvent = async (eventType: 'impression' | 'click') => {
-    if (!campaign) return;
-    
-    try {
-      await supabase.from('campaign_events').insert([{
-        campaign_id: campaign.id,
-        event_type: eventType,
-        channel_type: 'ads',
+  // Track impression on mount
+  useEffect(() => {
+    if (campaign) {
+      trackCampaignEvent({
+        campaignId: campaign.id,
+        channelType: 'ads',
+        eventType: 'impression',
         metadata: { position, category, format: '300x250' },
-        session_id: getSessionId(),
-      }]);
-    } catch (error) {
-      console.error('Failed to record event:', error);
+      });
     }
+  }, [campaign, position, category]);
+
+  const handleClick = () => {
+    if (!campaign) return;
+    trackCampaignEvent({
+      campaignId: campaign.id,
+      channelType: 'ads',
+      eventType: 'click',
+      metadata: { position, category, format: '300x250' },
+    });
   };
 
   if (isLoading || !campaign) {
@@ -123,14 +131,13 @@ export function InlineAdSlot({ position = 1, category, className }: InlineAdSlot
         {/* Ad container */}
         <div 
           className="w-[300px] h-[250px] bg-muted rounded overflow-hidden"
-          onLoad={() => recordEvent('impression')}
         >
           {campaign.cta_url ? (
             <a
               href={campaign.cta_url}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() => recordEvent('click')}
+              onClick={handleClick}
               className="block w-full h-full"
             >
               <img
@@ -157,14 +164,4 @@ export function InlineAdSlot({ position = 1, category, className }: InlineAdSlot
       </div>
     </div>
   );
-}
-
-// Generate/get session ID for tracking
-function getSessionId(): string {
-  let sessionId = sessionStorage.getItem('session_id');
-  if (!sessionId) {
-    sessionId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    sessionStorage.setItem('session_id', sessionId);
-  }
-  return sessionId;
 }
