@@ -12,6 +12,7 @@ import { FactCheckCTA } from '@/components/news/FactCheckCTA';
 import { PrintButton } from '@/components/news/PrintButton';
 import { ImageLightbox } from '@/components/ui/image-lightbox';
 import { NewsGallery } from '@/components/news/NewsGallery';
+import { InlineAdSlot } from '@/components/ads/InlineAdSlot';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -466,16 +467,24 @@ function NewsDetailContent({ news }: NewsDetailContentProps) {
             imageAlt={news.image_alt}
           />
 
-          {/* Main Content */}
+          {/* Main Content with Inline Ad */}
           <section 
             id="main-content"
             aria-label="Conteúdo da matéria"
           >
             {news.content && (
-              <div
-                className="prose-news text-lg mb-10"
-                dangerouslySetInnerHTML={{ __html: news.content }}
-              />
+              <>
+                <div
+                  className="prose-news text-lg mb-6"
+                  dangerouslySetInnerHTML={{ __html: news.content }}
+                />
+                {/* Inline Ad After Content - 300x250 Editorial Slot */}
+                <InlineAdSlot 
+                  position={4} 
+                  category={news.category?.slug}
+                  className="my-8"
+                />
+              </>
             )}
           </section>
 

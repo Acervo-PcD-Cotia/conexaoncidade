@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Plus, Calendar, Check, Clock, AlertCircle, Trash2 } from 'lucide-react';
+import { Plus, Calendar, Check, Clock, AlertCircle, Bell, Mail, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,6 +19,9 @@ import {
 } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useCampaignCycles, useCreateCycle, useConfirmCycle } from '@/hooks/useCampaignCycles';
+import { useSendPushCampaign } from '@/hooks/usePushCampaign';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import type { ChannelType, CycleStatus, CampaignCycle } from '@/types/campaigns-unified';
 
 interface CycleSelectorCardProps {
@@ -49,8 +52,11 @@ export function CycleSelectorCard({ campaignId, enabledChannels }: CycleSelector
   const { data: cycles = [], isLoading } = useCampaignCycles(campaignId);
   const createMutation = useCreateCycle();
   const confirmMutation = useConfirmCycle();
+  const sendPushMutation = useSendPushCampaign();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [sendingPush, setSendingPush] = useState<string | null>(null);
+  const [sendingNewsletter, setSendingNewsletter] = useState<string | null>(null);
   const [newCycle, setNewCycle] = useState({
     name: '',
     starts_at: '',
@@ -79,6 +85,85 @@ export function CycleSelectorCard({ campaignId, enabledChannels }: CycleSelector
 
   const handleConfirmCycle = (cycleId: string) => {
     confirmMutation.mutate(cycleId);
+  };
+
+  const handleSendPush = async (cycle: CampaignCycle) => {
+    if (!cycle.active_channels.includes('push')) return;
+    
+    setSendingPush(cycle.id);
+    try {
+      // Get push config from campaign channels
+      const { data: channelData } = await supabase
+        .from('campaign_channels')
+        .select('config')
+        .eq('campaign_id', campaignId)
+        .eq('channel_type', 'push')
+        .single();
+
+      if (!channelData?.config) {
+        toast.error('Configuração de Push não encontrada');
+        return;
+      }
+
+      const config = channelData.config as { title?: string; body?: string; icon_url?: string; action_url?: string; target_audience?: 'all' | 'segment' | 'subscribers' };
+      
+      sendPushMutation.mutate({
+        campaignId,
+        cycleId: cycle.id,
+        config: {
+          title: config.title || 'Nova mensagem',
+          body: config.body || '',
+          icon_url: config.icon_url,
+          action_url: config.action_url,
+          target_audience: config.target_audience ?? 'all',
+        },
+      });
+    } finally {
+      setSendingPush(null);
+    }
+  };
+
+  const handleSendNewsletter = async (cycle: CampaignCycle) => {
+    if (!cycle.active_channels.includes('newsletter')) return;
+    
+    setSendingNewsletter(cycle.id);
+    try {
+      // Get newsletter config from campaign channels
+      const { data: channelData } = await supabase
+        .from('campaign_channels')
+        .select('config')
+        .eq('campaign_id', campaignId)
+        .eq('channel_type', 'newsletter')
+        .single();
+
+      if (!channelData?.config) {
+        toast.error('Configuração de Newsletter não encontrada');
+        return;
+      }
+
+      const config = channelData.config as { subject?: string; preview_text?: string; content_html?: string; target_list?: string };
+      
+      const { error } = await supabase.functions.invoke('campaign-newsletter', {
+        body: {
+          campaign_id: campaignId,
+          cycle_id: cycle.id,
+          subject: config.subject || 'Newsletter',
+          preview_text: config.preview_text || '',
+          content_html: config.content_html,
+          target_list: config.target_list || 'all',
+        },
+      });
+
+      if (error) {
+        toast.error('Erro ao enviar newsletter');
+      } else {
+        toast.success('Newsletter enviada com sucesso!');
+      }
+    } catch (err) {
+      toast.error('Erro ao enviar newsletter');
+    } finally {
+      setSendingNewsletter(null);
+    }
   };
 
   const toggleChannel = (channel: ChannelType) => {
@@ -281,6 +366,36 @@ export function CycleSelectorCard({ campaignId, enabledChannels }: CycleSelector
                     <Check className="h-3.5 w-3.5" />
                     Confirmado em {formatDate(cycle.confirmed_at)}
                   </p>
+                )}
+
+                {/* Send buttons for confirmed cycles */}
+                {cycle.confirmed_at && (
+                  <div className="flex items-center gap-2 pt-2 border-t">
+                    {cycle.active_channels.includes('push') && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleSendPush(cycle)}
+                        disabled={sendingPush === cycle.id || sendPushMutation.isPending}
+                        className="flex items-center gap-1"
+                      >
+                        <Bell className="h-4 w-4" />
+                        {sendingPush === cycle.id ? 'Enviando...' : 'Enviar Push'}
+                      </Button>
+                    )}
+                    {cycle.active_channels.includes('newsletter') && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleSendNewsletter(cycle)}
+                        disabled={sendingNewsletter === cycle.id}
+                        className="flex items-center gap-1"
+                      >
+                        <Mail className="h-4 w-4" />
+                        {sendingNewsletter === cycle.id ? 'Enviando...' : 'Enviar Newsletter'}
+                      </Button>
+                    )}
+                  </div>
                 )}
               </div>
             ))}
