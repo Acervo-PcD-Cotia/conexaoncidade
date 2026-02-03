@@ -2169,6 +2169,131 @@ export type Database = {
           },
         ]
       }
+      billing_client_defaults: {
+        Row: {
+          client_id: string
+          cnae: string
+          created_at: string
+          id: string
+          invoice_text_template: string | null
+          iss_rate: number
+          service_code: string
+          service_description_short: string | null
+        }
+        Insert: {
+          client_id: string
+          cnae?: string
+          created_at?: string
+          id?: string
+          invoice_text_template?: string | null
+          iss_rate?: number
+          service_code?: string
+          service_description_short?: string | null
+        }
+        Update: {
+          client_id?: string
+          cnae?: string
+          created_at?: string
+          id?: string
+          invoice_text_template?: string | null
+          iss_rate?: number
+          service_code?: string
+          service_description_short?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_client_defaults_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "billing_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      billing_clients: {
+        Row: {
+          address_line: string | null
+          city: string | null
+          cnpj: string
+          created_at: string
+          email: string | null
+          id: string
+          im: string | null
+          is_active: boolean
+          is_default: boolean
+          legal_name: string
+          state: string | null
+          user_id: string
+        }
+        Insert: {
+          address_line?: string | null
+          city?: string | null
+          cnpj: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          im?: string | null
+          is_active?: boolean
+          is_default?: boolean
+          legal_name: string
+          state?: string | null
+          user_id: string
+        }
+        Update: {
+          address_line?: string | null
+          city?: string | null
+          cnpj?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          im?: string | null
+          is_active?: boolean
+          is_default?: boolean
+          legal_name?: string
+          state?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      billing_provider_profile: {
+        Row: {
+          address_line: string | null
+          cnpj: string
+          created_at: string
+          email: string | null
+          id: string
+          im: string | null
+          legal_name: string
+          trade_name: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address_line?: string | null
+          cnpj: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          im?: string | null
+          legal_name: string
+          trade_name?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address_line?: string | null
+          cnpj?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          im?: string | null
+          legal_name?: string
+          trade_name?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bio_buttons: {
         Row: {
           bio_page_id: string
@@ -3859,6 +3984,157 @@ export type Database = {
             columns: ["campaign_proof_id"]
             isOneToOne: false
             referencedRelation: "campaign_proofs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_proof_invoice_audit: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          invoice_id: string
+          meta: Json | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          invoice_id: string
+          meta?: Json | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          meta?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_proof_invoice_audit_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_proof_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_proof_invoice_files: {
+        Row: {
+          created_at: string
+          file_name: string | null
+          file_type: string
+          file_url: string
+          id: string
+          invoice_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name?: string | null
+          file_type: string
+          file_url: string
+          id?: string
+          invoice_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string | null
+          file_type?: string
+          file_url?: string
+          id?: string
+          invoice_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_proof_invoice_files_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_proof_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_proof_invoices: {
+        Row: {
+          campaign_proof_id: string | null
+          client_id: string
+          client_snapshot: Json | null
+          cnae: string | null
+          created_at: string
+          description_final: string
+          id: string
+          iss_rate: number | null
+          nf_issue_datetime: string | null
+          nf_number: string | null
+          nf_pdf_url: string | null
+          nf_verification_code: string | null
+          pi_number: string
+          provider_snapshot: Json | null
+          service_code: string | null
+          service_description_short: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          campaign_proof_id?: string | null
+          client_id: string
+          client_snapshot?: Json | null
+          cnae?: string | null
+          created_at?: string
+          description_final: string
+          id?: string
+          iss_rate?: number | null
+          nf_issue_datetime?: string | null
+          nf_number?: string | null
+          nf_pdf_url?: string | null
+          nf_verification_code?: string | null
+          pi_number: string
+          provider_snapshot?: Json | null
+          service_code?: string | null
+          service_description_short?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          campaign_proof_id?: string | null
+          client_id?: string
+          client_snapshot?: Json | null
+          cnae?: string | null
+          created_at?: string
+          description_final?: string
+          id?: string
+          iss_rate?: number | null
+          nf_issue_datetime?: string | null
+          nf_number?: string | null
+          nf_pdf_url?: string | null
+          nf_verification_code?: string | null
+          pi_number?: string
+          provider_snapshot?: Json | null
+          service_code?: string | null
+          service_description_short?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_proof_invoices_campaign_proof_id_fkey"
+            columns: ["campaign_proof_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_proofs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_proof_invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "billing_clients"
             referencedColumns: ["id"]
           },
         ]
