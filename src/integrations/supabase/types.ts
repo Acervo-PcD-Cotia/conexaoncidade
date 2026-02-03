@@ -12864,44 +12864,60 @@ export type Database = {
       }
       social_accounts: {
         Row: {
-          created_at: string
-          credentials_encrypted: Json | null
-          enabled: boolean
+          account_type:
+            | Database["public"]["Enums"]["social_account_type"]
+            | null
+          created_at: string | null
+          default_enabled: boolean | null
+          display_name: string
           id: string
-          platform: string
+          is_active: boolean | null
+          platform: Database["public"]["Enums"]["social_platform"]
+          provider_account_id: string | null
           settings: Json | null
-          tenant_id: string | null
-          updated_at: string
+          token_expires_at: string | null
+          token_ref: string | null
+          updated_at: string | null
+          user_id: string | null
+          username: string | null
         }
         Insert: {
-          created_at?: string
-          credentials_encrypted?: Json | null
-          enabled?: boolean
+          account_type?:
+            | Database["public"]["Enums"]["social_account_type"]
+            | null
+          created_at?: string | null
+          default_enabled?: boolean | null
+          display_name: string
           id?: string
-          platform: string
+          is_active?: boolean | null
+          platform: Database["public"]["Enums"]["social_platform"]
+          provider_account_id?: string | null
           settings?: Json | null
-          tenant_id?: string | null
-          updated_at?: string
+          token_expires_at?: string | null
+          token_ref?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          username?: string | null
         }
         Update: {
-          created_at?: string
-          credentials_encrypted?: Json | null
-          enabled?: boolean
+          account_type?:
+            | Database["public"]["Enums"]["social_account_type"]
+            | null
+          created_at?: string | null
+          default_enabled?: boolean | null
+          display_name?: string
           id?: string
-          platform?: string
+          is_active?: boolean | null
+          platform?: Database["public"]["Enums"]["social_platform"]
+          provider_account_id?: string | null
           settings?: Json | null
-          tenant_id?: string | null
-          updated_at?: string
+          token_expires_at?: string | null
+          token_ref?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          username?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "social_accounts_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "sites"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       social_logs: {
         Row: {
@@ -12928,84 +12944,222 @@ export type Database = {
           message?: string
           social_post_id?: string | null
         }
+        Relationships: []
+      }
+      social_post_logs: {
+        Row: {
+          created_at: string | null
+          event: string
+          id: string
+          level: string | null
+          message: string | null
+          payload_json: Json | null
+          target_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          event: string
+          id?: string
+          level?: string | null
+          message?: string | null
+          payload_json?: Json | null
+          target_id: string
+        }
+        Update: {
+          created_at?: string | null
+          event?: string
+          id?: string
+          level?: string | null
+          message?: string | null
+          payload_json?: Json | null
+          target_id?: string
+        }
         Relationships: [
           {
-            foreignKeyName: "social_logs_social_post_id_fkey"
-            columns: ["social_post_id"]
+            foreignKeyName: "social_post_logs_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "social_post_targets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_post_targets: {
+        Row: {
+          assisted_at: string | null
+          attempts: number | null
+          caption_override: string | null
+          created_at: string | null
+          error_message: string | null
+          id: string
+          last_attempt_at: string | null
+          max_attempts: number | null
+          media_override: Json | null
+          next_retry_at: string | null
+          post_id: string
+          posted_at: string | null
+          provider_post_id: string | null
+          provider_post_url: string | null
+          scheduled_at: string | null
+          social_account_id: string
+          status: Database["public"]["Enums"]["social_target_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          assisted_at?: string | null
+          attempts?: number | null
+          caption_override?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          last_attempt_at?: string | null
+          max_attempts?: number | null
+          media_override?: Json | null
+          next_retry_at?: string | null
+          post_id: string
+          posted_at?: string | null
+          provider_post_id?: string | null
+          provider_post_url?: string | null
+          scheduled_at?: string | null
+          social_account_id: string
+          status?: Database["public"]["Enums"]["social_target_status"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          assisted_at?: string | null
+          attempts?: number | null
+          caption_override?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          last_attempt_at?: string | null
+          max_attempts?: number | null
+          media_override?: Json | null
+          next_retry_at?: string | null
+          post_id?: string
+          posted_at?: string | null
+          provider_post_id?: string | null
+          provider_post_url?: string | null
+          scheduled_at?: string | null
+          social_account_id?: string
+          status?: Database["public"]["Enums"]["social_target_status"] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_post_targets_post_id_fkey"
+            columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "social_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_post_targets_social_account_id_fkey"
+            columns: ["social_account_id"]
+            isOneToOne: false
+            referencedRelation: "social_accounts"
             referencedColumns: ["id"]
           },
         ]
       }
       social_posts: {
         Row: {
-          created_at: string
+          base_caption: string | null
+          created_at: string | null
           created_by: string | null
-          error_message: string | null
-          external_post_id: string | null
-          external_post_url: string | null
+          hashtags: string[] | null
           id: string
-          news_id: string | null
-          payload: Json | null
-          platform: string
-          posted_at: string | null
-          retries_count: number
-          scheduled_at: string | null
-          status: string
-          tenant_id: string | null
-          updated_at: string
+          link_url: string | null
+          media_json: Json | null
+          origin_id: string | null
+          origin_type: Database["public"]["Enums"]["social_origin_type"] | null
+          status_global:
+            | Database["public"]["Enums"]["social_post_status"]
+            | null
+          template_id: string | null
+          title: string
+          updated_at: string | null
+          user_id: string | null
+          utm_params: Json | null
         }
         Insert: {
-          created_at?: string
+          base_caption?: string | null
+          created_at?: string | null
           created_by?: string | null
-          error_message?: string | null
-          external_post_id?: string | null
-          external_post_url?: string | null
+          hashtags?: string[] | null
           id?: string
-          news_id?: string | null
-          payload?: Json | null
-          platform: string
-          posted_at?: string | null
-          retries_count?: number
-          scheduled_at?: string | null
-          status?: string
-          tenant_id?: string | null
-          updated_at?: string
+          link_url?: string | null
+          media_json?: Json | null
+          origin_id?: string | null
+          origin_type?: Database["public"]["Enums"]["social_origin_type"] | null
+          status_global?:
+            | Database["public"]["Enums"]["social_post_status"]
+            | null
+          template_id?: string | null
+          title: string
+          updated_at?: string | null
+          user_id?: string | null
+          utm_params?: Json | null
         }
         Update: {
-          created_at?: string
+          base_caption?: string | null
+          created_at?: string | null
           created_by?: string | null
-          error_message?: string | null
-          external_post_id?: string | null
-          external_post_url?: string | null
+          hashtags?: string[] | null
           id?: string
-          news_id?: string | null
-          payload?: Json | null
-          platform?: string
-          posted_at?: string | null
-          retries_count?: number
-          scheduled_at?: string | null
-          status?: string
-          tenant_id?: string | null
-          updated_at?: string
+          link_url?: string | null
+          media_json?: Json | null
+          origin_id?: string | null
+          origin_type?: Database["public"]["Enums"]["social_origin_type"] | null
+          status_global?:
+            | Database["public"]["Enums"]["social_post_status"]
+            | null
+          template_id?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string | null
+          utm_params?: Json | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "social_posts_news_id_fkey"
-            columns: ["news_id"]
-            isOneToOne: false
-            referencedRelation: "news"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "social_posts_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "sites"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
+      }
+      social_templates: {
+        Row: {
+          caption_template: string
+          created_at: string | null
+          hashtags: string[] | null
+          id: string
+          is_default: boolean | null
+          name: string
+          origin_type: Database["public"]["Enums"]["social_origin_type"] | null
+          platforms: Database["public"]["Enums"]["social_platform"][] | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          caption_template: string
+          created_at?: string | null
+          hashtags?: string[] | null
+          id?: string
+          is_default?: boolean | null
+          name: string
+          origin_type?: Database["public"]["Enums"]["social_origin_type"] | null
+          platforms?: Database["public"]["Enums"]["social_platform"][] | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          caption_template?: string
+          created_at?: string | null
+          hashtags?: string[] | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          origin_type?: Database["public"]["Enums"]["social_origin_type"] | null
+          platforms?: Database["public"]["Enums"]["social_platform"][] | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       solutions: {
         Row: {
@@ -14620,6 +14774,37 @@ export type Database = {
         | "impacto_total"
       site_user_role: "admin" | "editor" | "journalist" | "reviewer"
       site_user_status: "active" | "pending" | "suspended"
+      social_account_type:
+        | "page"
+        | "business"
+        | "creator"
+        | "channel"
+        | "personal"
+      social_origin_type: "news" | "ad" | "publidoor" | "campaign360" | "manual"
+      social_platform:
+        | "instagram"
+        | "facebook"
+        | "x"
+        | "linkedin"
+        | "tiktok"
+        | "youtube"
+        | "pinterest"
+        | "whatsapp"
+        | "telegram"
+      social_post_status:
+        | "draft"
+        | "scheduled"
+        | "processing"
+        | "done"
+        | "failed"
+      social_target_status:
+        | "draft"
+        | "scheduled"
+        | "queued"
+        | "processing"
+        | "done"
+        | "failed"
+        | "assisted"
       story_status: "draft" | "published" | "archived"
       style_profile_type: "journalist" | "site_default"
       style_ref_kind: "link" | "txt" | "pdf"
@@ -14906,6 +15091,41 @@ export const Constants = {
       ],
       site_user_role: ["admin", "editor", "journalist", "reviewer"],
       site_user_status: ["active", "pending", "suspended"],
+      social_account_type: [
+        "page",
+        "business",
+        "creator",
+        "channel",
+        "personal",
+      ],
+      social_origin_type: ["news", "ad", "publidoor", "campaign360", "manual"],
+      social_platform: [
+        "instagram",
+        "facebook",
+        "x",
+        "linkedin",
+        "tiktok",
+        "youtube",
+        "pinterest",
+        "whatsapp",
+        "telegram",
+      ],
+      social_post_status: [
+        "draft",
+        "scheduled",
+        "processing",
+        "done",
+        "failed",
+      ],
+      social_target_status: [
+        "draft",
+        "scheduled",
+        "queued",
+        "processing",
+        "done",
+        "failed",
+        "assisted",
+      ],
       story_status: ["draft", "published", "archived"],
       style_profile_type: ["journalist", "site_default"],
       style_ref_kind: ["link", "txt", "pdf"],
