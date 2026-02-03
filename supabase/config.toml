@@ -224,3 +224,6 @@ verify_jwt = false
 
 [functions.campaign-newsletter]
 verify_jwt = false
+
+[functions.guia-seo]
+verify_jwt = false
