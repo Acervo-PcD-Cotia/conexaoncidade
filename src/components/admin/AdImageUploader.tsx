@@ -70,7 +70,20 @@ export function AdImageUploader({
         .from('ads')
         .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        // Check for specific error types
+        if (uploadError.message?.includes('Bucket not found')) {
+          toast.error('Bucket de armazenamento não configurado. Contate o administrador.');
+          console.error('Storage bucket "ads" not found');
+        } else if (uploadError.message?.includes('row-level security') || uploadError.message?.includes('permission')) {
+          toast.error('Sem permissão para upload. Verifique se está logado.');
+          console.error('Storage permission error:', uploadError);
+        } else {
+          toast.error(`Erro no upload: ${uploadError.message}`);
+          console.error('Upload error:', uploadError);
+        }
+        return;
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from('ads')
@@ -80,7 +93,7 @@ export function AdImageUploader({
       toast.success('Imagem enviada!');
     } catch (error) {
       console.error('Upload error:', error);
-      toast.error('Erro ao enviar imagem');
+      toast.error('Erro inesperado ao enviar imagem');
     } finally {
       setUploading(false);
     }

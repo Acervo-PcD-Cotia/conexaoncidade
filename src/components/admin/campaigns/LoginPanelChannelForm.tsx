@@ -8,17 +8,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { AdImageUploader } from '@/components/admin/AdImageUploader';
 import type { LoginPanelChannelConfig } from '@/types/campaigns-unified';
 
 interface LoginPanelChannelFormProps {
   config?: Partial<LoginPanelChannelConfig>;
   onChange: (config: Partial<LoginPanelChannelConfig>) => void;
+  assetUrl?: string;
+  onAssetChange?: (url: string, alt?: string) => void;
 }
 
-export function LoginPanelChannelForm({ config, onChange }: LoginPanelChannelFormProps) {
+export function LoginPanelChannelForm({ 
+  config, 
+  onChange,
+  assetUrl = '',
+  onAssetChange,
+}: LoginPanelChannelFormProps) {
   const updateConfig = (key: keyof LoginPanelChannelConfig, value: string) => {
     onChange({ ...config, [key]: value });
   };
+
+  const displayType = config?.display_type || 'publidoor';
 
   return (
     <div className="space-y-4">
@@ -29,7 +39,7 @@ export function LoginPanelChannelForm({ config, onChange }: LoginPanelChannelFor
       <div className="space-y-2">
         <Label>Tipo de exibição</Label>
         <Select
-          value={config?.display_type || 'publidoor'}
+          value={displayType}
           onValueChange={(value) => updateConfig('display_type', value)}
         >
           <SelectTrigger>
@@ -44,6 +54,19 @@ export function LoginPanelChannelForm({ config, onChange }: LoginPanelChannelFor
           O criativo será selecionado automaticamente dos assets da campanha
         </p>
       </div>
+
+      {/* Asset Uploader */}
+      {onAssetChange && (
+        <div className="pt-2">
+          <AdImageUploader
+            value={assetUrl}
+            onChange={(url) => onAssetChange(url)}
+            onAltChange={(alt) => onAssetChange(assetUrl, alt)}
+            format={displayType === 'story' ? 'arranha-ceu' : 'arranha-ceu'}
+            label={`Criativo do Login (${displayType === 'story' ? 'Story Cover' : 'Vertical'})`}
+          />
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="login-text">Texto curto (opcional)</Label>

@@ -216,6 +216,7 @@ import WebRadioTVCampaign from "./pages/campaigns/WebRadioTVCampaign";
 import GoogleMapsLeads from "./pages/admin/campaigns/GoogleMapsLeads";
 import CampaignsUnified from "./pages/admin/campaigns/CampaignsUnified";
 import CampaignEditor from "./pages/admin/campaigns/CampaignEditor";
+import CampaignMetrics from "./pages/admin/campaigns/CampaignMetrics";
 
 import TransporteEscolarHome from "./pages/transporte-escolar/TransporteEscolarHome";
 import TransporteEscolarEncontrar from "./pages/transporte-escolar/TransporteEscolarEncontrar";
@@ -622,6 +623,7 @@ const App = () => (
                         <Route path="campaigns/unified" element={<CampaignsUnified />} />
                         <Route path="campaigns/new" element={<CampaignEditor />} />
                         <Route path="campaigns/edit/:id" element={<CampaignEditor />} />
+                        <Route path="campaigns/metrics/:id" element={<CampaignMetrics />} />
                         
                         {/* Transporte Escolar Admin Routes */}
                         <Route path="transporte-escolar" element={<TransporteEscolarAdmin />} />
