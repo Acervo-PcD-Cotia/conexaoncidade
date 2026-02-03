@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Edit, Trash2, ExternalLink, Eye, EyeOff } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { AdImageUploader, getFormatFromSlot } from "@/components/admin/AdImageUploader";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -286,50 +287,24 @@ export default function Ads() {
                 </div>
               </div>
 
+              <AdImageUploader
+                value={form.image_url}
+                onChange={(url) => setForm({ ...form, image_url: url })}
+                onAltChange={(alt) => setForm({ ...form, alt_text: alt })}
+                alt={form.alt_text}
+                format={getFormatFromSlot(form.slot_type)}
+                label="Imagem do Anúncio"
+                required
+              />
+
               <div>
-                <Label htmlFor="image_url">URL da Imagem *</Label>
+                <Label htmlFor="link_url">URL de Destino</Label>
                 <Input
-                  id="image_url"
-                  value={form.image_url}
-                  onChange={(e) => setForm({ ...form, image_url: e.target.value })}
+                  id="link_url"
+                  value={form.link_url}
+                  onChange={(e) => setForm({ ...form, link_url: e.target.value })}
                   placeholder="https://..."
-                  required
                 />
-              </div>
-
-              {form.image_url && (
-                <div className="overflow-hidden rounded-lg border bg-muted/50 p-4">
-                  <p className="mb-2 text-xs text-muted-foreground">Preview ({form.size})</p>
-                  <img
-                    src={form.image_url}
-                    alt="Preview"
-                    className="mx-auto h-auto max-h-32 w-auto object-contain"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = "/placeholder.svg";
-                    }}
-                  />
-                </div>
-              )}
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <Label htmlFor="link_url">URL de Destino</Label>
-                  <Input
-                    id="link_url"
-                    value={form.link_url}
-                    onChange={(e) => setForm({ ...form, link_url: e.target.value })}
-                    placeholder="https://..."
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="alt_text">Texto Alternativo</Label>
-                  <Input
-                    id="alt_text"
-                    value={form.alt_text}
-                    onChange={(e) => setForm({ ...form, alt_text: e.target.value })}
-                    placeholder="Descrição para acessibilidade"
-                  />
-                </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
