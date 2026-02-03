@@ -440,7 +440,45 @@
     @apply h-full bg-white transition-all duration-100 ease-linear;
   }
 
-  /* Prose styling for news content - Agência Brasil Editorial Style v2 */
+  /* ============================================
+     ARTICLE THEMED SYSTEM - Agência Brasil Style v3
+     Uses --category-color CSS variable for theming
+     ============================================ */
+
+  /* Article wrapper with category theme */
+  .article-themed {
+    --category-color: #334155; /* fallback - Geral/grafite */
+  }
+
+  /* Chapéu (category label) - underline style */
+  .article-themed .article-chapeu {
+    color: var(--category-color);
+    border-bottom: 2px solid var(--category-color);
+    display: inline-block;
+    padding-bottom: 2px;
+  }
+
+  /* Dividers use category color with transparency */
+  .article-themed .article-divider {
+    border-color: color-mix(in srgb, var(--category-color) 25%, transparent);
+  }
+
+  /* Tag chips in footer */
+  .article-themed .article-tag {
+    border-color: var(--category-color);
+    color: var(--category-color);
+  }
+
+  .article-themed .article-tag:hover {
+    background-color: var(--category-color);
+    color: white;
+    border-color: var(--category-color);
+  }
+
+  /* ============================================
+     PROSE-NEWS - Editorial Content Styling
+     ============================================ */
+
   .prose-news {
     @apply text-foreground leading-relaxed;
     max-width: 780px;
@@ -462,7 +500,13 @@
     @apply mb-5;
   }
 
-  /* H2 - Intertítulo limpo, sem decoração */
+  /* H2 - Clean intertitle with subtle category-colored border */
+  .article-themed .prose-news h2 {
+    @apply text-xl font-bold mt-10 mb-4 pb-2 text-foreground;
+    border-bottom: 1px solid color-mix(in srgb, var(--category-color) 20%, transparent);
+    scroll-margin-top: 100px;
+  }
+
   .prose-news h2 {
     @apply text-xl font-bold mt-10 mb-4 text-foreground;
     border: none;
@@ -482,7 +526,26 @@
     @apply mb-2;
   }
 
-  /* Blockquote - Agência Brasil Style (dark blue border) */
+  /* List markers use category color */
+  .article-themed .prose-news ul {
+    list-style-type: disc;
+  }
+
+  .article-themed .prose-news li::marker {
+    color: var(--category-color);
+  }
+
+  /* Blockquote - Uses category color for border */
+  .article-themed .prose-news blockquote {
+    @apply border-l-4 pl-6 py-6 my-10 text-xl;
+    border-left-color: var(--category-color);
+    background: hsl(var(--muted) / 0.2);
+    color: hsl(var(--foreground) / 0.9);
+    font-style: italic;
+    line-height: 1.6;
+  }
+
+  /* Default blockquote (fallback) */
   .prose-news blockquote {
     @apply border-l-4 pl-6 py-6 my-10 text-xl;
     border-color: #1a3c6e;
@@ -507,7 +570,20 @@
     border-radius: 0;
   }
 
-  /* Links - Bold + Underline (Agência Brasil style) */
+  /* Links - Category colored, bold, underlined */
+  .article-themed .prose-news a {
+    color: var(--category-color);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: filter 0.15s ease;
+  }
+
+  .article-themed .prose-news a:hover {
+    filter: brightness(0.85);
+  }
+
+  /* Default links (fallback) */
   .prose-news a {
     @apply font-bold underline transition-colors;
     color: hsl(var(--foreground));

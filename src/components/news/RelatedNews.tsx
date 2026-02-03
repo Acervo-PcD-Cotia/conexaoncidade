@@ -3,6 +3,7 @@ import { NewsItem } from '@/hooks/useNews';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getCategoryDisplay } from '@/utils/categoryDisplay';
+import { getCategoryTheme } from '@/lib/categoryTheme';
 
 interface RelatedNewsProps {
   news: NewsItem[];
@@ -24,47 +25,57 @@ export function RelatedNews({ news }: RelatedNewsProps) {
 
       {/* Grid Layout */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-        {news.map((item) => (
-          <Link
-            key={item.id}
-            to={`/noticia/${item.slug}`}
-            className="group"
-          >
-            <article className="space-y-3">
-              {/* Compact Square Image */}
-              <div className="aspect-[4/3] overflow-hidden bg-muted">
-                <img
-                  src={item.featured_image_url || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400'}
-                  alt={item.image_alt || item.title}
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-              </div>
-              
-              {/* Content */}
-              <div className="space-y-1.5">
-                {item.category && (
-                  <span
-                    className="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 text-white"
-                    style={{ backgroundColor: item.category.color }}
-                  >
-                    {getCategoryDisplay(item.category.name, item.tags?.map(t => t.name) || [], item.source)}
-                  </span>
-                )}
-                <h4 className="text-sm font-semibold line-clamp-3 group-hover:text-primary transition-colors leading-snug">
-                  {item.title}
-                </h4>
-                {item.published_at && (
-                  <time className="text-[11px] text-muted-foreground block">
-                    {formatDistanceToNow(new Date(item.published_at), {
-                      addSuffix: true,
-                      locale: ptBR,
-                    })}
-                  </time>
-                )}
-              </div>
-            </article>
-          </Link>
-        ))}
+        {news.map((item) => {
+          const categoryTheme = getCategoryTheme(
+            item.category?.name || 'Geral',
+            item.category?.color || null
+          );
+
+          return (
+            <Link
+              key={item.id}
+              to={`/noticia/${item.slug}`}
+              className="group"
+            >
+              <article className="space-y-3">
+                {/* Compact Square Image */}
+                <div className="aspect-[4/3] overflow-hidden bg-muted">
+                  <img
+                    src={item.featured_image_url || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400'}
+                    alt={item.image_alt || item.title}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                </div>
+                
+                {/* Content */}
+                <div className="space-y-1.5">
+                  {item.category && (
+                    <span
+                      className="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border"
+                      style={{ 
+                        borderColor: categoryTheme.color,
+                        color: categoryTheme.color,
+                      }}
+                    >
+                      {getCategoryDisplay(item.category.name, item.tags?.map(t => t.name) || [], item.source)}
+                    </span>
+                  )}
+                  <h4 className="text-sm font-semibold line-clamp-3 group-hover:text-primary transition-colors leading-snug">
+                    {item.title}
+                  </h4>
+                  {item.published_at && (
+                    <time className="text-[11px] text-muted-foreground block">
+                      {formatDistanceToNow(new Date(item.published_at), {
+                        addSuffix: true,
+                        locale: ptBR,
+                      })}
+                    </time>
+                  )}
+                </div>
+              </article>
+            </Link>
+          );
+        })}
       </div>
     </section>
   );
