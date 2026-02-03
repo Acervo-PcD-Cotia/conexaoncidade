@@ -301,6 +301,104 @@ export type Database = {
           },
         ]
       }
+      anunciantes: {
+        Row: {
+          bairros_atuacao: string[] | null
+          capa_url: string | null
+          cidade_base: string | null
+          created_at: string
+          creci: string | null
+          email: string | null
+          facebook: string | null
+          id: string
+          instagram: string | null
+          is_active: boolean | null
+          is_verified: boolean | null
+          logo_url: string | null
+          nome: string
+          plano: Database["public"]["Enums"]["anunciante_plano"]
+          rating_avg: number | null
+          rating_count: number | null
+          slug: string
+          sobre_html: string | null
+          telefone: string | null
+          tenant_id: string | null
+          tipo: Database["public"]["Enums"]["anunciante_tipo"]
+          total_imoveis: number | null
+          total_leads: number | null
+          updated_at: string
+          user_id: string | null
+          website: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          bairros_atuacao?: string[] | null
+          capa_url?: string | null
+          cidade_base?: string | null
+          created_at?: string
+          creci?: string | null
+          email?: string | null
+          facebook?: string | null
+          id?: string
+          instagram?: string | null
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          logo_url?: string | null
+          nome: string
+          plano?: Database["public"]["Enums"]["anunciante_plano"]
+          rating_avg?: number | null
+          rating_count?: number | null
+          slug: string
+          sobre_html?: string | null
+          telefone?: string | null
+          tenant_id?: string | null
+          tipo?: Database["public"]["Enums"]["anunciante_tipo"]
+          total_imoveis?: number | null
+          total_leads?: number | null
+          updated_at?: string
+          user_id?: string | null
+          website?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          bairros_atuacao?: string[] | null
+          capa_url?: string | null
+          cidade_base?: string | null
+          created_at?: string
+          creci?: string | null
+          email?: string | null
+          facebook?: string | null
+          id?: string
+          instagram?: string | null
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          logo_url?: string | null
+          nome?: string
+          plano?: Database["public"]["Enums"]["anunciante_plano"]
+          rating_avg?: number | null
+          rating_count?: number | null
+          slug?: string
+          sobre_html?: string | null
+          telefone?: string | null
+          tenant_id?: string | null
+          tipo?: Database["public"]["Enums"]["anunciante_tipo"]
+          total_imoveis?: number | null
+          total_leads?: number | null
+          updated_at?: string
+          user_id?: string | null
+          website?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anunciantes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       article_versions: {
         Row: {
           article_id: string
@@ -1423,6 +1521,101 @@ export type Database = {
           },
           {
             foreignKeyName: "autopost_sources_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bairros_guia: {
+        Row: {
+          cidade: string
+          comercio: string | null
+          created_at: string
+          descricao_html: string | null
+          escolas: string | null
+          faixa_preco_aluguel_max: number | null
+          faixa_preco_aluguel_min: number | null
+          faixa_preco_venda_max: number | null
+          faixa_preco_venda_min: number | null
+          galeria: string[] | null
+          id: string
+          imagem_capa: string | null
+          infraestrutura: string | null
+          is_active: boolean | null
+          lat: number | null
+          lazer: string | null
+          lng: number | null
+          mobilidade: string | null
+          nome: string
+          perfil_publico: string | null
+          seguranca: string | null
+          seo_description: string | null
+          seo_title: string | null
+          slug: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          cidade: string
+          comercio?: string | null
+          created_at?: string
+          descricao_html?: string | null
+          escolas?: string | null
+          faixa_preco_aluguel_max?: number | null
+          faixa_preco_aluguel_min?: number | null
+          faixa_preco_venda_max?: number | null
+          faixa_preco_venda_min?: number | null
+          galeria?: string[] | null
+          id?: string
+          imagem_capa?: string | null
+          infraestrutura?: string | null
+          is_active?: boolean | null
+          lat?: number | null
+          lazer?: string | null
+          lng?: number | null
+          mobilidade?: string | null
+          nome: string
+          perfil_publico?: string | null
+          seguranca?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cidade?: string
+          comercio?: string | null
+          created_at?: string
+          descricao_html?: string | null
+          escolas?: string | null
+          faixa_preco_aluguel_max?: number | null
+          faixa_preco_aluguel_min?: number | null
+          faixa_preco_venda_max?: number | null
+          faixa_preco_venda_min?: number | null
+          galeria?: string[] | null
+          id?: string
+          imagem_capa?: string | null
+          infraestrutura?: string | null
+          is_active?: boolean | null
+          lat?: number | null
+          lazer?: string | null
+          lng?: number | null
+          mobilidade?: string | null
+          nome?: string
+          perfil_publico?: string | null
+          seguranca?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bairros_guia_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "sites"
@@ -3065,6 +3258,44 @@ export type Database = {
           },
           {
             foreignKeyName: "broadcasts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      buscas_imoveis_salvas: {
+        Row: {
+          created_at: string
+          filtros: Json
+          id: string
+          nome: string
+          notificar: boolean | null
+          tenant_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          filtros: Json
+          id?: string
+          nome: string
+          notificar?: boolean | null
+          tenant_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          filtros?: Json
+          id?: string
+          nome?: string
+          notificar?: boolean | null
+          tenant_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buscas_imoveis_salvas_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "sites"
@@ -6249,6 +6480,35 @@ export type Database = {
           },
         ]
       }
+      favoritos_imoveis: {
+        Row: {
+          created_at: string
+          id: string
+          imovel_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          imovel_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          imovel_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favoritos_imoveis_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fiscal_profiles: {
         Row: {
           address_json: Json | null
@@ -8052,6 +8312,218 @@ export type Database = {
           },
         ]
       }
+      imagens_imovel: {
+        Row: {
+          alt: string | null
+          created_at: string
+          id: string
+          imovel_id: string
+          is_capa: boolean | null
+          ordem: number | null
+          url: string
+        }
+        Insert: {
+          alt?: string | null
+          created_at?: string
+          id?: string
+          imovel_id: string
+          is_capa?: boolean | null
+          ordem?: number | null
+          url: string
+        }
+        Update: {
+          alt?: string | null
+          created_at?: string
+          id?: string
+          imovel_id?: string
+          is_capa?: boolean | null
+          ordem?: number | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "imagens_imovel_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      imoveis: {
+        Row: {
+          aceita_financiamento: boolean | null
+          aceita_permuta: boolean | null
+          anunciante_id: string | null
+          area_construida: number | null
+          area_terreno: number | null
+          bairro: string
+          banheiros: number | null
+          cep: string | null
+          cidade: string
+          codigo: string | null
+          complemento: string | null
+          condominio_valor: number | null
+          created_at: string
+          descricao_html: string | null
+          destaque: boolean | null
+          endereco: string | null
+          expires_at: string | null
+          external_id: string | null
+          external_source: string | null
+          favoritos_count: number | null
+          features: Json | null
+          finalidade: Database["public"]["Enums"]["imovel_finalidade"]
+          id: string
+          iptu_valor: number | null
+          is_condominio: boolean | null
+          lancamento: boolean | null
+          lat: number | null
+          leads_count: number | null
+          lng: number | null
+          mostrar_endereco_exato: boolean | null
+          numero: string | null
+          preco: number | null
+          preco_anterior: number | null
+          preco_m2: number | null
+          proximidades: Json | null
+          published_at: string | null
+          quartos: number | null
+          seo_description: string | null
+          seo_title: string | null
+          slug: string
+          status: Database["public"]["Enums"]["imovel_status"]
+          suites: number | null
+          tenant_id: string | null
+          tipo: Database["public"]["Enums"]["imovel_tipo"]
+          titulo: string
+          tour_360_url: string | null
+          updated_at: string
+          vagas: number | null
+          video_url: string | null
+          views_count: number | null
+        }
+        Insert: {
+          aceita_financiamento?: boolean | null
+          aceita_permuta?: boolean | null
+          anunciante_id?: string | null
+          area_construida?: number | null
+          area_terreno?: number | null
+          bairro: string
+          banheiros?: number | null
+          cep?: string | null
+          cidade: string
+          codigo?: string | null
+          complemento?: string | null
+          condominio_valor?: number | null
+          created_at?: string
+          descricao_html?: string | null
+          destaque?: boolean | null
+          endereco?: string | null
+          expires_at?: string | null
+          external_id?: string | null
+          external_source?: string | null
+          favoritos_count?: number | null
+          features?: Json | null
+          finalidade?: Database["public"]["Enums"]["imovel_finalidade"]
+          id?: string
+          iptu_valor?: number | null
+          is_condominio?: boolean | null
+          lancamento?: boolean | null
+          lat?: number | null
+          leads_count?: number | null
+          lng?: number | null
+          mostrar_endereco_exato?: boolean | null
+          numero?: string | null
+          preco?: number | null
+          preco_anterior?: number | null
+          preco_m2?: number | null
+          proximidades?: Json | null
+          published_at?: string | null
+          quartos?: number | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug: string
+          status?: Database["public"]["Enums"]["imovel_status"]
+          suites?: number | null
+          tenant_id?: string | null
+          tipo?: Database["public"]["Enums"]["imovel_tipo"]
+          titulo: string
+          tour_360_url?: string | null
+          updated_at?: string
+          vagas?: number | null
+          video_url?: string | null
+          views_count?: number | null
+        }
+        Update: {
+          aceita_financiamento?: boolean | null
+          aceita_permuta?: boolean | null
+          anunciante_id?: string | null
+          area_construida?: number | null
+          area_terreno?: number | null
+          bairro?: string
+          banheiros?: number | null
+          cep?: string | null
+          cidade?: string
+          codigo?: string | null
+          complemento?: string | null
+          condominio_valor?: number | null
+          created_at?: string
+          descricao_html?: string | null
+          destaque?: boolean | null
+          endereco?: string | null
+          expires_at?: string | null
+          external_id?: string | null
+          external_source?: string | null
+          favoritos_count?: number | null
+          features?: Json | null
+          finalidade?: Database["public"]["Enums"]["imovel_finalidade"]
+          id?: string
+          iptu_valor?: number | null
+          is_condominio?: boolean | null
+          lancamento?: boolean | null
+          lat?: number | null
+          leads_count?: number | null
+          lng?: number | null
+          mostrar_endereco_exato?: boolean | null
+          numero?: string | null
+          preco?: number | null
+          preco_anterior?: number | null
+          preco_m2?: number | null
+          proximidades?: Json | null
+          published_at?: string | null
+          quartos?: number | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug?: string
+          status?: Database["public"]["Enums"]["imovel_status"]
+          suites?: number | null
+          tenant_id?: string | null
+          tipo?: Database["public"]["Enums"]["imovel_tipo"]
+          titulo?: string
+          tour_360_url?: string | null
+          updated_at?: string
+          vagas?: number | null
+          video_url?: string | null
+          views_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "imoveis_anunciante_id_fkey"
+            columns: ["anunciante_id"]
+            isOneToOne: false
+            referencedRelation: "anunciantes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "imoveis_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       import_subscriptions: {
         Row: {
           allowed_hours: Json | null
@@ -8625,6 +9097,106 @@ export type Database = {
             columns: ["style_profile_id"]
             isOneToOne: false
             referencedRelation: "journalist_style_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads_imoveis: {
+        Row: {
+          anunciante_id: string | null
+          contatado_at: string | null
+          created_at: string
+          email: string | null
+          id: string
+          imovel_id: string | null
+          intencao: Database["public"]["Enums"]["lead_intencao"] | null
+          ip_hash: string | null
+          mensagem: string | null
+          nome: string
+          notas: string | null
+          orcamento: number | null
+          origem: string | null
+          pagina_origem: string | null
+          prazo: string | null
+          status: Database["public"]["Enums"]["lead_imovel_status"]
+          telefone: string | null
+          tenant_id: string | null
+          updated_at: string
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          anunciante_id?: string | null
+          contatado_at?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          imovel_id?: string | null
+          intencao?: Database["public"]["Enums"]["lead_intencao"] | null
+          ip_hash?: string | null
+          mensagem?: string | null
+          nome: string
+          notas?: string | null
+          orcamento?: number | null
+          origem?: string | null
+          pagina_origem?: string | null
+          prazo?: string | null
+          status?: Database["public"]["Enums"]["lead_imovel_status"]
+          telefone?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          anunciante_id?: string | null
+          contatado_at?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          imovel_id?: string | null
+          intencao?: Database["public"]["Enums"]["lead_intencao"] | null
+          ip_hash?: string | null
+          mensagem?: string | null
+          nome?: string
+          notas?: string | null
+          orcamento?: number | null
+          origem?: string | null
+          pagina_origem?: string | null
+          prazo?: string | null
+          status?: Database["public"]["Enums"]["lead_imovel_status"]
+          telefone?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_imoveis_anunciante_id_fkey"
+            columns: ["anunciante_id"]
+            isOneToOne: false
+            referencedRelation: "anunciantes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_imoveis_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_imoveis_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
             referencedColumns: ["id"]
           },
         ]
@@ -13019,6 +13591,7 @@ export type Database = {
         Returns: undefined
       }
       increment_classified_views: { Args: { p_id: string }; Returns: undefined }
+      increment_imovel_views: { Args: { p_id: string }; Returns: undefined }
       increment_job_views: { Args: { p_id: string }; Returns: undefined }
       increment_link_clicks: { Args: { p_link_id: string }; Returns: undefined }
       is_admin_or_editor: { Args: { _user_id: string }; Returns: boolean }
@@ -13074,6 +13647,8 @@ export type Database = {
       }
     }
     Enums: {
+      anunciante_plano: "free" | "pro" | "partner"
+      anunciante_tipo: "corretor" | "imobiliaria"
       app_role:
         | "super_admin"
         | "admin"
@@ -13135,8 +13710,36 @@ export type Database = {
         | "FALSO"
         | "NAO_VERIFICAVEL_AINDA"
       highlight_type: "none" | "home" | "urgent" | "featured"
+      imovel_finalidade: "venda" | "aluguel" | "venda_aluguel"
+      imovel_status:
+        | "rascunho"
+        | "pendente"
+        | "ativo"
+        | "vendido"
+        | "alugado"
+        | "inativo"
+      imovel_tipo:
+        | "casa"
+        | "apartamento"
+        | "terreno"
+        | "comercial"
+        | "chacara"
+        | "cobertura"
+        | "studio"
+        | "kitnet"
+        | "galpao"
+        | "sala_comercial"
       import_mode: "manual" | "auto" | "auto_with_approval"
       imported_article_status: "inbox" | "published" | "rejected"
+      lead_imovel_status:
+        | "novo"
+        | "contatado"
+        | "qualificado"
+        | "visita_agendada"
+        | "proposta"
+        | "fechado"
+        | "perdido"
+      lead_intencao: "comprar" | "alugar" | "investir" | "avaliar"
       news_origin: "manual" | "ai"
       news_status:
         | "draft"
@@ -13290,6 +13893,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      anunciante_plano: ["free", "pro", "partner"],
+      anunciante_tipo: ["corretor", "imobiliaria"],
       app_role: [
         "super_admin",
         "admin",
@@ -13358,8 +13963,39 @@ export const Constants = {
         "NAO_VERIFICAVEL_AINDA",
       ],
       highlight_type: ["none", "home", "urgent", "featured"],
+      imovel_finalidade: ["venda", "aluguel", "venda_aluguel"],
+      imovel_status: [
+        "rascunho",
+        "pendente",
+        "ativo",
+        "vendido",
+        "alugado",
+        "inativo",
+      ],
+      imovel_tipo: [
+        "casa",
+        "apartamento",
+        "terreno",
+        "comercial",
+        "chacara",
+        "cobertura",
+        "studio",
+        "kitnet",
+        "galpao",
+        "sala_comercial",
+      ],
       import_mode: ["manual", "auto", "auto_with_approval"],
       imported_article_status: ["inbox", "published", "rejected"],
+      lead_imovel_status: [
+        "novo",
+        "contatado",
+        "qualificado",
+        "visita_agendada",
+        "proposta",
+        "fechado",
+        "perdido",
+      ],
+      lead_intencao: ["comprar", "alugar", "investir", "avaliar"],
       news_origin: ["manual", "ai"],
       news_status: [
         "draft",
