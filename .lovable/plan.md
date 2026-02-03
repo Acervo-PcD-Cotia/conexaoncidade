@@ -1,171 +1,414 @@
 
-# Relatório de Auditoria e Plano de Conclusão: Publicidade & Monetização 360
 
-## Estado Atual do Sistema
+# Plano de Implementação: Módulo Comprovantes de Campanha
 
-Após análise detalhada do código, identifiquei o que já está implementado e o que ainda precisa ser finalizado para atingir 100% de funcionalidade.
+## Resumo Executivo
 
----
+Criar um módulo completo para cadastrar campanhas publicitárias e gerar automaticamente PDFs de Comprovante de Veiculação e Relatório Google Analytics, com upload de prints, métricas manuais opcionais e histórico de versões.
 
-## Itens Implementados (Funcionando)
-
-| Módulo | Status | Detalhes |
-|--------|--------|----------|
-| **Menu Campanhas 360** | OK | Item "Campanhas 360" adicionado em `AdminSidebar.tsx` com badge "Novo" |
-| **CampaignsHub.tsx** | OK | Card "Campanhas 360" com stats dinâmicos do DB |
-| **CampaignsUnified.tsx** | OK | Lista de campanhas com CRUD completo |
-| **CampaignEditor.tsx** | OK | Formulário multi-canal com ciclos |
-| **Parceiros Inbox** | OK | Usando `useSyndicationInbox` - mock removido |
-| **Parceiros Manage** | OK | Usando `usePartnerRelationships` - mock removido |
-| **Parceiros Pitches** | OK | Usando `usePitchRequests` - mock removido |
-| **Publidoor Locations** | OK | CRUD completo implementado |
-| **Publidoor Templates** | OK | CRUD completo com preview |
-| **Publidoor Schedules** | OK | CRUD completo com tipos de agendamento |
-| **trackCampaignEvent.ts** | OK | Helper unificado para métricas |
-| **WebStoriesViewer.tsx** | OK | Viewer fullscreen com tracking |
-| **InlineAdSlot.tsx** | OK | Usando trackCampaignEvent |
-| **ExitIntentModal.tsx** | OK | Integrado com campanhas 360 |
-| **LoginPanelAd.tsx** | OK | Integrado com campanhas 360 |
-| **Ads.tsx** | OK | Campos campaign_id e managed_by_campaign |
-| **Banners.tsx** | OK | Campos campaign_id e managed_by_campaign |
-| **Edge Function campaign-push** | OK | Registra eventos e atualiza ciclos |
-| **Edge Function campaign-newsletter** | OK | Registra eventos e atualiza ciclos |
-| **Tabelas DB** | OK | Todas criadas: campaigns_unified, campaign_cycles, campaign_channels, campaign_assets, campaign_events, publidoor_locations, publidoor_templates, publidoor_schedules |
+Este módulo é **independente** do sistema "Campanhas 360" existente, focado especificamente em **documentação comprobatória** para clientes e agências.
 
 ---
 
-## Itens Pendentes para 100% Funcionalidade
+## Arquitetura Proposta
 
-### Categoria A: Integrações Faltantes (Prioridade Alta)
-
-#### 1. InlineAdSlot não está integrado em templates de matérias
-**Problema**: O componente existe e funciona, mas não está sendo renderizado nas páginas de artigos/matérias do portal.
-
-**Solução**: Integrar o `InlineAdSlot` no componente de visualização de artigos (`NewsDetail.tsx` ou similar) para exibir anúncios entre parágrafos.
-
-#### 2. WebStoriesViewer não está acessível no site público
-**Problema**: O viewer existe mas não há rota pública ou integração na home/matérias.
-
-**Solução**: 
-- Criar rota `/stories/:id` para visualização individual
-- Adicionar slot na home para exibir WebStories de campanhas
-- Opcionalmente integrar como opção secundária no Exit-Intent
-
-#### 3. Push Notifications faltam envio real
-**Problema**: A Edge Function `campaign-push` registra eventos mas não usa web-push para envio real. Falta `VAPID_PRIVATE_KEY`.
-
-**Solução**: 
-- Configurar chaves VAPID no ambiente
-- Implementar envio real usando biblioteca web-push
-- Criar UI no frontend para disparar push por ciclo
-
-#### 4. Newsletter falta integração com serviço de email
-**Problema**: A Edge Function `campaign-newsletter` registra eventos mas não envia emails reais.
-
-**Solução**:
-- Integrar com Resend, SendGrid ou outro serviço
-- Configurar API key no ambiente
-- Implementar template de email HTML
-
----
-
-### Categoria B: Melhorias de UX (Prioridade Média)
-
-#### 5. BatchAssetUploader precisa validação de upload real
-**Problema**: O componente existe mas precisa garantir que o upload para Storage está funcionando end-to-end com criação de registros em `campaign_assets`.
-
-**Solução**: Testar e validar fluxo completo de upload em lote.
-
-#### 6. Service Worker para Push não está registrado
-**Problema**: Falta arquivo `public/sw.js` para receber push notifications no browser.
-
-**Solução**: Criar Service Worker com handlers para push e notificationclick.
-
-#### 7. UI para disparar Push/Newsletter por ciclo
-**Problema**: As Edge Functions existem mas falta UI amigável no CampaignEditor para disparar envios.
-
-**Solução**: Adicionar botões "Enviar Push" e "Enviar Newsletter" no CycleSelectorCard.
-
----
-
-### Categoria C: Integrações Opcionais (Prioridade Baixa)
-
-#### 8. Publidoor Items não tem campo campaign_id
-**Problema**: A tabela `publidoor_items` precisa de campo para vincular a campanhas 360.
-
-**Solução**: Migration para adicionar `campaign_id` e atualizar formulário.
-
----
-
-## Plano de Implementação
-
-### Fase 1: Integrações Front-End Críticas
-
-1. Integrar InlineAdSlot em NewsDetail/ArticleView
-2. Criar rota pública para WebStories
-3. Adicionar slot de WebStories na home
-
-### Fase 2: Push e Newsletter End-to-End
-
-4. Criar `public/sw.js` (Service Worker)
-5. Atualizar Edge Function `campaign-push` para envio real
-6. Adicionar UI de disparo no CycleSelectorCard
-
-### Fase 3: Validações e Testes
-
-7. Testar fluxo completo de upload de assets
-8. Testar exibição de campanhas em todos os canais
-9. Validar gravação de métricas em campaign_events
-
----
-
-## Arquivos a Criar/Modificar
-
-| Arquivo | Ação | Descrição |
-|---------|------|-----------|
-| `src/pages/NewsDetail.tsx` | Modificar | Integrar InlineAdSlot |
-| `src/pages/WebStoryViewer.tsx` | Criar | Página pública para stories |
-| `src/App.tsx` | Modificar | Adicionar rota /stories/:id |
-| `public/sw.js` | Criar | Service Worker para push |
-| `src/components/admin/campaigns/CycleSelectorCard.tsx` | Modificar | Botões de disparo Push/Newsletter |
-| `supabase/functions/campaign-push/index.ts` | Modificar | Implementar web-push real |
-
----
-
-## Migrações Pendentes
-
-Nenhuma migração de banco é estritamente necessária - todas as tabelas já existem. Opcionalmente:
-
-```sql
--- Opcional: Adicionar campaign_id em publidoor_items
-ALTER TABLE publidoor_items 
-  ADD COLUMN IF NOT EXISTS campaign_id UUID REFERENCES campaigns_unified(id) ON DELETE SET NULL;
+```text
+┌──────────────────────────────────────────────────────────────────┐
+│                    MÓDULO COMPROVANTES                           │
+├──────────────────────────────────────────────────────────────────┤
+│  UI (React + Tailwind)                                           │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────────────────┐    │
+│  │ Lista       │ │ Editor      │ │ Exportação/Preview      │    │
+│  │ Campanhas   │ │ Multi-Abas  │ │ PDF                     │    │
+│  └─────────────┘ └─────────────┘ └─────────────────────────┘    │
+├──────────────────────────────────────────────────────────────────┤
+│  Hooks (TanStack Query)                                          │
+│  useCampaignProofs, useProofChannels, useProofAssets, etc.      │
+├──────────────────────────────────────────────────────────────────┤
+│  Edge Function: generate-campaign-proof                          │
+│  - Gera PDF A4 com template HTML renderizado                     │
+│  - Salva em Storage bucket "campaign-proofs"                     │
+├──────────────────────────────────────────────────────────────────┤
+│  Supabase                                                        │
+│  ┌──────────────┐ ┌───────────────────┐ ┌──────────────────┐    │
+│  │ Tabelas      │ │ Storage           │ │ RLS Policies     │    │
+│  │ (5 novas)    │ │ campaign-proofs   │ │ Admin only       │    │
+│  └──────────────┘ └───────────────────┘ └──────────────────┘    │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Critérios de Aceite Final
+## Fase 1: Database (Migrations)
 
-O sistema estará 100% completo quando:
+### Tabelas a Criar
 
-1. Menu "Campanhas 360" visível e acessível
-2. Parceiros (Inbox/Manage/Pitches) sem mock data
-3. Publidoor com CRUD completo (Locations/Templates/Schedules)
-4. InlineAdSlot exibindo em matérias reais
-5. WebStories acessíveis em rota pública
-6. Exit-Intent e Login Panel funcionando
-7. trackCampaignEvent gravando métricas
-8. Push/Newsletter com UI de disparo
-9. Ads e Banners vinculáveis a campanhas 360
+#### 1. campaign_proofs (tabela principal)
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | uuid PK | ID único |
+| client_name | text NOT NULL | Nome do cliente |
+| campaign_name | text NOT NULL | Nome da campanha |
+| insertion_order | text NOT NULL | Pedido de Inserção (PI) |
+| internal_number | text NULL | Número interno opcional |
+| internal_code | text NULL | Código interno opcional |
+| site_name | text DEFAULT 'Jornal Conexão na Cidade' | Nome do veículo |
+| site_domain | text DEFAULT 'www.conexaonacidade.com.br' | Domínio |
+| start_date | date NOT NULL | Data início |
+| end_date | date NOT NULL | Data fim |
+| status | text CHECK (draft, final, sent) | Status atual |
+| created_by | uuid FK auth.users | Criador |
+| created_at | timestamptz | Criação |
+| updated_at | timestamptz | Atualização |
+
+#### 2. campaign_proof_channels (canais de veiculação)
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | uuid PK | ID único |
+| campaign_proof_id | uuid FK CASCADE | Ref campanha |
+| channel_name | text NOT NULL | Ex: "Site", "Newsletter", "Redes Sociais" |
+| channel_value | text NULL | Valor ou descrição |
+| channel_metric | text NULL | Métrica associada |
+| sort_order | int DEFAULT 0 | Ordem de exibição |
+
+#### 3. campaign_proof_assets (prints e imagens)
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | uuid PK | ID único |
+| campaign_proof_id | uuid FK CASCADE | Ref campanha |
+| asset_type | text CHECK | VEICULACAO_PRINT, ANALYTICS_PRINT, CAPA_IMAGEM |
+| file_path | text NOT NULL | Caminho no Storage |
+| file_url | text NOT NULL | URL pública/signed |
+| caption | text NULL | Legenda opcional |
+| sort_order | int DEFAULT 0 | Ordem de exibição |
+| created_at | timestamptz | Upload timestamp |
+
+#### 4. campaign_proof_analytics (métricas manuais)
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| campaign_proof_id | uuid PK FK | 1:1 com campaign_proofs |
+| users | int NULL | Usuários |
+| new_users | int NULL | Novos usuários |
+| pageviews | int NULL | Visualizações |
+| unique_pageviews | int NULL | Visualizações únicas |
+| sessions | int NULL | Sessões |
+| bounce_rate | numeric(5,2) NULL | Taxa de rejeição |
+| avg_time | text NULL | Tempo médio |
+| entrances | int NULL | Entradas |
+| show_on_pdf | boolean DEFAULT false | Exibir no PDF |
+| notes | text NULL | Observações |
+
+#### 5. campaign_proof_documents (PDFs gerados)
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | uuid PK | ID único |
+| campaign_proof_id | uuid FK CASCADE | Ref campanha |
+| doc_type | text CHECK | VEICULACAO, ANALYTICS, BOTH_ZIP |
+| version | int DEFAULT 1 | Versão do documento |
+| file_path | text NOT NULL | Caminho no Storage |
+| file_url | text NULL | URL signed |
+| file_size | bigint NULL | Tamanho em bytes |
+| created_at | timestamptz | Geração timestamp |
+
+### RLS Policies
+- Somente usuários com role admin/editor podem acessar
+- Usar função `is_admin_or_editor(auth.uid())` existente
 
 ---
 
-## Resumo Executivo
+## Fase 2: Storage Bucket
 
-**Implementado**: 85% do sistema está funcional
-**Pendente**: Integrações de exibição no site público + Push/Newsletter end-to-end
+### Criar bucket: campaign-proofs (privado)
 
-O sistema de campanhas 360 está praticamente pronto. As principais pendências são:
-- Integrar os componentes de display (InlineAdSlot, WebStories) nas páginas públicas
-- Finalizar o fluxo real de Push e Newsletter
-- Criar UI amigável para disparar envios por ciclo
+Estrutura de diretórios:
+```text
+campaign-proofs/
+├── {campaign_id}/
+│   ├── veiculacao/          # Prints de veiculação
+│   │   ├── print-001.jpg
+│   │   └── print-002.png
+│   ├── analytics/           # Prints do Analytics
+│   │   ├── overview.png
+│   │   └── sources.png
+│   └── generated/           # PDFs gerados
+│       ├── veiculacao-v1.pdf
+│       ├── veiculacao-v2.pdf
+│       └── analytics-v1.pdf
+```
+
+### Policies
+- INSERT: admin/editor autenticado
+- SELECT: admin/editor autenticado
+- DELETE: admin apenas
+
+---
+
+## Fase 3: Tipos TypeScript + Hooks
+
+### Arquivo: src/types/campaign-proofs.ts
+
+Tipos principais:
+- CampaignProof
+- CampaignProofChannel
+- CampaignProofAsset
+- CampaignProofAnalytics
+- CampaignProofDocument
+- CreateCampaignProofInput
+- UpdateCampaignProofInput
+
+### Arquivo: src/hooks/useCampaignProofs.ts
+
+Hooks a implementar:
+- `useCampaignProofs(filters)` - Lista com busca/filtros
+- `useCampaignProof(id)` - Detalhes completos
+- `useCreateCampaignProof()` - Criar campanha
+- `useUpdateCampaignProof()` - Atualizar campanha
+- `useDeleteCampaignProof()` - Excluir campanha
+- `useDuplicateCampaignProof()` - Duplicar campanha
+
+### Arquivo: src/hooks/useCampaignProofChannels.ts
+
+- `useProofChannels(campaignId)` - Listar canais
+- `useCreateProofChannel()` - Adicionar canal
+- `useUpdateProofChannel()` - Editar canal
+- `useDeleteProofChannel()` - Remover canal
+- `useReorderProofChannels()` - Reordenar (drag & drop)
+- `useApplyDefaultChannels()` - Aplicar modelo Conexão
+
+### Arquivo: src/hooks/useCampaignProofAssets.ts
+
+- `useProofAssets(campaignId, type?)` - Listar assets
+- `useUploadProofAsset()` - Upload com progresso
+- `useDeleteProofAsset()` - Remover asset
+- `useReorderProofAssets()` - Reordenar
+
+### Arquivo: src/hooks/useCampaignProofAnalytics.ts
+
+- `useProofAnalytics(campaignId)` - Buscar métricas
+- `useUpsertProofAnalytics()` - Criar/Atualizar métricas
+
+### Arquivo: src/hooks/useCampaignProofDocuments.ts
+
+- `useProofDocuments(campaignId)` - Histórico de PDFs
+- `useGenerateProofPDF()` - Chamar Edge Function
+- `useDownloadProofDocument()` - Baixar PDF com signed URL
+
+---
+
+## Fase 4: UI (Páginas e Componentes)
+
+### Rotas a Adicionar (App.tsx)
+
+| Rota | Componente | Descrição |
+|------|------------|-----------|
+| /admin/comprovantes | CampaignProofsList | Lista de campanhas |
+| /admin/comprovantes/novo | CampaignProofEditor | Criar nova |
+| /admin/comprovantes/:id | CampaignProofEditor | Editar existente |
+| /admin/comprovantes/:id/exportar | CampaignProofExport | Preview e exportação |
+
+### Adicionar ao Menu (AdminSidebar.tsx)
+
+```text
+Publicidade & Monetização
+  └── Comprovantes        (novo item)
+      - Ícone: FileCheck
+      - Rota: /admin/comprovantes
+```
+
+### Componentes a Criar
+
+#### Página: CampaignProofsList.tsx
+- Header com título e botão "Nova Campanha"
+- Barra de busca (por PI, campanha, cliente)
+- Filtros: status, período
+- Tabela com colunas: Cliente, Campanha, PI, Período, Status, Ações
+- Ações: Editar, Duplicar, Gerar Veiculação, Gerar Analytics, Gerar Ambos, Baixar
+
+#### Página: CampaignProofEditor.tsx
+- Tabs: Dados | Canais | Veiculação | Analytics | Exportação
+- Tab Dados: Formulário com campos da campanha
+- Tab Canais: Lista editável + botão "Modelo Padrão Conexão"
+- Tab Veiculação: Upload múltiplo + drag-to-reorder + preview
+- Tab Analytics: Upload prints + campos manuais + toggle "exibir no PDF"
+- Tab Exportação: Botões de geração + histórico de versões
+
+#### Componentes Auxiliares
+
+| Componente | Função |
+|------------|--------|
+| ProofDataForm | Formulário de dados básicos |
+| ProofChannelsList | Lista editável de canais |
+| ProofAssetUploader | Upload múltiplo com preview |
+| ProofAnalyticsForm | Formulário de métricas manuais |
+| ProofExportPanel | Botões de geração e histórico |
+| ProofDocumentCard | Card de documento gerado |
+
+---
+
+## Fase 5: Edge Function (Geração de PDF)
+
+### Arquivo: supabase/functions/generate-campaign-proof/index.ts
+
+#### Input
+```json
+{
+  "campaign_proof_id": "uuid",
+  "doc_type": "VEICULACAO" | "ANALYTICS" | "BOTH"
+}
+```
+
+#### Processo
+
+1. **Validação**
+   - Verificar se campanha existe
+   - Para ANALYTICS: exigir pelo menos 1 print OU métricas manuais preenchidas
+
+2. **Buscar dados**
+   - Campanha + canais + assets + analytics_manual
+   - Gerar signed URLs para assets (duração: 1 hora)
+
+3. **Renderizar HTML**
+   - Template capa: título, site, PI, campanha, número/código (se houver)
+   - Página canais: lista formatada
+   - Páginas de prints: grid 2x1 ou 3x1 por página
+   - Rodapé: data de geração + domínio
+
+4. **Converter para PDF**
+   - Usar jsPDF (já disponível no projeto)
+   - Formato A4
+   - Margem 20mm
+
+5. **Salvar no Storage**
+   - Path: campaigns/{id}/generated/{tipo}-v{version}.pdf
+   - Incrementar version
+
+6. **Registrar em campaign_proof_documents**
+   - doc_type, version, file_path
+
+7. **Retornar**
+   - URL signed do PDF
+   - Metadados (version, size)
+
+#### Para doc_type = BOTH
+- Gerar ambos PDFs
+- Criar ZIP com os dois
+- Salvar ZIP no Storage
+
+### Template HTML (simplificado)
+
+```text
+┌──────────────────────────────────────────┐
+│         COMPROVANTE DE VEICULAÇÃO        │
+│                                          │
+│  Veículo: Jornal Conexão na Cidade       │
+│  Site: www.conexaonacidade.com.br        │
+│                                          │
+│  Pedido de Inserção: PI-2024-001         │
+│  Campanha: Black Friday 2024             │
+│  Cliente: Loja Exemplo                   │
+│  Período: 15/11/2024 a 30/11/2024        │
+│                                          │
+│  [Número: 12345] [Código: BF2024]        │
+└──────────────────────────────────────────┘
+
+┌──────────────────────────────────────────┐
+│     PEDIDOS DE INSERÇÃO - NOSSOS CANAIS  │
+├──────────────────────────────────────────┤
+│  ● Site Principal                        │
+│  ● Newsletter Semanal (15.000 envios)    │
+│  ● Redes Sociais (Instagram, Facebook)   │
+│  ● Push Notifications                    │
+└──────────────────────────────────────────┘
+
+┌──────────────────────────────────────────┐
+│           PRINTS DE VEICULAÇÃO           │
+├──────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐        │
+│  │   Print 1   │  │   Print 2   │        │
+│  └─────────────┘  └─────────────┘        │
+│  Legenda 1         Legenda 2             │
+└──────────────────────────────────────────┘
+```
+
+---
+
+## Fase 6: Arquivos a Criar
+
+### Novos Arquivos
+
+| Arquivo | Descrição |
+|---------|-----------|
+| src/types/campaign-proofs.ts | Tipos TypeScript |
+| src/hooks/useCampaignProofs.ts | CRUD campanhas |
+| src/hooks/useCampaignProofChannels.ts | CRUD canais |
+| src/hooks/useCampaignProofAssets.ts | Upload assets |
+| src/hooks/useCampaignProofAnalytics.ts | Métricas manuais |
+| src/hooks/useCampaignProofDocuments.ts | Documentos gerados |
+| src/pages/admin/comprovantes/CampaignProofsList.tsx | Lista |
+| src/pages/admin/comprovantes/CampaignProofEditor.tsx | Editor |
+| src/components/admin/comprovantes/ProofDataForm.tsx | Form dados |
+| src/components/admin/comprovantes/ProofChannelsList.tsx | Lista canais |
+| src/components/admin/comprovantes/ProofAssetUploader.tsx | Upload |
+| src/components/admin/comprovantes/ProofAnalyticsForm.tsx | Form analytics |
+| src/components/admin/comprovantes/ProofExportPanel.tsx | Exportação |
+| src/lib/campaignProofPdf.ts | Geração de PDF client-side |
+| supabase/functions/generate-campaign-proof/index.ts | Edge Function |
+
+### Arquivos a Modificar
+
+| Arquivo | Mudança |
+|---------|---------|
+| AdminSidebar.tsx | Adicionar item "Comprovantes" |
+| App.tsx | Adicionar rotas /admin/comprovantes/* |
+| create-signed-url/index.ts | Adicionar "campaign-proofs" aos buckets permitidos |
+
+---
+
+## Fase 7: Ordem de Implementação
+
+```text
+1. [DB] Migration: Criar tabelas e RLS
+2. [DB] Storage: Criar bucket campaign-proofs + policies
+3. [TS] Criar tipos em src/types/campaign-proofs.ts
+4. [TS] Criar hooks CRUD principais
+5. [TS] Criar hooks de upload e documentos
+6. [UI] Criar página CampaignProofsList
+7. [UI] Criar página CampaignProofEditor + componentes
+8. [UI] Adicionar rotas e menu
+9. [PDF] Implementar geração client-side (jsPDF)
+10. [Edge] Criar Edge Function para geração server-side (opcional)
+11. [Test] Testar fluxo completo
+```
+
+---
+
+## Modelo Padrão de Canais (Conexão na Cidade)
+
+Ao clicar em "Aplicar Modelo Padrão", inserir:
+
+| Canal | Valor | Métrica |
+|-------|-------|---------|
+| Site Principal | Banner destaque home | Impressões |
+| Matérias Relacionadas | Inserção entre parágrafos | Visualizações |
+| Newsletter | Envio semanal | Disparos |
+| Redes Sociais | Facebook + Instagram | Alcance |
+| Push Notifications | Notificação direta | Cliques |
+| Exit-Intent | Modal de saída | Impressões |
+
+---
+
+## Critérios de Aceite
+
+O módulo estará completo quando:
+
+1. Menu "Comprovantes" visível em Publicidade & Monetização
+2. Listagem com busca, filtros e paginação funcionando
+3. Editor com todas as 5 abas funcionais
+4. Upload de prints com drag-to-reorder
+5. Métricas manuais opcionais salvando corretamente
+6. Geração de PDF de Veiculação funcionando
+7. Geração de PDF Analytics funcionando
+8. Download de ZIP com ambos funcionando
+9. Histórico de versões dos PDFs disponível
+10. Nenhum erro de console ou TypeScript
+
