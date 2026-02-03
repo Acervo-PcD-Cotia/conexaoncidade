@@ -10,21 +10,26 @@ import { NewsContentNavigator } from '@/components/news/NewsContentNavigator';
 import { ReadingProgressBar } from '@/components/news/ReadingProgressBar';
 import { FactCheckCTA } from '@/components/news/FactCheckCTA';
 import { PrintButton } from '@/components/news/PrintButton';
-import { ImageLightbox } from '@/components/ui/image-lightbox';
 import { NewsGallery } from '@/components/news/NewsGallery';
 import { InlineAdSlot } from '@/components/ads/InlineAdSlot';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ArrowLeft, RefreshCw, ZoomIn } from 'lucide-react';
+import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useReadingTracker } from '@/hooks/useReadingTracker';
 import { useNewsAnalytics } from '@/hooks/useNewsAnalytics';
 import { useAuth } from '@/contexts/AuthContext';
-import { getNewsHeaderColor } from '@/lib/colorUtils';
 import { getCategoryDisplay } from '@/utils/categoryDisplay';
+import { getCategoryTheme, getArticleThemeStyle } from '@/lib/categoryTheme';
+import { 
+  ArticleHeader, 
+  ArticleHero, 
+  ArticleContent, 
+  ArticleDivider, 
+  ArticleFooter 
+} from '@/components/article';
 
 // Error Boundary para capturar erros de renderização
 interface ErrorBoundaryProps {
@@ -217,10 +222,22 @@ function NewsDetailContent({ news }: NewsDetailContentProps) {
   const readTime = calculateReadTime(news.content);
   const wordCount = countWords(news.content);
 
-  // Dynamic header color based on category
-  const headerBgColor = useMemo(() => {
-    return getNewsHeaderColor(news.category?.color || null, news.highlight);
-  }, [news.category?.color, news.highlight]);
+  // Category theme for styled elements
+  const categoryTheme = useMemo(() => {
+    return getCategoryTheme(
+      news.category?.name || 'Geral',
+      news.category?.color || null
+    );
+  }, [news.category]);
+
+  // Category display text (e.g., "Cotia | Saúde")
+  const categoryDisplay = useMemo(() => {
+    return getCategoryDisplay(
+      news.category?.name || 'Geral',
+      news.tags?.map(t => t.name) || [],
+      news.source
+    );
+  }, [news.category, news.tags, news.source]);
 
   const metaDescription = news.meta_description || news.summary_short || news.excerpt || news.subtitle || '';
   const ogImage = news.og_image_url || news.featured_image_url || '';
@@ -317,7 +334,13 @@ function NewsDetailContent({ news }: NewsDetailContentProps) {
         Pular para o conteúdo
       </a>
 
-      <article role="article" aria-labelledby="news-title">
+      {/* Article with Category Theme */}
+      <article 
+        role="article" 
+        aria-labelledby="news-title"
+        className="article-themed"
+        style={getArticleThemeStyle(categoryTheme)}
+      >
         {/* Print Header - Hidden on screen */}
         <div className="hidden print:block news-header-print">
           <div className="news-category-print">
@@ -334,101 +357,44 @@ function NewsDetailContent({ news }: NewsDetailContentProps) {
           </div>
         </div>
 
-        {/* Dark Header - Agência Brasil Style (hidden on print) */}
-        <header 
-          className="print-hide text-white py-8 md:py-12 transition-colors duration-300"
-          style={{ backgroundColor: headerBgColor }}
-        >
-          <div className="container max-w-4xl text-center">
-            {/* Category Badge - Solid Red (Agência Brasil Style) */}
-            {news.category && (
-              <Link to={`/categoria/${news.category.slug}`}>
-                <Badge
-                  className="mb-4 bg-red-600 hover:bg-red-700 text-white border-0 text-xs uppercase tracking-widest px-3 py-1"
-                >
-                  {getCategoryDisplay(news.category.name, news.tags?.map(t => t.name) || [], news.source)}
-                </Badge>
-              </Link>
-            )}
-
-            {/* Title (H1) */}
-            <h1 
-              id="news-title"
-              className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight mb-4 px-4"
-            >
-              {news.title}
-            </h1>
-
-            {/* Subtitle / Linha Fina */}
-            {news.subtitle && (
-              <p className="text-lg md:text-xl text-white/80 leading-relaxed px-4 max-w-3xl mx-auto">
-                {news.subtitle}
-              </p>
-            )}
-          </div>
-        </header>
-
-        {/* Author & Metadata Bar */}
-        <div className="border-b bg-card">
-          <div className="container max-w-4xl py-4">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              {/* Author Info - Agência Brasil Style */}
-              <div className="space-y-1">
-                <p className="font-bold text-foreground uppercase tracking-wide text-sm">
-                  {news.author?.full_name || 'Redação'}
-                  {news.source && !news.source.startsWith('http') && (
-                    <span className="font-normal"> – {news.source}</span>
-                  )}
-                </p>
-                {news.published_at && (
-                  <p className="text-sm text-muted-foreground">
-                    Publicado em {format(new Date(news.published_at), "dd/MM/yyyy '-' HH:mm", { locale: ptBR })} • Brasília
-                  </p>
-                )}
-              </div>
-
-              {/* Share Buttons + Print */}
-              <div className="flex items-center gap-2 print-hide">
-                <ShareButtons 
-                  url={currentUrl} 
-                  title={news.title} 
-                  contentId={news.id}
-                  contentType="news"
-                  variant="circular"
-                  onShare={trackShare}
-                />
-                <PrintButton />
-              </div>
+        {/* Clean Header - Agência Brasil Style (no colored background) */}
+        <div className="print-hide bg-background">
+          <ArticleHeader
+            categoryDisplay={categoryDisplay}
+            categorySlug={news.category?.slug}
+            title={news.title}
+            subtitle={news.subtitle}
+            authorName={news.author?.full_name || 'Redação'}
+            publishedAt={news.published_at}
+            source={news.source}
+          />
+          
+          {/* Share Buttons + Print - aligned right */}
+          <div className="max-w-[820px] mx-auto px-4 md:px-6 pb-4">
+            <div className="flex items-center justify-end gap-2">
+              <ShareButtons 
+                url={currentUrl} 
+                title={news.title} 
+                contentId={news.id}
+                contentType="news"
+                variant="circular"
+                onShare={trackShare}
+              />
+              <PrintButton />
             </div>
           </div>
         </div>
 
+        <ArticleDivider />
+
         {/* Main Content Area */}
-        <div className="container max-w-4xl py-8">
-          {/* 1. Hero Image - No Rounded Corners */}
-          {news.featured_image_url && (
-            <figure className="mb-6 relative">
-              <img
-                src={news.featured_image_url}
-                alt={news.image_alt || `Imagem da notícia: ${news.title}`}
-                className="w-full object-cover aspect-video"
-                loading="eager"
-                fetchPriority="high"
-              />
-              {/* Credit overlay on image */}
-              {news.image_credit && (
-                <span className="absolute bottom-0 right-0 bg-black/70 text-white text-xs px-3 py-1.5">
-                  {news.image_credit}
-                </span>
-              )}
-              {/* Caption below image */}
-              {news.image_alt && (
-                <figcaption className="text-sm text-muted-foreground mt-3 italic">
-                  {news.image_alt}
-                </figcaption>
-              )}
-            </figure>
-          )}
+        <div className="max-w-[820px] mx-auto px-4 md:px-6 py-8">
+          {/* 1. Hero Image */}
+          <ArticleHero
+            imageUrl={news.featured_image_url}
+            imageAlt={news.image_alt}
+            imageCredit={news.image_credit}
+          />
 
           {/* 2. Audio Block - UOL/Trinity Audio Style (BEFORE summary) */}
           <div id="accessibility">
@@ -467,17 +433,11 @@ function NewsDetailContent({ news }: NewsDetailContentProps) {
             imageAlt={news.image_alt}
           />
 
-          {/* Main Content with Inline Ad */}
-          <section 
-            id="main-content"
-            aria-label="Conteúdo da matéria"
-          >
+          {/* Main Content */}
+          <section aria-label="Conteúdo da matéria">
             {news.content && (
               <>
-                <div
-                  className="prose-news text-lg mb-6"
-                  dangerouslySetInnerHTML={{ __html: news.content }}
-                />
+                <ArticleContent html={news.content} className="mb-6" />
                 {/* Inline Ad After Content - 300x250 Editorial Slot */}
                 <InlineAdSlot 
                   position={4} 
@@ -488,38 +448,14 @@ function NewsDetailContent({ news }: NewsDetailContentProps) {
             )}
           </section>
 
-          {/* Article Footer */}
-          <footer className="border-t pt-8 space-y-8 article-footer" aria-label="Informações adicionais">
-            {/* Tags */}
-            {news.tags && news.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {news.tags.map((tag) => (
-                  <Link
-                    key={tag.id}
-                    to={`/busca?tag=${tag.slug}`}
-                    className="bg-muted hover:bg-primary/10 hover:text-primary px-4 py-2 rounded-full text-sm transition-colors"
-                  >
-                    {tag.name}
-                  </Link>
-                ))}
-              </div>
-            )}
-
-            {/* Share Section - Centered */}
-            <div className="text-center py-6 border-t">
-              <p className="text-sm font-medium text-foreground mb-4">Compartilhe essa notícia</p>
-              <div className="flex justify-center">
-                <ShareButtons 
-                  url={currentUrl} 
-                  title={news.title} 
-                  contentId={news.id}
-                  contentType="news"
-                  variant="circular"
-                  onShare={trackShare}
-                />
-              </div>
-            </div>
-          </footer>
+          {/* Article Footer with Tags and Share */}
+          <ArticleFooter
+            tags={news.tags}
+            newsId={news.id}
+            newsTitle={news.title}
+            currentUrl={currentUrl}
+            onShare={trackShare}
+          />
 
           {/* Author Card */}
           {news.author && (

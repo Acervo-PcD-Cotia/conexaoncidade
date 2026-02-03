@@ -1,13 +1,14 @@
 import { Helmet } from "react-helmet-async";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Calendar, Newspaper, Trophy } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBrGeneratedNewsBySlug } from "@/hooks/useBrasileiraoNews";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { getCategoryTheme, getArticleThemeStyle } from "@/lib/categoryTheme";
+import { ArticleHeader, ArticleDivider } from "@/components/article";
 
 const NEWS_TYPE_LABELS: Record<string, string> = {
   'round_recap': 'Resumo da Rodada',
@@ -20,6 +21,9 @@ const NEWS_TYPE_LABELS: Record<string, string> = {
 export default function GeneratedNewsDetail() {
   const { slug } = useParams<{ slug: string }>();
   const { data: news, isLoading, error } = useBrGeneratedNewsBySlug(slug || '');
+
+  // Sports category theme
+  const categoryTheme = getCategoryTheme('Esportes', null);
 
   if (isLoading) {
     return (
@@ -43,6 +47,7 @@ export default function GeneratedNewsDetail() {
   }
 
   const publishedDate = news.published_at ? new Date(news.published_at) : new Date(news.created_at);
+  const categoryDisplay = `Esportes | ${NEWS_TYPE_LABELS[news.news_type] || 'Brasileirão'}`;
 
   // Schema.org for SEO
   const schema = {
@@ -83,9 +88,12 @@ export default function GeneratedNewsDetail() {
         <script type="application/ld+json">{JSON.stringify(schema)}</script>
       </Helmet>
 
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <article 
+        className="article-themed"
+        style={getArticleThemeStyle(categoryTheme)}
+      >
         {/* Back Button */}
-        <div className="mb-6">
+        <div className="max-w-[820px] mx-auto px-4 md:px-6 pt-6">
           <Button asChild variant="ghost" size="sm">
             <Link to="/esportes/brasileirao" className="flex items-center gap-2">
               <ArrowLeft className="h-4 w-4" />
@@ -95,65 +103,43 @@ export default function GeneratedNewsDetail() {
         </div>
 
         {/* Header */}
-        <header className="mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <Badge variant="outline" className="border-primary text-primary">
-              <Trophy className="h-3 w-3 mr-1" />
-              Brasileirão
-            </Badge>
-            <Badge variant="secondary">
-              {NEWS_TYPE_LABELS[news.news_type] || news.news_type}
-            </Badge>
-          </div>
-          
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-            {news.title}
-          </h1>
-          
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Calendar className="h-4 w-4" />
-              {format(publishedDate, "dd 'de' MMMM 'de' yyyy, HH:mm", { locale: ptBR })}
-            </span>
-            <span className="flex items-center gap-1">
-              <Newspaper className="h-4 w-4" />
-              Portal Conexão na Cidade
-            </span>
-          </div>
-        </header>
+        <ArticleHeader
+          categoryDisplay={categoryDisplay}
+          title={news.title}
+          authorName="Portal Conexão na Cidade"
+          publishedAt={news.published_at || news.created_at}
+        />
+
+        <ArticleDivider />
 
         {/* Content */}
-        <Card>
-          <CardContent className="p-6 md:p-8">
-            <article 
-              className="prose prose-lg dark:prose-invert max-w-none
-                prose-headings:font-bold prose-headings:tracking-tight
-                prose-p:text-foreground prose-p:leading-relaxed
-                prose-a:text-primary prose-a:font-semibold prose-a:underline
-                prose-strong:text-foreground
-                prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:italic prose-blockquote:bg-muted/50 prose-blockquote:py-2 prose-blockquote:px-4
-                prose-ul:list-disc prose-ol:list-decimal"
-              dangerouslySetInnerHTML={{ __html: news.content }}
-            />
-          </CardContent>
-        </Card>
+        <div className="max-w-[820px] mx-auto px-4 md:px-6 py-8">
+          <Card className="border-0 shadow-none">
+            <CardContent className="p-0">
+              <div 
+                className="prose-news max-w-none"
+                dangerouslySetInnerHTML={{ __html: news.content }}
+              />
+            </CardContent>
+          </Card>
 
-        {/* Related Links */}
-        <div className="mt-8 flex flex-wrap gap-4">
-          <Button asChild variant="outline">
-            <Link to="/esportes/brasileirao/serie-a">
-              Ver Tabela Completa
-            </Link>
-          </Button>
-          {news.related_round && (
-            <Button asChild variant="outline">
-              <Link to={`/esportes/brasileirao/serie-a/rodada/${news.related_round}`}>
-                Ver Rodada {news.related_round}
+          {/* Related Links */}
+          <div className="mt-8 flex flex-wrap gap-4">
+            <Button asChild variant="outline" className="article-tag">
+              <Link to="/esportes/brasileirao/serie-a">
+                Ver Tabela Completa
               </Link>
             </Button>
-          )}
+            {news.related_round && (
+              <Button asChild variant="outline" className="article-tag">
+                <Link to={`/esportes/brasileirao/serie-a/rodada/${news.related_round}`}>
+                  Ver Rodada {news.related_round}
+                </Link>
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
+      </article>
     </>
   );
 }
