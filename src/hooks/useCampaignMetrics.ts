@@ -5,6 +5,7 @@ import type {
   ChannelType, 
   EventType 
 } from '@/types/campaigns-unified';
+import { CHANNEL_TYPES } from '@/types/campaigns-unified';
 import { asJson, parseJsonObject } from '@/types/json';
 import type { Json } from '@/integrations/supabase/types';
 
@@ -80,8 +81,8 @@ export function useTrackCampaignEvent() {
         .from('campaign_events')
         .insert([{
           campaign_id: campaignId,
-          channel_type: channelType as 'ads' | 'publidoor' | 'webstories',
-          event_type: eventType as 'impression' | 'click' | 'cta_click' | 'story_open' | 'story_complete' | 'slide_view',
+          channel_type: channelType,
+          event_type: eventType,
           metadata: asJson(metadata),
         }]);
 
@@ -138,9 +139,8 @@ function calculateMetrics(campaignId: string, events: MetricEvent[]): CampaignMe
   const totalCtaClicks = ctaClicks.length;
   const ctr = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
 
-  // Group by channel (including new channels)
-  const channelTypes: ChannelType[] = ['ads', 'publidoor', 'webstories', 'push', 'newsletter', 'exit_intent', 'login_panel'];
-  const byChannel = channelTypes.map(channel => {
+  // Group by channel (using CHANNEL_TYPES as source of truth)
+  const byChannel = CHANNEL_TYPES.map(channel => {
     const channelImpressions = impressions.filter(e => e.channel_type === channel).length;
     const channelClicks = clicks.filter(e => e.channel_type === channel).length;
     return {

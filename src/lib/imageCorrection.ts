@@ -1,5 +1,8 @@
 /**
- * Image Correction Engine
+ * Image Correction Engine (Legacy V1)
+ * 
+ * NOTE: For new code, prefer using imageCorrectionV2.ts which has better
+ * proportion matching and downscale support.
  * 
  * Rules:
  * - Auto-correction ACTIVE
@@ -10,6 +13,8 @@
  * - Original ALWAYS preserved
  * - Derived marked: is_derived = true
  */
+
+import { type SlotChannel } from './adSlots';
 
 export interface ImageDimensions {
   width: number;
@@ -30,7 +35,7 @@ export interface ImageCorrectionResult {
 export interface SlotMatch {
   slotKey: string;
   slotLabel: string;
-  channel: 'ads' | 'publidoor' | 'webstories';
+  channel: SlotChannel;
   width: number;
   height: number;
   correctionResult: ImageCorrectionResult;
@@ -153,7 +158,7 @@ export function findMatchingSlots(imageDimensions: ImageDimensions): SlotMatch[]
         matches.push({
           slotKey: slot.key,
           slotLabel: slot.label,
-          channel: channel as 'ads' | 'publidoor' | 'webstories',
+          channel: channel as SlotChannel,
           width: slot.width,
           height: slot.height,
           correctionResult,

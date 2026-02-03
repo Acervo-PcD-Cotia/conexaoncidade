@@ -3,9 +3,54 @@
  * Central types for multi-channel advertising campaigns (360 System)
  */
 
+// ============================================
+// CHANNEL TYPES - SINGLE SOURCE OF TRUTH
+// ============================================
+
+/**
+ * All available channel types in the 360 Campaign System
+ */
+export const CHANNEL_TYPES = [
+  'ads',
+  'publidoor',
+  'webstories',
+  'push',
+  'newsletter',
+  'exit_intent',
+  'login_panel',
+] as const;
+
+export type ChannelType = typeof CHANNEL_TYPES[number];
+
+/**
+ * Type guard to check if a value is a valid ChannelType
+ */
+export function isChannelType(value: unknown): value is ChannelType {
+  return typeof value === 'string' && (CHANNEL_TYPES as readonly string[]).includes(value);
+}
+
+/**
+ * Normalize an array of unknown values to valid ChannelTypes
+ */
+export function normalizeChannels(values: unknown): ChannelType[] {
+  if (!Array.isArray(values)) return [];
+  return values.filter(isChannelType);
+}
+
+/**
+ * Safely cast a string to ChannelType (returns undefined if invalid)
+ */
+export function toChannelType(value: string | null | undefined): ChannelType | undefined {
+  if (!value) return undefined;
+  return isChannelType(value) ? value : undefined;
+}
+
+// ============================================
+// STATUS AND OTHER ENUMS
+// ============================================
+
 // Status and type enums
 export type CampaignStatus = 'draft' | 'active' | 'paused' | 'ended';
-export type ChannelType = 'ads' | 'publidoor' | 'webstories' | 'push' | 'newsletter' | 'exit_intent' | 'login_panel';
 export type AssetType = 'banner' | 'publidoor' | 'story_cover' | 'story_slide' | 'logo';
 export type EventType = 
   | 'impression' | 'click' | 'cta_click' 
@@ -238,7 +283,14 @@ export interface CampaignFilters {
   endDate?: string;
 }
 
-// Official slot dimensions
+// ============================================
+// OFFICIAL SLOTS - Derived from AD_SLOTS in adSlots.ts
+// ============================================
+
+/**
+ * Official slot dimensions grouped by channel
+ * This is a convenience export; the source of truth is AD_SLOTS in src/lib/adSlots.ts
+ */
 export const OFFICIAL_SLOTS = {
   ads: [
     { key: '728x90', label: 'Leaderboard', width: 728, height: 90 },
@@ -253,7 +305,7 @@ export const OFFICIAL_SLOTS = {
     { key: '300x600', label: 'Vertical', width: 300, height: 600 },
   ],
   webstories: [
-    { key: '1080x1920', label: 'Capa Story', width: 1080, height: 1920 },
+    { key: '1080x1920', label: 'Capa Story (9:16)', width: 1080, height: 1920 },
   ],
 } as const;
 
