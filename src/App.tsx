@@ -74,6 +74,10 @@ import LinksBioBuilder from "./pages/admin/LinksBioBuilder";
 import LinksReports from "./pages/admin/LinksReports";
 import CampaignsHub from "./pages/admin/CampaignsHub";
 
+// Campaign Proofs Module
+import CampaignProofsList from "./pages/admin/comprovantes/CampaignProofsList";
+import CampaignProofEditor from "./pages/admin/comprovantes/CampaignProofEditor";
+
 // Auto Post PRO Pages
 import AutoPostDashboard from "./pages/admin/autopost/AutoPostDashboard";
 import AutoPostSources from "./pages/admin/autopost/AutoPostSources";
@@ -541,6 +545,10 @@ const App = () => (
                         <Route path="esportes/brasileirao/noticias" element={<BrasileiraoNews />} />
                         <Route path="esportes/estatisticas" element={<EsportesEstatisticas />} />
                         <Route path="esportes/configurar" element={<EsportesConfig />} />
+                        
+                        {/* Campaign Proofs Routes */}
+                        <Route path="comprovantes" element={<CampaignProofsList />} />
+                        <Route path="comprovantes/:id" element={<CampaignProofEditor />} />
                         
                         {/* Publidoor Routes */}
                         <Route path="publidoor" element={<PublidoorDashboard />} />

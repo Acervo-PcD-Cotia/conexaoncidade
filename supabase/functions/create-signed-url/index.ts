@@ -39,7 +39,7 @@ serve(async (req) => {
     }
 
     // Validate bucket names (security)
-    const allowedBuckets = ['podcast-audio', 'studio-branding', 'news-audio', 'user-uploads'];
+    const allowedBuckets = ['podcast-audio', 'studio-branding', 'news-audio', 'user-uploads', 'campaign-proofs'];
     if (!allowedBuckets.includes(bucket)) {
       return new Response(
         JSON.stringify({ error: `Bucket not allowed: ${bucket}` }),

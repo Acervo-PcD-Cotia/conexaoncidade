@@ -140,6 +140,7 @@ const distributionItems: MenuItem[] = [
 // 3️⃣ PUBLICIDADE & MONETIZAÇÃO - Receita
 const monetizationItems: MenuItem[] = [
   { title: "Campanhas 360", url: "/admin/campaigns/unified", icon: Megaphone, badge: "Novo", badgeColor: "bg-primary" },
+  { title: "Comprovantes", url: "/admin/comprovantes", icon: FileText },
   { title: "Anúncios", url: "/admin/ads", icon: Megaphone },
   { title: "Super Banners", url: "/admin/banners", icon: Image },
   { title: "Publidoor", url: "/admin/publidoor", icon: Building2, badge: "Premium", badgeColor: "bg-money" },
