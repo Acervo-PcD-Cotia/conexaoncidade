@@ -1,484 +1,465 @@
 
-# Plano de Implementação: Emissão de NFS-e no Módulo Comprovantes de Campanha
+# Plano: Padronização Visual de Notícias (Modelo Agência Brasil + Cor por Categoria)
 
-## Resumo Executivo
+## Resumo
 
-Implementar funcionalidade de emissão de Nota Fiscal de Serviço Eletrônica (NFS-e) integrada ao módulo **Comprovantes de Campanha**, com foco em automação máxima conforme a "Regra do Benilton Freitas": o que muda entre notas é **apenas o número da PI na descrição**.
+Refatorar completamente o layout de páginas de notícias para seguir o padrão visual da **Agência Brasil**, com a diferença de que todos os elementos de destaque (chapéu, blockquotes, links, divisórias, chips) herdam a **cor da categoria** da matéria através de um token CSS único `--category-color`.
 
-O sistema terá cliente padrão **Prefeitura do Município de Cotia** pré-configurado, permitindo emissão em 2 minutos sem retrabalho.
+---
+
+## Diagnóstico da Situação Atual
+
+### O que existe hoje:
+1. **Header com fundo colorido dinâmico** (`headerBgColor`) baseado na categoria
+2. **Badge de categoria vermelho sólido** (`bg-red-600`) no topo
+3. **Blockquote com borda azul fixa** (`#1a3c6e`)
+4. **Links no corpo do texto** usam cor do texto (não da categoria)
+5. **Cores de categoria vêm do banco** (`categories.color`) como valores HEX
+
+### Problemas identificados:
+- Header com fundo colorido forte competindo com o conteúdo
+- Blockquote e links não usam a cor da categoria
+- Não existe um token CSS central para tema de categoria
+- Chapéu sempre vermelho (não contextual)
+- Tags no rodapé não usam a cor da categoria
 
 ---
 
 ## Arquitetura Proposta
 
 ```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                       MÓDULO EMISSÃO NFS-e                                  │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  UI (React + Tailwind)                                                      │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────────────────────┐ │
-│  │ EmitInvoiceModal│  │ClientSelectorMod│  │ InvoiceIssuedForm           │ │
-│  │ (PI-only input) │  │(troca cliente)  │  │ (pós-emissão: nº nota, PDF) │ │
-│  └─────────────────┘  └─────────────────┘  └──────────────────────────────┘ │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  Botões de Atalho                                                           │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │ "Emitir NF Prefeitura de Cotia" (atalho 1 clique, PI-only)         │    │
-│  │ "Emitir Nota Fiscal" (fluxo padrão, cliente selecionável)          │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  Hooks (TanStack Query)                                                     │
-│  useBillingClients, useBillingProvider, useProofInvoices                    │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  Supabase (Database + Storage)                                              │
-│  ┌──────────────────┐ ┌────────────────────┐ ┌─────────────────────────┐    │
-│  │ billing_clients  │ │ billing_provider   │ │ campaign_proof_invoices │    │
-│  │ (Tomadores)      │ │ (Prestador)        │ │ (NFS-e vinculada a PI)  │    │
-│  └──────────────────┘ └────────────────────┘ └─────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────┐
+│                         SISTEMA DE TEMA POR CATEGORIA                          │
+├────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                │
+│   1. FONTE DE VERDADE                                                          │
+│   ┌─────────────────────────────────────────────────────────────────────────┐  │
+│   │ getCategoryTheme(categoryName: string, categoryColor: string | null)    │  │
+│   │ → { color: string, label: string }                                      │  │
+│   │                                                                          │  │
+│   │ Mapeamento (fallback para cor do banco quando não no mapa):             │  │
+│   │ • Saúde → #0E7490 (petróleo)                                            │  │
+│   │ • Segurança Pública → #7F1D1D (bordô)                                   │  │
+│   │ • Projetos Sociais → #166534 (verde)                                    │  │
+│   │ • Educação → #1D4ED8 (azul)                                             │  │
+│   │ • Tecnologia → #6D28D9 (roxo)                                           │  │
+│   │ • Esportes → #15803D (verde vibrante)                                   │  │
+│   │ • Geral → #334155 (grafite)                                             │  │
+│   └─────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                │
+│   2. TOKEN CSS                                                                 │
+│   ┌─────────────────────────────────────────────────────────────────────────┐  │
+│   │ <article style={{ '--category-color': theme.color } as CSSProperties}>  │  │
+│   │                                                                          │  │
+│   │ Uso no CSS:                                                              │  │
+│   │ • Chapéu: color: var(--category-color)                                  │  │
+│   │ • Blockquote: border-left-color: var(--category-color)                  │  │
+│   │ • Links: color: var(--category-color)                                   │  │
+│   │ • Divisórias: color-mix(--category-color, 25%)                          │  │
+│   │ • Tags: border-color: var(--category-color)                             │  │
+│   └─────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                │
+│   3. COMPONENTIZAÇÃO                                                           │
+│   ┌───────────────┐ ┌───────────────┐ ┌───────────────┐ ┌────────────────────┐ │
+│   │ ArticleHeader │ │ ArticleHero   │ │ ArticleContent│ │ ArticleFooter      │ │
+│   │ (chapéu,      │ │ (imagem       │ │ (prose-news   │ │ (tags, share,      │ │
+│   │  título,      │ │  principal)   │ │  + blockquote)│ │  relacionadas)     │ │
+│   │  linha fina)  │ │               │ │               │ │                    │ │
+│   └───────────────┘ └───────────────┘ └───────────────┘ └────────────────────┘ │
+│                                                                                │
+└────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Fase 1: Database (Migrations)
+## Fase 1: Criar Sistema de Tema por Categoria
 
-### 1.1 Tabela: billing_clients (Tomadores de Serviço)
+### 1.1 Criar `src/lib/categoryTheme.ts`
 
-| Coluna | Tipo | Descrição |
-|--------|------|-----------|
-| id | uuid PK | ID único |
-| user_id | uuid FK auth.users | Dono do registro |
-| legal_name | text NOT NULL | Razão social |
-| cnpj | text NOT NULL | CNPJ formatado |
-| im | text NULL | Inscrição Municipal |
-| address_line | text NULL | Endereço completo |
-| city | text NULL | Cidade |
-| state | text NULL | UF |
-| email | text NULL | Email do tomador |
-| is_default | boolean DEFAULT false | Cliente padrão para emissão |
-| is_active | boolean DEFAULT true | Ativo/inativo |
-| created_at | timestamptz | Criação |
+**Função principal:**
 
-**Trigger obrigatório**: Ao setar `is_default=true`, setar todos os outros do `user_id` para `false`.
+```typescript
+interface CategoryTheme {
+  color: string;  // HEX color
+  label: string;  // Category name for display
+}
 
-### 1.2 Tabela: billing_client_defaults (Configurações por Cliente)
+const CATEGORY_COLOR_MAP: Record<string, string> = {
+  'saúde': '#0E7490',
+  'segurança pública': '#7F1D1D',
+  'projetos sociais': '#166534',
+  'educação': '#1D4ED8',
+  'tecnologia': '#6D28D9',
+  'esportes': '#15803D',
+  'cultura': '#D97706',
+  'economia': '#B45309',
+  'política': '#1E3A8A',
+  'internacional': '#1E3A8A',
+  'brasil': '#166534',
+  'geral': '#334155',
+};
 
-| Coluna | Tipo | Descrição |
-|--------|------|-----------|
-| id | uuid PK | ID único |
-| client_id | uuid FK billing_clients | Referência ao cliente |
-| service_code | text DEFAULT '107' | Código do serviço municipal |
-| cnae | text DEFAULT '6209100' | CNAE |
-| iss_rate | numeric(5,2) DEFAULT 2.00 | Alíquota ISS |
-| service_description_short | text | Descrição curta do serviço |
-| invoice_text_template | text | Template com {PI} placeholder |
-| created_at | timestamptz | Criação |
-
-### 1.3 Tabela: billing_provider_profile (Prestador de Serviço)
-
-| Coluna | Tipo | Descrição |
-|--------|------|-----------|
-| id | uuid PK | ID único |
-| user_id | uuid UNIQUE FK auth.users | 1 por usuário |
-| legal_name | text NOT NULL | Razão social |
-| trade_name | text NULL | Nome fantasia |
-| cnpj | text NOT NULL | CNPJ |
-| im | text NULL | Inscrição Municipal |
-| address_line | text NULL | Endereço |
-| email | text NULL | Email |
-| created_at | timestamptz | Criação |
-| updated_at | timestamptz | Atualização |
-
-### 1.4 Tabela: campaign_proof_invoices (NFS-e vinculada ao comprovante)
-
-| Coluna | Tipo | Descrição |
-|--------|------|-----------|
-| id | uuid PK | ID único |
-| user_id | uuid FK auth.users | Criador |
-| campaign_proof_id | uuid FK campaign_proofs | Ref ao comprovante (opcional) |
-| client_id | uuid FK billing_clients | Tomador |
-| pi_number | text NOT NULL | Número da PI |
-| description_final | text NOT NULL | Template renderizado com PI |
-| service_code | text | Código do serviço |
-| cnae | text | CNAE |
-| iss_rate | numeric(5,2) | Alíquota |
-| service_description_short | text | Descrição do serviço |
-| status | text DEFAULT 'draft' | draft / issued |
-| nf_number | text NULL | Número da NF (pós-emissão) |
-| nf_verification_code | text NULL | Código de verificação |
-| nf_issue_datetime | timestamptz NULL | Data/hora emissão |
-| nf_pdf_url | text NULL | URL do PDF da NFS-e |
-| client_snapshot | jsonb NULL | Snapshot do cliente na emissão |
-| provider_snapshot | jsonb NULL | Snapshot do prestador |
-| created_at | timestamptz | Criação |
-| updated_at | timestamptz | Atualização |
-
-### 1.5 Tabela: campaign_proof_invoice_files (Arquivos anexos)
-
-| Coluna | Tipo | Descrição |
-|--------|------|-----------|
-| id | uuid PK | ID único |
-| invoice_id | uuid FK campaign_proof_invoices | Ref à invoice |
-| file_type | text CHECK | pi_pdf, evidence, nf_pdf, other |
-| file_url | text NOT NULL | URL no Storage |
-| file_name | text NULL | Nome original |
-| created_at | timestamptz | Upload |
-
-### 1.6 Tabela: campaign_proof_invoice_audit (Auditoria)
-
-| Coluna | Tipo | Descrição |
-|--------|------|-----------|
-| id | uuid PK | ID único |
-| invoice_id | uuid FK | Ref à invoice |
-| user_id | uuid FK | Quem fez a ação |
-| action | text | created, client_changed, issued, file_uploaded |
-| meta | jsonb NULL | Dados adicionais |
-| created_at | timestamptz | Timestamp |
-
----
-
-## Fase 2: Seeds (Dados Pré-configurados)
-
-### 2.1 Cliente Padrão: Prefeitura do Município de Cotia
-
-```sql
-INSERT INTO billing_clients (
-  user_id, legal_name, cnpj, im, address_line, city, state, email, is_default
-) VALUES (
-  auth.uid(),
-  'Prefeitura do Município de Cotia',
-  '46.523.049/0001-20',
-  '3000014',
-  'Avenida Professor Manoel José Pedroso, 1347 – Parque Bahia',
-  'Cotia',
-  'SP',
-  'contabilidade@cotia.sp.gov.br',
-  true
-);
+export function getCategoryTheme(
+  categoryName: string,
+  categoryColorFromDB: string | null
+): CategoryTheme {
+  const normalized = categoryName.toLowerCase().trim();
+  const mappedColor = CATEGORY_COLOR_MAP[normalized];
+  
+  return {
+    color: mappedColor || categoryColorFromDB || '#334155',
+    label: categoryName,
+  };
+}
 ```
 
-### 2.2 Defaults do Cliente Prefeitura de Cotia
+### 1.2 Adicionar CSS para `--category-color`
 
-```sql
-INSERT INTO billing_client_defaults (
-  client_id, service_code, cnae, iss_rate, service_description_short, invoice_text_template
-) VALUES (
-  '<id_prefeitura>',
-  '107',
-  '6209100',
-  2.00,
-  'SUPORTE TÉCNICO, MANUTENÇÃO E OUTROS SERVIÇOS EM TECNOLOGIA DA INFORMAÇÃO',
-  'AOS CUIDADOS DA VERBO COMUNICAÇÃO LTDA. CONTRATO Nº 055/2024.
-REFERENTE À VEICULAÇÃO DE ANÚNCIO INSTITUCIONAL NO PORTAL CONEXÃO NA CIDADE.
-PEDIDO DE INSERÇÃO (PI): Nº {PI}.'
-);
-```
+No `src/index.css`, adicionar regras que usam a variável CSS:
 
-### 2.3 Prestador Padrão: Benilton Silva Freitas
+```css
+/* Article with category theme */
+.article-themed {
+  --category-color: #334155; /* fallback */
+}
 
-Criar via UI na primeira execução ou seed:
+/* Chapéu (category label) */
+.article-themed .article-chapeu {
+  color: var(--category-color);
+  border-bottom: 2px solid var(--category-color);
+}
 
-```sql
-INSERT INTO billing_provider_profile (
-  user_id, legal_name, trade_name, cnpj, im, address_line, email
-) VALUES (
-  auth.uid(),
-  'Benilton Silva Freitas – Informática',
-  'Conexão na Cidade',
-  '13.794.818/0001-75',
-  '6023077',
-  'Rua da Fraternidade, 343 – Jardim Cotia – Cotia/SP',
-  'conexaonacidade@gmail.com'
-);
+/* Blockquote */
+.article-themed .prose-news blockquote {
+  border-left-color: var(--category-color);
+}
+
+/* Links within article content */
+.article-themed .prose-news a {
+  color: var(--category-color);
+}
+
+.article-themed .prose-news a:hover {
+  filter: brightness(0.85);
+  text-decoration: underline;
+}
+
+/* Dividers */
+.article-themed .article-divider {
+  border-color: color-mix(in srgb, var(--category-color) 25%, transparent);
+}
+
+/* Tag chips */
+.article-themed .article-tag {
+  border-color: var(--category-color);
+  color: var(--category-color);
+}
 ```
 
 ---
 
-## Fase 3: Storage
+## Fase 2: Refatorar Layout do NewsDetail (Modelo Agência Brasil)
 
-### Bucket: campaign-invoices (privado)
+### Mudanças no Layout
 
-Estrutura:
+| Elemento | Antes | Depois |
+|----------|-------|--------|
+| Header | Fundo colorido escuro | Fundo branco/neutro, chapéu colorido |
+| Chapéu | Badge vermelho sólido | Texto + underline na cor da categoria |
+| Título | Texto branco sobre fundo | Texto preto sobre fundo neutro |
+| Linha fina | Sobre fundo colorido | Cinza escuro, logo abaixo do título |
+| Meta (autor/data) | Barra separada | Texto discreto, cinza médio |
+| Blockquote | Borda azul fixa | Borda na cor da categoria |
+| Links | Cor do texto | Cor da categoria |
+| Tags | Hover genérico | Borda + texto na cor da categoria |
+
+### Estrutura HTML Final
+
+```tsx
+<article 
+  className="article-themed"
+  style={{ '--category-color': theme.color } as React.CSSProperties}
+>
+  {/* 1. Chapéu (categoria) */}
+  <div className="article-chapeu">
+    COTIA | SAÚDE
+  </div>
+  
+  {/* 2. Título */}
+  <h1 className="text-3xl font-bold text-foreground">
+    Título da notícia
+  </h1>
+  
+  {/* 3. Linha fina (subtítulo) */}
+  <p className="text-lg text-muted-foreground">
+    Subtítulo opcional
+  </p>
+  
+  {/* 4. Meta */}
+  <div className="text-sm text-muted-foreground">
+    Por REDAÇÃO – Brasília | 03/02/2026
+  </div>
+  
+  {/* 5. Divisória */}
+  <hr className="article-divider" />
+  
+  {/* 6. Imagem principal */}
+  <figure>
+    <img ... />
+    <figcaption>Crédito da imagem</figcaption>
+  </figure>
+  
+  {/* 7. Áudio (se existir) */}
+  <NewsAudioBlock ... />
+  
+  {/* 8. Conteúdo */}
+  <div className="prose-news">
+    {content with blockquotes, links using --category-color}
+  </div>
+  
+  {/* 9. Tags */}
+  <div className="flex gap-2">
+    <span className="article-tag">Tag 1</span>
+    <span className="article-tag">Tag 2</span>
+  </div>
+  
+  {/* 10. Compartilhar */}
+  <ShareButtons ... />
+</article>
+```
+
+---
+
+## Fase 3: Criar Componentes de Artigo
+
+### Novos Componentes
+
+| Componente | Responsabilidade |
+|------------|------------------|
+| `ArticleHeader.tsx` | Chapéu, título, linha fina, meta |
+| `ArticleHero.tsx` | Imagem principal com crédito |
+| `ArticleContent.tsx` | Wrapper para prose-news |
+| `ArticleBlockquote.tsx` | Estilo de citação (opcional) |
+| `ArticleFooter.tsx` | Tags, share, autor |
+| `ArticleDivider.tsx` | Linha divisória temática |
+
+### Estrutura de Arquivos
+
 ```text
-campaign-invoices/
-├── {invoice_id}/
-│   ├── nf-pdf/           # PDF da NFS-e emitida
-│   │   └── nf-12345.pdf
-│   ├── evidence/         # Comprovantes adicionais
-│   │   └── comprovante.jpg
-│   └── pi-pdf/           # PDF da PI relacionada
-│       └── pi-269.pdf
+src/components/article/
+├── ArticleHeader.tsx
+├── ArticleHero.tsx
+├── ArticleContent.tsx
+├── ArticleFooter.tsx
+├── ArticleDivider.tsx
+└── index.ts (exports)
 ```
 
-### Policies RLS
+### Exemplo: ArticleHeader.tsx
 
-- INSERT/SELECT/UPDATE/DELETE: apenas quando `user_id = auth.uid()`
-
----
-
-## Fase 4: Tipos TypeScript
-
-### Arquivo: src/types/billing.ts
-
-```typescript
-export interface BillingClient {
-  id: string;
-  user_id: string;
-  legal_name: string;
-  cnpj: string;
-  im: string | null;
-  address_line: string | null;
-  city: string | null;
-  state: string | null;
-  email: string | null;
-  is_default: boolean;
-  is_active: boolean;
-  created_at: string;
+```tsx
+interface ArticleHeaderProps {
+  categoryDisplay: string;  // "Cotia | Saúde"
+  title: string;
+  subtitle?: string;
+  authorName: string;
+  publishedAt: string;
+  source?: string;
 }
 
-export interface BillingClientDefaults {
-  id: string;
-  client_id: string;
-  service_code: string;
-  cnae: string;
-  iss_rate: number;
-  service_description_short: string;
-  invoice_text_template: string;
-  created_at: string;
-}
-
-export interface BillingProviderProfile {
-  id: string;
-  user_id: string;
-  legal_name: string;
-  trade_name: string | null;
-  cnpj: string;
-  im: string | null;
-  address_line: string | null;
-  email: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface ProofInvoice {
-  id: string;
-  user_id: string;
-  campaign_proof_id: string | null;
-  client_id: string;
-  pi_number: string;
-  description_final: string;
-  service_code: string;
-  cnae: string;
-  iss_rate: number;
-  service_description_short: string;
-  status: 'draft' | 'issued';
-  nf_number: string | null;
-  nf_verification_code: string | null;
-  nf_issue_datetime: string | null;
-  nf_pdf_url: string | null;
-  client_snapshot: Record<string, any> | null;
-  provider_snapshot: Record<string, any> | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export type InvoiceFileType = 'pi_pdf' | 'evidence' | 'nf_pdf' | 'other';
-
-export interface ProofInvoiceFile {
-  id: string;
-  invoice_id: string;
-  file_type: InvoiceFileType;
-  file_url: string;
-  file_name: string | null;
-  created_at: string;
+export function ArticleHeader({
+  categoryDisplay,
+  title,
+  subtitle,
+  authorName,
+  publishedAt,
+  source,
+}: ArticleHeaderProps) {
+  return (
+    <header className="max-w-[820px] mx-auto px-4 md:px-6 pt-8 pb-4">
+      {/* Chapéu */}
+      <span className="article-chapeu uppercase tracking-wide text-xs font-semibold pb-1 inline-block mb-4">
+        {categoryDisplay}
+      </span>
+      
+      {/* Título */}
+      <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight text-foreground mb-4">
+        {title}
+      </h1>
+      
+      {/* Linha fina */}
+      {subtitle && (
+        <p className="text-lg md:text-xl text-muted-foreground leading-relaxed mb-4">
+          {subtitle}
+        </p>
+      )}
+      
+      {/* Meta */}
+      <div className="flex flex-col md:flex-row md:items-center gap-2 text-sm text-muted-foreground">
+        <span className="font-semibold uppercase tracking-wide">
+          {authorName}
+        </span>
+        {source && <span>– {source}</span>}
+        <span className="hidden md:inline">|</span>
+        <time>{formatDate(publishedAt)}</time>
+      </div>
+    </header>
+  );
 }
 ```
 
 ---
 
-## Fase 5: Hooks
+## Fase 4: Atualizar CSS (prose-news)
 
-### Arquivo: src/hooks/useBillingClients.ts
+### Mudanças no `src/index.css`
 
-- `useBillingClients()` - Lista todos os clientes ativos do usuário
-- `useBillingClient(id)` - Detalhes de um cliente
-- `useDefaultBillingClient()` - Busca cliente com `is_default=true`
-- `useCreateBillingClient()` - Criar novo cliente
-- `useUpdateBillingClient()` - Atualizar cliente
-- `useSetDefaultBillingClient()` - Define como padrão (trigger cuida do resto)
-- `useBillingClientDefaults(clientId)` - Busca defaults do cliente
+```css
+/* Prose styling for news content - Agência Brasil Editorial Style v3 */
+.prose-news {
+  @apply text-foreground leading-relaxed;
+  max-width: 780px;
+  font-size: 1.125rem;
+  line-height: 1.85;
+}
 
-### Arquivo: src/hooks/useBillingProvider.ts
+/* Blockquote - Usa cor da categoria */
+.article-themed .prose-news blockquote {
+  @apply border-l-4 pl-6 py-4 my-8;
+  border-left-color: var(--category-color);
+  background: hsl(var(--muted) / 0.3);
+  color: hsl(var(--foreground));
+  font-style: italic;
+}
 
-- `useBillingProvider()` - Perfil do prestador atual
-- `useCreateBillingProvider()` - Criar perfil inicial
-- `useUpdateBillingProvider()` - Atualizar perfil
+/* Links - Usa cor da categoria */
+.article-themed .prose-news a {
+  color: var(--category-color);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 
-### Arquivo: src/hooks/useProofInvoices.ts
+.article-themed .prose-news a:hover {
+  filter: brightness(0.85);
+}
 
-- `useProofInvoices(proofId?)` - Lista invoices (opcionalmente por comprovante)
-- `useProofInvoice(id)` - Detalhes de uma invoice
-- `useCreateProofInvoice()` - Criar nova invoice (draft)
-- `useUpdateProofInvoice()` - Atualizar invoice
-- `useMarkInvoiceIssued()` - Marcar como emitida (preencher nf_number, etc)
-- `useProofInvoiceFiles(invoiceId)` - Arquivos anexos
-- `useUploadInvoiceFile()` - Upload de arquivo
+/* H2 com borda inferior sutil (opcional) */
+.article-themed .prose-news h2 {
+  @apply text-xl font-bold mt-10 mb-4 pb-2;
+  border-bottom: 1px solid color-mix(in srgb, var(--category-color) 20%, transparent);
+}
 
----
+/* Listas com bullet na cor da categoria */
+.article-themed .prose-news ul {
+  list-style-type: disc;
+}
 
-## Fase 6: Componentes UI
-
-### 6.1 Componente: EmitInvoiceModal
-
-**Localização**: `src/components/admin/comprovantes/EmitInvoiceModal.tsx`
-
-**Funcionalidades**:
-- Modal com formulário de emissão
-- Cliente travado (default: Prefeitura de Cotia) com botão [Alterar cliente]
-- Input `pi_number` (obrigatório, focado automaticamente)
-- Descrição renderizada em tempo real ao digitar PI
-- Serviço/ISS/CNAE puxados do `billing_client_defaults`
-- Botões: "Copiar Descrição", "Salvar Rascunho", "Fechar"
-
-**Props**:
-```typescript
-interface EmitInvoiceModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  proofId?: string;
-  forceClient?: string; // ID do cliente (para atalho Prefeitura)
-  onSuccess?: (invoiceId: string) => void;
+.article-themed .prose-news li::marker {
+  color: var(--category-color);
 }
 ```
 
-### 6.2 Componente: ClientSelectorModal
-
-**Localização**: `src/components/admin/comprovantes/ClientSelectorModal.tsx`
-
-**Funcionalidades**:
-- Lista de clientes cadastrados
-- Select + busca
-- Botão [+ Novo cliente] abre NewClientModal
-- Toggle "Definir como padrão"
-- Opção default: "Usar só nesta emissão"
-
-### 6.3 Componente: NewClientModal
-
-**Localização**: `src/components/admin/comprovantes/NewClientModal.tsx`
-
-**Funcionalidades**:
-- Formulário de cadastro de novo tomador
-- Campos: Razão social, CNPJ, IM, Endereço, Email
-- Checkbox "Definir como padrão"
-- Botão Salvar
-
-### 6.4 Componente: InvoiceIssuedForm
-
-**Localização**: `src/components/admin/comprovantes/InvoiceIssuedForm.tsx`
-
-**Funcionalidades**:
-- Formulário pós-emissão
-- Inputs: Número da NF, Código de Verificação, Data/Hora
-- Upload do PDF da NFS-e
-- Botão "Marcar como Emitida"
-
-### 6.5 Componente: ProofInvoiceCard
-
-**Localização**: `src/components/admin/comprovantes/ProofInvoiceCard.tsx`
-
-**Funcionalidades**:
-- Card resumo de uma invoice
-- Status badge (Rascunho / Emitida)
-- Ações: Editar, Copiar Descrição, Marcar Emitida, Download PDF
-
-### 6.6 Componente: CopyToClipboardButton
-
-**Localização**: `src/components/admin/comprovantes/CopyToClipboardButton.tsx`
-
-**Funcionalidades**:
-- Botão que copia texto para clipboard
-- Feedback visual (toast "Copiado!")
-
 ---
 
-## Fase 7: Integração na UI Existente
+## Fase 5: Refatorar NewsDetail.tsx
 
-### 7.1 Modificar: ProofExportPanel.tsx
+### Mudanças Principais
 
-Adicionar nova seção "Nota Fiscal" com:
-- Botão destacado: **"Emitir NF Prefeitura de Cotia"** (atalho)
-- Botão secundário: **"Emitir Nota Fiscal"** (fluxo padrão)
-- Lista de invoices já criadas para este comprovante
+1. **Remover header colorido** - Trocar por fundo neutro
+2. **Aplicar `--category-color`** no `<article>`
+3. **Trocar Badge vermelho** por chapéu estilizado
+4. **Usar novos componentes** (ArticleHeader, ArticleHero, etc.)
 
-### 7.2 Modificar: CampaignProofEditor.tsx
+### Código Simplificado
 
-Adicionar nova aba **"Nota Fiscal"** no TabsList:
-- Mostra formulário de emissão rápida
-- Lista de notas emitidas para este comprovante
-- Histórico de ações
+```tsx
+function NewsDetailContent({ news }: NewsDetailContentProps) {
+  const categoryTheme = useMemo(() => {
+    return getCategoryTheme(
+      news.category?.name || 'Geral',
+      news.category?.color || null
+    );
+  }, [news.category]);
+  
+  const categoryDisplay = getCategoryDisplay(
+    news.category?.name || 'Geral',
+    news.tags?.map(t => t.name) || [],
+    news.source
+  );
 
-### 7.3 Modificar: CampaignProofsList.tsx
-
-Adicionar no DropdownMenu de ações:
-- "Emitir NF Prefeitura de Cotia" (atalho direto)
-- "Emitir Nota Fiscal" (fluxo padrão)
-
----
-
-## Fase 8: Função de Renderização de Template
-
-### Arquivo: src/lib/invoiceTemplate.ts
-
-```typescript
-/**
- * Renderiza o template de descrição substituindo {PI} pelo número real
- */
-export function renderInvoiceDescription(template: string, piNumber: string): string {
-  return template.replace(/{PI}/g, piNumber);
+  return (
+    <article 
+      className="article-themed"
+      style={{ '--category-color': categoryTheme.color } as React.CSSProperties}
+    >
+      <ArticleHeader
+        categoryDisplay={categoryDisplay}
+        title={news.title}
+        subtitle={news.subtitle}
+        authorName={news.author?.full_name || 'Redação'}
+        publishedAt={news.published_at || ''}
+        source={news.source}
+      />
+      
+      <ArticleDivider />
+      
+      <div className="max-w-[820px] mx-auto px-4 md:px-6 py-8">
+        <ArticleHero
+          imageUrl={news.featured_image_url}
+          imageAlt={news.image_alt}
+          imageCredit={news.image_credit}
+        />
+        
+        <NewsAudioBlock ... />
+        
+        <ArticleContent html={news.content} />
+        
+        <ArticleFooter
+          tags={news.tags}
+          newsId={news.id}
+          newsTitle={news.title}
+          currentUrl={currentUrl}
+        />
+      </div>
+      
+      <RelatedNews news={relatedNews} />
+    </article>
+  );
 }
-
-/**
- * Template padrão da Prefeitura de Cotia
- */
-export const PREFEITURA_COTIA_TEMPLATE = `AOS CUIDADOS DA VERBO COMUNICAÇÃO LTDA. CONTRATO Nº 055/2024.
-REFERENTE À VEICULAÇÃO DE ANÚNCIO INSTITUCIONAL NO PORTAL CONEXÃO NA CIDADE.
-PEDIDO DE INSERÇÃO (PI): Nº {PI}.`;
 ```
 
 ---
 
-## Fase 9: Páginas Admin (Opcional)
+## Fase 6: Atualizar GeneratedNewsDetail (Esportes)
 
-### 9.1 Página: /admin/settings/billing-clients
+Aplicar o mesmo padrão visual ao `GeneratedNewsDetail.tsx`:
 
-CRUD de clientes/tomadores de serviço:
-- Lista com busca
-- Botão definir padrão
-- Editar/excluir
-
-### 9.2 Página: /admin/settings/billing-provider
-
-Perfil do prestador:
-- Formulário único
-- Editável uma vez, reaproveitável sempre
+1. Importar `getCategoryTheme`
+2. Aplicar `--category-color` (para Esportes: `#15803D`)
+3. Usar componentes de artigo
 
 ---
 
-## Ordem de Implementação (Build Order)
+## Fase 7: Atualizar Componentes Relacionados
 
-| Ordem | Fase | Descrição | Prioridade |
-|-------|------|-----------|------------|
-| 1 | Migration | Criar tabelas billing_clients, billing_client_defaults, billing_provider_profile, campaign_proof_invoices, etc + RLS + triggers | 🔴 CRÍTICA |
-| 2 | Storage | Criar bucket campaign-invoices + policies | 🔴 CRÍTICA |
-| 3 | Seeds | Inserir Prefeitura de Cotia como cliente padrão + defaults | 🔴 CRÍTICA |
-| 4 | Tipos | Criar src/types/billing.ts | 🟡 ALTA |
-| 5 | Hooks | Criar useBillingClients, useBillingProvider, useProofInvoices | 🟡 ALTA |
-| 6 | UI Modal | Criar EmitInvoiceModal com PI-only input | 🟡 ALTA |
-| 7 | Atalho | Adicionar botão "Emitir NF Prefeitura de Cotia" no ProofExportPanel | 🟡 ALTA |
-| 8 | Client Modal | Criar ClientSelectorModal e NewClientModal | 🟢 MÉDIA |
-| 9 | Pós-emissão | Criar InvoiceIssuedForm (nº nota, PDF) | 🟢 MÉDIA |
-| 10 | Auditoria | Implementar logging em campaign_proof_invoice_audit | 🔵 BAIXA |
-| 11 | Admin Pages | Criar páginas de gestão de clientes e prestador | 🔵 BAIXA |
+### RelatedNews.tsx
+
+Usar `--category-color` nas tags de categoria:
+
+```tsx
+<span
+  className="article-tag inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5"
+  style={{ 
+    borderColor: categoryColor,
+    color: categoryColor,
+  }}
+>
+```
+
+### ShareButtons (footer)
+
+Manter estilo atual, mas garantir que divisórias usem a cor da categoria.
 
 ---
 
@@ -488,41 +469,49 @@ Perfil do prestador:
 
 | Arquivo | Descrição |
 |---------|-----------|
-| supabase/migrations/XXXX_billing_tables.sql | Migration com todas as tabelas |
-| src/types/billing.ts | Tipos TypeScript |
-| src/hooks/useBillingClients.ts | CRUD clientes/tomadores |
-| src/hooks/useBillingProvider.ts | Perfil do prestador |
-| src/hooks/useProofInvoices.ts | CRUD invoices |
-| src/lib/invoiceTemplate.ts | Função de renderização |
-| src/components/admin/comprovantes/EmitInvoiceModal.tsx | Modal de emissão |
-| src/components/admin/comprovantes/ClientSelectorModal.tsx | Troca de cliente |
-| src/components/admin/comprovantes/NewClientModal.tsx | Novo cliente |
-| src/components/admin/comprovantes/InvoiceIssuedForm.tsx | Pós-emissão |
-| src/components/admin/comprovantes/ProofInvoiceCard.tsx | Card de invoice |
-| src/components/admin/comprovantes/CopyToClipboardButton.tsx | Copiar texto |
+| `src/lib/categoryTheme.ts` | Função `getCategoryTheme()` + mapa de cores |
+| `src/components/article/ArticleHeader.tsx` | Chapéu, título, linha fina, meta |
+| `src/components/article/ArticleHero.tsx` | Imagem principal com crédito |
+| `src/components/article/ArticleContent.tsx` | Wrapper para prose-news |
+| `src/components/article/ArticleFooter.tsx` | Tags, share |
+| `src/components/article/ArticleDivider.tsx` | Divisória temática |
+| `src/components/article/index.ts` | Exports |
 
 ### Arquivos a Modificar
 
 | Arquivo | Mudança |
 |---------|---------|
-| src/components/admin/comprovantes/ProofExportPanel.tsx | Adicionar seção NF + botões |
-| src/pages/admin/comprovantes/CampaignProofEditor.tsx | Adicionar aba "Nota Fiscal" |
-| src/pages/admin/comprovantes/CampaignProofsList.tsx | Adicionar ações no dropdown |
-| src/types/campaign-proofs.ts | Adicionar refs de invoice |
+| `src/index.css` | Adicionar regras para `.article-themed`, atualizar `.prose-news` |
+| `src/pages/NewsDetail.tsx` | Refatorar layout para Agência Brasil, usar novos componentes |
+| `src/pages/public/esportes/GeneratedNewsDetail.tsx` | Aplicar mesmo padrão |
+| `src/components/news/RelatedNews.tsx` | Tags com cor da categoria |
 
 ---
 
-## Critérios de Aceite (Definition of Done)
+## Ordem de Implementação (Build Order)
 
-O módulo estará completo quando:
+| Ordem | Tarefa | Prioridade |
+|-------|--------|------------|
+| 1 | Criar `categoryTheme.ts` com mapa de cores | ALTA |
+| 2 | Adicionar CSS para `.article-themed` e `--category-color` | ALTA |
+| 3 | Criar componentes de artigo (ArticleHeader, ArticleHero, etc.) | ALTA |
+| 4 | Refatorar `NewsDetail.tsx` para novo layout | ALTA |
+| 5 | Atualizar `GeneratedNewsDetail.tsx` | MÉDIA |
+| 6 | Atualizar `RelatedNews.tsx` para usar tema | MÉDIA |
+| 7 | Testar em 5+ notícias de categorias diferentes | ALTA |
+| 8 | Verificar responsividade mobile | MÉDIA |
 
-1. Botão **"Emitir NF Prefeitura de Cotia"** visível em cada comprovante
-2. Ao clicar, abre modal com cliente travado (Prefeitura)
-3. Cursor focado no input de PI
-4. Ao digitar PI, descrição renderiza em tempo real
-5. Botão **"Copiar Descrição"** funciona (feedback toast)
-6. Ao salvar, cria invoice em status `draft`
-7. Após emitir no portal da Prefeitura, preencher nº nota + upload PDF
-8. Status muda para `issued`
-9. Histórico de notas visível no comprovante
-10. Tempo total de emissão: **menos de 2 minutos**
+---
+
+## Critérios de Aceite
+
+1. Todas as notícias têm o mesmo layout e hierarquia (Agência Brasil)
+2. Chapéu aparece sempre no topo com cor da categoria
+3. Título sem fundo/gradiente colorido
+4. Blockquote sempre com barra lateral na cor da categoria
+5. Links no texto com cor da categoria
+6. Tags no rodapé com borda na cor da categoria
+7. Nenhuma matéria mistura duas cores tema
+8. Categoria desconhecida cai em "Geral" (grafite)
+9. Layout responsivo funciona em mobile
+10. Print styles mantidos
