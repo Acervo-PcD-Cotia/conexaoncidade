@@ -80,13 +80,13 @@ export function Header() {
                   <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
                     <VocabText term="services" fallback="Serviços" />
                   </p>
-                  {/* 1. Apareça no Google - blue */}
+                  {/* 1. Você no Google - blue */}
                   <Link
                     to="/google-maps"
                     className="flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:underline"
                   >
                     <MapPin className="h-4 w-4" />
-                    <VocabText term="google_maps_cta" fallback="Apareça no Google" />
+                    <VocabText term="google_maps_cta" fallback="Você no Google" />
                   </Link>
                   {/* 2. Brasileirão - emerald */}
                   <Link
@@ -96,13 +96,13 @@ export function Header() {
                     <Trophy className="h-4 w-4" />
                     Brasileirão
                   </Link>
-                  {/* 3. Censo PcD - purple */}
+                  {/* 3. Censo SP - purple */}
                   <Link
                     to="/censo-pcd"
                     className="flex items-center gap-2 text-purple-600 dark:text-purple-400 hover:underline"
                   >
                     <Accessibility className="h-4 w-4" />
-                    <VocabText term="pcd_census" fallback="Censo PcD" />
+                    <VocabText term="pcd_census" fallback="Censo SP" />
                   </Link>
                   {/* 4. Conexões - pink */}
                   <Link
@@ -112,13 +112,13 @@ export function Header() {
                     <Users className="h-4 w-4" />
                     <VocabText term="community" fallback="Conexões" />
                   </Link>
-                  {/* 5. ENEM 2026 - indigo */}
+                  {/* 5. ENEM - indigo */}
                   <Link
                     to="/enem-2026"
                     className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 hover:underline font-semibold"
                   >
                     <GraduationCap className="h-4 w-4" />
-                    ENEM 2026
+                    ENEM
                   </Link>
                   {/* 6. Fake News - green */}
                   <Link
@@ -128,22 +128,22 @@ export function Header() {
                     <ShieldCheck className="h-4 w-4" />
                     <VocabText term="fake_news" fallback="Fake News" />
                   </Link>
-                  {/* 7. Transporte Escolar - amber */}
+                  {/* 7. Escolar - amber */}
                   <Link
                     to="/transporte-escolar"
                     className="flex items-center gap-2 text-amber-600 dark:text-amber-400 hover:underline"
                   >
                     <Bus className="h-4 w-4" />
-                    <VocabText term="school_transport" fallback="Transporte Escolar" />
+                    <VocabText term="school_transport" fallback="Escolar" />
                   </Link>
-                  {/* 8. Web Rádio / TV - red (destaque) */}
+                  {/* 8. Web Live - red (destaque) */}
                   <Link
                     to="/web-radio-tv"
                     className="flex items-center gap-2 text-red-600 dark:text-red-400 hover:underline font-semibold"
                   >
                     <Radio className="h-4 w-4" />
                     <Tv className="h-4 w-4 -ml-2" />
-                    Web Rádio / TV
+                    Web Live
                   </Link>
                   {/* 9. Imóveis - teal */}
                   <Link
@@ -305,13 +305,13 @@ export function Header() {
         {/* Services Bar - Individual Links */}
         <div className="hidden border-t bg-muted/50 lg:block">
           <div className="container flex items-center justify-center gap-3 py-2">
-            {/* 1. Apareça no Google - blue */}
+            {/* 1. Você no Google - blue */}
             <Link
               to="/campanha/google-maps"
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-blue-700 dark:text-blue-400 bg-blue-100 dark:bg-blue-950/60 rounded-full hover:bg-blue-200 dark:hover:bg-blue-900/60 transition-colors border border-blue-200 dark:border-blue-800"
             >
               <MapPin className="h-4 w-4" />
-              <VocabText term="google_maps_cta" fallback="Apareça no Google" />
+              <VocabText term="google_maps_cta" fallback="Você no Google" />
             </Link>
             {/* 2. Brasileirão - emerald */}
             <Link
@@ -321,13 +321,13 @@ export function Header() {
               <Trophy className="h-4 w-4" />
               Brasileirão
             </Link>
-            {/* 3. Censo PcD - purple */}
+            {/* 3. Censo SP - purple */}
             <Link
               to="/censo-pcd"
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-purple-700 dark:text-purple-400 bg-purple-100 dark:bg-purple-950/60 rounded-full hover:bg-purple-200 dark:hover:bg-purple-900/60 transition-colors border border-purple-200 dark:border-purple-800"
             >
               <Accessibility className="h-4 w-4" />
-              <VocabText term="pcd_census" fallback="Censo PcD" />
+              <VocabText term="pcd_census" fallback="Censo SP" />
             </Link>
             {/* 4. Conexões - pink */}
             <Link
@@ -337,13 +337,13 @@ export function Header() {
               <Users className="h-4 w-4" />
               <VocabText term="community" fallback="Conexões" />
             </Link>
-            {/* 5. ENEM 2026 - indigo */}
+            {/* 5. ENEM - indigo */}
             <Link
               to="/enem-2026"
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-indigo-700 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-950/60 rounded-full hover:bg-indigo-200 dark:hover:bg-indigo-900/60 transition-colors border border-indigo-200 dark:border-indigo-800"
             >
               <GraduationCap className="h-4 w-4" />
-              ENEM 2026
+              ENEM
             </Link>
             {/* 6. Fake News - green */}
             <Link
@@ -353,22 +353,22 @@ export function Header() {
               <ShieldCheck className="h-4 w-4" />
               <VocabText term="fake_news" fallback="Fake News" />
             </Link>
-            {/* 7. Transporte Escolar - amber */}
+            {/* 7. Escolar - amber */}
             <Link
               to="/transporte-escolar"
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 rounded-full hover:bg-amber-200 dark:hover:bg-amber-900/60 transition-colors border border-amber-200 dark:border-amber-800"
             >
               <Bus className="h-4 w-4" />
-              <VocabText term="school_transport" fallback="Transporte Escolar" />
+              <VocabText term="school_transport" fallback="Escolar" />
             </Link>
-            {/* 8. Web Rádio / TV - red (destaque com pulse) */}
+            {/* 8. Web Live - red (destaque com pulse) */}
             <Link
               to="/web-radio-tv"
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-950/60 rounded-full hover:bg-red-200 dark:hover:bg-red-900/60 transition-colors border border-red-200 dark:border-red-800 animate-pulse"
             >
               <Radio className="h-4 w-4" />
               <Tv className="h-4 w-4 -ml-1" />
-              Web Rádio / TV
+              Web Live
             </Link>
             {/* 9. Imóveis - teal with submenu */}
             <NavigationMenu>

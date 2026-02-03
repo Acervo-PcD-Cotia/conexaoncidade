@@ -199,10 +199,10 @@ export const DEFAULT_VOCABULARY: VocabularyMap = {
   manage_news: 'Cadastrar Notícia',
   
   // Service links (Header bar)
-  google_maps_cta: 'Apareça no Google',
+  google_maps_cta: 'Você no Google',
   fake_news: 'Fake News',
-  school_transport: 'Transporte Escolar',
-  pcd_census: 'Censo PcD',
+  school_transport: 'Escolar',
+  pcd_census: 'Censo SP',
   civil_defense: 'Defesa Civil',
   accessibility: 'Acessibilidade',
   notifications: 'Notificações',
