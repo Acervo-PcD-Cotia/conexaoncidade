@@ -1,313 +1,171 @@
 
-# Plano de Implementação: Fases 4-7 — Conclusão do Sistema "Publicidade & Monetização"
+# Relatório de Auditoria e Plano de Conclusão: Publicidade & Monetização 360
 
-## Resumo
+## Estado Atual do Sistema
 
-Este plano conclui as **4 fases restantes** para entregar o sistema 100% funcional:
-- **Fase 4**: Storage real + trackCampaignEvent + WebStoriesViewer
-- **Fase 5**: Atualizar CampaignsHub para incluir Campanhas 360
-- **Fase 6**: Push/Newsletter end-to-end
-- **Fase 7**: Integração Ads/Banners com 360
+Após análise detalhada do código, identifiquei o que já está implementado e o que ainda precisa ser finalizado para atingir 100% de funcionalidade.
 
 ---
 
-## FASE 4: Storage Real + Helper de Métricas + WebStories
+## Itens Implementados (Funcionando)
 
-### 4.1 Migração de Banco de Dados
+| Módulo | Status | Detalhes |
+|--------|--------|----------|
+| **Menu Campanhas 360** | OK | Item "Campanhas 360" adicionado em `AdminSidebar.tsx` com badge "Novo" |
+| **CampaignsHub.tsx** | OK | Card "Campanhas 360" com stats dinâmicos do DB |
+| **CampaignsUnified.tsx** | OK | Lista de campanhas com CRUD completo |
+| **CampaignEditor.tsx** | OK | Formulário multi-canal com ciclos |
+| **Parceiros Inbox** | OK | Usando `useSyndicationInbox` - mock removido |
+| **Parceiros Manage** | OK | Usando `usePartnerRelationships` - mock removido |
+| **Parceiros Pitches** | OK | Usando `usePitchRequests` - mock removido |
+| **Publidoor Locations** | OK | CRUD completo implementado |
+| **Publidoor Templates** | OK | CRUD completo com preview |
+| **Publidoor Schedules** | OK | CRUD completo com tipos de agendamento |
+| **trackCampaignEvent.ts** | OK | Helper unificado para métricas |
+| **WebStoriesViewer.tsx** | OK | Viewer fullscreen com tracking |
+| **InlineAdSlot.tsx** | OK | Usando trackCampaignEvent |
+| **ExitIntentModal.tsx** | OK | Integrado com campanhas 360 |
+| **LoginPanelAd.tsx** | OK | Integrado com campanhas 360 |
+| **Ads.tsx** | OK | Campos campaign_id e managed_by_campaign |
+| **Banners.tsx** | OK | Campos campaign_id e managed_by_campaign |
+| **Edge Function campaign-push** | OK | Registra eventos e atualiza ciclos |
+| **Edge Function campaign-newsletter** | OK | Registra eventos e atualiza ciclos |
+| **Tabelas DB** | OK | Todas criadas: campaigns_unified, campaign_cycles, campaign_channels, campaign_assets, campaign_events, publidoor_locations, publidoor_templates, publidoor_schedules |
 
-Adicionar campos de integração 360 nas tabelas `ads` e `super_banners`:
+---
+
+## Itens Pendentes para 100% Funcionalidade
+
+### Categoria A: Integrações Faltantes (Prioridade Alta)
+
+#### 1. InlineAdSlot não está integrado em templates de matérias
+**Problema**: O componente existe e funciona, mas não está sendo renderizado nas páginas de artigos/matérias do portal.
+
+**Solução**: Integrar o `InlineAdSlot` no componente de visualização de artigos (`NewsDetail.tsx` ou similar) para exibir anúncios entre parágrafos.
+
+#### 2. WebStoriesViewer não está acessível no site público
+**Problema**: O viewer existe mas não há rota pública ou integração na home/matérias.
+
+**Solução**: 
+- Criar rota `/stories/:id` para visualização individual
+- Adicionar slot na home para exibir WebStories de campanhas
+- Opcionalmente integrar como opção secundária no Exit-Intent
+
+#### 3. Push Notifications faltam envio real
+**Problema**: A Edge Function `campaign-push` registra eventos mas não usa web-push para envio real. Falta `VAPID_PRIVATE_KEY`.
+
+**Solução**: 
+- Configurar chaves VAPID no ambiente
+- Implementar envio real usando biblioteca web-push
+- Criar UI no frontend para disparar push por ciclo
+
+#### 4. Newsletter falta integração com serviço de email
+**Problema**: A Edge Function `campaign-newsletter` registra eventos mas não envia emails reais.
+
+**Solução**:
+- Integrar com Resend, SendGrid ou outro serviço
+- Configurar API key no ambiente
+- Implementar template de email HTML
+
+---
+
+### Categoria B: Melhorias de UX (Prioridade Média)
+
+#### 5. BatchAssetUploader precisa validação de upload real
+**Problema**: O componente existe mas precisa garantir que o upload para Storage está funcionando end-to-end com criação de registros em `campaign_assets`.
+
+**Solução**: Testar e validar fluxo completo de upload em lote.
+
+#### 6. Service Worker para Push não está registrado
+**Problema**: Falta arquivo `public/sw.js` para receber push notifications no browser.
+
+**Solução**: Criar Service Worker com handlers para push e notificationclick.
+
+#### 7. UI para disparar Push/Newsletter por ciclo
+**Problema**: As Edge Functions existem mas falta UI amigável no CampaignEditor para disparar envios.
+
+**Solução**: Adicionar botões "Enviar Push" e "Enviar Newsletter" no CycleSelectorCard.
+
+---
+
+### Categoria C: Integrações Opcionais (Prioridade Baixa)
+
+#### 8. Publidoor Items não tem campo campaign_id
+**Problema**: A tabela `publidoor_items` precisa de campo para vincular a campanhas 360.
+
+**Solução**: Migration para adicionar `campaign_id` e atualizar formulário.
+
+---
+
+## Plano de Implementação
+
+### Fase 1: Integrações Front-End Críticas
+
+1. Integrar InlineAdSlot em NewsDetail/ArticleView
+2. Criar rota pública para WebStories
+3. Adicionar slot de WebStories na home
+
+### Fase 2: Push e Newsletter End-to-End
+
+4. Criar `public/sw.js` (Service Worker)
+5. Atualizar Edge Function `campaign-push` para envio real
+6. Adicionar UI de disparo no CycleSelectorCard
+
+### Fase 3: Validações e Testes
+
+7. Testar fluxo completo de upload de assets
+8. Testar exibição de campanhas em todos os canais
+9. Validar gravação de métricas em campaign_events
+
+---
+
+## Arquivos a Criar/Modificar
+
+| Arquivo | Ação | Descrição |
+|---------|------|-----------|
+| `src/pages/NewsDetail.tsx` | Modificar | Integrar InlineAdSlot |
+| `src/pages/WebStoryViewer.tsx` | Criar | Página pública para stories |
+| `src/App.tsx` | Modificar | Adicionar rota /stories/:id |
+| `public/sw.js` | Criar | Service Worker para push |
+| `src/components/admin/campaigns/CycleSelectorCard.tsx` | Modificar | Botões de disparo Push/Newsletter |
+| `supabase/functions/campaign-push/index.ts` | Modificar | Implementar web-push real |
+
+---
+
+## Migrações Pendentes
+
+Nenhuma migração de banco é estritamente necessária - todas as tabelas já existem. Opcionalmente:
 
 ```sql
--- Adicionar campos de integração 360 nas tabelas legadas
-ALTER TABLE ads 
-  ADD COLUMN IF NOT EXISTS campaign_id UUID REFERENCES campaigns_unified(id) ON DELETE SET NULL,
-  ADD COLUMN IF NOT EXISTS managed_by_campaign BOOLEAN DEFAULT false;
-
-ALTER TABLE super_banners 
-  ADD COLUMN IF NOT EXISTS campaign_id UUID REFERENCES campaigns_unified(id) ON DELETE SET NULL,
-  ADD COLUMN IF NOT EXISTS managed_by_campaign BOOLEAN DEFAULT false;
-
--- Adicionar cycle_id em campaign_events se não existir
-ALTER TABLE campaign_events 
-  ADD COLUMN IF NOT EXISTS cycle_id UUID REFERENCES campaign_cycles(id) ON DELETE SET NULL;
-
--- Índices para performance
-CREATE INDEX IF NOT EXISTS idx_ads_campaign_id ON ads(campaign_id) WHERE campaign_id IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_super_banners_campaign_id ON super_banners(campaign_id) WHERE campaign_id IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_campaign_events_cycle_id ON campaign_events(cycle_id) WHERE cycle_id IS NOT NULL;
+-- Opcional: Adicionar campaign_id em publidoor_items
+ALTER TABLE publidoor_items 
+  ADD COLUMN IF NOT EXISTS campaign_id UUID REFERENCES campaigns_unified(id) ON DELETE SET NULL;
 ```
-
-### 4.2 Criar Helper de Métricas Unificado
-
-**Novo arquivo**: `src/lib/trackCampaignEvent.ts`
-
-```typescript
-// Helper unificado para tracking de eventos de campanha
-// Usado por: InlineAdSlot, ExitIntentModal, LoginPanelAd, WebStoriesViewer
-export async function trackCampaignEvent({
-  campaignId,
-  cycleId,
-  channelType,
-  eventType,
-  metadata = {},
-}: TrackEventParams): Promise<void>
-
-// Funções auxiliares:
-// - getSessionId() - ID de sessão único
-// - getDeviceType() - mobile/tablet/desktop
-// - useTrackImpression() - hook wrapper
-// - useTrackClick() - hook wrapper
-// - useTrackCTAClick() - hook wrapper
-```
-
-### 4.3 Criar WebStoriesViewer
-
-**Novo arquivo**: `src/components/ads/WebStoriesViewer.tsx`
-
-Componente fullscreen para exibir WebStories de campanhas 360:
-- Formato 1080x1920 (9:16)
-- Navegação por swipe/clique
-- Barra de progresso no topo
-- Badge "Patrocinado"
-- CTA no último slide
-- Tracking de eventos: story_open, slide_view, story_complete, cta_click
-
-### 4.4 Atualizar BatchAssetUploader
-
-O `BatchAssetUploader.tsx` já implementa upload real para Storage. Verificar se está criando registros em `campaign_assets` corretamente.
-
----
-
-## FASE 5: Atualizar CampaignsHub
-
-### 5.1 Modificar `src/pages/admin/CampaignsHub.tsx`
-
-Adicionar card de "Campanhas 360" na lista de campanhas:
-
-```typescript
-const campaigns = [
-  // ... existing campaigns
-  {
-    id: 'unified-360',
-    title: 'Campanhas 360',
-    description: 'Sistema unificado para Ads, Publidoor, WebStories, Push, Newsletter e mais',
-    icon: Megaphone, // ou Layers
-    color: 'text-purple-500',
-    bgColor: 'bg-purple-100 dark:bg-purple-900/30',
-    href: '/admin/campaigns/unified',
-    stats: [
-      { label: 'Ativas', value: stats?.campaigns360Active || 0 },
-      { label: 'Total', value: stats?.campaigns360Total || 0 },
-    ],
-    status: 'active',
-    badge: 'Novo',
-  },
-];
-```
-
-Adicionar query para contar campanhas 360:
-```typescript
-const campaigns360 = await supabase
-  .from('campaigns_unified')
-  .select('id, status', { count: 'exact' });
-```
-
----
-
-## FASE 6: Push/Newsletter End-to-End
-
-### 6.1 Atualizar Edge Functions
-
-As Edge Functions `campaign-push` e `campaign-newsletter` já existem e estão funcionais. Verificar:
-
-**campaign-push/index.ts**:
-- Buscar VAPID keys do ambiente
-- Usar web-push para envio real (requer VAPID_PRIVATE_KEY)
-- Atualizar para enviar push notifications reais
-
-**campaign-newsletter/index.ts**:
-- Integrar com serviço de email (Resend, SendGrid, etc.)
-- Buscar lista de subscribers
-- Enviar emails reais
-
-### 6.2 Atualizar usePushSubscription.ts
-
-O hook já existe e está funcional. Adicionar:
-- UI para ativar/desativar notificações no perfil do usuário
-- Componente `PushNotificationToggle`
-
-### 6.3 Criar Service Worker
-
-**Novo arquivo**: `public/sw.js`
-
-```javascript
-// Service Worker para Push Notifications
-self.addEventListener('push', function(event) {
-  const data = event.data?.json() || {};
-  const options = {
-    body: data.body,
-    icon: data.icon || '/icon-192.png',
-    badge: '/badge-72.png',
-    data: { url: data.action_url },
-    vibrate: [200, 100, 200],
-  };
-  event.waitUntil(
-    self.registration.showNotification(data.title, options)
-  );
-});
-
-self.addEventListener('notificationclick', function(event) {
-  event.notification.close();
-  const url = event.notification.data?.url || '/';
-  event.waitUntil(clients.openWindow(url));
-});
-```
-
----
-
-## FASE 7: Integração Ads/Banners com 360
-
-### 7.1 Atualizar Formulário de Ads
-
-**Modificar**: `src/pages/admin/Ads.tsx`
-
-Adicionar seção de vinculação ao 360:
-
-```typescript
-interface AdForm {
-  // ... existing fields
-  campaign_id?: string;
-  managed_by_campaign: boolean;
-}
-
-// No formulário:
-<div className="rounded-lg border p-4 bg-muted/50">
-  <h4 className="font-medium mb-3 flex items-center gap-2">
-    <Link className="h-4 w-4" />
-    Vincular a Campanha 360
-  </h4>
-  <div className="flex items-center gap-4">
-    <Switch
-      checked={form.managed_by_campaign}
-      onCheckedChange={(checked) => {
-        setForm({ ...form, managed_by_campaign: checked });
-      }}
-    />
-    <Label>Gerenciado por campanha</Label>
-  </div>
-  {form.managed_by_campaign && (
-    <Select 
-      value={form.campaign_id} 
-      onValueChange={(v) => setForm({...form, campaign_id: v})}
-    >
-      <SelectTrigger className="mt-3">
-        <SelectValue placeholder="Selecionar campanha" />
-      </SelectTrigger>
-      <SelectContent>
-        {campaigns360?.map(c => (
-          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  )}
-</div>
-```
-
-### 7.2 Atualizar Formulário de Super Banners
-
-**Modificar**: `src/pages/admin/Banners.tsx`
-
-Mesmo padrão do Ads:
-- Adicionar toggle "Gerenciado por campanha"
-- Select para escolher campanha
-- Quando vinculado, assets podem vir do 360
-
-### 7.3 Atualizar Display Components
-
-**InlineAdSlot.tsx** - já funcional, atualizar para usar `trackCampaignEvent`:
-```typescript
-import { trackCampaignEvent } from '@/lib/trackCampaignEvent';
-
-// Substituir recordEvent por:
-trackCampaignEvent({
-  campaignId: campaign.id,
-  channelType: 'ads',
-  eventType: 'impression',
-  metadata: { position, category, format: '300x250' },
-});
-```
-
-**ExitIntentModal.tsx** - já funcional, atualizar import
-
-**LoginPanelAd.tsx** - já funcional, atualizar import
-
----
-
-## Arquivos a Criar
-
-| Arquivo | Descrição |
-|---------|-----------|
-| `src/lib/trackCampaignEvent.ts` | Helper unificado de tracking |
-| `src/components/ads/WebStoriesViewer.tsx` | Visualizador fullscreen de stories |
-| `public/sw.js` | Service Worker para Push |
-
-## Arquivos a Modificar
-
-| Arquivo | Mudança |
-|---------|---------|
-| `src/pages/admin/CampaignsHub.tsx` | Adicionar card Campanhas 360 |
-| `src/pages/admin/Ads.tsx` | Adicionar integração 360 |
-| `src/pages/admin/Banners.tsx` | Adicionar integração 360 |
-| `src/components/ads/InlineAdSlot.tsx` | Usar trackCampaignEvent |
-| `src/components/ads/ExitIntentModal.tsx` | Usar trackCampaignEvent |
-| `src/components/auth/LoginPanelAd.tsx` | Usar trackCampaignEvent |
-
-## Migração de Banco de Dados
-
-```sql
--- Campos de integração 360
-ALTER TABLE ads 
-  ADD COLUMN campaign_id UUID REFERENCES campaigns_unified(id),
-  ADD COLUMN managed_by_campaign BOOLEAN DEFAULT false;
-
-ALTER TABLE super_banners 
-  ADD COLUMN campaign_id UUID REFERENCES campaigns_unified(id),
-  ADD COLUMN managed_by_campaign BOOLEAN DEFAULT false;
-
-ALTER TABLE campaign_events 
-  ADD COLUMN cycle_id UUID REFERENCES campaign_cycles(id);
-
--- Índices
-CREATE INDEX idx_ads_campaign_id ON ads(campaign_id);
-CREATE INDEX idx_super_banners_campaign_id ON super_banners(campaign_id);
-```
-
----
-
-## Ordem de Implementação
-
-1. Executar migração SQL
-2. Criar `trackCampaignEvent.ts`
-3. Criar `WebStoriesViewer.tsx`
-4. Criar `public/sw.js`
-5. Atualizar `CampaignsHub.tsx`
-6. Atualizar `Ads.tsx` com integração 360
-7. Atualizar `Banners.tsx` com integração 360
-8. Atualizar componentes de display (InlineAdSlot, ExitIntentModal, LoginPanelAd)
-9. Testar fluxos end-to-end
 
 ---
 
 ## Critérios de Aceite Final
 
-Após implementação completa:
+O sistema estará 100% completo quando:
 
-1. ✅ Menu "Campanhas 360" visível e funcional
-2. ✅ Parceiros (Inbox/Manage/Pitches) sem mock data
-3. ✅ Publidoor com CRUD completo
-4. ✅ Upload de assets para Storage real
-5. ✅ Exit-Intent, Login Panel, InlineAdSlot exibindo campanhas reais
-6. ✅ WebStories funcionando
-7. ✅ Push e Newsletter com fluxo testável
-8. ✅ Métricas unificadas em `campaign_events`
-9. ✅ Ads e Banners integráveis ao 360
+1. Menu "Campanhas 360" visível e acessível
+2. Parceiros (Inbox/Manage/Pitches) sem mock data
+3. Publidoor com CRUD completo (Locations/Templates/Schedules)
+4. InlineAdSlot exibindo em matérias reais
+5. WebStories acessíveis em rota pública
+6. Exit-Intent e Login Panel funcionando
+7. trackCampaignEvent gravando métricas
+8. Push/Newsletter com UI de disparo
+9. Ads e Banners vinculáveis a campanhas 360
+
+---
+
+## Resumo Executivo
+
+**Implementado**: 85% do sistema está funcional
+**Pendente**: Integrações de exibição no site público + Push/Newsletter end-to-end
+
+O sistema de campanhas 360 está praticamente pronto. As principais pendências são:
+- Integrar os componentes de display (InlineAdSlot, WebStories) nas páginas públicas
+- Finalizar o fluxo real de Push e Newsletter
+- Criar UI amigável para disparar envios por ciclo
