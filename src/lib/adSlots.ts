@@ -1,9 +1,27 @@
 /**
  * Official Ad Slot Definitions
  * Single source of truth for all slot configurations across channels
+ * 
+ * NOTE: This file defines slots for VISUAL channels only.
+ * For the full list of ChannelTypes, see src/types/campaigns-unified.ts
  */
 
-export type SlotChannel = 'ads' | 'publidoor' | 'webstories';
+import { type ChannelType } from '@/types/campaigns-unified';
+
+/**
+ * Channels that have visual ad slots
+ * These are a subset of all ChannelTypes
+ */
+export const SLOT_CHANNELS = ['ads', 'publidoor', 'webstories'] as const;
+export type SlotChannel = typeof SLOT_CHANNELS[number];
+
+/**
+ * Type guard to check if a ChannelType has visual slots
+ */
+export function isSlotChannel(channel: ChannelType | string): channel is SlotChannel {
+  return (SLOT_CHANNELS as readonly string[]).includes(channel);
+}
+
 export type SlotPlacement = 'top' | 'inline' | 'sidebar' | 'modal' | 'hero' | 'fullscreen';
 
 export interface AdSlot {
@@ -112,11 +130,11 @@ export const AD_SLOTS: AdSlot[] = [
     placement: 'sidebar' 
   },
   
-  // WebStories
+  // WebStories - 9:16 vertical format (1080x1920)
   { 
     id: 'story_cover', 
     key: '1080x1920', 
-    label: 'Capa Story', 
+    label: 'Capa Story (9:16)', 
     width: 1080, 
     height: 1920, 
     aspect: calculateAspect(1080, 1920), // 0.5625
