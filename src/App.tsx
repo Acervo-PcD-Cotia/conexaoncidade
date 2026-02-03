@@ -207,8 +207,9 @@ import JobAlertsPage from "./pages/community/JobAlertsPage";
 import GoogleMapsCampaign from "./pages/campaigns/GoogleMapsCampaign";
 import WebRadioTVCampaign from "./pages/campaigns/WebRadioTVCampaign";
 import GoogleMapsLeads from "./pages/admin/campaigns/GoogleMapsLeads";
+import CampaignsUnified from "./pages/admin/campaigns/CampaignsUnified";
+import CampaignEditor from "./pages/admin/campaigns/CampaignEditor";
 
-// Transporte Escolar Pages
 import TransporteEscolarHome from "./pages/transporte-escolar/TransporteEscolarHome";
 import TransporteEscolarEncontrar from "./pages/transporte-escolar/TransporteEscolarEncontrar";
 import TransporteEscolarCadastrar from "./pages/transporte-escolar/TransporteEscolarCadastrar";
@@ -575,6 +576,9 @@ const App = () => (
                         {/* Campaign Admin Routes */}
                         <Route path="campaigns" element={<CampaignsHub />} />
                         <Route path="campaigns/google-maps" element={<GoogleMapsLeads />} />
+                        <Route path="campaigns/unified" element={<CampaignsUnified />} />
+                        <Route path="campaigns/new" element={<CampaignEditor />} />
+                        <Route path="campaigns/edit/:id" element={<CampaignEditor />} />
                         
                         {/* Transporte Escolar Admin Routes */}
                         <Route path="transporte-escolar" element={<TransporteEscolarAdmin />} />

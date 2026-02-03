@@ -3303,6 +3303,132 @@ export type Database = {
           },
         ]
       }
+      campaign_assets: {
+        Row: {
+          alt_text: string | null
+          asset_type: Database["public"]["Enums"]["campaign_asset_type"]
+          campaign_id: string
+          channel_type:
+            | Database["public"]["Enums"]["campaign_channel_type"]
+            | null
+          created_at: string | null
+          file_url: string
+          format_key: string | null
+          height: number | null
+          id: string
+          width: number | null
+        }
+        Insert: {
+          alt_text?: string | null
+          asset_type: Database["public"]["Enums"]["campaign_asset_type"]
+          campaign_id: string
+          channel_type?:
+            | Database["public"]["Enums"]["campaign_channel_type"]
+            | null
+          created_at?: string | null
+          file_url: string
+          format_key?: string | null
+          height?: number | null
+          id?: string
+          width?: number | null
+        }
+        Update: {
+          alt_text?: string | null
+          asset_type?: Database["public"]["Enums"]["campaign_asset_type"]
+          campaign_id?: string
+          channel_type?:
+            | Database["public"]["Enums"]["campaign_channel_type"]
+            | null
+          created_at?: string | null
+          file_url?: string
+          format_key?: string | null
+          height?: number | null
+          id?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_assets_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns_unified"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_channels: {
+        Row: {
+          campaign_id: string
+          channel_type: Database["public"]["Enums"]["campaign_channel_type"]
+          config: Json | null
+          created_at: string | null
+          enabled: boolean | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          campaign_id: string
+          channel_type: Database["public"]["Enums"]["campaign_channel_type"]
+          config?: Json | null
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          channel_type?: Database["public"]["Enums"]["campaign_channel_type"]
+          config?: Json | null
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_channels_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns_unified"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_events: {
+        Row: {
+          campaign_id: string
+          channel_type: Database["public"]["Enums"]["campaign_channel_type"]
+          created_at: string | null
+          event_type: Database["public"]["Enums"]["campaign_event_type"]
+          id: string
+          metadata: Json | null
+        }
+        Insert: {
+          campaign_id: string
+          channel_type: Database["public"]["Enums"]["campaign_channel_type"]
+          created_at?: string | null
+          event_type: Database["public"]["Enums"]["campaign_event_type"]
+          id?: string
+          metadata?: Json | null
+        }
+        Update: {
+          campaign_id?: string
+          channel_type?: Database["public"]["Enums"]["campaign_channel_type"]
+          created_at?: string | null
+          event_type?: Database["public"]["Enums"]["campaign_event_type"]
+          id?: string
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_events_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns_unified"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_lead_photos: {
         Row: {
           file_name: string | null
@@ -3520,6 +3646,68 @@ export type Database = {
           {
             foreignKeyName: "campaigns_site_id_fkey"
             columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns_unified: {
+        Row: {
+          advertiser: string
+          created_at: string | null
+          created_by: string | null
+          cta_text: string | null
+          cta_url: string | null
+          description: string | null
+          ends_at: string | null
+          frequency_cap_per_day: number | null
+          id: string
+          name: string
+          priority: number | null
+          starts_at: string | null
+          status: string
+          tenant_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          advertiser: string
+          created_at?: string | null
+          created_by?: string | null
+          cta_text?: string | null
+          cta_url?: string | null
+          description?: string | null
+          ends_at?: string | null
+          frequency_cap_per_day?: number | null
+          id?: string
+          name: string
+          priority?: number | null
+          starts_at?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          advertiser?: string
+          created_at?: string | null
+          created_by?: string | null
+          cta_text?: string | null
+          cta_url?: string | null
+          description?: string | null
+          ends_at?: string | null
+          frequency_cap_per_day?: number | null
+          id?: string
+          name?: string
+          priority?: number | null
+          starts_at?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_unified_tenant_id_fkey"
+            columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "sites"
             referencedColumns: ["id"]
@@ -13507,7 +13695,42 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_legacy_ads_campaigns: {
+        Row: {
+          advertiser: string | null
+          ends_at: string | null
+          id: string | null
+          image_url: string | null
+          is_active: boolean | null
+          name: string | null
+          slot_type: string | null
+          source: string | null
+          starts_at: string | null
+        }
+        Insert: {
+          advertiser?: string | null
+          ends_at?: string | null
+          id?: string | null
+          image_url?: string | null
+          is_active?: boolean | null
+          name?: string | null
+          slot_type?: string | null
+          source?: never
+          starts_at?: string | null
+        }
+        Update: {
+          advertiser?: string | null
+          ends_at?: string | null
+          id?: string | null
+          image_url?: string | null
+          is_active?: boolean | null
+          name?: string | null
+          slot_type?: string | null
+          source?: never
+          starts_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       calculate_community_level: {
@@ -13686,6 +13909,20 @@ export type Database = {
         | "html_crawler"
         | "api"
         | "manual_url"
+      campaign_asset_type:
+        | "banner"
+        | "publidoor"
+        | "story_cover"
+        | "story_slide"
+        | "logo"
+      campaign_channel_type: "ads" | "publidoor" | "webstories"
+      campaign_event_type:
+        | "impression"
+        | "click"
+        | "cta_click"
+        | "story_open"
+        | "story_complete"
+        | "slide_view"
       community_level: "supporter" | "collaborator" | "ambassador" | "leader"
       delivery_mode: "teaser" | "full" | "rewrite"
       distribution_status:
@@ -13935,6 +14172,22 @@ export const Constants = {
         "html_crawler",
         "api",
         "manual_url",
+      ],
+      campaign_asset_type: [
+        "banner",
+        "publidoor",
+        "story_cover",
+        "story_slide",
+        "logo",
+      ],
+      campaign_channel_type: ["ads", "publidoor", "webstories"],
+      campaign_event_type: [
+        "impression",
+        "click",
+        "cta_click",
+        "story_open",
+        "story_complete",
+        "slide_view",
       ],
       community_level: ["supporter", "collaborator", "ambassador", "leader"],
       delivery_mode: ["teaser", "full", "rewrite"],
