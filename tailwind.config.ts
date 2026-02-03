@@ -142,6 +142,13 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      aspectRatio: {
+        'super-banner': '97 / 25',
+        'leaderboard': '728 / 90',
+        'medium-rect': '6 / 5',
+        'skyscraper': '1 / 2',
+        'popup': '29 / 20',
+      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
