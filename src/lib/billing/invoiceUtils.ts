@@ -1,5 +1,6 @@
 /**
- * Utilitários para renderização de templates de nota fiscal
+ * Utilitários para NFS-e - Módulo Billing
+ * Normalização de PI, formatação de CNPJ, templates
  */
 
 /**
@@ -57,10 +58,16 @@ REFERENTE À VEICULAÇÃO DE ANÚNCIO INSTITUCIONAL NO PORTAL CONEXÃO NA CIDADE
 PEDIDO DE INSERÇÃO (PI): Nº {PI}.`;
 
 /**
- * Formata CNPJ para exibição
+ * CNPJ da Prefeitura de Cotia (para busca)
+ */
+export const PREFEITURA_COTIA_CNPJ = '46.523.049/0001-20';
+export const PREFEITURA_COTIA_CNPJ_CLEAN = '46523049000120';
+
+/**
+ * Formata CNPJ para exibição (00.000.000/0000-00)
  */
 export function formatCNPJ(cnpj: string): string {
-  const cleaned = cnpj.replace(/\D/g, '');
+  const cleaned = cleanCNPJ(cnpj);
   if (cleaned.length !== 14) return cnpj;
   return cleaned.replace(
     /^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,
@@ -76,9 +83,18 @@ export function cleanCNPJ(cnpj: string): string {
 }
 
 /**
- * Valida CNPJ básico (apenas formato)
+ * Valida CNPJ básico (apenas formato 14 dígitos)
  */
 export function isValidCNPJ(cnpj: string): boolean {
   const cleaned = cleanCNPJ(cnpj);
   return cleaned.length === 14;
+}
+
+/**
+ * Retorna o bucket correto baseado no tipo de arquivo
+ * - nf_pdf → campaign-invoices (notas fiscais)
+ * - pi_pdf, evidence, other → campaign-proofs (comprovantes)
+ */
+export function getBucketForFileType(fileType: string): string {
+  return fileType === 'nf_pdf' ? 'campaign-invoices' : 'campaign-proofs';
 }

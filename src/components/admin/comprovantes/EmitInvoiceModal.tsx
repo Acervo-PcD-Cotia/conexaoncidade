@@ -27,7 +27,7 @@ import {
 } from "@/hooks/useBillingClients";
 import { useBillingProvider, useEnsureProviderProfile } from "@/hooks/useBillingProvider";
 import { useCreateProofInvoice } from "@/hooks/useProofInvoices";
-import { renderInvoiceDescription, normalizePINumber, PREFEITURA_COTIA_TEMPLATE } from "@/lib/invoiceTemplate";
+import { renderInvoiceDescription, normalizePINumber, PREFEITURA_COTIA_TEMPLATE } from "@/lib/billing/invoiceUtils";
 import type { BillingClient } from "@/types/billing";
 
 interface EmitInvoiceModalProps {

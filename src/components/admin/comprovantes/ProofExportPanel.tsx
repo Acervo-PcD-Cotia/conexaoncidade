@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCreateProofDocument, useDownloadProofDocument } from "@/hooks/useCampaignProofDocuments";
 import { generateVeiculacaoPdf, generateAnalyticsPdf } from "@/lib/campaignProofPdf";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +24,7 @@ import EmitInvoiceModal from "./EmitInvoiceModal";
 import ProofInvoiceCard from "./ProofInvoiceCard";
 import InvoiceIssuedForm from "./InvoiceIssuedForm";
 import { useProofInvoices } from "@/hooks/useProofInvoices";
+import { useCotiaBillingClient, useEnsureDefaultClient } from "@/hooks/useBillingClients";
 import type { ProofInvoiceExpanded } from "@/types/billing";
 
 interface ProofExportPanelProps {
@@ -34,8 +35,11 @@ export default function ProofExportPanel({ proof }: ProofExportPanelProps) {
   const [generating, setGenerating] = useState<CampaignProofDocType | null>(null);
   const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<ProofInvoiceExpanded | null>(null);
+  const [forceClientId, setForceClientId] = useState<string | undefined>(undefined);
 
   const { data: invoices = [], refetch: refetchInvoices } = useProofInvoices(proof.id);
+  const { data: cotiaClient, isLoading: loadingCotia } = useCotiaBillingClient();
+  const ensureClient = useEnsureDefaultClient();
   const downloadMutation = useDownloadProofDocument();
 
   const handleGenerateVeiculacao = async () => {
@@ -97,6 +101,34 @@ export default function ProofExportPanel({ proof }: ProofExportPanelProps) {
   const veiculacaoAssets = proof.assets.filter(a => a.asset_type === 'VEICULACAO_PRINT');
   const analyticsAssets = proof.assets.filter(a => a.asset_type === 'ANALYTICS_PRINT');
 
+  // Função para abrir modal com atalho Cotia
+  const handleOpenCotiaShortcut = async () => {
+    // Se já temos o cliente Cotia, usar direto
+    if (cotiaClient) {
+      setForceClientId(cotiaClient.id);
+      setInvoiceModalOpen(true);
+      return;
+    }
+
+    // Se não existe, criar o cliente padrão primeiro
+    try {
+      const result = await ensureClient.mutateAsync();
+      if (result) {
+        setForceClientId(result.id);
+        setInvoiceModalOpen(true);
+      }
+    } catch (error) {
+      console.error("Erro ao criar cliente Cotia:", error);
+      toast.error("Erro ao carregar cliente Prefeitura de Cotia");
+    }
+  };
+
+  // Função para abrir modal normal (sem forceClient)
+  const handleOpenNormalInvoice = () => {
+    setForceClientId(undefined);
+    setInvoiceModalOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       {/* Seção de Nota Fiscal - ATALHO RÁPIDO */}
@@ -114,12 +146,27 @@ export default function ProofExportPanel({ proof }: ProofExportPanelProps) {
           <div className="flex flex-wrap gap-3">
             {/* Atalho Prefeitura de Cotia */}
             <Button
-              onClick={() => setInvoiceModalOpen(true)}
+              onClick={handleOpenCotiaShortcut}
               className="gap-2"
               size="lg"
+              disabled={loadingCotia || ensureClient.isPending}
             >
-              <Building2 className="h-5 w-5" />
+              {(loadingCotia || ensureClient.isPending) ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Building2 className="h-5 w-5" />
+              )}
               Emitir NF Prefeitura de Cotia
+            </Button>
+
+            {/* Botão para outros clientes */}
+            <Button
+              onClick={handleOpenNormalInvoice}
+              variant="outline"
+              className="gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              Outro Cliente
             </Button>
           </div>
 
@@ -327,9 +374,16 @@ export default function ProofExportPanel({ proof }: ProofExportPanelProps) {
       {/* Modal de Emissão */}
       <EmitInvoiceModal
         open={invoiceModalOpen}
-        onOpenChange={setInvoiceModalOpen}
+        onOpenChange={(open) => {
+          setInvoiceModalOpen(open);
+          if (!open) setForceClientId(undefined); // Limpar ao fechar
+        }}
         proofId={proof.id}
-        onSuccess={() => refetchInvoices()}
+        forceClientId={forceClientId}
+        onSuccess={() => {
+          refetchInvoices();
+          setForceClientId(undefined);
+        }}
       />
     </div>
   );
