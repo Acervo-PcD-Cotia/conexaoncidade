@@ -3,11 +3,18 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useDeviceType } from "@/hooks/useDeviceType";
+import { AD_FORMATS, type DeviceType } from "@/lib/adFormats";
 
 export function SuperBanner() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const trackedImpressions = useRef<Set<string>>(new Set());
+  const device = useDeviceType();
+  
+  // Get format config for responsive sizing
+  const formatConfig = AD_FORMATS.SUPER_BANNER_TOPO;
+  const dimensions = formatConfig[device as DeviceType];
 
   // Generate or retrieve session ID for tracking
   const sessionId = useMemo(() => {
@@ -129,10 +136,12 @@ export function SuperBanner() {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Banner container - fullwidth */}
+      {/* Banner container with aspect-ratio */}
       <div
         className="flex transition-transform duration-700 ease-out"
-        style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+        style={{ 
+          transform: `translateX(-${currentIndex * 100}%)`,
+        }}
       >
         {banners.map((banner) => (
           <a
@@ -143,13 +152,20 @@ export function SuperBanner() {
             className="relative w-full shrink-0"
             onClick={(e) => handleBannerClick(e, banner)}
           >
-            {/* Responsive aspect ratio: 3:1 on mobile, 4:1 on desktop for compact banners */}
-            <div className="aspect-[3/1] w-full md:aspect-[4/1] max-h-[280px] md:max-h-[350px]">
+            {/* Responsive container with aspect-ratio from format config */}
+            <div 
+              className="relative w-full overflow-hidden bg-muted"
+              style={{ 
+                aspectRatio: formatConfig.aspectRatio,
+                maxHeight: device === 'mobile' ? '100px' : device === 'tablet' ? '90px' : '250px',
+              }}
+            >
               <img
                 src={banner.image_url}
                 alt={banner.alt_text || banner.title || "Banner promocional"}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-cover object-center"
                 loading="eager"
+                decoding="async"
               />
             </div>
           </a>

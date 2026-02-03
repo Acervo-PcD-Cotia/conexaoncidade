@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import type { HomeSectionConfig, HomeSectionType } from "@/types/portal-templates";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ResponsiveAdUnit } from "@/components/ads/ResponsiveAdUnit";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SectionComponent = React.ComponentType<any>;
@@ -17,7 +18,6 @@ const LatestNewsList = lazy(() => import("./LatestNewsList").then(m => ({ defaul
 const QuickNotes = lazy(() => import("./QuickNotes").then(m => ({ default: m.QuickNotes })));
 const MostReadSection = lazy(() => import("./MostReadSection").then(m => ({ default: m.MostReadSection })));
 const CategorySection = lazy(() => import("./CategorySection").then(m => ({ default: m.CategorySection })));
-const AdSlot = lazy(() => import("./AdSlot").then(m => ({ default: m.AdSlot })));
 
 // Placeholder components for sections not yet implemented
 const DonationsCTA = () => (
@@ -88,7 +88,7 @@ const SECTION_COMPONENTS: Record<HomeSectionType, SectionComponent> = {
   stories_bar: TopWebStoriesBar,
   ad_slot_top: () => (
     <div className="container py-2">
-      <AdSlot slotType="home_top" />
+      <ResponsiveAdUnit format="SUPER_BANNER_TOPO" slotId="home_top" source="ads" />
     </div>
   ),
   hero_headlines: HeroSection,
