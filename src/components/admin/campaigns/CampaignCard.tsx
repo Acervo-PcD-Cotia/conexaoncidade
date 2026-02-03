@@ -17,6 +17,10 @@ import {
   Layout, 
   Megaphone, 
   Smartphone,
+  Bell,
+  Mail,
+  DoorOpen,
+  LogIn,
   BarChart3,
   Calendar
 } from 'lucide-react';
@@ -32,6 +36,10 @@ const CHANNEL_ICONS: Record<ChannelType, React.ReactNode> = {
   ads: <Layout className="h-4 w-4" />,
   publidoor: <Megaphone className="h-4 w-4" />,
   webstories: <Smartphone className="h-4 w-4" />,
+  push: <Bell className="h-4 w-4" />,
+  newsletter: <Mail className="h-4 w-4" />,
+  exit_intent: <DoorOpen className="h-4 w-4" />,
+  login_panel: <LogIn className="h-4 w-4" />,
 };
 
 interface CampaignCardProps {
