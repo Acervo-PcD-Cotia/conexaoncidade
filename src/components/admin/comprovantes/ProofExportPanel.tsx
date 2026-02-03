@@ -13,11 +13,18 @@ import {
   Loader2,
   CheckCircle,
   Clock,
+  Receipt,
+  Building2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import type { CampaignProofFull, CampaignProofDocType } from "@/types/campaign-proofs";
+import EmitInvoiceModal from "./EmitInvoiceModal";
+import ProofInvoiceCard from "./ProofInvoiceCard";
+import InvoiceIssuedForm from "./InvoiceIssuedForm";
+import { useProofInvoices } from "@/hooks/useProofInvoices";
+import type { ProofInvoiceExpanded } from "@/types/billing";
 
 interface ProofExportPanelProps {
   proof: CampaignProofFull;
@@ -25,7 +32,10 @@ interface ProofExportPanelProps {
 
 export default function ProofExportPanel({ proof }: ProofExportPanelProps) {
   const [generating, setGenerating] = useState<CampaignProofDocType | null>(null);
+  const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<ProofInvoiceExpanded | null>(null);
 
+  const { data: invoices = [], refetch: refetchInvoices } = useProofInvoices(proof.id);
   const downloadMutation = useDownloadProofDocument();
 
   const handleGenerateVeiculacao = async () => {
@@ -89,6 +99,64 @@ export default function ProofExportPanel({ proof }: ProofExportPanelProps) {
 
   return (
     <div className="space-y-6">
+      {/* Seção de Nota Fiscal - ATALHO RÁPIDO */}
+      <Card className="border-primary/30 bg-primary/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Receipt className="h-5 w-5" />
+            Emissão de Nota Fiscal
+          </CardTitle>
+          <CardDescription>
+            Gere o texto da nota fiscal rapidamente. O número da NF será preenchido após emissão no portal.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap gap-3">
+            {/* Atalho Prefeitura de Cotia */}
+            <Button
+              onClick={() => setInvoiceModalOpen(true)}
+              className="gap-2"
+              size="lg"
+            >
+              <Building2 className="h-5 w-5" />
+              Emitir NF Prefeitura de Cotia
+            </Button>
+          </div>
+
+          {/* Lista de invoices existentes */}
+          {invoices.length > 0 && (
+            <>
+              <Separator />
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Notas Fiscais deste Comprovante
+                </p>
+                <div className="space-y-2">
+                  {invoices.map((invoice) => (
+                    <ProofInvoiceCard
+                      key={invoice.id}
+                      invoice={invoice}
+                      onClick={() => setSelectedInvoice(invoice)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Formulário de pós-emissão para invoice selecionada */}
+      {selectedInvoice && (
+        <InvoiceIssuedForm
+          invoice={selectedInvoice}
+          onSuccess={() => {
+            setSelectedInvoice(null);
+            refetchInvoices();
+          }}
+        />
+      )}
+
       {/* Generation Buttons */}
       <Card>
         <CardHeader>
@@ -255,6 +323,14 @@ export default function ProofExportPanel({ proof }: ProofExportPanelProps) {
           </CardContent>
         </Card>
       )}
+
+      {/* Modal de Emissão */}
+      <EmitInvoiceModal
+        open={invoiceModalOpen}
+        onOpenChange={setInvoiceModalOpen}
+        proofId={proof.id}
+        onSuccess={() => refetchInvoices()}
+      />
     </div>
   );
 }
