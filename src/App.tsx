@@ -260,6 +260,9 @@ import {
   ImoveisBairroPage, 
   CorretoresListPage 
 } from "./modules/imoveis/pages";
+
+// Guia Comercial Module
+import { GuiaComercialPage, BusinessDetailPage } from "./pages/guia";
 import ImoveisAdmin from "./pages/admin/imoveis/ImoveisAdmin";
 import ImovelEditor from "./pages/admin/imoveis/ImovelEditor";
 import BroadcastHub from "./pages/broadcast/BroadcastHub";
