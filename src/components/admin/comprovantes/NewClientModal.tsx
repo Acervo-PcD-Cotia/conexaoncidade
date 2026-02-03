@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Building2 } from "lucide-react";
 import { useCreateBillingClient } from "@/hooks/useBillingClients";
-import { formatCNPJ, cleanCNPJ, isValidCNPJ } from "@/lib/invoiceTemplate";
+import { formatCNPJ, isValidCNPJ } from "@/lib/billing/invoiceUtils";
 import type { BillingClient } from "@/types/billing";
 
 interface NewClientModalProps {

@@ -229,7 +229,7 @@ export function useProofInvoiceFiles(invoiceId: string | undefined) {
   });
 }
 
-// Upload de arquivo
+// Upload de arquivo - escolhe bucket correto por tipo
 export function useUploadInvoiceFile() {
   const queryClient = useQueryClient();
 
@@ -246,17 +246,22 @@ export function useUploadInvoiceFile() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
+      // Escolher bucket correto baseado no tipo de arquivo
+      // nf_pdf → campaign-invoices (notas fiscais)
+      // pi_pdf, evidence, other → campaign-proofs (comprovantes)
+      const bucket = fileType === 'nf_pdf' ? 'campaign-invoices' : 'campaign-proofs';
+
       // Upload para storage
       const filePath = `${user.id}/${invoiceId}/${fileType}/${Date.now()}-${file.name}`;
       const { error: uploadError } = await supabase.storage
-        .from("campaign-invoices")
+        .from(bucket)
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
       // Obter URL pública
       const { data: urlData } = supabase.storage
-        .from("campaign-invoices")
+        .from(bucket)
         .getPublicUrl(filePath);
 
       // Registrar no banco
@@ -286,7 +291,7 @@ export function useUploadInvoiceFile() {
         invoice_id: invoiceId,
         user_id: user.id,
         action: "file_uploaded",
-        meta: { file_type: fileType, file_name: file.name },
+        meta: { file_type: fileType, file_name: file.name, bucket } as Json,
       });
 
       return data as ProofInvoiceFile;

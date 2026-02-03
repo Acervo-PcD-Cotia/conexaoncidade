@@ -8,13 +8,8 @@ import type {
   CreateBillingClientInput,
   UpdateBillingClientInput,
   CreateBillingClientDefaultsInput,
-  PREFEITURA_COTIA_DATA,
-  PREFEITURA_COTIA_TEMPLATE,
-  DEFAULT_SERVICE_CODE,
-  DEFAULT_CNAE,
-  DEFAULT_ISS_RATE,
-  DEFAULT_SERVICE_DESCRIPTION,
 } from "@/types/billing";
+import { PREFEITURA_COTIA_CNPJ_CLEAN } from "@/lib/billing/invoiceUtils";
 
 // Lista todos os clientes ativos
 export function useBillingClients() {
@@ -295,6 +290,43 @@ PEDIDO DE INSERÇÃO (PI): Nº {PI}.`,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["billing-clients"] });
       queryClient.invalidateQueries({ queryKey: ["billing-client-default"] });
+    },
+  });
+}
+
+// Buscar cliente Prefeitura de Cotia pelo CNPJ
+export function useCotiaBillingClient() {
+  return useQuery({
+    queryKey: ["billing-client-cotia"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      // Buscar cliente pelo CNPJ da Prefeitura de Cotia (limpo, sem formatação)
+      const { data, error } = await supabase
+        .from("billing_clients")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .ilike("cnpj", "%46523049000120%")
+        .maybeSingle();
+
+      // Se não encontrar pelo CNPJ exato, tentar pelo formatado
+      if (!data) {
+        const { data: formatted, error: formattedError } = await supabase
+          .from("billing_clients")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("is_active", true)
+          .ilike("cnpj", "%46.523.049/0001-20%")
+          .maybeSingle();
+
+        if (formattedError) throw formattedError;
+        return formatted as BillingClient | null;
+      }
+
+      if (error) throw error;
+      return data as BillingClient | null;
     },
   });
 }

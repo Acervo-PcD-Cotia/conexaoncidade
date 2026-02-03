@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Building2, Star, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { useBillingClients, useSetDefaultBillingClient } from "@/hooks/useBillingClients";
 import type { BillingClient } from "@/types/billing";
 
@@ -35,20 +36,31 @@ export default function ClientSelectorModal({
 }: ClientSelectorModalProps) {
   const [selectedId, setSelectedId] = useState<string>(currentClientId || "");
   const [setAsDefault, setSetAsDefault] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { data: clients, isLoading } = useBillingClients();
   const setDefaultMutation = useSetDefaultBillingClient();
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     const selectedClient = clients?.find((c) => c.id === selectedId);
     if (!selectedClient) return;
 
-    if (setAsDefault) {
-      setDefaultMutation.mutate(selectedId);
-    }
+    setIsSubmitting(true);
+    try {
+      if (setAsDefault) {
+        // Usar mutateAsync para aguardar e tratar erros
+        await setDefaultMutation.mutateAsync(selectedId);
+      }
 
-    onSelect(selectedClient, setAsDefault);
-    onOpenChange(false);
+      onSelect(selectedClient, setAsDefault);
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Erro ao definir cliente padrão:", error);
+      toast.error("Erro ao definir cliente como padrão. Tente novamente.");
+      // NÃO fechar modal em caso de erro
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const selectedClient = clients?.find((c) => c.id === selectedId);
@@ -158,8 +170,20 @@ export default function ClientSelectorModal({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={handleConfirm} disabled={!selectedId || isLoading}>
-            {setAsDefault ? "Confirmar e Definir Padrão" : "Usar Só Nesta Emissão"}
+          <Button 
+            onClick={handleConfirm} 
+            disabled={!selectedId || isLoading || isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Salvando...
+              </>
+            ) : setAsDefault ? (
+              "Confirmar e Definir Padrão"
+            ) : (
+              "Usar Só Nesta Emissão"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
