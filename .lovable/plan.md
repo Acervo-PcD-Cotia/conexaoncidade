@@ -1,323 +1,606 @@
 
-# Upload de Imagens para Anuncios - Sistema Padronizado
 
-## Resumo
+# Sistema Unificado de Campanhas Publicitarias
 
-Atualizar o sistema de anuncios (Ads + Publidoor) para suportar **upload direto de imagens** como padrao, mantendo a opcao de URL externa como alternativa avancada. Isso permitira que admins, prefeituras e anunciantes subam imagens sem depender de hospedagem externa.
+## Resumo Executivo
+
+Criar uma arquitetura centralizada onde **Campanha** e a unica fonte de verdade para toda publicidade do portal. Uma mesma campanha pode rodar simultaneamente em Ads (banners), Publidoor e WebStories, com assets compartilhados e metricas unificadas.
 
 ---
 
-## Arquitetura da Solucao
+## Arquitetura Nova vs. Atual
 
 ```text
-+-------------------+       +------------------+       +----------------+
-|   Admin/Usuario   |  -->  |  AdImageUploader |  -->  |  Supabase      |
-|                   |       |  (Novo Comp.)    |       |  Storage       |
-+-------------------+       +------------------+       +----------------+
-         |                          |                         |
-         |  1. Upload de arquivo    |  2. Gera URL publica    |
-         |  ou cola URL externa     |                         |
-         v                          v                         v
-+-------------------+       +------------------+       +----------------+
-|  Formulario de    |       |  Salva image_url |       |  Bucket: ads   |
-|  Anuncio          |       |  no banco        |       |  (Organizado)  |
-+-------------------+       +------------------+       +----------------+
+ATUAL (Fragmentado):
++--------+     +-----------+     +------------+
+|  ads   |     | publidoor |     | web_stories|
++--------+     +-----------+     +------------+
+(independentes, sem conexao)
+
+NOVO (Unificado):
+                  +------------+
+                  | campaigns  |
+                  +------------+
+                       |
+       +---------------+---------------+
+       |               |               |
++------+------+ +------+------+ +------+------+
+| campaign_   | | campaign_   | | campaign_   |
+| channels    | | assets      | | events      |
+| (ads,pub,   | | (banner,    | | (impressao, |
+|  stories)   | |  story,pub) | |  click,etc) |
++-------------+ +-------------+ +-------------+
 ```
 
 ---
 
 ## 1. Migracao de Banco de Dados
 
-Criar bucket `ads` com organizacao por tipo:
+### 1.1 Nova Tabela: `campaigns_unified`
+
+Nova tabela centralizada (evita conflito com tabela existente `campaigns`):
 
 ```sql
--- Criar bucket publico para anuncios
-INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES (
-  'ads',
-  'ads',
-  true,
-  2097152, -- 2MB
-  ARRAY['image/jpeg', 'image/png', 'image/webp']
+CREATE TABLE campaigns_unified (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID REFERENCES sites(id),
+  
+  -- Identificacao
+  name TEXT NOT NULL,
+  advertiser TEXT NOT NULL,
+  description TEXT,
+  
+  -- Status e datas
+  status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','active','paused','ended')),
+  starts_at TIMESTAMPTZ,
+  ends_at TIMESTAMPTZ,
+  
+  -- Configuracoes
+  priority INTEGER DEFAULT 0,
+  cta_text TEXT,
+  cta_url TEXT,
+  frequency_cap_per_day INTEGER DEFAULT 0,
+  
+  -- Controle
+  created_by UUID REFERENCES auth.users(id),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+### 1.2 Nova Tabela: `campaign_channels`
+
+Define quais canais estao ativos para cada campanha:
+
+```sql
+CREATE TYPE campaign_channel_type AS ENUM ('ads', 'publidoor', 'webstories');
+
+CREATE TABLE campaign_channels (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  campaign_id UUID REFERENCES campaigns_unified(id) ON DELETE CASCADE,
+  channel_type campaign_channel_type NOT NULL,
+  enabled BOOLEAN DEFAULT true,
+  
+  -- Configuracoes especificas do canal (JSON)
+  config JSONB DEFAULT '{}',
+  
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  
+  UNIQUE(campaign_id, channel_type)
+);
+```
+
+**Exemplos de `config` por canal:**
+
+```json
+// Ads
+{
+  "slot_type": "home_top",
+  "size": "970x250",
+  "sort_order": 1
+}
+
+// Publidoor
+{
+  "location_id": "uuid",
+  "type": "narrativo",
+  "phrase_1": "Texto principal",
+  "template_id": "uuid"
+}
+
+// WebStories
+{
+  "story_url": "https://...",
+  "story_id": "uuid", // para stories nativos
+  "story_type": "external" // ou "native"
+}
+```
+
+### 1.3 Nova Tabela: `campaign_assets`
+
+Assets reutilizaveis entre canais:
+
+```sql
+CREATE TYPE campaign_asset_type AS ENUM ('banner', 'publidoor', 'story_cover', 'story_slide', 'logo');
+
+CREATE TABLE campaign_assets (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  campaign_id UUID REFERENCES campaigns_unified(id) ON DELETE CASCADE,
+  asset_type campaign_asset_type NOT NULL,
+  
+  file_url TEXT NOT NULL,
+  width INTEGER,
+  height INTEGER,
+  alt_text TEXT,
+  
+  -- Para qual canal e formato
+  channel_type campaign_channel_type,
+  format_key TEXT, -- ex: 'super_banner_topo', 'retangulo_medio'
+  
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+### 1.4 Nova Tabela: `campaign_events`
+
+Metricas unificadas:
+
+```sql
+CREATE TYPE campaign_event_type AS ENUM ('impression', 'click', 'cta_click', 'story_open', 'story_complete', 'slide_view');
+
+CREATE TABLE campaign_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  campaign_id UUID REFERENCES campaigns_unified(id) ON DELETE CASCADE,
+  channel_type campaign_channel_type NOT NULL,
+  event_type campaign_event_type NOT NULL,
+  
+  -- Contexto
+  metadata JSONB DEFAULT '{}', -- slot, page, device, etc.
+  
+  created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Politica: qualquer usuario autenticado pode fazer upload
-CREATE POLICY "Authenticated users can upload ads"
-ON storage.objects FOR INSERT TO authenticated
-WITH CHECK (bucket_id = 'ads');
+-- Index para queries de metricas
+CREATE INDEX idx_campaign_events_campaign ON campaign_events(campaign_id, created_at);
+CREATE INDEX idx_campaign_events_channel ON campaign_events(channel_type, created_at);
+```
 
--- Politica: leitura publica
-CREATE POLICY "Public read access for ads"
-ON storage.objects FOR SELECT TO public
-USING (bucket_id = 'ads');
+### 1.5 RLS Policies
 
--- Politica: autores podem deletar suas proprias imagens
-CREATE POLICY "Users can delete own ads"
-ON storage.objects FOR DELETE TO authenticated
-USING (bucket_id = 'ads');
+```sql
+ALTER TABLE campaigns_unified ENABLE ROW LEVEL SECURITY;
+ALTER TABLE campaign_channels ENABLE ROW LEVEL SECURITY;
+ALTER TABLE campaign_assets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE campaign_events ENABLE ROW LEVEL SECURITY;
+
+-- Leitura publica para campanhas ativas
+CREATE POLICY "Public read active campaigns" ON campaigns_unified
+  FOR SELECT USING (status = 'active');
+
+-- Admin full access
+CREATE POLICY "Admin full access campaigns" ON campaigns_unified
+  FOR ALL TO authenticated
+  USING (EXISTS (
+    SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'editor')
+  ));
+
+-- Policies similares para outras tabelas...
 ```
 
 ---
 
-## 2. Novo Componente: AdImageUploader
+## 2. Tipos TypeScript
 
-Criar `src/components/admin/AdImageUploader.tsx` baseado no `ImageUploader.tsx` existente, com:
-
-**Diferenciais:**
-- Upload como aba padrao (invertido em relacao ao original)
-- Organizacao automatica por tipo de anuncio (subpastas)
-- Validacao de tamanho 2MB (nao 5MB)
-- Preview com aspect-ratio do formato escolhido
-- Indicador visual de safe area (80% central)
-
-**Interface:**
+### Arquivo: `src/types/campaigns-unified.ts`
 
 ```typescript
-interface AdImageUploaderProps {
-  value: string;
-  onChange: (url: string) => void;
-  onAltChange?: (alt: string) => void;
-  alt?: string;
-  format: 'home-topo' | 'retangulo-medio' | 'arranha-ceu' | 'popup';
-  label?: string;
-  required?: boolean;
+export type CampaignStatus = 'draft' | 'active' | 'paused' | 'ended';
+export type ChannelType = 'ads' | 'publidoor' | 'webstories';
+export type AssetType = 'banner' | 'publidoor' | 'story_cover' | 'story_slide' | 'logo';
+export type EventType = 'impression' | 'click' | 'cta_click' | 'story_open' | 'story_complete' | 'slide_view';
+
+export interface CampaignUnified {
+  id: string;
+  tenant_id?: string;
+  name: string;
+  advertiser: string;
+  description?: string;
+  status: CampaignStatus;
+  starts_at?: string;
+  ends_at?: string;
+  priority: number;
+  cta_text?: string;
+  cta_url?: string;
+  frequency_cap_per_day: number;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+  
+  // Joined
+  channels?: CampaignChannel[];
+  assets?: CampaignAsset[];
+}
+
+export interface CampaignChannel {
+  id: string;
+  campaign_id: string;
+  channel_type: ChannelType;
+  enabled: boolean;
+  config: AdsChannelConfig | PublidoorChannelConfig | WebStoriesChannelConfig;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdsChannelConfig {
+  slot_type: string;
+  size: string;
+  sort_order: number;
+  link_target: string;
+}
+
+export interface PublidoorChannelConfig {
+  location_id?: string;
+  type: string;
+  phrase_1: string;
+  phrase_2?: string;
+  phrase_3?: string;
+  template_id?: string;
+}
+
+export interface WebStoriesChannelConfig {
+  story_type: 'external' | 'native';
+  story_url?: string;
+  story_id?: string;
+}
+
+export interface CampaignAsset {
+  id: string;
+  campaign_id: string;
+  asset_type: AssetType;
+  file_url: string;
+  width?: number;
+  height?: number;
+  alt_text?: string;
+  channel_type?: ChannelType;
+  format_key?: string;
+  created_at: string;
+}
+
+export interface CampaignEvent {
+  id: string;
+  campaign_id: string;
+  channel_type: ChannelType;
+  event_type: EventType;
+  metadata: Record<string, unknown>;
+  created_at: string;
 }
 ```
 
-**Estrutura de Pastas no Storage:**
+---
+
+## 3. Hooks
+
+### Arquivo: `src/hooks/useCampaignsUnified.ts`
+
+```typescript
+// Principais hooks:
+- useCampaignsUnified(filters?) - Lista campanhas
+- useCampaignUnified(id) - Campanha com channels e assets
+- useCreateCampaignUnified() - Criar campanha + channels + assets
+- useUpdateCampaignUnified() - Atualizar campanha
+- useToggleCampaignChannel() - Ativar/desativar canal
+- useAddChannelToCampaign() - Adicionar canal existente
+- useCampaignMetrics(id, dateRange) - Metricas agregadas
+- useTrackCampaignEvent() - Registrar evento
+```
+
+---
+
+## 4. Componentes Novos
+
+### 4.1 Formulario Unificado: `src/components/admin/campaigns/CampaignForm.tsx`
+
+**Estrutura em 2 blocos:**
+
+**Bloco 1 - Dados Comuns:**
+- Nome da campanha
+- Anunciante
+- Descricao
+- Data inicio / fim
+- Status (draft/active/paused)
+- Prioridade
+- CTA texto + URL
+- Frequency cap
+
+**Bloco 2 - Canais (Checkboxes expandiveis):**
+- [ ] **Ads (Banners)**
+  - Ao marcar: expande form com `AdImageUploader` + slot_type
+- [ ] **Publidoor**
+  - Ao marcar: expande form com tipo, frases, location, template
+- [ ] **WebStories**
+  - Ao marcar: expande form com tipo (externo/nativo), URL ou editor
+
+### 4.2 Seletor de Canais: `src/components/admin/campaigns/ChannelSelector.tsx`
+
+```typescript
+interface ChannelSelectorProps {
+  channels: ChannelType[];
+  onChange: (channels: ChannelType[]) => void;
+  expandedConfigs: Record<ChannelType, ChannelConfig>;
+  onConfigChange: (channel: ChannelType, config: ChannelConfig) => void;
+}
+```
+
+### 4.3 Formularios por Canal:
+
+- `AdsChannelForm.tsx` - Configuracao de banner
+- `PublidoorChannelForm.tsx` - Configuracao de Publidoor
+- `WebStoriesChannelForm.tsx` - Configuracao de Story
+
+### 4.4 Modal de Conversao: `src/components/admin/campaigns/AddChannelModal.tsx`
+
+Modal para adicionar canal a campanha existente (usado quando usuario clica "Usar tambem em Publidoor" de um Ad existente):
+
+```typescript
+interface AddChannelModalProps {
+  campaignId: string;
+  targetChannel: ChannelType;
+  existingAssets: CampaignAsset[];
+  onSuccess: () => void;
+}
+```
+
+### 4.5 Dashboard de Metricas: `src/components/admin/campaigns/CampaignMetricsDashboard.tsx`
+
+- Total impressoes/clicks/CTR (soma de todos canais)
+- Breakdown por canal (grafico de pizza)
+- Breakdown por dispositivo
+- Timeline de eventos
+
+---
+
+## 5. Paginas Admin
+
+### 5.1 Nova Pagina: `src/pages/admin/campaigns/CampaignsUnified.tsx`
+
+Lista de campanhas unificadas com:
+- Filtros por status, canal, data
+- Cards mostrando canais ativos por campanha
+- Acoes rapidas (ativar, pausar, editar)
+
+### 5.2 Nova Pagina: `src/pages/admin/campaigns/CampaignEditor.tsx`
+
+Editor completo com:
+- Form unificado (Bloco 1 + Bloco 2)
+- Preview por canal
+- Gerenciador de assets
+- Agendamento
+
+### 5.3 Modificar: `src/pages/admin/Ads.tsx`
+
+Adicionar botoes por anuncio:
+- "Usar em Publidoor" -> abre AddChannelModal
+- "Usar em WebStory" -> abre AddChannelModal
+- "Ver Campanha" -> navega para CampaignEditor (se vinculado)
+
+### 5.4 Modificar: `src/pages/admin/publidoor/PublidoorDashboard.tsx`
+
+Adicionar link para "Campanhas Unificadas" e botoes de conversao em cada item.
+
+### 5.5 Modificar: `src/pages/admin/StoriesList.tsx`
+
+Adicionar botoes de conversao:
+- "Usar em Ads" -> cria banner com capa do story
+- "Usar em Publidoor" -> cria item Publidoor com assets do story
+
+---
+
+## 6. Integracao com Sistemas Existentes
+
+### 6.1 Migracao de Dados Opcionais
+
+View ou funcao para mapear dados antigos:
+
+```sql
+-- View para campanhas legadas de Ads
+CREATE VIEW v_legacy_ads_campaigns AS
+SELECT 
+  id,
+  name,
+  advertiser,
+  'ads' as source,
+  slot_type,
+  image_url,
+  is_active,
+  starts_at,
+  ends_at
+FROM ads;
+```
+
+### 6.2 Backward Compatibility
+
+Os sistemas antigos (`ads`, `publidoor_items`, `web_stories`) continuam funcionando. A campanha unificada e uma **camada adicional** que pode ou nao ser usada.
+
+---
+
+## 7. Renderizacao no Portal
+
+### 7.1 Hook Unificado: `src/hooks/useActiveCampaigns.ts`
+
+```typescript
+function useActiveCampaigns(channel: ChannelType, slotId?: string) {
+  // Busca campanhas ativas para o canal
+  // Considera:
+  //   - status = 'active'
+  //   - starts_at <= now <= ends_at
+  //   - frequency_cap (via localStorage/sessionStorage)
+  //   - priority para ordenacao
+}
+```
+
+### 7.2 Atualizacao do ResponsiveAdUnit
+
+Adicionar suporte para buscar de `campaigns_unified`:
+
+```typescript
+// Em useAdUnit.ts
+const source = props.source === 'unified' 
+  ? fetchFromCampaignsUnified(slotId) 
+  : fetchFromLegacyAds(slotId);
+```
+
+---
+
+## 8. Estrutura de Arquivos
 
 ```text
-ads/
-  home-topo/
-    1706123456789-abc123.jpg
-    1706123456789-def456.png
-  retangulo-medio/
-    ...
-  arranha-ceu/
-    ...
-  popup/
-    ...
+src/
+  types/
+    campaigns-unified.ts         # Tipos TypeScript
+  hooks/
+    useCampaignsUnified.ts       # CRUD de campanhas
+    useActiveCampaigns.ts        # Campanhas ativas (portal)
+    useCampaignMetrics.ts        # Metricas agregadas
+  components/
+    admin/
+      campaigns/
+        CampaignForm.tsx         # Formulario principal
+        ChannelSelector.tsx      # Checkboxes de canais
+        AdsChannelForm.tsx       # Form especifico Ads
+        PublidoorChannelForm.tsx # Form especifico Publidoor
+        WebStoriesChannelForm.tsx# Form especifico Stories
+        AddChannelModal.tsx      # Modal de conversao
+        CampaignMetricsDashboard.tsx # Dashboard metricas
+        CampaignCard.tsx         # Card na listagem
+  pages/
+    admin/
+      campaigns/
+        CampaignsUnified.tsx     # Lista campanhas
+        CampaignEditor.tsx       # Editor completo
+        CampaignMetrics.tsx      # Pagina de metricas
 ```
 
 ---
 
-## 3. Atualizar src/pages/admin/Ads.tsx
+## 9. Fluxos de Usuario
 
-Substituir o campo de URL simples (linhas 289-312) pelo novo componente:
+### Fluxo 1: Criar Campanha Nova
 
-**Antes:**
-```tsx
-<div>
-  <Label htmlFor="image_url">URL da Imagem *</Label>
-  <Input
-    id="image_url"
-    value={form.image_url}
-    onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-    placeholder="https://..."
-    required
-  />
-</div>
-```
+1. Admin acessa `/admin/campaigns/unified`
+2. Clica "Nova Campanha"
+3. Preenche dados basicos (nome, anunciante, datas)
+4. Seleciona canais (checkboxes): [x] Ads [x] Publidoor [ ] Stories
+5. Para cada canal selecionado, preenche config especifica
+6. Faz upload de assets (imagens)
+7. Salva -> campanha criada com 2 canais ativos
 
-**Depois:**
-```tsx
-<AdImageUploader
-  value={form.image_url}
-  onChange={(url) => setForm({ ...form, image_url: url })}
-  onAltChange={(alt) => setForm({ ...form, alt_text: alt })}
-  alt={form.alt_text}
-  format={getFormatFromSlot(form.slot_type)}
-  label="Imagem do Anuncio"
-  required
-/>
-```
+### Fluxo 2: Converter Ad Existente
 
-**Mapeamento de slots para formatos:**
+1. Admin esta em `/admin/ads`
+2. Clica "..." em um anuncio -> "Usar em Publidoor"
+3. Modal abre com dados pre-preenchidos da campanha/asset
+4. Admin escolhe location e preenche frases
+5. Salva -> novo canal adicionado a campanha
 
-```typescript
-const SLOT_TO_FORMAT = {
-  home_top: 'home-topo',
-  home_banner: 'home-topo',
-  super_banner: 'home-topo',
-  rectangle: 'retangulo-medio',
-  skyscraper: 'arranha-ceu',
-  popup: 'popup',
-} as const;
-```
+### Fluxo 3: Ver Metricas Unificadas
+
+1. Admin acessa campanha
+2. Ve dashboard com total geral + breakdown por canal
+3. Filtra por periodo, dispositivo
 
 ---
 
-## 4. Atualizar src/pages/admin/publidoor/PublidoorCreate.tsx
+## 10. Ordem de Implementacao
 
-Substituir os campos de URL (media_url e logo_url) pelo novo uploader:
+### Fase 1: Fundacao (Banco + Tipos)
+1. Migracao SQL: tabelas, enums, RLS
+2. Tipos TypeScript
+3. Hook basico `useCampaignsUnified`
 
-**Secao de Midia (linhas 166-211):**
+### Fase 2: CRUD Admin
+4. `CampaignForm` com Bloco 1 (dados comuns)
+5. `ChannelSelector` com checkboxes
+6. Forms por canal (Ads, Publidoor, Stories)
+7. Pagina `CampaignsUnified` (listagem)
+8. Pagina `CampaignEditor` (create/edit)
 
-```tsx
-<Card>
-  <CardHeader>
-    <CardTitle>Midia</CardTitle>
-    <CardDescription>Imagem do Publidoor</CardDescription>
-  </CardHeader>
-  <CardContent className="space-y-4">
-    <AdImageUploader
-      value={formData.media_url || ''}
-      onChange={(url) => updateField('media_url', url)}
-      format="home-topo"
-      label="Imagem Principal *"
-      required
-    />
-    
-    <AdImageUploader
-      value={formData.logo_url || ''}
-      onChange={(url) => updateField('logo_url', url)}
-      format="retangulo-medio"
-      label="Logo (opcional)"
-    />
-  </CardContent>
-</Card>
-```
+### Fase 3: Conversao e Integracao
+9. `AddChannelModal`
+10. Botoes de conversao em Ads, Publidoor, Stories
+11. `useTrackCampaignEvent` para metricas
 
----
-
-## 5. Atualizar src/pages/admin/publidoor/PublidoorEdit.tsx
-
-Mesma atualizacao do Create (linhas 217-262).
-
----
-
-## 6. Componente AdImageUploader - Especificacao Detalhada
-
-```tsx
-// src/components/admin/AdImageUploader.tsx
-
-// Props
-interface AdImageUploaderProps {
-  value: string;
-  onChange: (url: string) => void;
-  onAltChange?: (alt: string) => void;
-  alt?: string;
-  format: 'home-topo' | 'retangulo-medio' | 'arranha-ceu' | 'popup';
-  label?: string;
-  required?: boolean;
-}
-
-// Constantes de dimensoes por formato
-const FORMAT_DIMENSIONS = {
-  'home-topo': { width: 970, height: 250, ratio: '21/9' },
-  'retangulo-medio': { width: 300, height: 250, ratio: '6/5' },
-  'arranha-ceu': { width: 300, height: 600, ratio: '1/2' },
-  'popup': { width: 580, height: 400, ratio: '29/20' },
-};
-
-// Funcionalidades:
-// - Tabs: "Upload" (padrao) | "URL Externa"
-// - Drag and drop
-// - Validacao: JPG, PNG, WebP ate 2MB
-// - Preview com aspect-ratio do formato
-// - Overlay mostrando safe area (80% central)
-// - Campo de alt text apos upload
-// - Botao de remover imagem
-```
-
----
-
-## 7. Fluxo de Usuario
-
-1. Admin abre formulario de anuncio ou Publidoor
-2. Seleciona "Local do Anuncio" (determina formato)
-3. Na secao de imagem:
-   - **Tab Upload (padrao):** Arrasta ou clica para enviar
-   - **Tab URL:** Cola link externo (uso avancado)
-4. Preview exibe imagem com:
-   - Proporcao correta do formato
-   - Overlay indicando safe area
-5. Preenche texto alternativo (acessibilidade)
-6. Salva anuncio
-
----
-
-## Arquivos a Criar
-
-| Arquivo | Descricao |
-|---------|-----------|
-| `src/components/admin/AdImageUploader.tsx` | Componente de upload para anuncios |
-
-## Arquivos a Modificar
-
-| Arquivo | Alteracao |
-|---------|-----------|
-| `src/pages/admin/Ads.tsx` | Substituir Input por AdImageUploader |
-| `src/pages/admin/publidoor/PublidoorCreate.tsx` | Substituir Inputs de media por AdImageUploader |
-| `src/pages/admin/publidoor/PublidoorEdit.tsx` | Idem ao Create |
-
----
-
-## Performance e UX
-
-- **Lazy loading:** Imagens no storage ja suportam
-- **CLS zero:** Preview com aspect-ratio fixo
-- **Feedback imediato:** Loader durante upload
-- **Erro amigavel:** Toast em caso de falha
-- **Tamanho maximo:** 2MB (validado client-side)
+### Fase 4: Metricas e Dashboard
+12. `CampaignMetricsDashboard`
+13. Pagina de metricas detalhadas
+14. Integracao com portal (hook `useActiveCampaigns`)
 
 ---
 
 ## Secao Tecnica
 
-### Estrutura do AdImageUploader
+### Estrutura do `config` JSONB
 
-```text
-AdImageUploader
-|-- Tabs (Upload | URL)
-|   |-- TabUpload
-|   |   |-- Dropzone (drag and drop)
-|   |   |-- Input type="file" (click to select)
-|   |   |-- Progress/Loader
-|   |-- TabURL
-|       |-- Input text
-|       |-- Button submit
-|-- Preview (se value)
-|   |-- Image com aspect-ratio
-|   |-- Overlay safe area (opcional)
-|   |-- Button remover
-|-- Input alt_text (se value)
-```
-
-### Logica de Upload
+O campo `config` em `campaign_channels` armazena configuracoes especificas. Validacao via Zod no frontend:
 
 ```typescript
-async function handleUpload(file: File) {
-  // 1. Validar tipo (image/jpeg, image/png, image/webp)
-  // 2. Validar tamanho (max 2MB)
-  // 3. Gerar nome unico: timestamp-random.ext
-  // 4. Upload para bucket 'ads' no path do formato
-  // 5. Obter URL publica
-  // 6. Chamar onChange(publicUrl)
+const AdsConfigSchema = z.object({
+  slot_type: z.string(),
+  size: z.string(),
+  sort_order: z.number().default(0),
+  link_target: z.string().default('_blank'),
+});
+
+const PublidoorConfigSchema = z.object({
+  location_id: z.string().optional(),
+  type: z.enum(['narrativo', 'contextual', 'geografico', 'editorial', 'impacto_total']),
+  phrase_1: z.string(),
+  phrase_2: z.string().optional(),
+  phrase_3: z.string().optional(),
+  template_id: z.string().optional(),
+});
+
+const WebStoriesConfigSchema = z.object({
+  story_type: z.enum(['external', 'native']),
+  story_url: z.string().url().optional(),
+  story_id: z.string().uuid().optional(),
+});
+```
+
+### Query de Campanhas Ativas
+
+```sql
+SELECT c.*, 
+       array_agg(DISTINCT ch.channel_type) as active_channels,
+       json_agg(DISTINCT a.*) as assets
+FROM campaigns_unified c
+LEFT JOIN campaign_channels ch ON ch.campaign_id = c.id AND ch.enabled = true
+LEFT JOIN campaign_assets a ON a.campaign_id = c.id
+WHERE c.status = 'active'
+  AND (c.starts_at IS NULL OR c.starts_at <= now())
+  AND (c.ends_at IS NULL OR c.ends_at >= now())
+GROUP BY c.id
+ORDER BY c.priority DESC, c.created_at DESC;
+```
+
+### Frequency Cap (Client-side)
+
+```typescript
+function checkFrequencyCap(campaignId: string, cap: number): boolean {
+  const key = `campaign_${campaignId}_views`;
+  const today = new Date().toDateString();
+  const data = JSON.parse(sessionStorage.getItem(key) || '{}');
+  
+  if (data.date !== today) {
+    sessionStorage.setItem(key, JSON.stringify({ date: today, count: 1 }));
+    return true;
+  }
+  
+  if (data.count >= cap) return false;
+  
+  data.count++;
+  sessionStorage.setItem(key, JSON.stringify(data));
+  return true;
 }
 ```
 
-### Safe Area Visual
-
-O overlay de safe area sera uma borda semitransparente indicando os 10% de margem em cada lado:
-
-```css
-.safe-area-overlay {
-  position: absolute;
-  inset: 10%;
-  border: 2px dashed rgba(255, 255, 255, 0.5);
-  pointer-events: none;
-}
-```
-
----
-
-## Validacao
-
-- Testar upload de JPG, PNG, WebP
-- Testar rejeicao de arquivos > 2MB
-- Testar rejeicao de tipos invalidos (GIF, PDF)
-- Testar URL externa funcionando
-- Testar preview com aspect-ratio correto
-- Testar em dispositivos moveis (responsivo)
-- Verificar que imagens aparecem corretamente nos anuncios publicados
