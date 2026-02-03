@@ -1,606 +1,574 @@
 
-
-# Sistema Unificado de Campanhas Publicitarias
+# Sistema Oficial de Campanhas & Publicidade 360
 
 ## Resumo Executivo
 
-Criar uma arquitetura centralizada onde **Campanha** e a unica fonte de verdade para toda publicidade do portal. Uma mesma campanha pode rodar simultaneamente em Ads (banners), Publidoor e WebStories, com assets compartilhados e metricas unificadas.
+Evoluir o sistema de campanhas ja implementado para suportar:
+1. **Ciclos de Distribuicao** - Reenvio/repeticao sem duplicar campanha
+2. **Novos Canais** - Push, Newsletter, Exit-Intent, Login Panel
+3. **Upload em Lote com Auto-Atribuicao** - Deteccao automatica de dimensoes
+4. **Motor de Correcao de Imagem** - Upscale 125%, tolerancia 2%
+5. **Storage Organizado** - Bucket campaign-assets com estrutura padrao
+6. **Exit-Intent Modal (modelo UOL)** - 3 espacos publicitarios
+7. **Login Panel** - Criativo no lado esquerdo
 
 ---
 
-## Arquitetura Nova vs. Atual
+## Estado Atual vs. Objetivo
 
-```text
-ATUAL (Fragmentado):
-+--------+     +-----------+     +------------+
-|  ads   |     | publidoor |     | web_stories|
-+--------+     +-----------+     +------------+
-(independentes, sem conexao)
+### Ja Implementado
+- Tabela `campaigns_unified` com campos basicos
+- Tabela `campaign_channels` (ads, publidoor, webstories)
+- Tabela `campaign_assets` e `campaign_events`
+- Hooks CRUD (`useCampaignsUnified.ts`)
+- Formulario de campanha (`CampaignForm.tsx`)
+- Seletor de canais (`ChannelSelector.tsx`)
+- Componente `AdImageUploader` para upload
 
-NOVO (Unificado):
-                  +------------+
-                  | campaigns  |
-                  +------------+
-                       |
-       +---------------+---------------+
-       |               |               |
-+------+------+ +------+------+ +------+------+
-| campaign_   | | campaign_   | | campaign_   |
-| channels    | | assets      | | events      |
-| (ads,pub,   | | (banner,    | | (impressao, |
-|  stories)   | |  story,pub) | |  click,etc) |
-+-------------+ +-------------+ +-------------+
-```
+### A Implementar
+- Tabela `campaign_cycles` (ciclos de distribuicao)
+- Expandir ENUMs para novos canais e eventos
+- Upload em lote com deteccao de dimensoes
+- Motor de correcao de imagem
+- Novo bucket `campaign-assets`
+- Componente Exit-Intent Modal
+- Painel de Login com criativo
 
 ---
 
 ## 1. Migracao de Banco de Dados
 
-### 1.1 Nova Tabela: `campaigns_unified`
-
-Nova tabela centralizada (evita conflito com tabela existente `campaigns`):
+### 1.1 Tabela campaign_cycles (NOVA)
 
 ```sql
-CREATE TABLE campaigns_unified (
+CREATE TABLE campaign_cycles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID REFERENCES sites(id),
-  
-  -- Identificacao
+  campaign_id UUID NOT NULL REFERENCES campaigns_unified(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
-  advertiser TEXT NOT NULL,
-  description TEXT,
-  
-  -- Status e datas
-  status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','active','paused','ended')),
   starts_at TIMESTAMPTZ,
   ends_at TIMESTAMPTZ,
-  
-  -- Configuracoes
-  priority INTEGER DEFAULT 0,
-  cta_text TEXT,
-  cta_url TEXT,
-  frequency_cap_per_day INTEGER DEFAULT 0,
-  
-  -- Controle
-  created_by UUID REFERENCES auth.users(id),
+  active_channels JSONB DEFAULT '["ads"]',
+  status TEXT NOT NULL DEFAULT 'scheduled' 
+    CHECK (status IN ('scheduled', 'active', 'completed', 'cancelled')),
+  requires_confirmation BOOLEAN DEFAULT false,
+  confirmed_at TIMESTAMPTZ,
+  confirmed_by UUID,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 ```
 
-### 1.2 Nova Tabela: `campaign_channels`
-
-Define quais canais estao ativos para cada campanha:
+### 1.2 Expandir ENUMs
 
 ```sql
-CREATE TYPE campaign_channel_type AS ENUM ('ads', 'publidoor', 'webstories');
+-- Adicionar novos tipos de canal
+ALTER TYPE campaign_channel_type ADD VALUE IF NOT EXISTS 'push';
+ALTER TYPE campaign_channel_type ADD VALUE IF NOT EXISTS 'newsletter';
+ALTER TYPE campaign_channel_type ADD VALUE IF NOT EXISTS 'exit_intent';
+ALTER TYPE campaign_channel_type ADD VALUE IF NOT EXISTS 'login_panel';
 
-CREATE TABLE campaign_channels (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  campaign_id UUID REFERENCES campaigns_unified(id) ON DELETE CASCADE,
-  channel_type campaign_channel_type NOT NULL,
-  enabled BOOLEAN DEFAULT true,
-  
-  -- Configuracoes especificas do canal (JSON)
-  config JSONB DEFAULT '{}',
-  
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now(),
-  
-  UNIQUE(campaign_id, channel_type)
-);
+-- Adicionar novos tipos de evento
+ALTER TYPE campaign_event_type ADD VALUE IF NOT EXISTS 'push_sent';
+ALTER TYPE campaign_event_type ADD VALUE IF NOT EXISTS 'push_delivered';
+ALTER TYPE campaign_event_type ADD VALUE IF NOT EXISTS 'newsletter_sent';
+ALTER TYPE campaign_event_type ADD VALUE IF NOT EXISTS 'newsletter_open';
 ```
 
-**Exemplos de `config` por canal:**
-
-```json
-// Ads
-{
-  "slot_type": "home_top",
-  "size": "970x250",
-  "sort_order": 1
-}
-
-// Publidoor
-{
-  "location_id": "uuid",
-  "type": "narrativo",
-  "phrase_1": "Texto principal",
-  "template_id": "uuid"
-}
-
-// WebStories
-{
-  "story_url": "https://...",
-  "story_id": "uuid", // para stories nativos
-  "story_type": "external" // ou "native"
-}
-```
-
-### 1.3 Nova Tabela: `campaign_assets`
-
-Assets reutilizaveis entre canais:
+### 1.3 Expandir campaign_assets para derivados
 
 ```sql
-CREATE TYPE campaign_asset_type AS ENUM ('banner', 'publidoor', 'story_cover', 'story_slide', 'logo');
-
-CREATE TABLE campaign_assets (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  campaign_id UUID REFERENCES campaigns_unified(id) ON DELETE CASCADE,
-  asset_type campaign_asset_type NOT NULL,
-  
-  file_url TEXT NOT NULL,
-  width INTEGER,
-  height INTEGER,
-  alt_text TEXT,
-  
-  -- Para qual canal e formato
-  channel_type campaign_channel_type,
-  format_key TEXT, -- ex: 'super_banner_topo', 'retangulo_medio'
-  
-  created_at TIMESTAMPTZ DEFAULT now()
-);
+ALTER TABLE campaign_assets 
+  ADD COLUMN IF NOT EXISTS is_original BOOLEAN DEFAULT true,
+  ADD COLUMN IF NOT EXISTS derived_from UUID REFERENCES campaign_assets(id),
+  ADD COLUMN IF NOT EXISTS upscale_percent NUMERIC(5,2),
+  ADD COLUMN IF NOT EXISTS auto_corrected BOOLEAN DEFAULT false;
 ```
 
-### 1.4 Nova Tabela: `campaign_events`
-
-Metricas unificadas:
+### 1.4 Criar Bucket campaign-assets
 
 ```sql
-CREATE TYPE campaign_event_type AS ENUM ('impression', 'click', 'cta_click', 'story_open', 'story_complete', 'slide_view');
-
-CREATE TABLE campaign_events (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  campaign_id UUID REFERENCES campaigns_unified(id) ON DELETE CASCADE,
-  channel_type campaign_channel_type NOT NULL,
-  event_type campaign_event_type NOT NULL,
-  
-  -- Contexto
-  metadata JSONB DEFAULT '{}', -- slot, page, device, etc.
-  
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-
--- Index para queries de metricas
-CREATE INDEX idx_campaign_events_campaign ON campaign_events(campaign_id, created_at);
-CREATE INDEX idx_campaign_events_channel ON campaign_events(channel_type, created_at);
-```
-
-### 1.5 RLS Policies
-
-```sql
-ALTER TABLE campaigns_unified ENABLE ROW LEVEL SECURITY;
-ALTER TABLE campaign_channels ENABLE ROW LEVEL SECURITY;
-ALTER TABLE campaign_assets ENABLE ROW LEVEL SECURITY;
-ALTER TABLE campaign_events ENABLE ROW LEVEL SECURITY;
-
--- Leitura publica para campanhas ativas
-CREATE POLICY "Public read active campaigns" ON campaigns_unified
-  FOR SELECT USING (status = 'active');
-
--- Admin full access
-CREATE POLICY "Admin full access campaigns" ON campaigns_unified
-  FOR ALL TO authenticated
-  USING (EXISTS (
-    SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'editor')
-  ));
-
--- Policies similares para outras tabelas...
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'campaign-assets',
+  'campaign-assets',
+  true,
+  2097152,
+  ARRAY['image/jpeg', 'image/png', 'image/webp']
+) ON CONFLICT (id) DO NOTHING;
 ```
 
 ---
 
-## 2. Tipos TypeScript
+## 2. Estrutura de Storage
 
-### Arquivo: `src/types/campaigns-unified.ts`
+```text
+campaign-assets/
+  {campaign_id}/
+    ads/
+      super_banner_topo/
+        original/
+          1706123456789-abc.jpg
+        derived/
+          1706123456789-abc-970x250.jpg
+          1706123456789-abc-728x90.jpg
+      retangulo_medio/
+        ...
+    publidoor/
+      ...
+    webstories/
+      cover/
+        ...
+      slides/
+        ...
+```
+
+---
+
+## 3. Tipos TypeScript Expandidos
+
+### Atualizar src/types/campaigns-unified.ts
 
 ```typescript
-export type CampaignStatus = 'draft' | 'active' | 'paused' | 'ended';
-export type ChannelType = 'ads' | 'publidoor' | 'webstories';
-export type AssetType = 'banner' | 'publidoor' | 'story_cover' | 'story_slide' | 'logo';
-export type EventType = 'impression' | 'click' | 'cta_click' | 'story_open' | 'story_complete' | 'slide_view';
+// Adicionar aos tipos existentes:
+export type ChannelType = 
+  | 'ads' | 'publidoor' | 'webstories' 
+  | 'push' | 'newsletter' | 'exit_intent' | 'login_panel';
 
-export interface CampaignUnified {
+export type EventType = 
+  | 'impression' | 'click' | 'cta_click' 
+  | 'story_open' | 'story_complete' | 'slide_view'
+  | 'push_sent' | 'push_delivered' 
+  | 'newsletter_sent' | 'newsletter_open';
+
+export type CycleStatus = 'scheduled' | 'active' | 'completed' | 'cancelled';
+
+// Nova interface
+export interface CampaignCycle {
   id: string;
-  tenant_id?: string;
+  campaign_id: string;
   name: string;
-  advertiser: string;
-  description?: string;
-  status: CampaignStatus;
   starts_at?: string;
   ends_at?: string;
-  priority: number;
+  active_channels: ChannelType[];
+  status: CycleStatus;
+  requires_confirmation: boolean;
+  confirmed_at?: string;
+  confirmed_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Configuracoes dos novos canais
+export interface PushChannelConfig {
+  title: string;
+  body: string;
+  icon_url?: string;
+  action_url: string;
+  send_at?: string;
+  target_audience: 'all' | 'subscribers' | 'segment';
+  segment_id?: string;
+}
+
+export interface NewsletterChannelConfig {
+  subject: string;
+  preview_text: string;
+  template_id?: string;
+  send_at?: string;
+  target_list: string;
+}
+
+export interface ExitIntentChannelConfig {
+  hero_type: 'publidoor' | 'banner';
+  hero_asset_id?: string;
+  secondary_1_asset_id?: string;
+  secondary_2_asset_id?: string;
+  cta_text: string;
+  priority_type: 'institutional' | 'editorial' | 'commercial';
+}
+
+export interface LoginPanelChannelConfig {
+  display_type: 'publidoor' | 'story';
+  asset_id?: string;
+  short_text?: string;
   cta_text?: string;
   cta_url?: string;
-  frequency_cap_per_day: number;
-  created_by?: string;
-  created_at: string;
-  updated_at: string;
+}
+
+// Slots oficiais por canal
+export const OFFICIAL_SLOTS = {
+  ads: [
+    { key: '728x90', label: 'Leaderboard', width: 728, height: 90 },
+    { key: '970x250', label: 'Super Banner', width: 970, height: 250 },
+    { key: '300x250', label: 'Retangulo Medio', width: 300, height: 250 },
+    { key: '300x600', label: 'Arranha-ceu', width: 300, height: 600 },
+    { key: '580x400', label: 'Pop-up', width: 580, height: 400 },
+  ],
+  publidoor: [
+    { key: '970x250', label: 'Banner Grande', width: 970, height: 250 },
+    { key: '300x250', label: 'Retangulo', width: 300, height: 250 },
+    { key: '300x600', label: 'Vertical', width: 300, height: 600 },
+  ],
+  webstories: [
+    { key: '1080x1920', label: 'Capa Story', width: 1080, height: 1920 },
+  ],
+} as const;
+```
+
+---
+
+## 4. Motor de Correcao de Imagem
+
+### Novo arquivo: src/lib/imageCorrection.ts
+
+```typescript
+interface ImageCorrectionResult {
+  canProcess: boolean;
+  reason?: string;
+  originalWidth: number;
+  originalHeight: number;
+  targetWidth: number;
+  targetHeight: number;
+  upscalePercent: number;
+  proportionDiff: number;
+}
+
+const MAX_UPSCALE = 125; // 125%
+const MAX_PROPORTION_DIFF = 2; // 2%
+
+export function analyzeImage(
+  original: { width: number; height: number },
+  target: { width: number; height: number }
+): ImageCorrectionResult {
+  const originalRatio = original.width / original.height;
+  const targetRatio = target.width / target.height;
+  const proportionDiff = Math.abs(1 - originalRatio / targetRatio) * 100;
   
-  // Joined
-  channels?: CampaignChannel[];
-  assets?: CampaignAsset[];
-}
-
-export interface CampaignChannel {
-  id: string;
-  campaign_id: string;
-  channel_type: ChannelType;
-  enabled: boolean;
-  config: AdsChannelConfig | PublidoorChannelConfig | WebStoriesChannelConfig;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface AdsChannelConfig {
-  slot_type: string;
-  size: string;
-  sort_order: number;
-  link_target: string;
-}
-
-export interface PublidoorChannelConfig {
-  location_id?: string;
-  type: string;
-  phrase_1: string;
-  phrase_2?: string;
-  phrase_3?: string;
-  template_id?: string;
-}
-
-export interface WebStoriesChannelConfig {
-  story_type: 'external' | 'native';
-  story_url?: string;
-  story_id?: string;
-}
-
-export interface CampaignAsset {
-  id: string;
-  campaign_id: string;
-  asset_type: AssetType;
-  file_url: string;
-  width?: number;
-  height?: number;
-  alt_text?: string;
-  channel_type?: ChannelType;
-  format_key?: string;
-  created_at: string;
-}
-
-export interface CampaignEvent {
-  id: string;
-  campaign_id: string;
-  channel_type: ChannelType;
-  event_type: EventType;
-  metadata: Record<string, unknown>;
-  created_at: string;
+  const scaleX = target.width / original.width;
+  const scaleY = target.height / original.height;
+  const upscalePercent = Math.max(scaleX, scaleY) * 100;
+  
+  const canProcess = 
+    proportionDiff <= MAX_PROPORTION_DIFF && 
+    upscalePercent <= MAX_UPSCALE;
+  
+  let reason: string | undefined;
+  if (upscalePercent > MAX_UPSCALE) {
+    reason = `Upscale de ${upscalePercent.toFixed(0)}% excede limite de ${MAX_UPSCALE}%`;
+  } else if (proportionDiff > MAX_PROPORTION_DIFF) {
+    reason = `Diferenca de proporcao ${proportionDiff.toFixed(1)}% excede ${MAX_PROPORTION_DIFF}%`;
+  }
+  
+  return {
+    canProcess,
+    reason,
+    originalWidth: original.width,
+    originalHeight: original.height,
+    targetWidth: target.width,
+    targetHeight: target.height,
+    upscalePercent,
+    proportionDiff,
+  };
 }
 ```
 
 ---
 
-## 3. Hooks
+## 5. Componentes Novos
 
-### Arquivo: `src/hooks/useCampaignsUnified.ts`
+### 5.1 BatchAssetUploader.tsx
+
+Upload em lote com deteccao automatica de dimensoes:
+
+- Drag & drop multiplo
+- Ler dimensoes via Image API
+- Mostrar preview + tamanho detectado
+- Auto-atribuir ao slot correto baseado nas dimensoes
+- Indicador visual de correcao (badge)
+- Botao "Remover" e "Atribuir manualmente"
+
+### 5.2 CycleSelectorCard.tsx
+
+Gerenciador de ciclos de campanha:
+
+- Lista ciclos existentes
+- Botao "Novo Ciclo"
+- Nome do ciclo (ex: Lancamento, Reforco)
+- Datas de inicio/fim
+- Checkboxes de canais ativos neste ciclo
+- Status (agendado, ativo, concluido)
+- Aviso para Push/Newsletter: "Requer confirmacao"
+
+### 5.3 ExitIntentModal.tsx
+
+Modal de saida estilo UOL:
+
+- Detectar intencao de saida (mouseout no topo)
+- Exibir 1x por sessao (sessionStorage)
+- Layout fixo: HERO + SECUNDARIO 1 + SECUNDARIO 2
+- Prioridade: Institucional > Editorial > Comercial
+- CTA neutro ("Ver depois" / "Continuar navegando")
+
+### 5.4 LoginPanelAd.tsx
+
+Criativo no painel esquerdo do login:
+
+- Remover textos fixos atuais
+- Exibir criativo ativo (Publidoor ou Story)
+- Texto curto opcional
+- CTA abre nova aba
+- Nunca bloquear login
+
+### 5.5 Formularios de novos canais
+
+- `PushChannelForm.tsx` - Titulo, corpo, icone, agendamento
+- `NewsletterChannelForm.tsx` - Assunto, preview, template
+- `ExitIntentChannelForm.tsx` - Configuracao dos 3 espacos
+- `LoginPanelChannelForm.tsx` - Tipo, asset, texto
+
+---
+
+## 6. Atualizacoes de Arquivos Existentes
+
+### 6.1 ChannelSelector.tsx
+
+Expandir lista de canais:
 
 ```typescript
-// Principais hooks:
-- useCampaignsUnified(filters?) - Lista campanhas
-- useCampaignUnified(id) - Campanha com channels e assets
-- useCreateCampaignUnified() - Criar campanha + channels + assets
-- useUpdateCampaignUnified() - Atualizar campanha
-- useToggleCampaignChannel() - Ativar/desativar canal
-- useAddChannelToCampaign() - Adicionar canal existente
-- useCampaignMetrics(id, dateRange) - Metricas agregadas
-- useTrackCampaignEvent() - Registrar evento
+const CHANNELS: ChannelOption[] = [
+  { type: 'ads', label: 'Ads (Banners)', icon: Layout },
+  { type: 'publidoor', label: 'Publidoor', icon: Megaphone },
+  { type: 'webstories', label: 'WebStories', icon: Smartphone },
+  { type: 'push', label: 'Push Notification', icon: Bell },
+  { type: 'newsletter', label: 'Newsletter', icon: Mail },
+  { type: 'exit_intent', label: 'Exit-Intent Modal', icon: DoorOpen },
+  { type: 'login_panel', label: 'Painel de Login', icon: LogIn },
+];
 ```
+
+### 6.2 CampaignForm.tsx
+
+- Adicionar secao "Ciclos de Distribuicao"
+- Adicionar componente `BatchAssetUploader`
+- Suportar novos canais
+
+### 6.3 src/pages/Auth.tsx
+
+- Integrar `LoginPanelAd` na coluna esquerda
+- Substituir textos estaticos por criativo dinamico
+
+### 6.4 useCampaignsUnified.ts
+
+- Adicionar hook `useCampaignCycles`
+- Adicionar hook `useCreateCycle`
+- Adicionar hook `useConfirmCycle` (para Push/Newsletter)
+
+### 6.5 useCampaignMetrics.ts
+
+- Expandir eventos para push_sent, newsletter_open
+- Agregar metricas por ciclo
 
 ---
 
-## 4. Componentes Novos
+## 7. Hooks Novos
 
-### 4.1 Formulario Unificado: `src/components/admin/campaigns/CampaignForm.tsx`
-
-**Estrutura em 2 blocos:**
-
-**Bloco 1 - Dados Comuns:**
-- Nome da campanha
-- Anunciante
-- Descricao
-- Data inicio / fim
-- Status (draft/active/paused)
-- Prioridade
-- CTA texto + URL
-- Frequency cap
-
-**Bloco 2 - Canais (Checkboxes expandiveis):**
-- [ ] **Ads (Banners)**
-  - Ao marcar: expande form com `AdImageUploader` + slot_type
-- [ ] **Publidoor**
-  - Ao marcar: expande form com tipo, frases, location, template
-- [ ] **WebStories**
-  - Ao marcar: expande form com tipo (externo/nativo), URL ou editor
-
-### 4.2 Seletor de Canais: `src/components/admin/campaigns/ChannelSelector.tsx`
+### useCampaignCycles.ts
 
 ```typescript
-interface ChannelSelectorProps {
-  channels: ChannelType[];
-  onChange: (channels: ChannelType[]) => void;
-  expandedConfigs: Record<ChannelType, ChannelConfig>;
-  onConfigChange: (channel: ChannelType, config: ChannelConfig) => void;
+function useCampaignCycles(campaignId: string);
+function useCreateCycle(campaignId: string);
+function useUpdateCycleStatus(cycleId: string);
+function useConfirmCycle(cycleId: string);
+```
+
+### useExitIntent.ts
+
+```typescript
+function useExitIntent() {
+  // Detectar mouseout no topo da pagina
+  // Verificar sessionStorage para 1x por sessao
+  // Retornar { shouldShow, campaigns, dismiss }
 }
 ```
 
-### 4.3 Formularios por Canal:
-
-- `AdsChannelForm.tsx` - Configuracao de banner
-- `PublidoorChannelForm.tsx` - Configuracao de Publidoor
-- `WebStoriesChannelForm.tsx` - Configuracao de Story
-
-### 4.4 Modal de Conversao: `src/components/admin/campaigns/AddChannelModal.tsx`
-
-Modal para adicionar canal a campanha existente (usado quando usuario clica "Usar tambem em Publidoor" de um Ad existente):
+### usePushCampaign.ts
 
 ```typescript
-interface AddChannelModalProps {
-  campaignId: string;
-  targetChannel: ChannelType;
-  existingAssets: CampaignAsset[];
-  onSuccess: () => void;
-}
-```
-
-### 4.5 Dashboard de Metricas: `src/components/admin/campaigns/CampaignMetricsDashboard.tsx`
-
-- Total impressoes/clicks/CTR (soma de todos canais)
-- Breakdown por canal (grafico de pizza)
-- Breakdown por dispositivo
-- Timeline de eventos
-
----
-
-## 5. Paginas Admin
-
-### 5.1 Nova Pagina: `src/pages/admin/campaigns/CampaignsUnified.tsx`
-
-Lista de campanhas unificadas com:
-- Filtros por status, canal, data
-- Cards mostrando canais ativos por campanha
-- Acoes rapidas (ativar, pausar, editar)
-
-### 5.2 Nova Pagina: `src/pages/admin/campaigns/CampaignEditor.tsx`
-
-Editor completo com:
-- Form unificado (Bloco 1 + Bloco 2)
-- Preview por canal
-- Gerenciador de assets
-- Agendamento
-
-### 5.3 Modificar: `src/pages/admin/Ads.tsx`
-
-Adicionar botoes por anuncio:
-- "Usar em Publidoor" -> abre AddChannelModal
-- "Usar em WebStory" -> abre AddChannelModal
-- "Ver Campanha" -> navega para CampaignEditor (se vinculado)
-
-### 5.4 Modificar: `src/pages/admin/publidoor/PublidoorDashboard.tsx`
-
-Adicionar link para "Campanhas Unificadas" e botoes de conversao em cada item.
-
-### 5.5 Modificar: `src/pages/admin/StoriesList.tsx`
-
-Adicionar botoes de conversao:
-- "Usar em Ads" -> cria banner com capa do story
-- "Usar em Publidoor" -> cria item Publidoor com assets do story
-
----
-
-## 6. Integracao com Sistemas Existentes
-
-### 6.1 Migracao de Dados Opcionais
-
-View ou funcao para mapear dados antigos:
-
-```sql
--- View para campanhas legadas de Ads
-CREATE VIEW v_legacy_ads_campaigns AS
-SELECT 
-  id,
-  name,
-  advertiser,
-  'ads' as source,
-  slot_type,
-  image_url,
-  is_active,
-  starts_at,
-  ends_at
-FROM ads;
-```
-
-### 6.2 Backward Compatibility
-
-Os sistemas antigos (`ads`, `publidoor_items`, `web_stories`) continuam funcionando. A campanha unificada e uma **camada adicional** que pode ou nao ser usada.
-
----
-
-## 7. Renderizacao no Portal
-
-### 7.1 Hook Unificado: `src/hooks/useActiveCampaigns.ts`
-
-```typescript
-function useActiveCampaigns(channel: ChannelType, slotId?: string) {
-  // Busca campanhas ativas para o canal
-  // Considera:
-  //   - status = 'active'
-  //   - starts_at <= now <= ends_at
-  //   - frequency_cap (via localStorage/sessionStorage)
-  //   - priority para ordenacao
-}
-```
-
-### 7.2 Atualizacao do ResponsiveAdUnit
-
-Adicionar suporte para buscar de `campaigns_unified`:
-
-```typescript
-// Em useAdUnit.ts
-const source = props.source === 'unified' 
-  ? fetchFromCampaignsUnified(slotId) 
-  : fetchFromLegacyAds(slotId);
+function useSendPushCampaign(cycleId: string);
+function usePushCampaignLogs(cycleId: string);
 ```
 
 ---
 
-## 8. Estrutura de Arquivos
+## 8. Fluxos de Usuario
+
+### Fluxo 1: Criar Campanha com Ciclo
+
+1. Admin acessa `/admin/campaigns/unified`
+2. Preenche dados basicos
+3. Seleciona canais: Ads + Push
+4. Cria Ciclo "Lancamento" com datas
+5. Para Push: sistema exige confirmacao antes de enviar
+6. Salva campanha com ciclo ativo
+
+### Fluxo 2: Reenviar Campanha (Novo Ciclo)
+
+1. Admin abre campanha existente
+2. Clica "Novo Ciclo"
+3. Nomeia: "Reforco Semana 2"
+4. Seleciona canais ativos neste ciclo
+5. Salva -> novo ciclo criado sem duplicar campanha
+
+### Fluxo 3: Upload em Lote
+
+1. Admin arrasta 5 imagens
+2. Sistema detecta dimensoes de cada uma
+3. Auto-atribui: 970x250 -> Super Banner, 300x250 -> Retangulo
+4. Badge mostra "Corrigido 112%" se upscale aplicado
+5. Admin confirma ou ajusta manualmente
+
+### Fluxo 4: Exit-Intent
+
+1. Usuario move mouse para fechar aba
+2. Modal aparece com 3 criativos
+3. Prioridade: campanha institucional primeiro
+4. Usuario clica CTA ou fecha
+5. Nao exibe novamente na sessao
+
+---
+
+## 9. Estrutura de Arquivos
 
 ```text
 src/
   types/
-    campaigns-unified.ts         # Tipos TypeScript
+    campaigns-unified.ts    # Atualizar com novos tipos
+  lib/
+    imageCorrection.ts      # NOVO - Motor de correcao
   hooks/
-    useCampaignsUnified.ts       # CRUD de campanhas
-    useActiveCampaigns.ts        # Campanhas ativas (portal)
-    useCampaignMetrics.ts        # Metricas agregadas
+    useCampaignsUnified.ts  # Atualizar
+    useCampaignCycles.ts    # NOVO
+    useExitIntent.ts        # NOVO
+    usePushCampaign.ts      # NOVO
   components/
     admin/
       campaigns/
-        CampaignForm.tsx         # Formulario principal
-        ChannelSelector.tsx      # Checkboxes de canais
-        AdsChannelForm.tsx       # Form especifico Ads
-        PublidoorChannelForm.tsx # Form especifico Publidoor
-        WebStoriesChannelForm.tsx# Form especifico Stories
-        AddChannelModal.tsx      # Modal de conversao
-        CampaignMetricsDashboard.tsx # Dashboard metricas
-        CampaignCard.tsx         # Card na listagem
-  pages/
-    admin/
-      campaigns/
-        CampaignsUnified.tsx     # Lista campanhas
-        CampaignEditor.tsx       # Editor completo
-        CampaignMetrics.tsx      # Pagina de metricas
+        BatchAssetUploader.tsx       # NOVO
+        CycleSelectorCard.tsx        # NOVO
+        PushChannelForm.tsx          # NOVO
+        NewsletterChannelForm.tsx    # NOVO
+        ExitIntentChannelForm.tsx    # NOVO
+        LoginPanelChannelForm.tsx    # NOVO
+    ads/
+      ExitIntentModal.tsx            # NOVO
+    auth/
+      LoginPanelAd.tsx               # NOVO
 ```
-
----
-
-## 9. Fluxos de Usuario
-
-### Fluxo 1: Criar Campanha Nova
-
-1. Admin acessa `/admin/campaigns/unified`
-2. Clica "Nova Campanha"
-3. Preenche dados basicos (nome, anunciante, datas)
-4. Seleciona canais (checkboxes): [x] Ads [x] Publidoor [ ] Stories
-5. Para cada canal selecionado, preenche config especifica
-6. Faz upload de assets (imagens)
-7. Salva -> campanha criada com 2 canais ativos
-
-### Fluxo 2: Converter Ad Existente
-
-1. Admin esta em `/admin/ads`
-2. Clica "..." em um anuncio -> "Usar em Publidoor"
-3. Modal abre com dados pre-preenchidos da campanha/asset
-4. Admin escolhe location e preenche frases
-5. Salva -> novo canal adicionado a campanha
-
-### Fluxo 3: Ver Metricas Unificadas
-
-1. Admin acessa campanha
-2. Ve dashboard com total geral + breakdown por canal
-3. Filtra por periodo, dispositivo
 
 ---
 
 ## 10. Ordem de Implementacao
 
-### Fase 1: Fundacao (Banco + Tipos)
-1. Migracao SQL: tabelas, enums, RLS
-2. Tipos TypeScript
-3. Hook basico `useCampaignsUnified`
+### Fase 1: Banco de Dados (Migracao)
+1. Criar tabela `campaign_cycles`
+2. Expandir ENUMs (canais e eventos)
+3. Adicionar colunas em `campaign_assets`
+4. Criar bucket `campaign-assets`
+5. RLS policies
 
-### Fase 2: CRUD Admin
-4. `CampaignForm` com Bloco 1 (dados comuns)
-5. `ChannelSelector` com checkboxes
-6. Forms por canal (Ads, Publidoor, Stories)
-7. Pagina `CampaignsUnified` (listagem)
-8. Pagina `CampaignEditor` (create/edit)
+### Fase 2: Tipos e Hooks Base
+6. Atualizar `campaigns-unified.ts`
+7. Criar `imageCorrection.ts`
+8. Criar `useCampaignCycles.ts`
 
-### Fase 3: Conversao e Integracao
-9. `AddChannelModal`
-10. Botoes de conversao em Ads, Publidoor, Stories
-11. `useTrackCampaignEvent` para metricas
+### Fase 3: Upload em Lote
+9. Criar `BatchAssetUploader.tsx`
+10. Integrar no `CampaignForm.tsx`
 
-### Fase 4: Metricas e Dashboard
-12. `CampaignMetricsDashboard`
-13. Pagina de metricas detalhadas
-14. Integracao com portal (hook `useActiveCampaigns`)
+### Fase 4: Ciclos de Campanha
+11. Criar `CycleSelectorCard.tsx`
+12. Integrar no editor de campanha
+
+### Fase 5: Novos Canais
+13. Forms: Push, Newsletter, Exit-Intent, Login
+14. Atualizar `ChannelSelector.tsx`
+
+### Fase 6: Componentes de Exibicao
+15. `ExitIntentModal.tsx` + `useExitIntent.ts`
+16. `LoginPanelAd.tsx` + integracao Auth.tsx
+
+### Fase 7: Metricas Expandidas
+17. Atualizar `useCampaignMetrics.ts`
+18. Dashboard com breakdown por ciclo
 
 ---
 
 ## Secao Tecnica
 
-### Estrutura do `config` JSONB
+### Slots Oficiais (Dimensoes Fixas)
 
-O campo `config` em `campaign_channels` armazena configuracoes especificas. Validacao via Zod no frontend:
+| Canal | Slot | Dimensoes |
+|-------|------|-----------|
+| Ads | Leaderboard | 728x90 |
+| Ads | Super Banner | 970x250 |
+| Ads | Retangulo Medio | 300x250 |
+| Ads | Arranha-ceu | 300x600 |
+| Ads | Pop-up | 580x400 |
+| Publidoor | Banner Grande | 970x250 |
+| Publidoor | Retangulo | 300x250 |
+| Publidoor | Vertical | 300x600 |
+| WebStories | Capa | 1080x1920 |
+
+### Regras do Motor de Correcao
+
+```text
+1. Auto-correcao ATIVA
+2. Upscale maximo: 125%
+3. Tolerancia de proporcao: <= 2%
+4. NUNCA distorcer
+5. NUNCA esticar
+6. Original SEMPRE preservado
+7. Derivados marcados: is_derived = true
+8. Badge visual no admin
+```
+
+### Exit-Intent Layout
+
+```text
++----------------------------------+
+|            HERO                  |
+|    (Publidoor ou Banner)         |
++----------------------------------+
++---------------+------------------+
+| SECUNDARIO 1  |   SECUNDARIO 2   |
++---------------+------------------+
+|     [ Continuar Navegando ]      |
++----------------------------------+
+```
+
+### Prioridade Exit-Intent
+
+1. Institucional (prefeitura, governo)
+2. Editorial (materias patrocinadas)
+3. Comercial (anunciantes)
+
+### Frequency Cap por Ciclo
 
 ```typescript
-const AdsConfigSchema = z.object({
-  slot_type: z.string(),
-  size: z.string(),
-  sort_order: z.number().default(0),
-  link_target: z.string().default('_blank'),
-});
-
-const PublidoorConfigSchema = z.object({
-  location_id: z.string().optional(),
-  type: z.enum(['narrativo', 'contextual', 'geografico', 'editorial', 'impacto_total']),
-  phrase_1: z.string(),
-  phrase_2: z.string().optional(),
-  phrase_3: z.string().optional(),
-  template_id: z.string().optional(),
-});
-
-const WebStoriesConfigSchema = z.object({
-  story_type: z.enum(['external', 'native']),
-  story_url: z.string().url().optional(),
-  story_id: z.string().uuid().optional(),
-});
+// Cada ciclo tem seu proprio contador
+const key = `campaign_${campaignId}_cycle_${cycleId}_views`;
 ```
 
-### Query de Campanhas Ativas
+---
 
-```sql
-SELECT c.*, 
-       array_agg(DISTINCT ch.channel_type) as active_channels,
-       json_agg(DISTINCT a.*) as assets
-FROM campaigns_unified c
-LEFT JOIN campaign_channels ch ON ch.campaign_id = c.id AND ch.enabled = true
-LEFT JOIN campaign_assets a ON a.campaign_id = c.id
-WHERE c.status = 'active'
-  AND (c.starts_at IS NULL OR c.starts_at <= now())
-  AND (c.ends_at IS NULL OR c.ends_at >= now())
-GROUP BY c.id
-ORDER BY c.priority DESC, c.created_at DESC;
-```
+## Validacao Final
 
-### Frequency Cap (Client-side)
-
-```typescript
-function checkFrequencyCap(campaignId: string, cap: number): boolean {
-  const key = `campaign_${campaignId}_views`;
-  const today = new Date().toDateString();
-  const data = JSON.parse(sessionStorage.getItem(key) || '{}');
-  
-  if (data.date !== today) {
-    sessionStorage.setItem(key, JSON.stringify({ date: today, count: 1 }));
-    return true;
-  }
-  
-  if (data.count >= cap) return false;
-  
-  data.count++;
-  sessionStorage.setItem(key, JSON.stringify(data));
-  return true;
-}
-```
-
+- [ ] Upload em lote funciona com drag & drop
+- [ ] Dimensoes detectadas automaticamente
+- [ ] Auto-atribuicao correta de slots
+- [ ] Motor de correcao bloqueia upscale > 125%
+- [ ] Ciclos permitem reenvio sem duplicar
+- [ ] Push/Newsletter exigem confirmacao
+- [ ] Exit-Intent aparece 1x por sessao
+- [ ] Login panel exibe criativo dinamico
+- [ ] Metricas agregam por campanha + ciclo + canal
+- [ ] Responsivo em todos os dispositivos
