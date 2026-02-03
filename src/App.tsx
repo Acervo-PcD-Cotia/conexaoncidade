@@ -29,6 +29,7 @@ import StoriesPage from "./pages/StoriesPage";
 import ResetPassword from "./pages/ResetPassword";
 import NewsListPage from "./pages/NewsListPage";
 import SearchPage from "./pages/SearchPage";
+import WebStoryViewerPage from "./pages/public/WebStoryViewer";
 
 // Admin Pages
 import Dashboard from "./pages/admin/Dashboard";
@@ -408,6 +409,7 @@ const App = () => (
                         <Route path="/enem-2026" element={<Enem2026Landing />} />
                       </Route>
                       <Route path="/story/:slug" element={<StoryViewer />} />
+                      <Route path="/webstory/:campaignId" element={<WebStoryViewerPage />} />
                       <Route path="/evento/:slug" element={<EventDetail />} />
                       <Route path="/edicao/:slug" element={<EditionViewer />} />
                       <Route path="/auth" element={<Auth />} />
