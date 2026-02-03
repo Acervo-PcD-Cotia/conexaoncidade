@@ -262,7 +262,17 @@ import {
 } from "./modules/imoveis/pages";
 
 // Guia Comercial Module
-import { GuiaComercialPage, BusinessDetailPage } from "./pages/guia";
+import { 
+  GuiaComercialPage, 
+  BusinessDetailPage, 
+  GuiaCadastrarPage,
+  GuiaCategoriaPage,
+  GuiaCidadePage,
+  GuiaPlanosPage,
+  GuiaAnuncianteDashboard,
+  GuiaAnuncianteLeads,
+  GuiaAnuncianteEditar,
+} from "./pages/guia";
 import ImoveisAdmin from "./pages/admin/imoveis/ImoveisAdmin";
 import ImovelEditor from "./pages/admin/imoveis/ImovelEditor";
 import BroadcastHub from "./pages/broadcast/BroadcastHub";
@@ -412,6 +422,17 @@ const App = () => (
                         <Route path="/imoveis/corretores" element={<CorretoresListPage />} />
                         <Route path="/imoveis/cidade/:cidade" element={<ImoveisCidadePage />} />
                         <Route path="/imoveis/cidade/:cidade/bairro/:bairro" element={<ImoveisBairroPage />} />
+                        
+                        {/* Guia Comercial Routes */}
+                        <Route path="/guia" element={<GuiaComercialPage />} />
+                        <Route path="/guia/cadastrar" element={<GuiaCadastrarPage />} />
+                        <Route path="/guia/planos" element={<GuiaPlanosPage />} />
+                        <Route path="/guia/categoria/:slug" element={<GuiaCategoriaPage />} />
+                        <Route path="/guia/cidade/:cidade" element={<GuiaCidadePage />} />
+                        <Route path="/guia/:slug" element={<BusinessDetailPage />} />
+                        <Route path="/guia/anunciante" element={<GuiaAnuncianteDashboard />} />
+                        <Route path="/guia/anunciante/leads" element={<GuiaAnuncianteLeads />} />
+                        <Route path="/guia/anunciante/editar/:id" element={<GuiaAnuncianteEditar />} />
                         
                         {/* ENEM 2026 Public Landing */}
                         <Route path="/enem-2026" element={<Enem2026Landing />} />
