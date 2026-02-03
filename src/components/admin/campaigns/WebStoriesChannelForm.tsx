@@ -71,12 +71,13 @@ export function WebStoriesChannelForm({
         </div>
       )}
 
+      {/* Note: Story cover is 1080x1920 but using BatchAssetUploader for proper slot assignment */}
       <AdImageUploader
         value={assetUrl || ''}
         onChange={(url) => onAssetChange(url)}
         onAltChange={(alt) => onAssetChange(assetUrl || '', alt)}
-        format="popup"
-        label="Capa do Story"
+        format="arranha-ceu"
+        label="Capa do Story (proporção vertical)"
       />
     </div>
   );
