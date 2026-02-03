@@ -56,6 +56,7 @@ import SocialQueue from "./pages/admin/SocialQueue";
 import SocialHistory from "./pages/admin/SocialHistory";
 import SocialLogs from "./pages/admin/SocialLogs";
 import SocialSettings from "./pages/admin/SocialSettings";
+import { PostSocialDashboard, PostSocialSettings, PostSocialComposer } from "./pages/admin/postsocial";
 import LinksDashboard from "./pages/admin/LinksDashboard";
 import LinksBuilder from "./pages/admin/LinksBuilder";
 import Solutions from "./pages/admin/Solutions";
@@ -464,6 +465,12 @@ const App = () => (
                         <Route path="social/history" element={<SocialHistory />} />
                         <Route path="social/logs" element={<SocialLogs />} />
                         <Route path="social/settings" element={<SocialSettings />} />
+                        
+                        {/* PostSocial Module (New) */}
+                        <Route path="postsocial" element={<PostSocialDashboard />} />
+                        <Route path="postsocial/new" element={<PostSocialComposer />} />
+                        <Route path="postsocial/:id" element={<PostSocialComposer />} />
+                        <Route path="postsocial/settings" element={<PostSocialSettings />} />
                         <Route path="links" element={<LinksDashboard />} />
                         <Route path="links/create" element={<LinksBuilder />} />
                         <Route path="links/qr" element={<LinksQRGenerator />} />
