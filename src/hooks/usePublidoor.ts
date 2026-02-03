@@ -474,6 +474,98 @@ export function usePublidoorTemplate(id: string | undefined) {
   });
 }
 
+export function useCreatePublidoorTemplate() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: Omit<PublidoorTemplate, 'id' | 'created_at'>) => {
+      const { data: result, error } = await supabase
+        .from('publidoor_templates')
+        .insert({
+          ...data,
+          color_palette: data.color_palette as unknown as Json,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['publidoor-templates'] });
+      toast.success('Template criado com sucesso!');
+    },
+    onError: (error) => {
+      toast.error('Erro ao criar template: ' + error.message);
+    },
+  });
+}
+
+export function useUpdatePublidoorTemplate() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: Partial<PublidoorTemplate> & { id: string }) => {
+      const updateData = {
+        ...data,
+        color_palette: data.color_palette ? (data.color_palette as unknown as Json) : undefined,
+      };
+      const { data: result, error } = await supabase
+        .from('publidoor_templates')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['publidoor-templates'] });
+      toast.success('Template atualizado!');
+    },
+    onError: (error) => {
+      toast.error('Erro ao atualizar template: ' + error.message);
+    },
+  });
+}
+
+export function useDeletePublidoorTemplate() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('publidoor_templates').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['publidoor-templates'] });
+      toast.success('Template excluído!');
+    },
+    onError: (error) => {
+      toast.error('Erro ao excluir template: ' + error.message);
+    },
+  });
+}
+
+export function useTogglePublidoorTemplateStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
+      const { data: result, error } = await supabase
+        .from('publidoor_templates')
+        .update({ is_active })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['publidoor-templates'] });
+      toast.success('Status atualizado!');
+    },
+    onError: (error) => {
+      toast.error('Erro ao atualizar status: ' + error.message);
+    },
+  });
+}
+
 // =============================================
 // LOCATIONS
 // =============================================
@@ -494,6 +586,91 @@ export function usePublidoorLocations(activeOnly = true) {
       const { data, error } = await query;
       if (error) throw error;
       return data as PublidoorLocation[];
+    },
+  });
+}
+
+export function useCreatePublidoorLocation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: Omit<PublidoorLocation, 'id' | 'created_at'>) => {
+      const { data: result, error } = await supabase
+        .from('publidoor_locations')
+        .insert(data)
+        .select()
+        .single();
+      if (error) throw error;
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['publidoor-locations'] });
+      toast.success('Local criado com sucesso!');
+    },
+    onError: (error) => {
+      toast.error('Erro ao criar local: ' + error.message);
+    },
+  });
+}
+
+export function useUpdatePublidoorLocation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: Partial<PublidoorLocation> & { id: string }) => {
+      const { data: result, error } = await supabase
+        .from('publidoor_locations')
+        .update(data)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['publidoor-locations'] });
+      toast.success('Local atualizado!');
+    },
+    onError: (error) => {
+      toast.error('Erro ao atualizar local: ' + error.message);
+    },
+  });
+}
+
+export function useDeletePublidoorLocation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('publidoor_locations').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['publidoor-locations'] });
+      toast.success('Local excluído!');
+    },
+    onError: (error) => {
+      toast.error('Erro ao excluir local: ' + error.message);
+    },
+  });
+}
+
+export function useTogglePublidoorLocationStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
+      const { data: result, error } = await supabase
+        .from('publidoor_locations')
+        .update({ is_active })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['publidoor-locations'] });
+      toast.success('Status atualizado!');
+    },
+    onError: (error) => {
+      toast.error('Erro ao atualizar status: ' + error.message);
     },
   });
 }
@@ -589,6 +766,23 @@ export function usePublidoorSchedules(publidoorId: string | undefined) {
   });
 }
 
+export function useAllPublidoorSchedules() {
+  return useQuery({
+    queryKey: ['publidoor-all-schedules'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('publidoor_schedules')
+        .select(`
+          *,
+          publidoor:publidoor_items(id, internal_name, status)
+        `)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      return data as (PublidoorSchedule & { publidoor?: { id: string; internal_name: string; status: string } | null })[];
+    },
+  });
+}
+
 export function useCreatePublidoorSchedule() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -603,10 +797,35 @@ export function useCreatePublidoorSchedule() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['publidoor-schedules', variables.publidoor_id] });
+      queryClient.invalidateQueries({ queryKey: ['publidoor-all-schedules'] });
       toast.success('Programação criada!');
     },
     onError: (error) => {
       toast.error('Erro ao criar programação: ' + error.message);
+    },
+  });
+}
+
+export function useUpdatePublidoorSchedule() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, publidoor_id, ...data }: Partial<PublidoorSchedule> & { id: string; publidoor_id: string }) => {
+      const { data: result, error } = await supabase
+        .from('publidoor_schedules')
+        .update(data)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return { ...result, publidoor_id };
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['publidoor-schedules', result.publidoor_id] });
+      queryClient.invalidateQueries({ queryKey: ['publidoor-all-schedules'] });
+      toast.success('Programação atualizada!');
+    },
+    onError: (error) => {
+      toast.error('Erro ao atualizar programação: ' + error.message);
     },
   });
 }
@@ -621,6 +840,7 @@ export function useDeletePublidoorSchedule() {
     },
     onSuccess: (publidoor_id) => {
       queryClient.invalidateQueries({ queryKey: ['publidoor-schedules', publidoor_id] });
+      queryClient.invalidateQueries({ queryKey: ['publidoor-all-schedules'] });
       toast.success('Programação removida!');
     },
     onError: (error) => {
