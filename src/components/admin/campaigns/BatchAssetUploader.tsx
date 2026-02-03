@@ -15,18 +15,21 @@ import {
   X, 
   Check, 
   AlertTriangle, 
-  Image as ImageIcon,
+  ArrowDown,
   RefreshCw 
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { 
   getImageDimensions, 
-  findMatchingSlots, 
+  findCompatibleSlots,
+  findAllProportionMatches,
   autoAssignSlot,
-  getCorrectionBadge,
-  type SlotMatch,
+  getMatchBadge,
+  formatAspectRatio,
+  type SlotMatchV2,
   type ImageDimensions 
-} from '@/lib/imageCorrection';
+} from '@/lib/imageCorrectionV2';
+import { AD_SLOTS } from '@/lib/adSlots';
 import { OFFICIAL_SLOTS, type ChannelType } from '@/types/campaigns-unified';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -36,9 +39,11 @@ interface UploadedAsset {
   file: File;
   preview: string;
   dimensions: ImageDimensions;
-  autoSlot: SlotMatch | null;
-  selectedSlot: SlotMatch | null;
-  possibleSlots: SlotMatch[];
+  aspectRatio: string;
+  autoSlot: SlotMatchV2 | null;
+  selectedSlot: SlotMatchV2 | null;
+  compatibleSlots: SlotMatchV2[];
+  allProportionMatches: SlotMatchV2[];
   isUploading: boolean;
   uploadedUrl?: string;
   error?: string;
@@ -73,17 +78,21 @@ export function BatchAssetUploader({
     
     try {
       const dimensions = await getImageDimensions(file);
-      const possibleSlots = findMatchingSlots(dimensions);
-      const autoSlot = autoAssignSlot(dimensions);
+      const aspectRatio = formatAspectRatio(dimensions.width, dimensions.height);
+      const compatibleSlots = findCompatibleSlots(dimensions);
+      const allProportionMatches = findAllProportionMatches(dimensions);
+      const autoSlotMatch = autoAssignSlot(dimensions);
       
       return {
         id,
         file,
         preview,
         dimensions,
-        autoSlot,
-        selectedSlot: autoSlot,
-        possibleSlots,
+        aspectRatio,
+        autoSlot: autoSlotMatch,
+        selectedSlot: autoSlotMatch,
+        compatibleSlots,
+        allProportionMatches,
         isUploading: false,
       };
     } catch {
@@ -92,9 +101,11 @@ export function BatchAssetUploader({
         file,
         preview,
         dimensions: { width: 0, height: 0 },
+        aspectRatio: '?',
         autoSlot: null,
         selectedSlot: null,
-        possibleSlots: [],
+        compatibleSlots: [],
+        allProportionMatches: [],
         isUploading: false,
         error: 'Não foi possível processar a imagem',
       };
@@ -139,7 +150,9 @@ export function BatchAssetUploader({
   const changeSlot = (assetId: string, slotKey: string) => {
     setAssets(prev => prev.map(asset => {
       if (asset.id === assetId) {
-        const newSlot = asset.possibleSlots.find(s => s.slotKey === slotKey);
+        // First check compatible slots, then all proportion matches
+        const newSlot = asset.compatibleSlots.find(s => s.slotKey === slotKey)
+          || asset.allProportionMatches.find(s => s.slotKey === slotKey);
         return { ...asset, selectedSlot: newSlot || null };
       }
       return asset;
@@ -198,10 +211,10 @@ export function BatchAssetUploader({
           channel_type: slot.channel as ChannelType,
           format_key: slot.slotKey,
           is_original: true,
-          upscale_percent: slot.correctionResult.upscalePercent > 100 
-            ? slot.correctionResult.upscalePercent 
+          upscale_percent: slot.scalePercent > 100 
+            ? slot.scalePercent 
             : undefined,
-          auto_corrected: slot.correctionResult.upscalePercent > 100,
+          auto_corrected: slot.scalePercent > 100,
         });
       }
 
@@ -293,7 +306,7 @@ export function BatchAssetUploader({
                           {asset.file.name}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {asset.dimensions.width} × {asset.dimensions.height}px
+                          {asset.dimensions.width} × {asset.dimensions.height}px • Proporção: {asset.aspectRatio}
                         </p>
                       </div>
                       <Button
@@ -312,11 +325,33 @@ export function BatchAssetUploader({
                         <AlertTriangle className="h-3 w-3 mr-1" />
                         {asset.error}
                       </Badge>
-                    ) : asset.possibleSlots.length === 0 ? (
-                      <Badge variant="destructive" className="text-xs">
-                        <AlertTriangle className="h-3 w-3 mr-1" />
-                        Nenhum slot compatível
-                      </Badge>
+                    ) : asset.compatibleSlots.length === 0 && asset.allProportionMatches.length === 0 ? (
+                      <div className="space-y-2">
+                        <Badge variant="destructive" className="text-xs">
+                          <AlertTriangle className="h-3 w-3 mr-1" />
+                          Nenhum slot compatível
+                        </Badge>
+                        {/* Manual slot selection fallback */}
+                        <Select
+                          value={asset.selectedSlot?.slotKey || ''}
+                          onValueChange={(value) => changeSlot(asset.id, value)}
+                        >
+                          <SelectTrigger className="h-8 w-48 text-xs">
+                            <SelectValue placeholder="Selecionar manualmente..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {AD_SLOTS.map(slot => (
+                              <SelectItem 
+                                key={slot.key} 
+                                value={slot.key}
+                                className="text-xs"
+                              >
+                                {slot.label} ({slot.channel}) - {slot.width}×{slot.height}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     ) : (
                       <div className="flex items-center gap-2 flex-wrap">
                         <Select
@@ -327,15 +362,42 @@ export function BatchAssetUploader({
                             <SelectValue placeholder="Selecionar slot" />
                           </SelectTrigger>
                           <SelectContent>
-                            {asset.possibleSlots.map(slot => (
-                              <SelectItem 
-                                key={slot.slotKey} 
-                                value={slot.slotKey}
-                                className="text-xs"
-                              >
-                                {slot.slotLabel} ({slot.channel})
-                              </SelectItem>
-                            ))}
+                            {/* Compatible slots first */}
+                            {asset.compatibleSlots.length > 0 && (
+                              <>
+                                <SelectItem disabled value="header-compatible" className="text-xs font-semibold text-muted-foreground">
+                                  ✓ Compatíveis (auto)
+                                </SelectItem>
+                                {asset.compatibleSlots.map(slot => (
+                                  <SelectItem 
+                                    key={slot.slotKey} 
+                                    value={slot.slotKey}
+                                    className="text-xs"
+                                  >
+                                    {slot.slotLabel} ({slot.channel}) - {slot.statusText}
+                                  </SelectItem>
+                                ))}
+                              </>
+                            )}
+                            {/* Manual selection slots */}
+                            {asset.allProportionMatches.length > asset.compatibleSlots.length && (
+                              <>
+                                <SelectItem disabled value="header-manual" className="text-xs font-semibold text-muted-foreground">
+                                  ⚠️ Requer ajuste manual
+                                </SelectItem>
+                                {asset.allProportionMatches
+                                  .filter(m => !asset.compatibleSlots.some(c => c.slotKey === m.slotKey))
+                                  .map(slot => (
+                                    <SelectItem 
+                                      key={slot.slotKey} 
+                                      value={slot.slotKey}
+                                      className="text-xs"
+                                    >
+                                      {slot.slotLabel} ({slot.channel}) - {slot.statusText}
+                                    </SelectItem>
+                                  ))}
+                              </>
+                            )}
                           </SelectContent>
                         </Select>
 
@@ -344,12 +406,15 @@ export function BatchAssetUploader({
                             variant="outline"
                             className={cn(
                               'text-xs',
-                              getCorrectionBadge(asset.selectedSlot.correctionResult).variant === 'success' && 'border-green-500 text-green-700',
-                              getCorrectionBadge(asset.selectedSlot.correctionResult).variant === 'warning' && 'border-yellow-500 text-yellow-700',
-                              getCorrectionBadge(asset.selectedSlot.correctionResult).variant === 'error' && 'border-red-500 text-red-700',
+                              asset.selectedSlot.statusVariant === 'success' && 'border-green-500 text-green-700',
+                              asset.selectedSlot.statusVariant === 'warning' && 'border-yellow-500 text-yellow-700',
+                              asset.selectedSlot.statusVariant === 'error' && 'border-red-500 text-red-700',
                             )}
                           >
-                            {getCorrectionBadge(asset.selectedSlot.correctionResult).text}
+                            {asset.selectedSlot.matchType === 'downscale' && (
+                              <ArrowDown className="h-3 w-3 mr-1" />
+                            )}
+                            {getMatchBadge(asset.selectedSlot).text}
                           </Badge>
                         )}
 

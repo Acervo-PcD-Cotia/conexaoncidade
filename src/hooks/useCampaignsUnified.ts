@@ -124,7 +124,7 @@ export function useCreateCampaignUnified() {
       if (formData.enabledChannels.length > 0) {
         const channelInserts = formData.enabledChannels.map(channelType => ({
           campaign_id: campaign.id,
-          channel_type: channelType as 'ads' | 'publidoor' | 'webstories',
+          channel_type: channelType, // ChannelType is already correctly typed
           enabled: true,
           config: asJson(getChannelConfig(channelType, formData)),
         }));
@@ -202,7 +202,7 @@ export function useUpdateCampaignUnified() {
         if (data.enabledChannels.length > 0) {
           const channelInserts = data.enabledChannels.map(channelType => ({
             campaign_id: id,
-            channel_type: channelType as 'ads' | 'publidoor' | 'webstories',
+            channel_type: channelType, // ChannelType is already correctly typed
             enabled: true,
             config: asJson(getChannelConfig(channelType, data as CampaignFormData)),
           }));
@@ -307,7 +307,7 @@ export function useAddChannelToCampaign() {
         .from('campaign_channels')
         .insert({
           campaign_id: campaignId,
-          channel_type: channelType as 'ads' | 'publidoor' | 'webstories',
+          channel_type: channelType, // ChannelType is already correctly typed
           enabled: true,
           config: asJson(config),
         })
