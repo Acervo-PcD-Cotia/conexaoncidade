@@ -243,7 +243,8 @@ import JobsPage from "./pages/jobs/JobsPage";
 import JobDetailPage from "./pages/jobs/JobDetailPage";
 import JobsAdmin from "./pages/admin/JobsAdmin";
 
-// Broadcast Pages
+// Real Estate Module
+import { ImoveisListPage } from "./modules/imoveis/pages";
 import BroadcastHub from "./pages/broadcast/BroadcastHub";
 import BroadcastWatch from "./pages/broadcast/BroadcastWatch";
 import BroadcastSchedule from "./pages/broadcast/BroadcastSchedule";
@@ -382,6 +383,9 @@ const App = () => (
                         
                         {/* Job Alerts */}
                         <Route path="/comunidade/alertas-vagas" element={<JobAlertsPage />} />
+                        
+                        {/* Real Estate Routes */}
+                        <Route path="/imoveis" element={<ImoveisListPage />} />
                         
                         {/* ENEM 2026 Public Landing */}
                         <Route path="/enem-2026" element={<Enem2026Landing />} />
