@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +7,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertTriangle } from 'lucide-react';
 import { ChannelSelector } from './ChannelSelector';
 import { BatchAssetUploader } from './BatchAssetUploader';
 import type { 
@@ -93,10 +95,63 @@ export function CampaignForm({
   const [adsAltText, setAdsAltText] = useState('');
   const [publidoorAltText, setPublidoorAltText] = useState('');
   const [storyAltText, setStoryAltText] = useState('');
+  
+  // Exit-Intent Assets
+  const [exitIntentHeroUrl, setExitIntentHeroUrl] = useState('');
+  const [exitIntentSecondary1Url, setExitIntentSecondary1Url] = useState('');
+  const [exitIntentSecondary2Url, setExitIntentSecondary2Url] = useState('');
+  
+  // Login Panel Assets
+  const [loginPanelAssetUrl, setLoginPanelAssetUrl] = useState('');
+
+  // Validation state
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   const status = watch('status');
 
+  // Validate channels before submit
+  const validateChannels = (): string[] => {
+    const errors: string[] = [];
+
+    if (selectedChannels.includes('push')) {
+      if (!pushConfig.title?.trim()) {
+        errors.push('Push: Título é obrigatório');
+      }
+      if (!pushConfig.body?.trim()) {
+        errors.push('Push: Corpo da mensagem é obrigatório');
+      }
+    }
+
+    if (selectedChannels.includes('newsletter')) {
+      if (!newsletterConfig.subject?.trim()) {
+        errors.push('Newsletter: Assunto é obrigatório');
+      }
+    }
+
+    if (selectedChannels.includes('webstories')) {
+      if (webstoriesConfig.story_type === 'external' && !webstoriesConfig.story_url?.trim()) {
+        errors.push('WebStories: URL do story é obrigatória para tipo externo');
+      }
+    }
+
+    if (selectedChannels.includes('exit_intent')) {
+      if (!exitIntentConfig.cta_text?.trim()) {
+        errors.push('Exit-Intent: Texto do CTA é obrigatório');
+      }
+    }
+
+    return errors;
+  };
+
   const handleFormSubmit = handleSubmit((data) => {
+    // Validate channels
+    const channelErrors = validateChannels();
+    if (channelErrors.length > 0) {
+      setValidationErrors(channelErrors);
+      return;
+    }
+    setValidationErrors([]);
+
     // Build assets array
     const assets: CampaignFormData['assets'] = [];
     
@@ -128,6 +183,44 @@ export function CampaignForm({
       });
     }
 
+    // Exit-Intent assets
+    if (selectedChannels.includes('exit_intent')) {
+      if (exitIntentHeroUrl) {
+        assets.push({
+          asset_type: 'banner',
+          file_url: exitIntentHeroUrl,
+          channel_type: 'exit_intent',
+          format_key: 'exit_hero',
+        });
+      }
+      if (exitIntentSecondary1Url) {
+        assets.push({
+          asset_type: 'banner',
+          file_url: exitIntentSecondary1Url,
+          channel_type: 'exit_intent',
+          format_key: 'exit_secondary_1',
+        });
+      }
+      if (exitIntentSecondary2Url) {
+        assets.push({
+          asset_type: 'banner',
+          file_url: exitIntentSecondary2Url,
+          channel_type: 'exit_intent',
+          format_key: 'exit_secondary_2',
+        });
+      }
+    }
+
+    // Login Panel assets
+    if (selectedChannels.includes('login_panel') && loginPanelAssetUrl) {
+      assets.push({
+        asset_type: loginPanelConfig.display_type === 'story' ? 'story_cover' : 'publidoor',
+        file_url: loginPanelAssetUrl,
+        channel_type: 'login_panel',
+        format_key: 'login_panel',
+      });
+    }
+
     onSubmit({
       ...data,
       enabledChannels: selectedChannels,
@@ -144,6 +237,20 @@ export function CampaignForm({
 
   return (
     <form onSubmit={handleFormSubmit} className="space-y-6">
+      {/* Validation Errors */}
+      {validationErrors.length > 0 && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            <ul className="list-disc list-inside space-y-1">
+              {validationErrors.map((error, idx) => (
+                <li key={idx}>{error}</li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Block 1: Common Data */}
       <Card>
         <CardHeader>
@@ -321,6 +428,14 @@ export function CampaignForm({
               setStoryAssetUrl(url);
               if (alt) setStoryAltText(alt);
             }}
+            exitIntentHeroUrl={exitIntentHeroUrl}
+            onExitIntentHeroChange={(url) => setExitIntentHeroUrl(url)}
+            exitIntentSecondary1Url={exitIntentSecondary1Url}
+            onExitIntentSecondary1Change={(url) => setExitIntentSecondary1Url(url)}
+            exitIntentSecondary2Url={exitIntentSecondary2Url}
+            onExitIntentSecondary2Change={(url) => setExitIntentSecondary2Url(url)}
+            loginPanelAssetUrl={loginPanelAssetUrl}
+            onLoginPanelAssetChange={(url) => setLoginPanelAssetUrl(url)}
           />
         </CardContent>
       </Card>

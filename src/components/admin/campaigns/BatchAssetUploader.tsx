@@ -190,9 +190,21 @@ export function BatchAssetUploader({
           });
 
         if (uploadError) {
+          let errorMessage = uploadError.message;
+          
+          // Provide user-friendly error messages
+          if (uploadError.message?.includes('Bucket not found')) {
+            errorMessage = 'Bucket não configurado. Contate o administrador.';
+            console.error('Storage bucket "campaign-assets" not found');
+          } else if (uploadError.message?.includes('row-level security') || uploadError.message?.includes('permission')) {
+            errorMessage = 'Sem permissão. Verifique se está logado.';
+            console.error('Storage permission error:', uploadError);
+          }
+          
           setAssets(prev => prev.map(a => 
-            a.id === asset.id ? { ...a, isUploading: false, error: uploadError.message } : a
+            a.id === asset.id ? { ...a, isUploading: false, error: errorMessage } : a
           ));
+          toast.error(`Erro ao enviar ${asset.file.name}: ${errorMessage}`);
           continue;
         }
 

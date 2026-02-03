@@ -7,17 +7,35 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { AdImageUploader } from '@/components/admin/AdImageUploader';
 import type { ExitIntentChannelConfig } from '@/types/campaigns-unified';
 
 interface ExitIntentChannelFormProps {
   config?: Partial<ExitIntentChannelConfig>;
   onChange: (config: Partial<ExitIntentChannelConfig>) => void;
+  heroAssetUrl?: string;
+  onHeroAssetChange?: (url: string, alt?: string) => void;
+  secondary1AssetUrl?: string;
+  onSecondary1AssetChange?: (url: string, alt?: string) => void;
+  secondary2AssetUrl?: string;
+  onSecondary2AssetChange?: (url: string, alt?: string) => void;
 }
 
-export function ExitIntentChannelForm({ config, onChange }: ExitIntentChannelFormProps) {
+export function ExitIntentChannelForm({ 
+  config, 
+  onChange,
+  heroAssetUrl = '',
+  onHeroAssetChange,
+  secondary1AssetUrl = '',
+  onSecondary1AssetChange,
+  secondary2AssetUrl = '',
+  onSecondary2AssetChange,
+}: ExitIntentChannelFormProps) {
   const updateConfig = (key: keyof ExitIntentChannelConfig, value: string) => {
     onChange({ ...config, [key]: value });
   };
+
+  const heroType = config?.hero_type || 'banner';
 
   return (
     <div className="space-y-4">
@@ -30,7 +48,7 @@ export function ExitIntentChannelForm({ config, onChange }: ExitIntentChannelFor
         <p className="text-xs text-muted-foreground mb-3">Prévia do layout:</p>
         <div className="space-y-2">
           <div className="h-20 bg-primary/10 rounded flex items-center justify-center text-xs text-muted-foreground border-2 border-dashed border-primary/30">
-            HERO (Publidoor ou Banner Grande)
+            HERO ({heroType === 'publidoor' ? 'Publidoor' : 'Banner Grande'})
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div className="h-14 bg-secondary/30 rounded flex items-center justify-center text-xs text-muted-foreground border border-dashed">
@@ -50,7 +68,7 @@ export function ExitIntentChannelForm({ config, onChange }: ExitIntentChannelFor
         <div className="space-y-2">
           <Label>Tipo do Hero</Label>
           <Select
-            value={config?.hero_type || 'banner'}
+            value={heroType}
             onValueChange={(value) => updateConfig('hero_type', value)}
           >
             <SelectTrigger>
@@ -95,6 +113,41 @@ export function ExitIntentChannelForm({ config, onChange }: ExitIntentChannelFor
         <p className="text-xs text-muted-foreground">
           Botão para fechar o modal (ex: "Ver depois", "Continuar navegando")
         </p>
+      </div>
+
+      {/* Asset Uploaders */}
+      <div className="space-y-4 pt-4 border-t">
+        <h4 className="font-medium text-sm">Criativos do Modal</h4>
+        
+        {onHeroAssetChange && (
+          <AdImageUploader
+            value={heroAssetUrl}
+            onChange={(url) => onHeroAssetChange(url)}
+            onAltChange={(alt) => onHeroAssetChange(heroAssetUrl, alt)}
+            format={heroType === 'publidoor' ? 'home-topo' : 'home-topo'}
+            label={`Hero (${heroType === 'publidoor' ? 'Publidoor' : 'Banner Grande'})`}
+          />
+        )}
+
+        {onSecondary1AssetChange && (
+          <AdImageUploader
+            value={secondary1AssetUrl}
+            onChange={(url) => onSecondary1AssetChange(url)}
+            onAltChange={(alt) => onSecondary1AssetChange(secondary1AssetUrl, alt)}
+            format="retangulo-medio"
+            label="Secundário 1 (Retângulo Médio)"
+          />
+        )}
+
+        {onSecondary2AssetChange && (
+          <AdImageUploader
+            value={secondary2AssetUrl}
+            onChange={(url) => onSecondary2AssetChange(url)}
+            onAltChange={(alt) => onSecondary2AssetChange(secondary2AssetUrl, alt)}
+            format="retangulo-medio"
+            label="Secundário 2 (Retângulo Médio)"
+          />
+        )}
       </div>
 
       <div className="text-xs text-muted-foreground">

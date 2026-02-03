@@ -25,26 +25,41 @@ import { LoginPanelChannelForm } from './LoginPanelChannelForm';
 interface ChannelSelectorProps {
   selectedChannels: ChannelType[];
   onChannelsChange: (channels: ChannelType[]) => void;
+  // Ads
   adsConfig?: Partial<AdsChannelConfig>;
   onAdsConfigChange: (config: Partial<AdsChannelConfig>) => void;
-  publidoorConfig?: Partial<PublidoorChannelConfig>;
-  onPublidoorConfigChange: (config: Partial<PublidoorChannelConfig>) => void;
-  webstoriesConfig?: Partial<WebStoriesChannelConfig>;
-  onWebstoriesConfigChange: (config: Partial<WebStoriesChannelConfig>) => void;
-  pushConfig?: Partial<PushChannelConfig>;
-  onPushConfigChange?: (config: Partial<PushChannelConfig>) => void;
-  newsletterConfig?: Partial<NewsletterChannelConfig>;
-  onNewsletterConfigChange?: (config: Partial<NewsletterChannelConfig>) => void;
-  exitIntentConfig?: Partial<ExitIntentChannelConfig>;
-  onExitIntentConfigChange?: (config: Partial<ExitIntentChannelConfig>) => void;
-  loginPanelConfig?: Partial<LoginPanelChannelConfig>;
-  onLoginPanelConfigChange?: (config: Partial<LoginPanelChannelConfig>) => void;
   adsAssetUrl?: string;
   onAdsAssetChange: (url: string, alt?: string) => void;
+  // Publidoor
+  publidoorConfig?: Partial<PublidoorChannelConfig>;
+  onPublidoorConfigChange: (config: Partial<PublidoorChannelConfig>) => void;
   publidoorAssetUrl?: string;
   onPublidoorAssetChange: (url: string, alt?: string) => void;
+  // WebStories
+  webstoriesConfig?: Partial<WebStoriesChannelConfig>;
+  onWebstoriesConfigChange: (config: Partial<WebStoriesChannelConfig>) => void;
   storyAssetUrl?: string;
   onStoryAssetChange: (url: string, alt?: string) => void;
+  // Push
+  pushConfig?: Partial<PushChannelConfig>;
+  onPushConfigChange: (config: Partial<PushChannelConfig>) => void;
+  // Newsletter
+  newsletterConfig?: Partial<NewsletterChannelConfig>;
+  onNewsletterConfigChange: (config: Partial<NewsletterChannelConfig>) => void;
+  // Exit-Intent
+  exitIntentConfig?: Partial<ExitIntentChannelConfig>;
+  onExitIntentConfigChange: (config: Partial<ExitIntentChannelConfig>) => void;
+  exitIntentHeroUrl?: string;
+  onExitIntentHeroChange?: (url: string, alt?: string) => void;
+  exitIntentSecondary1Url?: string;
+  onExitIntentSecondary1Change?: (url: string, alt?: string) => void;
+  exitIntentSecondary2Url?: string;
+  onExitIntentSecondary2Change?: (url: string, alt?: string) => void;
+  // Login Panel
+  loginPanelConfig?: Partial<LoginPanelChannelConfig>;
+  onLoginPanelConfigChange: (config: Partial<LoginPanelChannelConfig>) => void;
+  loginPanelAssetUrl?: string;
+  onLoginPanelAssetChange?: (url: string, alt?: string) => void;
 }
 
 interface ChannelOption {
@@ -116,6 +131,9 @@ const CATEGORY_LABELS: Record<string, string> = {
   direct: 'Comunicação Direta',
 };
 
+// No-op function for fallback
+const noop = () => {};
+
 export function ChannelSelector({
   selectedChannels,
   onChannelsChange,
@@ -126,19 +144,27 @@ export function ChannelSelector({
   webstoriesConfig,
   onWebstoriesConfigChange,
   pushConfig,
-  onPushConfigChange,
+  onPushConfigChange = noop,
   newsletterConfig,
-  onNewsletterConfigChange,
+  onNewsletterConfigChange = noop,
   exitIntentConfig,
-  onExitIntentConfigChange,
+  onExitIntentConfigChange = noop,
   loginPanelConfig,
-  onLoginPanelConfigChange,
+  onLoginPanelConfigChange = noop,
   adsAssetUrl,
   onAdsAssetChange,
   publidoorAssetUrl,
   onPublidoorAssetChange,
   storyAssetUrl,
   onStoryAssetChange,
+  exitIntentHeroUrl,
+  onExitIntentHeroChange,
+  exitIntentSecondary1Url,
+  onExitIntentSecondary1Change,
+  exitIntentSecondary2Url,
+  onExitIntentSecondary2Change,
+  loginPanelAssetUrl,
+  onLoginPanelAssetChange,
 }: ChannelSelectorProps) {
   const toggleChannel = (type: ChannelType) => {
     if (selectedChannels.includes(type)) {
@@ -188,33 +214,41 @@ export function ChannelSelector({
           />
         );
       case 'push':
-        return onPushConfigChange ? (
+        return (
           <PushChannelForm
             config={pushConfig}
             onChange={onPushConfigChange}
           />
-        ) : null;
+        );
       case 'newsletter':
-        return onNewsletterConfigChange ? (
+        return (
           <NewsletterChannelForm
             config={newsletterConfig}
             onChange={onNewsletterConfigChange}
           />
-        ) : null;
+        );
       case 'exit_intent':
-        return onExitIntentConfigChange ? (
+        return (
           <ExitIntentChannelForm
             config={exitIntentConfig}
             onChange={onExitIntentConfigChange}
+            heroAssetUrl={exitIntentHeroUrl}
+            onHeroAssetChange={onExitIntentHeroChange}
+            secondary1AssetUrl={exitIntentSecondary1Url}
+            onSecondary1AssetChange={onExitIntentSecondary1Change}
+            secondary2AssetUrl={exitIntentSecondary2Url}
+            onSecondary2AssetChange={onExitIntentSecondary2Change}
           />
-        ) : null;
+        );
       case 'login_panel':
-        return onLoginPanelConfigChange ? (
+        return (
           <LoginPanelChannelForm
             config={loginPanelConfig}
             onChange={onLoginPanelConfigChange}
+            assetUrl={loginPanelAssetUrl}
+            onAssetChange={onLoginPanelAssetChange}
           />
-        ) : null;
+        );
       default:
         return null;
     }
