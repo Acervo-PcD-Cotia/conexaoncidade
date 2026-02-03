@@ -15,6 +15,10 @@ import type {
   AdsChannelConfig,
   PublidoorChannelConfig,
   WebStoriesChannelConfig,
+  PushChannelConfig,
+  NewsletterChannelConfig,
+  ExitIntentChannelConfig,
+  LoginPanelChannelConfig,
   CampaignAsset,
 } from '@/types/campaigns-unified';
 
@@ -47,6 +51,10 @@ export function CampaignForm({
       adsConfig: initialData?.adsConfig || {},
       publidoorConfig: initialData?.publidoorConfig || {},
       webstoriesConfig: initialData?.webstoriesConfig || {},
+      pushConfig: initialData?.pushConfig || {},
+      newsletterConfig: initialData?.newsletterConfig || {},
+      exitIntentConfig: initialData?.exitIntentConfig || {},
+      loginPanelConfig: initialData?.loginPanelConfig || {},
       assets: initialData?.assets || [],
     },
   });
@@ -63,6 +71,18 @@ export function CampaignForm({
   );
   const [webstoriesConfig, setWebstoriesConfig] = useState<Partial<WebStoriesChannelConfig>>(
     initialData?.webstoriesConfig || { story_type: 'external' }
+  );
+  const [pushConfig, setPushConfig] = useState<Partial<PushChannelConfig>>(
+    initialData?.pushConfig || { title: '', body: '', action_url: '', target_audience: 'all' }
+  );
+  const [newsletterConfig, setNewsletterConfig] = useState<Partial<NewsletterChannelConfig>>(
+    initialData?.newsletterConfig || { subject: '', preview_text: '', target_list: '' }
+  );
+  const [exitIntentConfig, setExitIntentConfig] = useState<Partial<ExitIntentChannelConfig>>(
+    initialData?.exitIntentConfig || { hero_type: 'publidoor', cta_text: 'Continuar navegando', priority_type: 'commercial' }
+  );
+  const [loginPanelConfig, setLoginPanelConfig] = useState<Partial<LoginPanelChannelConfig>>(
+    initialData?.loginPanelConfig || { display_type: 'publidoor' }
   );
 
   // Asset states
@@ -113,6 +133,10 @@ export function CampaignForm({
       adsConfig,
       publidoorConfig,
       webstoriesConfig,
+      pushConfig,
+      newsletterConfig,
+      exitIntentConfig,
+      loginPanelConfig,
       assets,
     });
   });
@@ -273,6 +297,14 @@ export function CampaignForm({
             onPublidoorConfigChange={setPublidoorConfig}
             webstoriesConfig={webstoriesConfig}
             onWebstoriesConfigChange={setWebstoriesConfig}
+            pushConfig={pushConfig}
+            onPushConfigChange={setPushConfig}
+            newsletterConfig={newsletterConfig}
+            onNewsletterConfigChange={setNewsletterConfig}
+            exitIntentConfig={exitIntentConfig}
+            onExitIntentConfigChange={setExitIntentConfig}
+            loginPanelConfig={loginPanelConfig}
+            onLoginPanelConfigChange={setLoginPanelConfig}
             adsAssetUrl={adsAssetUrl}
             onAdsAssetChange={(url, alt) => {
               setAdsAssetUrl(url);

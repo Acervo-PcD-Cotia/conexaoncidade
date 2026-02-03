@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
 import { Loader2, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import logoFull from "@/assets/logo-full.png";
+import { LoginPanelAd } from '@/components/auth/LoginPanelAd';
 
 const ADMIN_ROLES = ['super_admin', 'admin', 'editor', 'editor_chief', 'reporter', 'columnist', 'moderator', 'commercial', 'financial'];
 
@@ -119,19 +120,44 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen bg-muted/30 flex flex-col lg:grid lg:grid-cols-[60%_40%]">
-      {/* Coluna Esquerda - Branding */}
-      <div className="flex flex-col items-center justify-center py-12 px-6 lg:py-0 lg:border-r lg:border-border/30">
+      {/* Coluna Esquerda - Dynamic Campaign Creative or Branding */}
+      <div className="relative hidden lg:flex lg:border-r lg:border-border/30 overflow-hidden">
+        {/* LoginPanelAd will render campaign creative if available */}
+        <LoginPanelAd className="absolute inset-0" />
+        
+        {/* Fallback branding shown when no campaign is active (LoginPanelAd returns null) */}
+        <div className="flex flex-col items-center justify-center w-full h-full py-12 px-6">
+          <div className="flex flex-col items-center gap-6 max-w-md text-center">
+            <img 
+              src={logoFull} 
+              alt="Conexão na Cidade" 
+              className="h-20 lg:h-28 w-auto"
+            />
+            <div className="space-y-2">
+              <h1 className="text-2xl lg:text-3xl font-heading font-bold text-foreground">
+                Acesse sua conta
+              </h1>
+              <p className="text-muted-foreground text-base lg:text-lg">
+                Painel Conexões
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile header - shows when no left panel */}
+      <div className="flex flex-col items-center justify-center py-12 px-6 lg:hidden">
         <div className="flex flex-col items-center gap-6 max-w-md text-center">
           <img 
             src={logoFull} 
             alt="Conexão na Cidade" 
-            className="h-20 lg:h-28 w-auto"
+            className="h-20 w-auto"
           />
           <div className="space-y-2">
-            <h1 className="text-2xl lg:text-3xl font-heading font-bold text-foreground">
+            <h1 className="text-2xl font-heading font-bold text-foreground">
               Acesse sua conta
             </h1>
-            <p className="text-muted-foreground text-base lg:text-lg">
+            <p className="text-muted-foreground text-base">
               Painel Conexões
             </p>
           </div>
