@@ -3441,6 +3441,596 @@ export type Database = {
           },
         ]
       }
+      business_categories: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          page_content: string | null
+          parent_id: string | null
+          seo_description: string | null
+          seo_title: string | null
+          slug: string
+          sort_order: number | null
+          tenant_id: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          page_content?: string | null
+          parent_id?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug: string
+          sort_order?: number | null
+          tenant_id?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          page_content?: string | null
+          parent_id?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug?: string
+          sort_order?: number | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "business_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_categories_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_clicks: {
+        Row: {
+          business_id: string
+          click_type: string
+          created_at: string | null
+          id: string
+          ip_hash: string | null
+          source_page: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          business_id: string
+          click_type: string
+          created_at?: string | null
+          id?: string
+          ip_hash?: string | null
+          source_page?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          business_id?: string
+          click_type?: string
+          created_at?: string | null
+          id?: string
+          ip_hash?: string | null
+          source_page?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_clicks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_faqs: {
+        Row: {
+          answer: string
+          business_id: string
+          created_at: string | null
+          id: string
+          question: string
+          sort_order: number | null
+        }
+        Insert: {
+          answer: string
+          business_id: string
+          created_at?: string | null
+          id?: string
+          question: string
+          sort_order?: number | null
+        }
+        Update: {
+          answer?: string
+          business_id?: string
+          created_at?: string | null
+          id?: string
+          question?: string
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_faqs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_leads: {
+        Row: {
+          business_id: string
+          contacted_at: string | null
+          converted_at: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          message: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          preferred_contact: string | null
+          service_needed: string | null
+          source: string | null
+          source_url: string | null
+          status: Database["public"]["Enums"]["lead_status"] | null
+          urgency: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          business_id: string
+          contacted_at?: string | null
+          converted_at?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          message?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          preferred_contact?: string | null
+          service_needed?: string | null
+          source?: string | null
+          source_url?: string | null
+          status?: Database["public"]["Enums"]["lead_status"] | null
+          urgency?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          business_id?: string
+          contacted_at?: string | null
+          converted_at?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          message?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          preferred_contact?: string | null
+          service_needed?: string | null
+          source?: string | null
+          source_url?: string | null
+          status?: Database["public"]["Enums"]["lead_status"] | null
+          urgency?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_leads_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_plan_features: {
+        Row: {
+          feature_key: string
+          feature_name: string
+          feature_value: string | null
+          id: string
+          is_enabled: boolean | null
+          plan: Database["public"]["Enums"]["business_plan"]
+        }
+        Insert: {
+          feature_key: string
+          feature_name: string
+          feature_value?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          plan: Database["public"]["Enums"]["business_plan"]
+        }
+        Update: {
+          feature_key?: string
+          feature_name?: string
+          feature_value?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          plan?: Database["public"]["Enums"]["business_plan"]
+        }
+        Relationships: []
+      }
+      business_promotions: {
+        Row: {
+          business_id: string
+          code: string | null
+          created_at: string | null
+          description: string | null
+          discount_type: string | null
+          discount_value: number | null
+          ends_at: string | null
+          id: string
+          is_active: boolean | null
+          starts_at: string | null
+          title: string
+        }
+        Insert: {
+          business_id: string
+          code?: string | null
+          created_at?: string | null
+          description?: string | null
+          discount_type?: string | null
+          discount_value?: number | null
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          starts_at?: string | null
+          title: string
+        }
+        Update: {
+          business_id?: string
+          code?: string | null
+          created_at?: string | null
+          description?: string | null
+          discount_type?: string | null
+          discount_value?: number | null
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          starts_at?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_promotions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_reviews: {
+        Row: {
+          author_email: string | null
+          author_name: string | null
+          business_id: string
+          cons: string[] | null
+          content: string | null
+          created_at: string | null
+          id: string
+          is_approved: boolean | null
+          is_featured: boolean | null
+          is_verified_purchase: boolean | null
+          pros: string[] | null
+          rating: number
+          replied_at: string | null
+          replied_by: string | null
+          reply: string | null
+          title: string | null
+          user_id: string | null
+        }
+        Insert: {
+          author_email?: string | null
+          author_name?: string | null
+          business_id: string
+          cons?: string[] | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          is_approved?: boolean | null
+          is_featured?: boolean | null
+          is_verified_purchase?: boolean | null
+          pros?: string[] | null
+          rating: number
+          replied_at?: string | null
+          replied_by?: string | null
+          reply?: string | null
+          title?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          author_email?: string | null
+          author_name?: string | null
+          business_id?: string
+          cons?: string[] | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          is_approved?: boolean | null
+          is_featured?: boolean | null
+          is_verified_purchase?: boolean | null
+          pros?: string[] | null
+          rating?: number
+          replied_at?: string | null
+          replied_by?: string | null
+          reply?: string | null
+          title?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_reviews_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_services: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          description: string | null
+          duration_minutes: number | null
+          id: string
+          is_highlighted: boolean | null
+          name: string
+          price_max: number | null
+          price_min: number | null
+          price_unit: string | null
+          sort_order: number | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          is_highlighted?: boolean | null
+          name: string
+          price_max?: number | null
+          price_min?: number | null
+          price_unit?: string | null
+          sort_order?: number | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          is_highlighted?: boolean | null
+          name?: string
+          price_max?: number | null
+          price_min?: number | null
+          price_unit?: string | null
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_services_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      businesses: {
+        Row: {
+          address: string | null
+          address_complement: string | null
+          amenities: string[] | null
+          avg_rating: number | null
+          categories_secondary: string[] | null
+          category_main: string
+          cep: string | null
+          city: string
+          cover_url: string | null
+          created_at: string | null
+          description_full: string | null
+          description_short: string | null
+          email: string | null
+          facebook: string | null
+          featured_until: string | null
+          gallery_urls: string[] | null
+          google_maps_url: string | null
+          id: string
+          instagram: string | null
+          is_active: boolean | null
+          is_featured: boolean | null
+          latitude: number | null
+          leads_count: number | null
+          logo_url: string | null
+          longitude: number | null
+          name: string
+          neighborhoods: string[] | null
+          opening_hours: Json | null
+          payment_methods: string[] | null
+          phone: string | null
+          phone_clicks: number | null
+          plan: Database["public"]["Enums"]["business_plan"] | null
+          plan_expires_at: string | null
+          review_count: number | null
+          seo_description: string | null
+          seo_keywords: string[] | null
+          seo_title: string | null
+          service_radius_km: number | null
+          slug: string
+          state: string | null
+          tagline: string | null
+          tags: string[] | null
+          tenant_id: string | null
+          updated_at: string | null
+          user_id: string | null
+          verification_status:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+          verified_at: string | null
+          video_url: string | null
+          views_count: number | null
+          website: string | null
+          website_clicks: number | null
+          whatsapp: string | null
+          whatsapp_clicks: number | null
+        }
+        Insert: {
+          address?: string | null
+          address_complement?: string | null
+          amenities?: string[] | null
+          avg_rating?: number | null
+          categories_secondary?: string[] | null
+          category_main: string
+          cep?: string | null
+          city: string
+          cover_url?: string | null
+          created_at?: string | null
+          description_full?: string | null
+          description_short?: string | null
+          email?: string | null
+          facebook?: string | null
+          featured_until?: string | null
+          gallery_urls?: string[] | null
+          google_maps_url?: string | null
+          id?: string
+          instagram?: string | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          latitude?: number | null
+          leads_count?: number | null
+          logo_url?: string | null
+          longitude?: number | null
+          name: string
+          neighborhoods?: string[] | null
+          opening_hours?: Json | null
+          payment_methods?: string[] | null
+          phone?: string | null
+          phone_clicks?: number | null
+          plan?: Database["public"]["Enums"]["business_plan"] | null
+          plan_expires_at?: string | null
+          review_count?: number | null
+          seo_description?: string | null
+          seo_keywords?: string[] | null
+          seo_title?: string | null
+          service_radius_km?: number | null
+          slug: string
+          state?: string | null
+          tagline?: string | null
+          tags?: string[] | null
+          tenant_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          verification_status?:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+          verified_at?: string | null
+          video_url?: string | null
+          views_count?: number | null
+          website?: string | null
+          website_clicks?: number | null
+          whatsapp?: string | null
+          whatsapp_clicks?: number | null
+        }
+        Update: {
+          address?: string | null
+          address_complement?: string | null
+          amenities?: string[] | null
+          avg_rating?: number | null
+          categories_secondary?: string[] | null
+          category_main?: string
+          cep?: string | null
+          city?: string
+          cover_url?: string | null
+          created_at?: string | null
+          description_full?: string | null
+          description_short?: string | null
+          email?: string | null
+          facebook?: string | null
+          featured_until?: string | null
+          gallery_urls?: string[] | null
+          google_maps_url?: string | null
+          id?: string
+          instagram?: string | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          latitude?: number | null
+          leads_count?: number | null
+          logo_url?: string | null
+          longitude?: number | null
+          name?: string
+          neighborhoods?: string[] | null
+          opening_hours?: Json | null
+          payment_methods?: string[] | null
+          phone?: string | null
+          phone_clicks?: number | null
+          plan?: Database["public"]["Enums"]["business_plan"] | null
+          plan_expires_at?: string | null
+          review_count?: number | null
+          seo_description?: string | null
+          seo_keywords?: string[] | null
+          seo_title?: string | null
+          service_radius_km?: number | null
+          slug?: string
+          state?: string | null
+          tagline?: string | null
+          tags?: string[] | null
+          tenant_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          verification_status?:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+          verified_at?: string | null
+          video_url?: string | null
+          views_count?: number | null
+          website?: string | null
+          website_clicks?: number | null
+          whatsapp?: string | null
+          whatsapp_clicks?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "businesses_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_assets: {
         Row: {
           alt_text: string | null
@@ -7967,6 +8557,80 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      guia_seo_pages: {
+        Row: {
+          category_slug: string | null
+          city: string | null
+          content_html: string | null
+          created_at: string | null
+          h1_title: string | null
+          id: string
+          intro_text: string | null
+          is_active: boolean | null
+          neighborhood: string | null
+          page_type: string
+          seo_description: string | null
+          seo_keywords: string[] | null
+          seo_title: string | null
+          service_type: string | null
+          slug: string
+          tenant_id: string | null
+          title: string
+          updated_at: string | null
+          views_count: number | null
+        }
+        Insert: {
+          category_slug?: string | null
+          city?: string | null
+          content_html?: string | null
+          created_at?: string | null
+          h1_title?: string | null
+          id?: string
+          intro_text?: string | null
+          is_active?: boolean | null
+          neighborhood?: string | null
+          page_type: string
+          seo_description?: string | null
+          seo_keywords?: string[] | null
+          seo_title?: string | null
+          service_type?: string | null
+          slug: string
+          tenant_id?: string | null
+          title: string
+          updated_at?: string | null
+          views_count?: number | null
+        }
+        Update: {
+          category_slug?: string | null
+          city?: string | null
+          content_html?: string | null
+          created_at?: string | null
+          h1_title?: string | null
+          id?: string
+          intro_text?: string | null
+          is_active?: boolean | null
+          neighborhood?: string | null
+          page_type?: string
+          seo_description?: string | null
+          seo_keywords?: string[] | null
+          seo_title?: string | null
+          service_type?: string | null
+          slug?: string
+          tenant_id?: string | null
+          title?: string
+          updated_at?: string | null
+          views_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guia_seo_pages_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       home_config: {
         Row: {
@@ -14557,6 +15221,19 @@ export type Database = {
           sources_with_errors: number
         }[]
       }
+      get_business_stats: {
+        Args: { p_business_id: string; p_days?: number }
+        Returns: {
+          period_clicks: number
+          period_leads: number
+          period_views: number
+          total_leads: number
+          total_phone_clicks: number
+          total_views: number
+          total_website_clicks: number
+          total_whatsapp_clicks: number
+        }[]
+      }
       get_partner_advertiser_id: { Args: { _user_id: string }; Returns: string }
       has_community_access: { Args: { _user_id: string }; Returns: boolean }
       has_permission: {
@@ -14570,6 +15247,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_business_views: { Args: { p_id: string }; Returns: undefined }
       increment_button_clicks: {
         Args: { p_button_id: string }
         Returns: undefined
@@ -14609,6 +15287,14 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      log_business_click: {
+        Args: {
+          p_business_id: string
+          p_click_type: string
+          p_source_page?: string
+        }
+        Returns: undefined
+      }
       normalize_title_fingerprint: { Args: { title: string }; Returns: string }
       owns_publidoor_item: {
         Args: { _publidoor_id: string; _user_id: string }
@@ -14674,6 +15360,7 @@ export type Database = {
         | "html_crawler"
         | "api"
         | "manual_url"
+      business_plan: "free" | "pro" | "premium"
       campaign_asset_type:
         | "banner"
         | "publidoor"
@@ -14753,6 +15440,7 @@ export type Database = {
         | "fechado"
         | "perdido"
       lead_intencao: "comprar" | "alugar" | "investir" | "avaliar"
+      lead_status: "new" | "contacted" | "converted" | "lost"
       news_origin: "manual" | "ai"
       news_status:
         | "draft"
@@ -14810,6 +15498,7 @@ export type Database = {
       style_ref_kind: "link" | "txt" | "pdf"
       style_ref_status: "uploaded" | "ingested" | "failed"
       trusted_source_type: "PRIMARY" | "JOURNALISM" | "CHECKER" | "OTHER"
+      verification_status: "pending" | "verified" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -14980,6 +15669,7 @@ export const Constants = {
         "api",
         "manual_url",
       ],
+      business_plan: ["free", "pro", "premium"],
       campaign_asset_type: [
         "banner",
         "publidoor",
@@ -15068,6 +15758,7 @@ export const Constants = {
         "perdido",
       ],
       lead_intencao: ["comprar", "alugar", "investir", "avaliar"],
+      lead_status: ["new", "contacted", "converted", "lost"],
       news_origin: ["manual", "ai"],
       news_status: [
         "draft",
@@ -15131,6 +15822,7 @@ export const Constants = {
       style_ref_kind: ["link", "txt", "pdf"],
       style_ref_status: ["uploaded", "ingested", "failed"],
       trusted_source_type: ["PRIMARY", "JOURNALISM", "CHECKER", "OTHER"],
+      verification_status: ["pending", "verified", "rejected"],
     },
   },
 } as const
