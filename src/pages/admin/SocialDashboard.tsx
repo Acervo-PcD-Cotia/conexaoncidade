@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useSocialStats } from "@/hooks/useSocialPosts";
 import { useSocialPosts, STATUS_LABELS, STATUS_COLORS } from "@/hooks/useSocialPosts";
-import { PLATFORM_LABELS, PLATFORM_ICONS } from "@/hooks/useSocialAccounts";
+import { PLATFORM_LABELS, PLATFORM_ICONS, SocialPlatform } from "@/hooks/useSocialAccounts";
 import { NavLink } from "@/components/NavLink";
 import { 
   Share2, 
@@ -113,11 +113,11 @@ export default function SocialDashboard() {
                 className="flex items-center gap-3 p-4 rounded-lg border bg-card"
               >
                 <span className="text-2xl">
-                  {PLATFORM_ICONS[platform as keyof typeof PLATFORM_ICONS]}
+                  {PLATFORM_ICONS[platform as SocialPlatform]}
                 </span>
                 <div>
                   <p className="font-medium">
-                    {PLATFORM_LABELS[platform as keyof typeof PLATFORM_LABELS]}
+                    {PLATFORM_LABELS[platform as SocialPlatform]}
                   </p>
                   <p className="text-2xl font-bold">{count}</p>
                 </div>
@@ -151,38 +151,45 @@ export default function SocialDashboard() {
             </p>
           ) : (
             <div className="space-y-3">
-              {recentPosts?.map((post) => (
-                <div 
-                  key={post.id}
-                  className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl">
-                      {PLATFORM_ICONS[post.platform]}
-                    </span>
-                    <div>
-                      <p className="font-medium line-clamp-1">
-                        {post.news?.title ?? 'Notícia removida'}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(post.created_at), "dd/MM 'às' HH:mm", { locale: ptBR })}
-                      </p>
+              {recentPosts?.map((post) => {
+                // Get first target for display
+                const firstTarget = post.targets?.[0];
+                const platform = firstTarget?.social_account?.platform;
+                const providerUrl = firstTarget?.provider_post_url;
+                
+                return (
+                  <div 
+                    key={post.id}
+                    className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">
+                        {platform ? PLATFORM_ICONS[platform] : '📱'}
+                      </span>
+                      <div>
+                        <p className="font-medium line-clamp-1">
+                          {post.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(post.created_at), "dd/MM 'às' HH:mm", { locale: ptBR })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge className={STATUS_COLORS[post.status_global]}>
+                        {STATUS_LABELS[post.status_global]}
+                      </Badge>
+                      {providerUrl && (
+                        <Button variant="ghost" size="icon" asChild>
+                          <a href={providerUrl} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge className={STATUS_COLORS[post.status]}>
-                      {STATUS_LABELS[post.status]}
-                    </Badge>
-                    {post.external_post_url && (
-                      <Button variant="ghost" size="icon" asChild>
-                        <a href={post.external_post_url} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="h-4 w-4" />
-                        </a>
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>

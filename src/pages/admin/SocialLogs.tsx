@@ -8,35 +8,46 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useSocialLogs } from "@/hooks/useSocialLogs";
+import { useSocialLogs, SocialLog } from "@/hooks/useSocialLogs";
 import { PLATFORM_ICONS } from "@/hooks/useSocialAccounts";
+import type { LogEvent, SocialPlatform } from "@/types/postsocial";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Info, AlertTriangle, XCircle } from "lucide-react";
+import { Send, AlertTriangle, XCircle, RotateCcw, UserCheck } from "lucide-react";
 
-const LEVEL_CONFIG = {
-  info: {
-    icon: Info,
+const EVENT_CONFIG: Record<LogEvent, { icon: React.ComponentType<{ className?: string }>; color: string; label: string }> = {
+  queued: {
+    icon: Send,
     color: 'bg-blue-100 text-blue-800',
-    label: 'Info',
+    label: 'Na Fila',
   },
-  warn: {
-    icon: AlertTriangle,
-    color: 'bg-yellow-100 text-yellow-800',
-    label: 'Aviso',
+  sent: {
+    icon: UserCheck,
+    color: 'bg-green-100 text-green-800',
+    label: 'Enviado',
   },
   error: {
     icon: XCircle,
     color: 'bg-red-100 text-red-800',
     label: 'Erro',
   },
+  retry: {
+    icon: RotateCcw,
+    color: 'bg-yellow-100 text-yellow-800',
+    label: 'Retry',
+  },
+  assisted: {
+    icon: AlertTriangle,
+    color: 'bg-orange-100 text-orange-800',
+    label: 'Assistido',
+  },
 };
 
 export default function SocialLogs() {
-  const [levelFilter, setLevelFilter] = useState<'info' | 'warn' | 'error' | undefined>(undefined);
+  const [eventFilter, setEventFilter] = useState<LogEvent | undefined>(undefined);
   
   const { data: logs, isLoading } = useSocialLogs({ 
-    level: levelFilter,
+    event: eventFilter,
     limit: 200 
   });
 
@@ -51,17 +62,19 @@ export default function SocialLogs() {
 
       <div className="flex items-center gap-4">
         <Select 
-          value={levelFilter ?? 'all'} 
-          onValueChange={(v) => setLevelFilter(v === 'all' ? undefined : v as 'info' | 'warn' | 'error')}
+          value={eventFilter ?? 'all'} 
+          onValueChange={(v) => setEventFilter(v === 'all' ? undefined : v as LogEvent)}
         >
           <SelectTrigger className="w-48">
-            <SelectValue placeholder="Todos os níveis" />
+            <SelectValue placeholder="Todos os eventos" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos os níveis</SelectItem>
-            <SelectItem value="info">Info</SelectItem>
-            <SelectItem value="warn">Avisos</SelectItem>
-            <SelectItem value="error">Erros</SelectItem>
+            <SelectItem value="all">Todos os eventos</SelectItem>
+            <SelectItem value="queued">Na Fila</SelectItem>
+            <SelectItem value="sent">Enviado</SelectItem>
+            <SelectItem value="error">Erro</SelectItem>
+            <SelectItem value="retry">Retry</SelectItem>
+            <SelectItem value="assisted">Assistido</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -83,8 +96,9 @@ export default function SocialLogs() {
           ) : (
             <div className="space-y-3">
               {logs.map((log) => {
-                const config = LEVEL_CONFIG[log.level];
+                const config = EVENT_CONFIG[log.event as LogEvent] ?? EVENT_CONFIG.queued;
                 const Icon = config.icon;
+                const platform = log.target?.social_account?.platform as SocialPlatform | undefined;
                 
                 return (
                   <div 
@@ -97,9 +111,9 @@ export default function SocialLogs() {
                     
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        {log.social_post?.platform && (
+                        {platform && (
                           <span className="text-lg">
-                            {PLATFORM_ICONS[log.social_post.platform as keyof typeof PLATFORM_ICONS]}
+                            {PLATFORM_ICONS[platform]}
                           </span>
                         )}
                         <Badge variant="outline" className={config.color}>
@@ -110,17 +124,13 @@ export default function SocialLogs() {
                         </span>
                       </div>
                       
-                      <p className="font-medium">{log.message}</p>
+                      <p className="font-medium">
+                        {log.event.toUpperCase()} - {log.target?.social_account?.display_name ?? 'Unknown'}
+                      </p>
                       
-                      {log.social_post?.news?.title && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Notícia: {log.social_post.news.title}
-                        </p>
-                      )}
-                      
-                      {Object.keys(log.details).length > 0 && (
+                      {log.payload_json && Object.keys(log.payload_json).length > 0 && (
                         <pre className="text-xs bg-muted p-2 rounded mt-2 overflow-x-auto">
-                          {JSON.stringify(log.details, null, 2)}
+                          {JSON.stringify(log.payload_json, null, 2)}
                         </pre>
                       )}
                     </div>
