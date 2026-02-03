@@ -234,6 +234,7 @@ export type Database = {
         Row: {
           advertiser: string | null
           alt_text: string | null
+          campaign_id: string | null
           click_count: number | null
           created_at: string
           ends_at: string | null
@@ -243,6 +244,7 @@ export type Database = {
           is_active: boolean | null
           link_target: string | null
           link_url: string | null
+          managed_by_campaign: boolean | null
           name: string
           size: string
           slot_type: string
@@ -254,6 +256,7 @@ export type Database = {
         Insert: {
           advertiser?: string | null
           alt_text?: string | null
+          campaign_id?: string | null
           click_count?: number | null
           created_at?: string
           ends_at?: string | null
@@ -263,6 +266,7 @@ export type Database = {
           is_active?: boolean | null
           link_target?: string | null
           link_url?: string | null
+          managed_by_campaign?: boolean | null
           name: string
           size: string
           slot_type: string
@@ -274,6 +278,7 @@ export type Database = {
         Update: {
           advertiser?: string | null
           alt_text?: string | null
+          campaign_id?: string | null
           click_count?: number | null
           created_at?: string
           ends_at?: string | null
@@ -283,6 +288,7 @@ export type Database = {
           is_active?: boolean | null
           link_target?: string | null
           link_url?: string | null
+          managed_by_campaign?: boolean | null
           name?: string
           size?: string
           slot_type?: string
@@ -292,6 +298,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "ads_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns_unified"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "ads_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -3474,6 +3487,7 @@ export type Database = {
           campaign_id: string
           channel_type: Database["public"]["Enums"]["campaign_channel_type"]
           created_at: string | null
+          cycle_id: string | null
           event_type: Database["public"]["Enums"]["campaign_event_type"]
           id: string
           metadata: Json | null
@@ -3482,6 +3496,7 @@ export type Database = {
           campaign_id: string
           channel_type: Database["public"]["Enums"]["campaign_channel_type"]
           created_at?: string | null
+          cycle_id?: string | null
           event_type: Database["public"]["Enums"]["campaign_event_type"]
           id?: string
           metadata?: Json | null
@@ -3490,6 +3505,7 @@ export type Database = {
           campaign_id?: string
           channel_type?: Database["public"]["Enums"]["campaign_channel_type"]
           created_at?: string | null
+          cycle_id?: string | null
           event_type?: Database["public"]["Enums"]["campaign_event_type"]
           id?: string
           metadata?: Json | null
@@ -3500,6 +3516,13 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "campaigns_unified"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_events_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_cycles"
             referencedColumns: ["id"]
           },
         ]
@@ -12585,6 +12608,7 @@ export type Database = {
       super_banners: {
         Row: {
           alt_text: string | null
+          campaign_id: string | null
           click_count: number
           created_at: string
           ends_at: string | null
@@ -12593,6 +12617,7 @@ export type Database = {
           is_active: boolean
           link_target: string | null
           link_url: string | null
+          managed_by_campaign: boolean | null
           sort_order: number
           starts_at: string | null
           tenant_id: string | null
@@ -12601,6 +12626,7 @@ export type Database = {
         }
         Insert: {
           alt_text?: string | null
+          campaign_id?: string | null
           click_count?: number
           created_at?: string
           ends_at?: string | null
@@ -12609,6 +12635,7 @@ export type Database = {
           is_active?: boolean
           link_target?: string | null
           link_url?: string | null
+          managed_by_campaign?: boolean | null
           sort_order?: number
           starts_at?: string | null
           tenant_id?: string | null
@@ -12617,6 +12644,7 @@ export type Database = {
         }
         Update: {
           alt_text?: string | null
+          campaign_id?: string | null
           click_count?: number
           created_at?: string
           ends_at?: string | null
@@ -12625,6 +12653,7 @@ export type Database = {
           is_active?: boolean
           link_target?: string | null
           link_url?: string | null
+          managed_by_campaign?: boolean | null
           sort_order?: number
           starts_at?: string | null
           tenant_id?: string | null
@@ -12632,6 +12661,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "super_banners_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns_unified"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "super_banners_tenant_id_fkey"
             columns: ["tenant_id"]
