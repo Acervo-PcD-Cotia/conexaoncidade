@@ -128,14 +128,18 @@ function calculateMetrics(campaignId: string, events: MetricEvent[]): CampaignMe
   const impressions = events.filter(e => e.event_type === 'impression');
   const clicks = events.filter(e => e.event_type === 'click');
   const ctaClicks = events.filter(e => e.event_type === 'cta_click');
+  const pushSent = events.filter(e => e.event_type === 'push_sent');
+  const pushDelivered = events.filter(e => e.event_type === 'push_delivered');
+  const newsletterSent = events.filter(e => e.event_type === 'newsletter_sent');
+  const newsletterOpens = events.filter(e => e.event_type === 'newsletter_open');
 
   const totalImpressions = impressions.length;
   const totalClicks = clicks.length;
   const totalCtaClicks = ctaClicks.length;
   const ctr = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
 
-  // Group by channel
-  const channelTypes: ChannelType[] = ['ads', 'publidoor', 'webstories'];
+  // Group by channel (including new channels)
+  const channelTypes: ChannelType[] = ['ads', 'publidoor', 'webstories', 'push', 'newsletter', 'exit_intent', 'login_panel'];
   const byChannel = channelTypes.map(channel => {
     const channelImpressions = impressions.filter(e => e.channel_type === channel).length;
     const channelClicks = clicks.filter(e => e.channel_type === channel).length;
@@ -169,6 +173,26 @@ function calculateMetrics(campaignId: string, events: MetricEvent[]): CampaignMe
     ...stats,
   }));
 
+  // Group by cycle (from metadata)
+  const cycleMap = new Map<string, { cycle_name: string; impressions: number; clicks: number; push_sent: number; newsletter_sent: number }>();
+  
+  events.forEach(e => {
+    const cycleId = (e.metadata as Record<string, unknown>)?.cycle_id as string;
+    const cycleName = (e.metadata as Record<string, unknown>)?.cycle_name as string || 'Default';
+    if (cycleId) {
+      const current = cycleMap.get(cycleId) || { cycle_name: cycleName, impressions: 0, clicks: 0, push_sent: 0, newsletter_sent: 0 };
+      if (e.event_type === 'impression') current.impressions++;
+      if (e.event_type === 'click') current.clicks++;
+      if (e.event_type === 'push_sent') current.push_sent++;
+      if (e.event_type === 'newsletter_sent') current.newsletter_sent++;
+      cycleMap.set(cycleId, current);
+    }
+  });
+
+  const byCycle = cycleMap.size > 0 
+    ? Object.fromEntries(cycleMap.entries())
+    : undefined;
+
   return {
     campaign_id: campaignId,
     total_impressions: totalImpressions,
@@ -177,6 +201,16 @@ function calculateMetrics(campaignId: string, events: MetricEvent[]): CampaignMe
     ctr,
     by_channel: byChannel,
     by_device: byDevice,
+    by_cycle: byCycle,
+    push_metrics: pushSent.length > 0 ? {
+      total_sent: pushSent.length,
+      total_delivered: pushDelivered.length,
+    } : undefined,
+    newsletter_metrics: newsletterSent.length > 0 ? {
+      total_sent: newsletterSent.length,
+      total_opens: newsletterOpens.length,
+      open_rate: newsletterSent.length > 0 ? (newsletterOpens.length / newsletterSent.length) * 100 : 0,
+    } : undefined,
   };
 }
 

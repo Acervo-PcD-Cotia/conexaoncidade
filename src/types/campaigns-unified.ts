@@ -210,13 +210,22 @@ export interface CampaignMetrics {
     impressions: number;
     clicks: number;
   }[];
-  by_cycle?: {
-    cycle_id: string;
+  by_cycle?: Record<string, {
     cycle_name: string;
     impressions: number;
     clicks: number;
-    ctr: number;
-  }[];
+    push_sent: number;
+    newsletter_sent: number;
+  }>;
+  push_metrics?: {
+    total_sent: number;
+    total_delivered: number;
+  };
+  newsletter_metrics?: {
+    total_sent: number;
+    total_opens: number;
+    open_rate: number;
+  };
 }
 
 // Filter types

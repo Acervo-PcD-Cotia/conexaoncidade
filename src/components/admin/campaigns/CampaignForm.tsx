@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ChannelSelector } from './ChannelSelector';
+import { BatchAssetUploader } from './BatchAssetUploader';
 import type { 
   CampaignFormData, 
   CampaignStatus,
@@ -319,6 +320,33 @@ export function CampaignForm({
             onStoryAssetChange={(url, alt) => {
               setStoryAssetUrl(url);
               if (alt) setStoryAltText(alt);
+            }}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Block 3: Batch Asset Upload */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Upload de Criativos</CardTitle>
+          <CardDescription>
+            Arraste imagens para auto-atribuição por dimensões oficiais
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <BatchAssetUploader
+            onAssetsUploaded={(assets) => {
+              // Add uploaded assets to form state
+              assets.forEach(asset => {
+                const channel = asset.channel_type;
+                if (channel === 'ads') {
+                  setAdsAssetUrl(asset.file_url);
+                } else if (channel === 'publidoor') {
+                  setPublidoorAssetUrl(asset.file_url);
+                } else if (channel === 'webstories') {
+                  setStoryAssetUrl(asset.file_url);
+                }
+              });
             }}
           />
         </CardContent>

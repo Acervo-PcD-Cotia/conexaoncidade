@@ -9,6 +9,8 @@ import type {
   CampaignFilters,
   ChannelType,
   ChannelConfig,
+  AdsChannelConfig,
+  LoginPanelChannelConfig,
 } from '@/types/campaigns-unified';
 import { asJson, parseJsonObject } from '@/types/json';
 import type { Json } from '@/integrations/supabase/types';
@@ -405,6 +407,43 @@ function getChannelConfig(channelType: ChannelType, formData: CampaignFormData):
         story_url: formData.webstoriesConfig?.story_url,
         story_id: formData.webstoriesConfig?.story_id,
       };
+    case 'push':
+      return {
+        title: formData.pushConfig?.title || '',
+        body: formData.pushConfig?.body || '',
+        icon_url: formData.pushConfig?.icon_url,
+        action_url: formData.pushConfig?.action_url || '',
+        target_audience: formData.pushConfig?.target_audience || 'all',
+        segment_id: formData.pushConfig?.segment_id,
+      };
+    case 'newsletter':
+      return {
+        subject: formData.newsletterConfig?.subject || '',
+        preview_text: formData.newsletterConfig?.preview_text || '',
+        template_id: formData.newsletterConfig?.template_id,
+        target_list: formData.newsletterConfig?.target_list || '',
+        send_at: formData.newsletterConfig?.send_at,
+      };
+    case 'exit_intent':
+      return {
+        hero_type: formData.exitIntentConfig?.hero_type || 'publidoor',
+        hero_asset_id: formData.exitIntentConfig?.hero_asset_id,
+        secondary_1_asset_id: formData.exitIntentConfig?.secondary_1_asset_id,
+        secondary_2_asset_id: formData.exitIntentConfig?.secondary_2_asset_id,
+        cta_text: formData.exitIntentConfig?.cta_text || 'Continuar navegando',
+        priority_type: formData.exitIntentConfig?.priority_type || 'commercial',
+      };
+    case 'login_panel':
+      return {
+        display_type: formData.loginPanelConfig?.display_type || 'publidoor',
+        asset_id: formData.loginPanelConfig?.asset_id,
+        short_text: formData.loginPanelConfig?.short_text,
+        cta_text: formData.loginPanelConfig?.cta_text,
+        cta_url: formData.loginPanelConfig?.cta_url,
+      } as LoginPanelChannelConfig;
+    default:
+      // Return a default config for unknown channel types
+      return { slot_type: '', size: '', sort_order: 0, link_target: '_blank' } as AdsChannelConfig;
   }
 }
 

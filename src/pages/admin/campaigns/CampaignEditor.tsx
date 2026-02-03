@@ -3,6 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CampaignForm } from '@/components/admin/campaigns/CampaignForm';
+import { CycleSelectorCard } from '@/components/admin/campaigns/CycleSelectorCard';
 import { 
   useCampaignUnified, 
   useCreateCampaignUnified, 
@@ -47,6 +48,10 @@ export default function CampaignEditor() {
     const adsChannel = campaign.channels?.find(c => c.channel_type === 'ads');
     const publidoorChannel = campaign.channels?.find(c => c.channel_type === 'publidoor');
     const storiesChannel = campaign.channels?.find(c => c.channel_type === 'webstories');
+    const pushChannel = campaign.channels?.find(c => c.channel_type === 'push');
+    const newsletterChannel = campaign.channels?.find(c => c.channel_type === 'newsletter');
+    const exitIntentChannel = campaign.channels?.find(c => c.channel_type === 'exit_intent');
+    const loginPanelChannel = campaign.channels?.find(c => c.channel_type === 'login_panel');
 
     return {
       name: campaign.name,
@@ -63,6 +68,10 @@ export default function CampaignEditor() {
       adsConfig: adsChannel?.config as AdsChannelConfig | undefined,
       publidoorConfig: publidoorChannel?.config as PublidoorChannelConfig | undefined,
       webstoriesConfig: storiesChannel?.config as WebStoriesChannelConfig | undefined,
+      pushConfig: pushChannel?.config as any,
+      newsletterConfig: newsletterChannel?.config as any,
+      exitIntentConfig: exitIntentChannel?.config as any,
+      loginPanelConfig: loginPanelChannel?.config as any,
       assets: campaign.assets?.map(a => ({
         asset_type: a.asset_type,
         file_url: a.file_url,
@@ -84,6 +93,10 @@ export default function CampaignEditor() {
     );
   }
 
+  const enabledChannels = campaign?.channels
+    ?.filter(c => c.enabled)
+    .map(c => c.channel_type) || [];
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       {/* Header */}
@@ -102,6 +115,14 @@ export default function CampaignEditor() {
           </p>
         </div>
       </div>
+
+      {/* Cycle Selector - Only show when editing */}
+      {isEditing && id && enabledChannels.length > 0 && (
+        <CycleSelectorCard 
+          campaignId={id} 
+          enabledChannels={enabledChannels}
+        />
+      )}
 
       {/* Form */}
       <CampaignForm
