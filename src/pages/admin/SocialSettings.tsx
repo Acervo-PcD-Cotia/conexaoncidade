@@ -15,17 +15,16 @@ import {
 } from "@/components/ui/select";
 import { useSocialAccounts, PLATFORM_LABELS, PLATFORM_ICONS, SocialPlatform } from "@/hooks/useSocialAccounts";
 import { Save, Info } from "lucide-react";
-import { toast } from "sonner";
 
 const DEFAULT_TEMPLATES: Record<SocialPlatform, string> = {
-  meta_facebook: `📰 {meta_title}
+  facebook: `📰 {meta_title}
 
 {meta_description}
 
 🔗 Leia mais: {link}
 
 {hashtags}`,
-  meta_instagram: `📰 {meta_title}
+  instagram: `📰 {meta_title}
 
 {meta_description}
 
@@ -51,11 +50,27 @@ Leia a matéria completa no Conexão na Cidade.
 {meta_description}
 
 🔗 <a href="{link}">Leia mais</a>`,
+  tiktok: `📰 {meta_title}
+
+{hashtags}`,
+  youtube: `📰 {meta_title}
+
+{meta_description}`,
+  pinterest: `📰 {meta_title}
+
+{meta_description}
+
+{hashtags}`,
+  whatsapp: `📰 *{meta_title}*
+
+{meta_description}
+
+🔗 {link}`,
 };
 
 export default function SocialSettings() {
   const { accounts, isLoading, upsertAccount, toggleAccount, getAccount } = useSocialAccounts();
-  const [activeTab, setActiveTab] = useState<SocialPlatform>('meta_facebook');
+  const [activeTab, setActiveTab] = useState<SocialPlatform>('facebook');
 
   if (isLoading) {
     return (
@@ -88,11 +103,11 @@ export default function SocialSettings() {
       </Card>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as SocialPlatform)}>
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-5 lg:grid-cols-9">
           {Object.entries(PLATFORM_LABELS).map(([key, label]) => (
             <TabsTrigger key={key} value={key} className="gap-1">
               <span>{PLATFORM_ICONS[key as SocialPlatform]}</span>
-              <span className="hidden sm:inline">{label}</span>
+              <span className="hidden lg:inline">{label}</span>
             </TabsTrigger>
           ))}
         </TabsList>
@@ -115,7 +130,7 @@ export default function SocialSettings() {
 interface PlatformSettingsProps {
   platform: SocialPlatform;
   account: ReturnType<typeof useSocialAccounts>['accounts'] extends (infer T)[] | undefined ? T : never;
-  onSave: (data: { enabled?: boolean; settings?: Record<string, unknown> }) => void;
+  onSave: (data: { is_active?: boolean; settings?: Record<string, unknown> }) => void;
   onToggle: (enabled: boolean) => void;
 }
 
@@ -141,7 +156,7 @@ function PlatformSettings({ platform, account, onSave, onToggle }: PlatformSetti
 
   const handleSave = () => {
     onSave({
-      enabled: account?.enabled ?? false,
+      is_active: account?.is_active ?? false,
       settings: {
         template,
         hashtags: hashtags.split(' ').filter(h => h.trim()),
@@ -165,12 +180,12 @@ function PlatformSettings({ platform, account, onSave, onToggle }: PlatformSetti
               {PLATFORM_ICONS[platform]} {PLATFORM_LABELS[platform]}
             </span>
             <Switch
-              checked={account?.enabled ?? false}
+              checked={account?.is_active ?? false}
               onCheckedChange={onToggle}
             />
           </CardTitle>
           <CardDescription>
-            {account?.enabled 
+            {account?.is_active 
               ? 'Esta rede está ativa e publicações serão feitas automaticamente'
               : 'Ative para habilitar publicações automáticas nesta rede'
             }
@@ -288,11 +303,15 @@ function PlatformSettings({ platform, account, onSave, onToggle }: PlatformSetti
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            {platform === 'meta_facebook' && 'Requer: Page Access Token, Page ID'}
-            {platform === 'meta_instagram' && 'Requer: Instagram Business Account ID, Access Token'}
+            {platform === 'facebook' && 'Requer: Page Access Token, Page ID'}
+            {platform === 'instagram' && 'Requer: Instagram Business Account ID, Access Token'}
             {platform === 'x' && 'Requer: API Key, API Secret, Access Token, Access Token Secret'}
             {platform === 'linkedin' && 'Requer: Client ID, Client Secret, Access Token, Organization ID'}
             {platform === 'telegram' && 'Requer: Bot Token, Channel ID'}
+            {platform === 'tiktok' && 'Requer: TikTok Business API credentials'}
+            {platform === 'youtube' && 'Requer: YouTube Data API credentials, OAuth2 tokens'}
+            {platform === 'pinterest' && 'Requer: Pinterest API credentials'}
+            {platform === 'whatsapp' && 'Modo assistido: copie e cole manualmente'}
           </p>
         </CardContent>
       </Card>

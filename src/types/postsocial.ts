@@ -53,8 +53,12 @@ export const PLATFORM_COLORS: Record<SocialPlatform, string> = {
 export type SocialAccountType = 'page' | 'business' | 'creator' | 'channel' | 'personal';
 
 export type SocialPostStatus = 'draft' | 'scheduled' | 'processing' | 'done' | 'failed';
+export type PostGlobalStatus = SocialPostStatus; // Alias for backward compatibility
 
 export type SocialTargetStatus = 'draft' | 'scheduled' | 'queued' | 'processing' | 'done' | 'failed' | 'assisted';
+export type PostTargetStatus = SocialTargetStatus; // Alias for backward compatibility
+
+export type LogEvent = 'queued' | 'sent' | 'error' | 'retry' | 'assisted';
 
 export type SocialOriginType = 'news' | 'ad' | 'publidoor' | 'campaign360' | 'manual';
 
