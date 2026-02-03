@@ -42,9 +42,10 @@ interface LeadFormProps {
   anuncianteId?: string;
   imovelTitulo?: string;
   compact?: boolean;
+  onSuccess?: () => void;
 }
 
-export function LeadForm({ imovelId, anuncianteId, imovelTitulo, compact = false }: LeadFormProps) {
+export function LeadForm({ imovelId, anuncianteId, imovelTitulo, compact = false, onSuccess }: LeadFormProps) {
   const createLead = useCreateLead();
   const [submitted, setSubmitted] = useState(false);
 
@@ -74,6 +75,7 @@ export function LeadForm({ imovelId, anuncianteId, imovelTitulo, compact = false
       intencao: data.intencao as LeadIntencao,
     });
     setSubmitted(true);
+    onSuccess?.();
   };
 
   if (submitted) {

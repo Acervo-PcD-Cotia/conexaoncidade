@@ -1,11 +1,43 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Imovel, ImovelFilters, ImagemImovel, Anunciante } from "../types";
+import type { Imovel, ImovelFilters, ImagemImovel, Anunciante, ImovelStatus } from "../types";
 
 interface UseImoveisOptions {
   filters?: ImovelFilters;
   limit?: number;
   page?: number;
+}
+
+interface CreateImovelData {
+  titulo: string;
+  slug: string;
+  finalidade: "venda" | "aluguel" | "venda_aluguel";
+  tipo: "casa" | "apartamento" | "terreno" | "comercial" | "chacara" | "cobertura" | "studio" | "kitnet" | "galpao" | "sala_comercial";
+  cidade: string;
+  bairro: string;
+  endereco?: string;
+  numero?: string;
+  cep?: string;
+  preco?: number;
+  condominio_valor?: number;
+  iptu_valor?: number;
+  area_construida?: number;
+  area_terreno?: number;
+  quartos?: number;
+  suites?: number;
+  banheiros?: number;
+  vagas?: number;
+  descricao_html?: string;
+  anunciante_id?: string;
+  mostrar_endereco_exato?: boolean;
+  destaque?: boolean;
+  lancamento?: boolean;
+  aceita_financiamento?: boolean;
+  aceita_permuta?: boolean;
+  is_condominio?: boolean;
+  features?: string[];
+  proximidades?: string[];
+  status: ImovelStatus;
 }
 
 export function useImoveis({ filters, limit = 12, page = 1 }: UseImoveisOptions = {}) {
@@ -243,5 +275,55 @@ export function useBairrosDisponiveis(cidade?: string) {
       return bairros;
     },
     enabled: !cidade || !!cidade,
+  });
+}
+
+export function useCreateImovel() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: CreateImovelData) => {
+      const { data: result, error } = await supabase
+        .from("imoveis")
+        .insert({
+          titulo: data.titulo,
+          slug: data.slug,
+          finalidade: data.finalidade,
+          tipo: data.tipo,
+          cidade: data.cidade,
+          bairro: data.bairro,
+          endereco: data.endereco,
+          numero: data.numero,
+          cep: data.cep,
+          preco: data.preco,
+          condominio_valor: data.condominio_valor,
+          iptu_valor: data.iptu_valor,
+          area_construida: data.area_construida,
+          area_terreno: data.area_terreno,
+          quartos: data.quartos || 0,
+          suites: data.suites || 0,
+          banheiros: data.banheiros || 0,
+          vagas: data.vagas || 0,
+          descricao_html: data.descricao_html,
+          anunciante_id: data.anunciante_id,
+          mostrar_endereco_exato: data.mostrar_endereco_exato || false,
+          destaque: data.destaque || false,
+          lancamento: data.lancamento || false,
+          aceita_financiamento: data.aceita_financiamento || false,
+          aceita_permuta: data.aceita_permuta || false,
+          is_condominio: data.is_condominio || false,
+          features: data.features || [],
+          proximidades: data.proximidades || [],
+          status: data.status,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["imoveis"] });
+    },
   });
 }

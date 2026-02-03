@@ -25,22 +25,26 @@ export function useBairrosGuia(cidade?: string) {
   });
 }
 
-export function useBairroGuia(cidade: string, slug: string) {
+export function useBairroGuia(slug: string, cidade?: string) {
   return useQuery({
-    queryKey: ["bairro-guia", cidade, slug],
+    queryKey: ["bairro-guia", slug, cidade],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("bairros_guia")
         .select("*")
-        .eq("cidade", cidade)
         .eq("slug", slug)
-        .eq("is_active", true)
-        .single();
+        .eq("is_active", true);
+
+      if (cidade) {
+        query = query.eq("cidade", cidade);
+      }
+
+      const { data, error } = await query.single();
 
       if (error) throw error;
 
       return data as BairroGuia;
     },
-    enabled: !!cidade && !!slug,
+    enabled: !!slug,
   });
 }

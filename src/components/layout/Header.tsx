@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Search, Sun, Moon, LogOut, LayoutDashboard, Newspaper, FolderOpen, Megaphone, Settings, ShieldCheck, Bus, MapPin, Accessibility, Users, Radio, Tv, GraduationCap, Trophy } from "lucide-react";
+import { Menu, X, Search, Sun, Moon, LogOut, LayoutDashboard, Newspaper, FolderOpen, Megaphone, Settings, ShieldCheck, Bus, MapPin, Accessibility, Users, Radio, Tv, GraduationCap, Trophy, Home, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTheme } from "@/hooks/useTheme";
@@ -16,6 +16,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu";
 import logoFull from "@/assets/logo-full.png";
 import { AccessibilityMenuButton } from "@/components/accessibility/AccessibilityMenuButton";
 import { CommunityButton } from "@/components/community/CommunityButton";
@@ -136,6 +144,14 @@ export function Header() {
                     <Radio className="h-4 w-4" />
                     <Tv className="h-4 w-4 -ml-2" />
                     Web Rádio / TV
+                  </Link>
+                  {/* 9. Imóveis - teal */}
+                  <Link
+                    to="/imoveis"
+                    className="flex items-center gap-2 text-teal-600 dark:text-teal-400 hover:underline font-semibold"
+                  >
+                    <Home className="h-4 w-4" />
+                    Imóveis
                   </Link>
                 </div>
                 
@@ -354,6 +370,87 @@ export function Header() {
               <Tv className="h-4 w-4 -ml-1" />
               Web Rádio / TV
             </Link>
+            {/* 9. Imóveis - teal with submenu */}
+            <NavigationMenu>
+              <NavigationMenuList>
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-teal-700 dark:text-teal-400 bg-teal-100 dark:bg-teal-950/60 rounded-full hover:bg-teal-200 dark:hover:bg-teal-900/60 transition-colors border border-teal-200 dark:border-teal-800">
+                    <Home className="h-4 w-4" />
+                    Imóveis
+                  </NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <div className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2">
+                      <NavigationMenuLink asChild>
+                        <Link
+                          to="/imoveis?finalidade=venda"
+                          className="block select-none rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                        >
+                          <div className="text-sm font-medium leading-none">Comprar</div>
+                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                            Casas e apartamentos à venda
+                          </p>
+                        </Link>
+                      </NavigationMenuLink>
+                      <NavigationMenuLink asChild>
+                        <Link
+                          to="/imoveis?finalidade=aluguel"
+                          className="block select-none rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                        >
+                          <div className="text-sm font-medium leading-none">Alugar</div>
+                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                            Imóveis para locação
+                          </p>
+                        </Link>
+                      </NavigationMenuLink>
+                      <NavigationMenuLink asChild>
+                        <Link
+                          to="/imoveis?lancamento=true"
+                          className="block select-none rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                        >
+                          <div className="text-sm font-medium leading-none">Lançamentos</div>
+                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                            Empreendimentos novos
+                          </p>
+                        </Link>
+                      </NavigationMenuLink>
+                      <NavigationMenuLink asChild>
+                        <Link
+                          to="/imoveis?tipo=comercial,galpao,sala_comercial"
+                          className="block select-none rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                        >
+                          <div className="text-sm font-medium leading-none">Comerciais</div>
+                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                            Salas, galpões e lojas
+                          </p>
+                        </Link>
+                      </NavigationMenuLink>
+                      <NavigationMenuLink asChild>
+                        <Link
+                          to="/imoveis?tipo=terreno"
+                          className="block select-none rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                        >
+                          <div className="text-sm font-medium leading-none">Terrenos</div>
+                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                            Lotes e áreas
+                          </p>
+                        </Link>
+                      </NavigationMenuLink>
+                      <NavigationMenuLink asChild>
+                        <Link
+                          to="/imoveis/corretores"
+                          className="block select-none rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                        >
+                          <div className="text-sm font-medium leading-none">Corretores</div>
+                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                            Profissionais da região
+                          </p>
+                        </Link>
+                      </NavigationMenuLink>
+                    </div>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
           </div>
         </div>
 
