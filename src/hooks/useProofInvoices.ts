@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import type { Json } from "@/integrations/supabase/types";
 import type {
   ProofInvoice,
   ProofInvoiceExpanded,
@@ -65,24 +66,22 @@ export function useCreateProofInvoice() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
-      const insertData = {
-        user_id: user.id,
-        campaign_proof_id: input.campaign_proof_id,
-        client_id: input.client_id,
-        pi_number: input.pi_number,
-        description_final: input.description_final,
-        service_code: input.service_code,
-        cnae: input.cnae,
-        iss_rate: input.iss_rate,
-        service_description_short: input.service_description_short,
-        status: "draft" as const,
-        client_snapshot: input.client_snapshot as unknown as null,
-        provider_snapshot: input.provider_snapshot as unknown as null,
-      };
-
       const { data, error } = await supabase
         .from("campaign_proof_invoices")
-        .insert(insertData)
+        .insert({
+          user_id: user.id,
+          campaign_proof_id: input.campaign_proof_id || null,
+          client_id: input.client_id,
+          pi_number: input.pi_number,
+          description_final: input.description_final,
+          service_code: input.service_code || null,
+          cnae: input.cnae || null,
+          iss_rate: input.iss_rate || null,
+          service_description_short: input.service_description_short || null,
+          status: "draft",
+          client_snapshot: (input.client_snapshot as Json) || null,
+          provider_snapshot: (input.provider_snapshot as Json) || null,
+        })
         .select()
         .single();
 
