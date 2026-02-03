@@ -3422,6 +3422,7 @@ export type Database = {
           created_at: string | null
           ends_at: string | null
           id: string
+          metrics_summary: Json | null
           name: string
           requires_confirmation: boolean | null
           starts_at: string | null
@@ -3436,6 +3437,7 @@ export type Database = {
           created_at?: string | null
           ends_at?: string | null
           id?: string
+          metrics_summary?: Json | null
           name: string
           requires_confirmation?: boolean | null
           starts_at?: string | null
@@ -3450,6 +3452,7 @@ export type Database = {
           created_at?: string | null
           ends_at?: string | null
           id?: string
+          metrics_summary?: Json | null
           name?: string
           requires_confirmation?: boolean | null
           starts_at?: string | null

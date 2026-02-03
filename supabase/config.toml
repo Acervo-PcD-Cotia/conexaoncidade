@@ -218,3 +218,9 @@ verify_jwt = false
 
 [functions.regional-process-item]
 verify_jwt = false
+
+[functions.campaign-push]
+verify_jwt = false
+
+[functions.campaign-newsletter]
+verify_jwt = false
