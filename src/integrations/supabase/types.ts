@@ -3307,43 +3307,55 @@ export type Database = {
         Row: {
           alt_text: string | null
           asset_type: Database["public"]["Enums"]["campaign_asset_type"]
+          auto_corrected: boolean | null
           campaign_id: string
           channel_type:
             | Database["public"]["Enums"]["campaign_channel_type"]
             | null
           created_at: string | null
+          derived_from: string | null
           file_url: string
           format_key: string | null
           height: number | null
           id: string
+          is_original: boolean | null
+          upscale_percent: number | null
           width: number | null
         }
         Insert: {
           alt_text?: string | null
           asset_type: Database["public"]["Enums"]["campaign_asset_type"]
+          auto_corrected?: boolean | null
           campaign_id: string
           channel_type?:
             | Database["public"]["Enums"]["campaign_channel_type"]
             | null
           created_at?: string | null
+          derived_from?: string | null
           file_url: string
           format_key?: string | null
           height?: number | null
           id?: string
+          is_original?: boolean | null
+          upscale_percent?: number | null
           width?: number | null
         }
         Update: {
           alt_text?: string | null
           asset_type?: Database["public"]["Enums"]["campaign_asset_type"]
+          auto_corrected?: boolean | null
           campaign_id?: string
           channel_type?:
             | Database["public"]["Enums"]["campaign_channel_type"]
             | null
           created_at?: string | null
+          derived_from?: string | null
           file_url?: string
           format_key?: string | null
           height?: number | null
           id?: string
+          is_original?: boolean | null
+          upscale_percent?: number | null
           width?: number | null
         }
         Relationships: [
@@ -3352,6 +3364,13 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "campaigns_unified"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_assets_derived_from_fkey"
+            columns: ["derived_from"]
+            isOneToOne: false
+            referencedRelation: "campaign_assets"
             referencedColumns: ["id"]
           },
         ]
@@ -3387,6 +3406,59 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "campaign_channels_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns_unified"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_cycles: {
+        Row: {
+          active_channels: Json | null
+          campaign_id: string
+          confirmed_at: string | null
+          confirmed_by: string | null
+          created_at: string | null
+          ends_at: string | null
+          id: string
+          name: string
+          requires_confirmation: boolean | null
+          starts_at: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          active_channels?: Json | null
+          campaign_id: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string | null
+          ends_at?: string | null
+          id?: string
+          name: string
+          requires_confirmation?: boolean | null
+          starts_at?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          active_channels?: Json | null
+          campaign_id?: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string | null
+          ends_at?: string | null
+          id?: string
+          name?: string
+          requires_confirmation?: boolean | null
+          starts_at?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_cycles_campaign_id_fkey"
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "campaigns_unified"
@@ -13915,7 +13987,14 @@ export type Database = {
         | "story_cover"
         | "story_slide"
         | "logo"
-      campaign_channel_type: "ads" | "publidoor" | "webstories"
+      campaign_channel_type:
+        | "ads"
+        | "publidoor"
+        | "webstories"
+        | "push"
+        | "newsletter"
+        | "exit_intent"
+        | "login_panel"
       campaign_event_type:
         | "impression"
         | "click"
@@ -13923,6 +14002,10 @@ export type Database = {
         | "story_open"
         | "story_complete"
         | "slide_view"
+        | "push_sent"
+        | "push_delivered"
+        | "newsletter_sent"
+        | "newsletter_open"
       community_level: "supporter" | "collaborator" | "ambassador" | "leader"
       delivery_mode: "teaser" | "full" | "rewrite"
       distribution_status:
@@ -14180,7 +14263,15 @@ export const Constants = {
         "story_slide",
         "logo",
       ],
-      campaign_channel_type: ["ads", "publidoor", "webstories"],
+      campaign_channel_type: [
+        "ads",
+        "publidoor",
+        "webstories",
+        "push",
+        "newsletter",
+        "exit_intent",
+        "login_panel",
+      ],
       campaign_event_type: [
         "impression",
         "click",
@@ -14188,6 +14279,10 @@ export const Constants = {
         "story_open",
         "story_complete",
         "slide_view",
+        "push_sent",
+        "push_delivered",
+        "newsletter_sent",
+        "newsletter_open",
       ],
       community_level: ["supporter", "collaborator", "ambassador", "leader"],
       delivery_mode: ["teaser", "full", "rewrite"],
