@@ -244,7 +244,16 @@ import JobDetailPage from "./pages/jobs/JobDetailPage";
 import JobsAdmin from "./pages/admin/JobsAdmin";
 
 // Real Estate Module
-import { ImoveisListPage } from "./modules/imoveis/pages";
+import { 
+  ImoveisListPage, 
+  ImovelDetailPage, 
+  AnuncianteProfilePage, 
+  ImoveisCidadePage, 
+  ImoveisBairroPage, 
+  CorretoresListPage 
+} from "./modules/imoveis/pages";
+import ImoveisAdmin from "./pages/admin/imoveis/ImoveisAdmin";
+import ImovelEditor from "./pages/admin/imoveis/ImovelEditor";
 import BroadcastHub from "./pages/broadcast/BroadcastHub";
 import BroadcastWatch from "./pages/broadcast/BroadcastWatch";
 import BroadcastSchedule from "./pages/broadcast/BroadcastSchedule";
@@ -386,6 +395,11 @@ const App = () => (
                         
                         {/* Real Estate Routes */}
                         <Route path="/imoveis" element={<ImoveisListPage />} />
+                        <Route path="/imoveis/:slug" element={<ImovelDetailPage />} />
+                        <Route path="/imoveis/corretor/:slug" element={<AnuncianteProfilePage />} />
+                        <Route path="/imoveis/corretores" element={<CorretoresListPage />} />
+                        <Route path="/imoveis/cidade/:cidade" element={<ImoveisCidadePage />} />
+                        <Route path="/imoveis/cidade/:cidade/bairro/:bairro" element={<ImoveisBairroPage />} />
                         
                         {/* ENEM 2026 Public Landing */}
                         <Route path="/enem-2026" element={<Enem2026Landing />} />
@@ -572,6 +586,11 @@ const App = () => (
                         {/* Censo PcD Admin Routes */}
                         <Route path="censo-pcd" element={<CensoPcdDashboard />} />
                         <Route path="censo-pcd/respostas" element={<CensoPcdRespostas />} />
+                        
+                        {/* Imóveis Admin Routes */}
+                        <Route path="imoveis" element={<ImoveisAdmin />} />
+                        <Route path="imoveis/novo" element={<ImovelEditor />} />
+                        <Route path="imoveis/:id/editar" element={<ImovelEditor />} />
                         
                         {/* Conexão Stream Hub (Central) */}
                         <Route path="stream" element={<ConexaoStream />} />
