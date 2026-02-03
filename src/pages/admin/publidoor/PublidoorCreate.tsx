@@ -4,14 +4,14 @@ import { ArrowLeft, Save, Send, Eye, Smartphone, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCreatePublidoorItem, usePublidoorAdvertisers, usePublidoorTemplates } from "@/hooks/usePublidoor";
 import { PublidoorItemFormData, PublidoorItemType, PUBLIDOOR_TYPE_LABELS } from "@/types/publidoor";
 import { PublidoorPreview } from "@/components/publidoor/PublidoorPreview";
+import { AdImageUploader } from "@/components/admin/AdImageUploader";
 
 const PUBLIDOOR_TYPES: PublidoorItemType[] = ["narrativo", "contextual", "geografico", "editorial", "impacto_total"];
 
@@ -167,19 +167,17 @@ export default function PublidoorCreate() {
           <Card>
             <CardHeader>
               <CardTitle>Mídia</CardTitle>
-              <CardDescription>Imagem ou vídeo do Publidoor</CardDescription>
+              <CardDescription>Imagem do Publidoor</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="media_url">URL da Mídia</Label>
-                <Input
-                  id="media_url"
-                  type="url"
-                  placeholder="https://..."
-                  value={formData.media_url || ""}
-                  onChange={(e) => updateField("media_url", e.target.value)}
-                />
-              </div>
+              <AdImageUploader
+                value={formData.media_url || ""}
+                onChange={(url) => updateField("media_url", url)}
+                format="home-topo"
+                label="Imagem Principal"
+                required
+              />
+              
               <div className="space-y-2">
                 <Label>Tipo de Mídia</Label>
                 <RadioGroup
@@ -197,16 +195,13 @@ export default function PublidoorCreate() {
                   </div>
                 </RadioGroup>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="logo_url">Logo (opcional)</Label>
-                <Input
-                  id="logo_url"
-                  type="url"
-                  placeholder="https://..."
-                  value={formData.logo_url || ""}
-                  onChange={(e) => updateField("logo_url", e.target.value)}
-                />
-              </div>
+
+              <AdImageUploader
+                value={formData.logo_url || ""}
+                onChange={(url) => updateField("logo_url", url)}
+                format="retangulo-medio"
+                label="Logo (opcional)"
+              />
             </CardContent>
           </Card>
 
