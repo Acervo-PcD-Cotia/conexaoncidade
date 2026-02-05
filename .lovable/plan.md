@@ -1,513 +1,270 @@
 
-# 🔍 RELATÓRIO COMPLETO DE AUDITORIA DO DASHBOARD
-## Portal Conexão na Cidade
+# Relatório de Auditoria Completa — Portal Conexão na Cidade
+## Versão: Superadmin | Data: 05/02/2026
 
 ---
 
-## 1️⃣ VISÃO GERAL
+## Índice
 
-### Menus Encontrados no Dashboard (12 grupos principais)
-
-| # | Menu Principal | Submenus/Itens |
-|---|----------------|----------------|
-| 1 | **Conteúdo** | Dashboard, Notícias, Nova Notícia, Notícias IA, Notas Rápidas, Web Stories, Podcasts, Edição Digital, Auto Post Regional, Correção de Conteúdo |
-| 2 | **Distribuição & Alcance** | Distribuição Social, Gerador de Links, SEO & Performance, Check Fake News |
-| 3 | **Publicidade & Monetização** | Campanhas 360, Comprovantes, Anúncios, Super Banners, Publidoor, Parceiros |
-| 4 | **Streaming & Mídia** | Hub Central, Ao Vivo (Dashboard, Transmissões, Canais, Programas, Playlist Rádio, Grade de Vídeos), Studio (Dashboard, Estúdios, Biblioteca, Destinos, Webinários, Branding, Equipe) |
-| 5 | **Gestão do Portal** | Editor da Home, Categorias, Tags, Aparência, Modelo do Portal, Vocabulário, Módulos |
-| 6 | **Inteligência & Métricas** | Analytics, Relatórios Editoriais, Métricas Comerciais |
-| 7 | **Conexão Academy** | Dashboard, Categorias, Cursos |
-| 8 | **Conexão.AI** | Dashboard, Assistente, Criador, Ferramentas, Automações, Insights |
-| 9 | **Negócios** | Soluções, Financeiro, Auto Post PRO, Campanhas, Censo PcD, Geração Cotia |
-| 10 | **Educação & Esportes** | Esportes, Brasileirão, ENEM 2026 |
-| 11 | **Transporte Escolar** | Dashboard, Escolas, Transportadores, Leads, Denúncias |
-| 12 | **Administração** | Usuários, Conexões, Cadastro Assistido, Monitor SSO, Logs, Configurações |
-
-### Resumo Quantitativo
-
-- **Total de rotas administrativas**: 120+
-- **Total de páginas/componentes analisados**: 80+
-- **Módulos principais**: 12
-- **Tabelas de banco de dados**: 50+
-
-### Resumo Geral de Estabilidade
-
-| Status | Quantidade | Percentual |
-|--------|------------|------------|
-| ✅ Funcionando corretamente | ~65% | Estrutura sólida, código implementado |
-| ⚠️ Funcionando parcialmente | ~25% | Dependências de dados ou configuração |
-| ❌ Não funcionando | ~10% | Funcionalidades placeholder ou quebradas |
+1. [Resumo Executivo](#resumo-executivo)
+2. [Achados Detalhados](#achados-detalhados)
+3. [Auditoria do Módulo Notícias AI / Importação JSON](#auditoria-noticias-ai)
+4. [Segurança - RLS e Acesso](#seguranca-rls)
+5. [Plano de Correção em 3 Fases](#plano-de-correcao)
 
 ---
 
-## 2️⃣ RELATÓRIO POR MENU
+## 1. Resumo Executivo
+
+### Estado Atual do Sistema (Nota 0-10)
+
+| Área | Nota | Justificativa |
+|------|------|---------------|
+| **Segurança** | 5/10 | 99 warnings no linter, 68+ políticas RLS permissivas (USING true/WITH CHECK true), perfis públicos expostos, leaked password protection desabilitada |
+| **Importação/Notícias AI** | 8/10 | Regras de categoria, tags e SEO bem implementadas; falta sanitização HTML no conteúdo importado |
+| **SEO** | 8/10 | Schema.org NewsArticle implementado, meta tags corretas, 90% das notícias com meta_title/description |
+| **Performance** | 7/10 | Fallback timeout na homepage, lazy loading implementado, mas 271 tabelas pode impactar |
+| **UX/UI** | 7/10 | Layout responsivo, estados de loading, mas muitos `dangerouslySetInnerHTML` sem sanitização |
+| **Estabilidade** | 7/10 | 82 edge functions, arquitetura sólida, mas funções sem search_path fixo |
+
+### Top 10 Riscos Críticos
+
+| # | Risco | Severidade | Localização |
+|---|-------|------------|-------------|
+| 1 | **Perfis públicos expostos** - Tabela `profiles` com SELECT público (`qual:true`) | CRÍTICO | RLS `profiles` |
+| 2 | **68+ políticas RLS permissivas** - INSERT/UPDATE/DELETE com `WITH CHECK (true)` | CRÍTICO | Múltiplas tabelas |
+| 3 | **dangerouslySetInnerHTML sem sanitização** - 21 arquivos renderizam HTML não sanitizado | CRÍTICO | ArticleContent.tsx, RichTextEditor.tsx, etc |
+| 4 | **Leaked password protection desabilitada** | ALTO | Auth config |
+| 5 | **Extension pg_trgm em schema public** | ALTO | Database |
+| 6 | **28 funções sem search_path fixo** | MÉDIO | Funções do banco |
+| 7 | **Security Definer View detectada** | MÉDIO | View no banco |
+| 8 | **Apenas 2 usuários com roles** (super_admin, collaborator) | BAIXO | user_roles |
+| 9 | **10% das notícias sem imagem destacada** | BAIXO | Tabela news |
+| 10 | **3-4 tags por notícia (média)** - algumas abaixo do mínimo recomendado de 3 | BAIXO | Tabela news_tags |
 
 ---
 
-### 📁 MENU: CONTEÚDO
+## 2. Achados Detalhados
 
-#### ✅ Funcionalidades que FUNCIONAM
+### SEC-001: Perfis de Usuário Expostos Publicamente
+- **Onde**: Política RLS `Perfis são visíveis publicamente` na tabela `profiles`
+- **Evidência**: `qual:true` permite SELECT sem autenticação
+- **Impacto**: Atacantes podem extrair nomes, avatares, bios e preferências de todos os usuários
+- **Correção**:
+```text
+1. Alterar a política para exigir autenticação:
+   CREATE POLICY "Perfis visíveis para autenticados" ON profiles
+   FOR SELECT TO authenticated USING (true);
+   
+2. Ou limitar campos públicos com uma VIEW específica
+```
+- **Esforço**: P (1-2 horas)
+- **Dependências**: Verificar se frontend depende de leitura pública
 
-1. **Dashboard** (`/admin`)
-   - Cards de KPI carregando corretamente
-   - Navegação entre painéis
-   - Exibição de estatísticas operacionais
+### SEC-002: 68+ Políticas RLS Permissivas
+- **Onde**: Múltiplas tabelas (autopost_*, broadcast_*, community_*, etc)
+- **Evidência**: Linter reporta 68 warnings de `USING (true)` ou `WITH CHECK (true)`
+- **Impacto**: Qualquer usuário autenticado pode INSERT/UPDATE/DELETE dados sem restrição
+- **Correção**:
+```text
+Para cada tabela afetada:
+1. Auditar se a permissividade é intencional
+2. Substituir WITH CHECK (true) por verificação de role:
+   WITH CHECK (is_admin_or_editor(auth.uid()))
+3. Priorizar tabelas sensíveis: user_roles, news, profiles
+```
+- **Esforço**: G (8-16 horas para todas)
+- **Dependências**: Documentar quais tabelas devem ser públicas
 
-2. **Notícias** (`/admin/news`)
-   - Listagem com paginação (limite 50)
-   - Busca por título
-   - Seleção múltipla para exclusão em lote
-   - Status badges funcionais
-   - Duplicação de notícias
-   - Links para edição
+### SEC-003: HTML Não Sanitizado em Renderização
+- **Onde**: 21 arquivos usam `dangerouslySetInnerHTML`
+- **Arquivos críticos**:
+  - `src/components/article/ArticleContent.tsx` (linha 15)
+  - `src/components/admin/RichTextEditor.tsx` (linha 226)
+  - `src/pages/EventDetail.tsx` (linha 306)
+  - `src/components/conexao-ai/AIContentPreview.tsx` (linha 138)
+- **Evidência**: Conteúdo de notícias renderizado sem passar por DOMPurify
+- **Impacto**: XSS armazenado se atacante injetar script via importação JSON ou editor
+- **Correção**:
+```text
+1. Instalar DOMPurify: npm install dompurify @types/dompurify
+2. Criar hook useSanitizedHtml:
+   const cleanHtml = DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
+3. Aplicar em todos os componentes que usam dangerouslySetInnerHTML
+```
+- **Esforço**: M (4-6 horas)
+- **Dependências**: Nenhuma
 
-3. **Editor de Notícias** (`/admin/news/:id/edit`)
-   - Formulário completo implementado
-   - Salvamento com validação
-   - Categorias e tags funcionais
+### SEC-004: Leaked Password Protection Desabilitada
+- **Onde**: Configuração de autenticação
+- **Evidência**: Linter warning #99
+- **Impacto**: Usuários podem usar senhas já vazadas em data breaches
+- **Correção**: Habilitar via dashboard do backend ou API
+- **Esforço**: P (15 minutos)
 
-4. **Web Stories** (`/admin/stories`)
-   - Listagem funcional
-   - Editor disponível
-
-5. **Categorias** (`/admin/categories`)
-   - CRUD completo implementado
-
-6. **Tags** (`/admin/tags`)
-   - CRUD completo implementado
-
-#### ⚠️ Funcionalidades PARCIAIS
-
-1. **Notícias IA** (`/admin/noticias-ai`)
-   - Interface implementada
-   - **Problema**: Depende de integração com API de IA que pode não estar configurada
-   - **Impacto**: Geração automática de conteúdo pode falhar
-
-2. **Auto Post Regional** (`/admin/autopost-regional`)
-   - Dashboard implementado
-   - **Problema**: Sem fontes configuradas no banco (0 registros em `autopost_sources`)
-   - **Impacto**: Não há captação automática ativa
-
-3. **Correção de Conteúdo** (`/admin/content-fix`)
-   - Módulo existe mas marcado como "Novo"
-   - Funcionalidade de correção de imagens e datas implementada
-   - **Problema**: Dependente de seleção prévia de notícias
-
-#### ❌ Funcionalidades NÃO FUNCIONAM
-
-1. **Podcasts** (`/admin/podcasts`)
-   - Página existe mas sem dados
-   - Sem infraestrutura de upload de áudio configurada
-
----
-
-### 📁 MENU: DISTRIBUIÇÃO & ALCANCE
-
-#### ✅ Funcionalidades que FUNCIONAM
-
-1. **Gerador de Links** (`/admin/links`)
-   - Dashboard, Builder, QR Generator implementados
-   - Criação de links UTM funcional
-
-2. **SEO & Performance** (`/admin/analytics`)
-   - Analytics completo com filtros por data
-   - Exportação CSV funcional
-   - Visualização por categoria
-   - Estatísticas de anúncios
-
-#### ⚠️ Funcionalidades PARCIAIS
-
-1. **Distribuição Social** (`/admin/social`)
-   - Dashboard implementado
-   - Hooks refatorados para novo schema
-   - **Problema**: `social_accounts` vazio (0 registros) - nenhuma conta conectada
-   - **Impacto**: Postagens sociais não podem ser criadas/enviadas
-
-2. **Check Fake News** (`/admin/anti-fake-news`)
-   - Interface funcional
-   - **Problema**: Funcionalidade de verificação pode depender de integração externa
+### SEC-005: Funções sem search_path Fixo
+- **Onde**: 28 funções no schema public
+- **Evidência**: Linter warnings #2-28
+- **Impacto**: Potencial vulnerabilidade a ataques de schema poisoning
+- **Correção**: Já corrigidas 9 funções na última migração; aplicar mesmo padrão nas restantes
+- **Esforço**: M (2-3 horas)
 
 ---
 
-### 📁 MENU: PUBLICIDADE & MONETIZAÇÃO
+## 3. Auditoria do Módulo Notícias AI / Importação JSON
 
-#### ✅ Funcionalidades que FUNCIONAM
+### Conformidade com Regras Oficiais
 
-1. **Campanhas 360** (`/admin/campaigns/unified`)
-   - Listagem de campanhas com filtros
-   - Formulário de criação multi-canal
-   - Seleção de 7 canais (Ads, Publidoor, WebStories, Exit-Intent, Login Panel, Push, Newsletter)
-   - Métricas implementadas em `/admin/campaigns/metrics/:id`
+| Regra | Status | Evidência |
+|-------|--------|-----------|
+| Não resumir conteúdo (95-105% do original) | PARCIAL | Edge function repassa conteúdo da IA sem validar tamanho |
+| Data original ISO 8601 | NÃO VERIFICADO | Campo `data_original` não encontrado na estrutura JSON |
+| Imagens: não inventar URLs | OK | `isValidImageUrl()` valida padrões de imagem |
+| Imagem única: replicar para hero/og/card | OK | Fallback implementado em `NoticiasAI.tsx` linha 289 |
+| Categoria inválida → usar "Geral" | OK | `isValidCategory()` com fallback em `constants/categories.ts` |
+| Tags: 3-12, primeira = cidade, incluir "Cotia" | OK | Regra blindada em `ensureRequiredFields()` linhas 96-119 |
+| Limites SEO: resumo ≤160, meta_titulo ≤60, meta_descricao ≤160 | PARCIAL | Validação no editor mas não no JSON import |
+| Estrutura HTML: lide em `<strong>` | OK | `autoFixFirstParagraph()` corrige automaticamente |
 
-2. **Anúncios** (`/admin/ads`)
-   - CRUD funcional
-   - Upload de banners
+### Achados Específicos da Importação
 
-3. **Super Banners** (`/admin/banners`)
-   - Gestão de banners implementada
+#### JSON-001: Validação de Limites SEO Ausente na Importação
+- **Onde**: `supabase/functions/noticias-ai-generate/index.ts`
+- **Evidência**: Não há validação de `meta_titulo.length <= 60` ou `meta_descricao.length <= 160` antes de retornar
+- **Impacto**: Títulos/descrições longas passam sem truncamento
+- **Correção**:
+```text
+Adicionar em ensureRequiredFields():
+seo: {
+  meta_titulo: article.seo?.meta_titulo?.substring(0, 60) || article.titulo.substring(0, 60),
+  meta_descricao: article.seo?.meta_descricao?.substring(0, 160) || article.resumo.substring(0, 160)
+}
+```
+- **Esforço**: P (30 minutos)
 
-4. **Comprovantes** (`/admin/comprovantes`)
-   - Sistema de geração de PDFs implementado
-   - Versionamento funcional
+#### JSON-002: Campo data_original Não Implementado
+- **Onde**: Interface NewsArticle
+- **Evidência**: Não existe campo para data original da fonte
+- **Impacto**: Todas as notícias importadas usam `now()` como data de publicação
+- **Correção**:
+```text
+1. Adicionar campo opcional data_original: string (ISO 8601) na interface
+2. Usar esse valor para published_at se fornecido
+3. Adicionar validação de formato ISO 8601
+```
+- **Esforço**: M (2 horas)
 
-#### ⚠️ Funcionalidades PARCIAIS
+#### JSON-003: Sanitização HTML do Conteúdo
+- **Onde**: `sanitizeContent()` linhas 68-92
+- **Evidência**: Remove `<img>` e URLs de imagem, mas não sanitiza tags perigosas (script, etc)
+- **Impacto**: XSS potencial se fonte injetar HTML malicioso
+- **Correção**: Usar biblioteca de sanitização HTML no edge function
+- **Esforço**: M (2-3 horas)
 
-1. **Publidoor** (`/admin/publidoor`)
-   - Dashboard e formulários implementados
-   - **Problema**: 0 registros em `publidoor_items`
-   - **Impacto**: Sem conteúdo para exibir/gerenciar
-   - Submenus (Campanhas, Locais, Agenda, Anunciantes, Métricas, Modelos, Aprovações) dependem de dados
+### Dados Reais do Sistema (Amostra de 20 notícias)
 
-2. **Campanhas 360 - Canais de Exibição**
-   - **Exit-Intent**: Formulário corrigido com seletores de assets
-   - **Login Panel**: Formulário corrigido com seletores de assets
-   - **Problema potencial**: Buckets de storage (`ads`, `campaign-assets`) podem não ter políticas RLS adequadas
-   - **Impacto**: Upload de assets pode falhar silenciosamente
-
-3. **Parceiros** (`/admin/partners`)
-   - Interface implementada
-   - **Problema**: Dependente de cadastro de parceiros
-
----
-
-### 📁 MENU: STREAMING & MÍDIA
-
-#### ✅ Funcionalidades que FUNCIONAM
-
-1. **Broadcast Dashboard** (`/admin/broadcast`)
-   - Cards de estatísticas
-   - Listagem de transmissões ao vivo
-   - Próximas transmissões
-
-2. **Canais** (`/admin/broadcast/channels`)
-   - 2 canais cadastrados no banco
-   - CRUD funcional
-
-#### ⚠️ Funcionalidades PARCIAIS
-
-1. **Transmissões** (`/admin/broadcast/list`)
-   - Listagem funcional
-   - **Problema**: Depende de integração com LiveKit para streaming real
-
-2. **Conexão Studio** (`/admin/conexao-studio/*`)
-   - Interface implementada
-   - **Problema**: Integração com serviços de streaming externos
-
-3. **Rádio Web** (`/admin/radio/*`) e **TV Web** (`/admin/tv/*`)
-   - Páginas implementadas
-   - **Problema**: Configuração de streams não definida
+| Métrica | Valor |
+|---------|-------|
+| Total de notícias | 106 |
+| Com meta_title | 95 (90%) |
+| Com meta_description | 95 (90%) |
+| Com imagem destacada | 77 (73%) |
+| Com fonte | 95 (90%) |
+| Média de tags por notícia | 7 |
+| Tags em conformidade (3-12) | OK |
+| Meta títulos > 60 chars | 2 de 20 (10%) |
 
 ---
 
-### 📁 MENU: GESTÃO DO PORTAL
+## 4. Segurança - RLS e Acesso
 
-#### ✅ Funcionalidades que FUNCIONAM
+### Tabelas Sensíveis e Políticas Atuais
 
-1. **Editor da Home** (`/admin/home-editor`)
-   - Drag-and-drop funcional (dnd-kit)
-   - Criação de blocos (curadoria, mais lidas, por categoria, por tag)
-   - Ativação/desativação de blocos
-   - Ordenação persistente
+| Tabela | SELECT | INSERT | UPDATE | DELETE | Risco |
+|--------|--------|--------|--------|--------|-------|
+| `profiles` | PUBLIC | auth.uid() | auth.uid() | - | ALTO (leitura pública) |
+| `user_roles` | admin OR owner | admin only | - | - | OK |
+| `news` | published OR editor | editor | editor | editor | OK |
+| `audit_logs` | - | true | - | - | MÉDIO (insert aberto) |
+| `autopost_*` (múltiplas) | true | true | true | - | ALTO |
+| `broadcast_autodj_settings` | true | auth | auth | - | MÉDIO |
+| `community_*` (múltiplas) | auth | auth | owner | - | OK |
 
-2. **Categorias** (`/admin/categories`)
-   - 29 categorias cadastradas
-   - CRUD completo
+### Recomendações de Hardening
 
-3. **Tags** (`/admin/tags`)
-   - CRUD completo
-
-4. **Configurações de Aparência** (`/admin/settings/appearance`)
-   - Temas e cores
-
-5. **Gerenciador de Módulos** (`/admin/settings/modules`)
-   - Ativação/desativação de módulos
-
-#### ⚠️ Funcionalidades PARCIAIS
-
-1. **Modelo do Portal** (`/admin/settings/template`)
-   - Templates disponíveis
-   - **Problema**: Persistência no banco pode exigir configuração tenant
-
-2. **Vocabulário** (`/admin/settings/vocabulary`)
-   - Editor implementado
-   - **Problema**: Dependente de configuração por tenant
+1. **Upload de arquivos**: Verificar buckets `ads` e `campaign-assets` possuem validação de tipo MIME
+2. **Headers de segurança**: Adicionar CSP, X-Frame-Options via edge function ou CDN
+3. **Rate limiting**: Implementar em endpoints críticos (login, importação JSON, edge functions de IA)
+4. **Brute force protection**: Habilitar proteção nativa do Supabase Auth
+5. **Sanitização HTML**: Obrigatória em todos os pontos de entrada de conteúdo
 
 ---
 
-### 📁 MENU: INTELIGÊNCIA & MÉTRICAS
+## 5. Plano de Correção em 3 Fases
 
-#### ✅ Funcionalidades que FUNCIONAM
+### Fase 1: Correções Críticas (1-2 dias)
+_Objetivo: Estabilizar segurança básica_
 
-1. **Analytics** (`/admin/analytics`)
-   - Filtros por data e categoria
-   - Cards de métricas (views, page views, publicadas, categorias)
-   - Tabs: Mais Lidas, Por Categoria, Publicações, Anúncios
-   - Exportação CSV
+| Prioridade | Ação | Responsável | Estimativa |
+|------------|------|-------------|------------|
+| P1 | Restringir RLS da tabela `profiles` para autenticados | Backend | 1h |
+| P1 | Habilitar leaked password protection | Config | 15min |
+| P1 | Implementar DOMPurify em ArticleContent.tsx | Frontend | 2h |
+| P2 | Adicionar validação de limites SEO na edge function | Backend | 1h |
+| P2 | Corrigir 5 tabelas autopost mais críticas | Backend | 3h |
 
-2. **Relatórios Editoriais** (`/admin/reading-analytics`)
-   - Implementado
+### Fase 2: Melhorias Estruturais (1 semana)
+_Objetivo: Resolver débitos técnicos de segurança_
 
-#### ⚠️ Funcionalidades PARCIAIS
+| Prioridade | Ação | Responsável | Estimativa |
+|------------|------|-------------|------------|
+| P2 | Corrigir todas as 28 funções sem search_path | Backend | 3h |
+| P2 | Auditar e corrigir 68 políticas RLS permissivas | Backend | 8h |
+| P2 | Adicionar sanitização HTML na edge function de importação | Backend | 3h |
+| P2 | Implementar campo data_original no import JSON | Full-stack | 4h |
+| P3 | Migrar extensão pg_trgm para schema extensions | Backend | 2h |
+| P3 | Aplicar DOMPurify em todos os 21 arquivos com dangerouslySetInnerHTML | Frontend | 6h |
 
-1. **Métricas Comerciais** (`/admin/publidoor/metricas`)
-   - Interface implementada
-   - **Problema**: Sem dados em `publidoor_items` para gerar métricas
+### Fase 3: Otimizações e Evolução (2-4 semanas)
+_Objetivo: Robustez e observabilidade_
 
----
-
-### 📁 MENU: CONEXÃO ACADEMY
-
-#### ✅ Funcionalidades que FUNCIONAM
-
-1. **Dashboard** (`/admin/academy`)
-   - Interface funcional
-
-2. **Categorias** (`/admin/academy/admin/categorias`)
-   - CRUD implementado
-
-3. **Cursos** (`/admin/academy/admin/cursos`)
-   - CRUD implementado
-
-#### ⚠️ Funcionalidades PARCIAIS
-
-1. **ENEM 2026** (`/admin/academy/enem`)
-   - Módulo implementado
-   - **Problema**: Conteúdo educacional precisa ser populado
+| Prioridade | Ação | Responsável | Estimativa |
+|------------|------|-------------|------------|
+| P3 | Implementar rate limiting em edge functions | Backend | 4h |
+| P3 | Adicionar headers de segurança (CSP, HSTS) | DevOps | 2h |
+| P3 | Criar testes automatizados para validação de importação | QA | 8h |
+| P3 | Implementar auditoria de conteúdo (hash/fingerprint de duplicatas) | Backend | 4h |
+| P3 | Dashboard de métricas de segurança (tentativas de login, erros RLS) | Full-stack | 8h |
+| P4 | Documentar todas as políticas RLS e justificativas | Docs | 4h |
 
 ---
 
-### 📁 MENU: CONEXÃO.AI
+## Observações Técnicas Adicionais
 
-#### ✅ Funcionalidades que FUNCIONAM
+### Arquitetura Atual
+- **271 tabelas** no schema public (quantidade alta, considerar modularização)
+- **82 edge functions** (boa separação de responsabilidades)
+- **120+ rotas** no frontend (conforme auditoria anterior)
+- **Whitelist de 26 categorias** funcionando corretamente
 
-1. **Dashboard** (`/admin/conexao-ai`)
-   - Cards de ação com navegação
-   - Design responsivo
+### Pontos Positivos Identificados
+1. Sistema de roles via tabela separada (`user_roles`) - padrão correto de segurança
+2. Hook `useRequireRole` com verificação server-side
+3. Implementação de Schema.org NewsArticle para SEO
+4. Sistema de duplicação de notícias com verificação de slug/source/título
+5. Fallback timeout na homepage (5s) previne loading infinito
+6. Sanitização de embeds via `sanitizeEmbedCode()` bem implementada
+7. Categorias com whitelist e fallback para "Geral"
+8. Geração automática de WebStory e Podcast após publicação
 
-2. **Interface do Assistente** (`/admin/conexao-ai/assistente`)
-   - Layout implementado
-
-#### ⚠️ Funcionalidades PARCIAIS
-
-1. **Criador de Conteúdo** (`/admin/conexao-ai/criador`)
-   - Interface existe
-   - **Problema**: Depende de edge function com modelo de IA configurado
-
-2. **Ferramentas** (`/admin/conexao-ai/ferramentas`)
-   - Interface implementada
-   - **Problema**: Algumas ferramentas podem ser placeholder
-
-3. **Automações** (`/admin/conexao-ai/automacoes`)
-   - Interface implementada
-   - **Problema**: Não há automações configuradas
-
-4. **Insights** (`/admin/conexao-ai/insights`)
-   - Interface implementada
-   - **Problema**: Depende de análise de dados existentes
+### Pontos de Atenção
+1. Verificar implementação de CSP headers
+2. Monitorar logs de edge functions para erros silenciosos
+3. Considerar implementar WAF para proteção adicional
+4. Validar configuração de CORS nas edge functions
 
 ---
 
-### 📁 MENU: NEGÓCIOS
-
-#### ✅ Funcionalidades que FUNCIONAM
-
-1. **Soluções** (`/admin/solutions`)
-   - Página implementada
-
-2. **Financeiro** (`/admin/financial`)
-   - Dashboard, Perfis, Recebíveis, Faturas
-
-3. **Auto Post PRO** (`/admin/autopost`)
-   - Dashboard completo
-   - Submenus: Sources, Queue, Groups, Rules, Schedules, Media, Duplicates, Logs, Reports, Settings
-   - **Problema**: Sem fontes cadastradas (0 em `autopost_sources`)
-
-#### ⚠️ Funcionalidades PARCIAIS
-
-1. **Campanhas Google Maps** (`/admin/campaigns/google-maps`)
-   - Interface existe
-   - **Problema**: Integração com Google Maps API
-
-2. **Censo PcD** (`/admin/censo-pcd`)
-   - Dashboard e Respostas
-   - **Problema**: Depende de respostas submetidas
-
-3. **Geração Cotia (SSO)** (`#sso-gcotia`)
-   - Botão implementado
-   - **Problema**: Depende de configuração SSO externa
-
----
-
-### 📁 MENU: EDUCAÇÃO & ESPORTES
-
-#### ✅ Funcionalidades que FUNCIONAM
-
-1. **Esportes Dashboard** (`/admin/esportes`)
-   - Interface implementada
-
-2. **Brasileirão** (`/admin/esportes/brasileirao`)
-   - Sync, Transmissões, Notícias
-   - Integração com API de futebol
-
-#### ⚠️ Funcionalidades PARCIAIS
-
-1. **ENEM 2026**
-   - Ver seção Conexão Academy
-
----
-
-### 📁 MENU: TRANSPORTE ESCOLAR
-
-#### ✅ Funcionalidades que FUNCIONAM
-
-1. **Dashboard** (`/admin/transporte-escolar`)
-   - Interface implementada
-
-2. **Escolas** (`/admin/transporte-escolar/escolas`)
-   - CRUD implementado
-
-3. **Transportadores** (`/admin/transporte-escolar/transportadores`)
-   - CRUD implementado
-
-4. **Leads** (`/admin/transporte-escolar/leads`)
-   - Listagem funcional
-
-5. **Denúncias** (`/admin/transporte-escolar/reports`)
-   - Listagem funcional
-
----
-
-### 📁 MENU: ADMINISTRAÇÃO
-
-#### ✅ Funcionalidades que FUNCIONAM
-
-1. **Usuários** (`/admin/users`)
-   - Listagem de usuários
-   - Gestão de roles
-
-2. **Conexões (Comunidade)** (`/admin/community`)
-   - Dashboard, Membros, Moderação
-
-3. **Logs** (`/admin/logs`)
-   - Audit logs funcionais
-
-4. **Configurações** (`/admin/settings`)
-   - Modo Manutenção (toggle funcional)
-   - Notificações Push (preferências)
-   - Segurança (autenticação, verificação email, timeout)
-   - Informações do Sistema
-
-#### ⚠️ Funcionalidades PARCIAIS
-
-1. **Monitor SSO** (`/admin/sso-monitor`)
-   - Interface implementada
-   - **Problema**: Depende de configurações SSO externas
-
-2. **Cadastro Assistido** (`/admin/community/phone-import`)
-   - Interface implementada
-   - **Problema**: Fluxo de importação pode ter dependências
-
----
-
-## 3️⃣ LISTA CONSOLIDADA DE PROBLEMAS
-
-### 🔴 CRÍTICO (Impede uso real)
-
-| # | Menu | Problema | Gravidade |
-|---|------|----------|-----------|
-| 1 | Distribuição Social | 0 contas sociais conectadas - impossível publicar | Crítico |
-| 2 | Publidoor | 0 itens cadastrados - módulo vazio | Crítico |
-| 3 | Auto Post PRO | 0 fontes configuradas - automação inativa | Crítico |
-| 4 | Campanhas 360 | 0 campanhas cadastradas - sistema ocioso | Alto |
-
-### 🟠 ALTO (Afeta funcionalidades principais)
-
-| # | Menu | Problema | Gravidade |
-|---|------|----------|-----------|
-| 5 | Campanhas 360 - Upload | Buckets de storage podem não ter RLS configurado | Alto |
-| 6 | Streaming | Integração LiveKit/streaming não configurada | Alto |
-| 7 | Conexão.AI | Edge functions de IA podem não estar ativas | Alto |
-| 8 | Podcasts | Sem infraestrutura de upload de áudio | Alto |
-
-### 🟡 MÉDIO (Afeta experiência)
-
-| # | Menu | Problema | Gravidade |
-|---|------|----------|-----------|
-| 9 | Analytics | Dados de page_views limitados | Médio |
-| 10 | SSO | Integração externa não verificada | Médio |
-| 11 | Academy | Conteúdo educacional não populado | Médio |
-| 12 | Esportes | Depende de API externa de futebol | Médio |
-
-### 🟢 BAIXO (Melhorias)
-
-| # | Menu | Problema | Gravidade |
-|---|------|----------|-----------|
-| 13 | Notícias | Limite de 50 itens na listagem (sem paginação real) | Baixo |
-| 14 | Segurança | 108 warnings no linter do Supabase (search_path) | Baixo |
-| 15 | Geral | Algumas páginas são placeholder | Baixo |
-
----
-
-## 4️⃣ DIAGNÓSTICO TÉCNICO
-
-### Rotas e Navegação
-- ✅ **Todas as rotas administrativas estão definidas** em `App.tsx`
-- ✅ **AdminLayout protegido** por `useRequireRole`
-- ✅ **Breadcrumb funcional**
-- ⚠️ Algumas rotas dependem de dados que não existem
-
-### Integração com Banco de Dados
-- ✅ **Supabase client configurado** corretamente
-- ✅ **React Query** para cache e mutations
-- ⚠️ **RLS**: 108 warnings no linter (funções sem search_path)
-- ⚠️ **Tabelas vazias** em módulos críticos
-
-### Componentes UI
-- ✅ **Shadcn/UI** implementado consistentemente
-- ✅ **dnd-kit** para drag-and-drop
-- ✅ **Recharts** para gráficos
-- ✅ **Sistema de temas** funcional
-
-### Hooks Personalizados
-- ✅ `useCampaignsUnified` - Refatorado e funcional
-- ✅ `usePublidoor` - Completo (CRUD)
-- ✅ `useAutoPost` - Completo
-- ✅ `useSocialPosts/Accounts` - Refatorado para novo schema
-- ✅ `useBroadcast` - Implementado
-
-### Funcionalidades Placeholder Identificadas
-1. Algumas ferramentas em Conexão.AI
-2. Integração real de streaming
-3. Automações de IA
-
----
-
-## 5️⃣ CONCLUSÃO OBJETIVA
-
-### Status Geral: ⚠️ **PARCIALMENTE FUNCIONAL**
-
-O dashboard está em **estágio avançado de desenvolvimento** com:
-
-- **Infraestrutura sólida**: Rotas, componentes, hooks e banco de dados estruturados
-- **UI/UX consistente**: Design system implementado corretamente
-- **Gaps de dados**: Módulos críticos sem dados cadastrados
-- **Integrações pendentes**: Streaming, IA, redes sociais precisam configuração
-
-### 📋 Menus que Exigem Correção Imediata
-
-| Prioridade | Menu | Ação Necessária |
-|------------|------|-----------------|
-| 🔴 1 | Distribuição Social | Configurar pelo menos 1 conta social |
-| 🔴 2 | Publidoor | Criar item de demonstração |
-| 🔴 3 | Auto Post PRO | Cadastrar pelo menos 1 fonte RSS |
-| 🔴 4 | Campanhas 360 | Criar campanha de demonstração |
-| 🟠 5 | Storage Buckets | Verificar políticas RLS dos buckets |
-| 🟠 6 | Streaming | Documentar requisitos de integração |
-
-### Recomendações para Produção
-
-1. **Dados de Seed**: Criar dados de demonstração para módulos vazios
-2. **Documentação**: Documentar requisitos de integração externa
-3. **Validação de Storage**: Verificar buckets `ads` e `campaign-assets`
-4. **Monitoramento**: Implementar logs de erro para integrações
-5. **Onboarding**: Criar wizard de configuração inicial para administradores
+_Relatório gerado em: 05/02/2026_
+_Escopo: Varredura completa do projeto Portal Conexão na Cidade_
+_Autenticação: Superadmin bs7freitas@gmail.com_
