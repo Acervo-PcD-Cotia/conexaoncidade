@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Toggle } from '@/components/ui/toggle';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
+import { useSanitizedHtml } from '@/hooks/useSanitizedHtml';
 
 interface RichTextEditorProps {
   content: string;
@@ -28,6 +29,7 @@ interface RichTextEditorProps {
 export function RichTextEditor({ content, onChange, placeholder = 'Escreva o conteúdo da notícia...' }: RichTextEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [showHtml, setShowHtml] = useState(false);
+  const sanitizedPreview = useSanitizedHtml(content);
 
   const insertTag = useCallback((openTag: string, closeTag: string = '') => {
     const textarea = textareaRef.current;
@@ -223,7 +225,7 @@ export function RichTextEditor({ content, onChange, placeholder = 'Escreva o con
           <p className="text-xs text-muted-foreground mb-2">Preview:</p>
           <div 
             className="prose prose-sm max-w-none"
-            dangerouslySetInnerHTML={{ __html: content }}
+            dangerouslySetInnerHTML={{ __html: sanitizedPreview }}
           />
         </div>
       )}
