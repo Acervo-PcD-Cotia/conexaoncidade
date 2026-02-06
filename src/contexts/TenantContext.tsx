@@ -43,6 +43,17 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      // Reset loading when user changes — use cached value while validating
+      const cached = localStorage.getItem(TENANT_CACHE_KEY);
+      if (cached) {
+        // Use cached tenant immediately to prevent content flash
+        setCurrentTenantIdState(cached);
+        // Still mark as loading briefly to let downstream queries settle
+        setIsLoading(true);
+      } else {
+        setIsLoading(true);
+      }
+
       try {
         // Step 1: Check if user is super_admin (they can access any site)
         const { data: roleData } = await supabase

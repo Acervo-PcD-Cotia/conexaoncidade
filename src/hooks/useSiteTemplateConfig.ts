@@ -22,6 +22,8 @@ export function useSiteTemplateConfig() {
     },
     // Only run query when we have a tenant ID and tenant loading is complete
     enabled: !tenantLoading && !!currentTenantId,
+    staleTime: 5 * 60 * 1000, // 5 minutes — config rarely changes
+    gcTime: 10 * 60 * 1000,
   });
 }
 

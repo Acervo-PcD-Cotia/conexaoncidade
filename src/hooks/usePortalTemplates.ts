@@ -15,6 +15,8 @@ export function usePortalTemplates() {
       if (error) throw error;
       return (data || []) as unknown as PortalTemplate[];
     },
+    staleTime: 10 * 60 * 1000, // 10 minutes — templates rarely change
+    gcTime: 15 * 60 * 1000,
   });
 }
 
@@ -34,6 +36,8 @@ export function usePortalTemplate(templateId: string | null | undefined) {
       return data as unknown as PortalTemplate;
     },
     enabled: !!templateId,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
   });
 }
 
@@ -53,5 +57,7 @@ export function usePortalTemplateByKey(key: string | null | undefined) {
       return data as unknown as PortalTemplate;
     },
     enabled: !!key,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
   });
 }
