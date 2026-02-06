@@ -114,15 +114,24 @@ function ensureRequiredFields(article: NewsArticle, sourceUrl?: string): NewsArt
     }
   }
   
+  // Truncar campos SEO para limites oficiais
+  const metaTitulo = (article.seo?.meta_titulo || article.titulo)?.substring(0, 60);
+  const metaDescricao = (article.seo?.meta_descricao || article.resumo)?.substring(0, 160);
+  
   return {
     ...article,
     tags: tags.slice(0, 12),  // Limitar a 12 tags (máximo)
-    subtitulo: article.subtitulo || article.resumo?.substring(0, 100) || 'Saiba mais sobre esta notícia',
+    subtitulo: (article.subtitulo || article.resumo?.substring(0, 100) || 'Saiba mais sobre esta notícia').substring(0, 160),
     chapeu: article.chapeu || article.categoria?.toUpperCase() || 'NOTÍCIAS',
     // ALWAYS force editor to Redação Conexão na Cidade, ignoring AI response
     editor: 'Redação Conexão na Cidade',
     fonte: sourceUrl || sanitizeSource(article.fonte),
     conteudo: sanitizeContent(article.conteudo, sourceUrl || article.fonte),
+    // Aplicar limites SEO obrigatórios
+    seo: {
+      meta_titulo: metaTitulo,
+      meta_descricao: metaDescricao,
+    },
   };
 }
 
