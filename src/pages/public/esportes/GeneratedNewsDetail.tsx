@@ -1,5 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { useParams, Link } from "react-router-dom";
+import { sanitizeHtml } from "@/hooks/useSanitizedHtml";
 import { ArrowLeft } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -118,7 +119,7 @@ export default function GeneratedNewsDetail() {
             <CardContent className="p-0">
               <div 
                 className="prose-news max-w-none"
-                dangerouslySetInnerHTML={{ __html: news.content }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(news.content) }}
               />
             </CardContent>
           </Card>

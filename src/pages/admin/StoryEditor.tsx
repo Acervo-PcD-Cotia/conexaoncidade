@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { sanitizeHtml } from "@/hooks/useSanitizedHtml";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Save, Plus, Trash2, GripVertical, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -474,7 +475,7 @@ export default function StoryEditor() {
                   {slides[0]?.content_html && (
                     <div
                       className="text-center text-xs"
-                      dangerouslySetInnerHTML={{ __html: slides[0].content_html }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(slides[0].content_html) }}
                     />
                   )}
                 </div>

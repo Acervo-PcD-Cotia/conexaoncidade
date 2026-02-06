@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Copy, Check, ExternalLink } from "lucide-react";
+import { sanitizeHtml } from "@/hooks/useSanitizedHtml";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -135,7 +136,7 @@ export function AIContentPreview({
             </div>
             <div
               className="prose prose-sm max-w-none rounded-md bg-muted p-4"
-              dangerouslySetInnerHTML={{ __html: content.conteudo }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(content.conteudo) }}
             />
           </div>
 

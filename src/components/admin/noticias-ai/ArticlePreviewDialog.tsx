@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, ExternalLink, Image } from 'lucide-react';
+import { sanitizeHtml } from '@/hooks/useSanitizedHtml';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -211,7 +212,7 @@ export function ArticlePreviewDialog({
               {/* Content */}
               <div
                 className="prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: article.conteudo }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(article.conteudo) }}
               />
 
               {/* Tags */}

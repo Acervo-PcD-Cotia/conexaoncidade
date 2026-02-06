@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
+import { sanitizeHtml } from "@/hooks/useSanitizedHtml";
 import { ArrowLeft, ExternalLink, CheckCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -156,7 +157,7 @@ export default function AcademyLesson() {
           {lesson.content_html && (
             <div 
               className="prose prose-sm dark:prose-invert max-w-none bg-card rounded-lg p-6 border"
-              dangerouslySetInnerHTML={{ __html: lesson.content_html }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.content_html) }}
             />
           )}
 

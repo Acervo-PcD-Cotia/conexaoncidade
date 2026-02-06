@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
+import { sanitizeHtml } from "@/hooks/useSanitizedHtml";
 import { X, ChevronLeft, ChevronRight, Pause, Play, Volume2, VolumeX, ExternalLink } from "lucide-react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { useStoryBySlug, incrementStoryViewCount } from "@/hooks/useWebStories";
@@ -256,7 +257,7 @@ export default function StoryViewer() {
               {currentSlideData?.content_html && (
                 <div
                   className="text-center prose prose-invert prose-lg max-w-none"
-                  dangerouslySetInnerHTML={{ __html: currentSlideData.content_html }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(currentSlideData.content_html) }}
                 />
               )}
             </div>
