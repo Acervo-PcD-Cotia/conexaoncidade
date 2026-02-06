@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { sanitizeHtml, sanitizeEmbed } from "@/hooks/useSanitizedHtml";
 import {
   ArrowLeft,
   Loader2,
@@ -144,7 +145,7 @@ export default function EnemLesson() {
           <CardContent className="pt-6">
             <div
               className="aspect-video rounded-lg overflow-hidden"
-              dangerouslySetInnerHTML={{ __html: lesson.video_embed }}
+              dangerouslySetInnerHTML={{ __html: sanitizeEmbed(lesson.video_embed) }}
             />
           </CardContent>
         </Card>
@@ -167,7 +168,7 @@ export default function EnemLesson() {
           <CardContent className="pt-6">
             <div
               className="prose prose-neutral dark:prose-invert max-w-none"
-              dangerouslySetInnerHTML={{ __html: lesson.content_html }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.content_html) }}
             />
           </CardContent>
         </Card>

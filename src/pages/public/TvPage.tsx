@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Tv, Users, Loader2, Volume2 } from "lucide-react";
+import { sanitizeEmbed } from "@/hooks/useSanitizedHtml";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -160,7 +161,7 @@ export default function TvPage() {
           <CardContent className="p-0">
             <div
               className="w-full aspect-video bg-black"
-              dangerouslySetInnerHTML={{ __html: getPlayerHtml() }}
+              dangerouslySetInnerHTML={{ __html: sanitizeEmbed(getPlayerHtml()) }}
             />
           </CardContent>
         </Card>

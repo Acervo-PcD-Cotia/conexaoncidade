@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Eye, Monitor, Smartphone, X } from "lucide-react";
+import { sanitizeHtml } from "@/hooks/useSanitizedHtml";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -251,7 +252,7 @@ export function NewsPreview({
                     {/* Content Preview */}
                     <div className="prose prose-sm max-w-none">
                       {content ? (
-                        <div dangerouslySetInnerHTML={{ __html: content }} />
+                        <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(content) }} />
                       ) : (
                         <p className="text-muted-foreground italic">
                           O conteúdo da notícia aparecerá aqui...

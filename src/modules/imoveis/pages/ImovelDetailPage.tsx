@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { sanitizeHtml } from "@/hooks/useSanitizedHtml";
 import { Helmet } from "react-helmet-async";
 import { 
   Loader2, MapPin, Bed, Bath, Car, Square, Calendar, Eye, Heart, Share2, 
@@ -209,7 +210,7 @@ export default function ImovelDetailPage() {
                 <CardContent>
                   <div 
                     className="prose prose-sm dark:prose-invert max-w-none"
-                    dangerouslySetInnerHTML={{ __html: imovel.descricao_html }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(imovel.descricao_html) }}
                   />
                 </CardContent>
               </Card>

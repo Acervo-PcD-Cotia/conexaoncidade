@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Radio, Volume2, Users, Music2, Loader2, Settings, ExternalLink, AlertCircle } from "lucide-react";
+import { sanitizeEmbed } from "@/hooks/useSanitizedHtml";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -178,7 +179,7 @@ export default function RadioPage() {
           <CardContent className="p-6">
             <div
               className="w-full"
-              dangerouslySetInnerHTML={{ __html: getPlayerHtml() }}
+              dangerouslySetInnerHTML={{ __html: sanitizeEmbed(getPlayerHtml()) }}
             />
           </CardContent>
         </Card>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { sanitizeHtml } from "@/hooks/useSanitizedHtml";
 import { Helmet } from "react-helmet-async";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -303,7 +304,7 @@ const EventDetail = () => {
                 <CardContent>
                   <div 
                     className="prose prose-sm max-w-none dark:prose-invert"
-                    dangerouslySetInnerHTML={{ __html: event.content_html || event.description }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(event.content_html || event.description) }}
                   />
                 </CardContent>
               </Card>

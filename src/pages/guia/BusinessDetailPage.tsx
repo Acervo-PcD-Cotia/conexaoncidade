@@ -4,6 +4,7 @@
  */
 
 import { useEffect } from "react";
+import { sanitizeHtml } from "@/hooks/useSanitizedHtml";
 import { useParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
@@ -247,7 +248,7 @@ export default function BusinessDetailPage() {
                       <CardContent>
                         <div 
                           className="prose prose-sm max-w-none"
-                          dangerouslySetInnerHTML={{ __html: business.description_full }}
+                          dangerouslySetInnerHTML={{ __html: sanitizeHtml(business.description_full) }}
                         />
                       </CardContent>
                     </Card>

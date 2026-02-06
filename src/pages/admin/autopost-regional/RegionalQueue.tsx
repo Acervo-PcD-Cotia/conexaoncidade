@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { sanitizeHtml } from '@/hooks/useSanitizedHtml';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -391,7 +392,7 @@ export default function RegionalQueue() {
                       <label className="text-sm font-medium text-muted-foreground">Conteúdo Reescrito</label>
                       <div 
                         className="mt-1 p-4 bg-muted/50 rounded-lg prose prose-sm max-h-80 overflow-auto"
-                        dangerouslySetInnerHTML={{ __html: selectedItem.rewritten_content || '' }}
+                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedItem.rewritten_content || '') }}
                       />
                     </div>
                   </>

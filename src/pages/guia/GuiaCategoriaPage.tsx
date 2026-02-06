@@ -4,6 +4,7 @@
  */
 
 import { useState } from "react";
+import { sanitizeHtml } from "@/hooks/useSanitizedHtml";
 import { useParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Card, CardContent } from "@/components/ui/card";
@@ -130,7 +131,7 @@ export default function GuiaCategoriaPage() {
             {category.page_content && (
               <div 
                 className="mt-6 prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: category.page_content }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(category.page_content) }}
               />
             )}
           </div>
