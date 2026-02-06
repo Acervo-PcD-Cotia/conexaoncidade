@@ -1,270 +1,162 @@
 
-# Relatório de Auditoria Completa — Portal Conexão na Cidade
-## Versão: Superadmin | Data: 05/02/2026
+# Plano de Implementacao Completa - Fases 2 e 3
+
+## Resumo do Estado Atual
+
+### Fase 1 (CONCLUIDA)
+- DOMPurify instalado e hook `useSanitizedHtml` criado
+- `ArticleContent.tsx` e `RichTextEditor.tsx` ja usam sanitizacao
+- RLS da tabela `profiles` restringida para autenticados
+- RLS de 5 tabelas autopost corrigidas
+- RLS de `audit_logs` corrigida
+
+### Pendencias Identificadas
+
+**Linter atual: 99 warnings**
+- 1 ERROR: Security Definer View
+- 27 WARN: Functions sem search_path (excluindo funcoes do pg_trgm que sao imutaveis)
+- 2 WARN: Extensions in public (pg_trgm, unaccent)
+- 69 WARN: RLS Policies permissivas (com WITH CHECK true)
+
+**Frontend: 21 arquivos com dangerouslySetInnerHTML**
+- 2 ja corrigidos (ArticleContent.tsx, RichTextEditor.tsx)
+- 19 arquivos ainda precisam sanitizacao
 
 ---
 
-## Índice
+## FASE 2: Melhorias Estruturais
 
-1. [Resumo Executivo](#resumo-executivo)
-2. [Achados Detalhados](#achados-detalhados)
-3. [Auditoria do Módulo Notícias AI / Importação JSON](#auditoria-noticias-ai)
-4. [Segurança - RLS e Acesso](#seguranca-rls)
-5. [Plano de Correção em 3 Fases](#plano-de-correcao)
+### 2.1 Sanitizacao HTML em TODOS os Arquivos (19 restantes)
 
----
+| # | Arquivo | Linha | Campo |
+|---|---------|-------|-------|
+| 1 | src/pages/public/TvPage.tsx | 163 | getPlayerHtml() |
+| 2 | src/pages/public/RadioPage.tsx | 181 | getPlayerHtml() |
+| 3 | src/pages/guia/GuiaCategoriaPage.tsx | 133 | category.page_content |
+| 4 | src/pages/guia/BusinessDetailPage.tsx | 250 | business.description_full |
+| 5 | src/modules/imoveis/pages/ImovelDetailPage.tsx | 212 | imovel.descricao_html |
+| 6 | src/pages/EventDetail.tsx | 306 | event.content_html |
+| 7 | src/pages/StoryViewer.tsx | 259 | currentSlideData.content_html |
+| 8 | src/pages/admin/StoryEditor.tsx | 477 | slides[0].content_html |
+| 9 | src/pages/admin/academy/AcademyLesson.tsx | 159 | lesson.content_html |
+| 10 | src/pages/admin/academy/EnemLesson.tsx | 147 | lesson.video_embed |
+| 11 | src/pages/admin/academy/EnemLesson.tsx | 170 | lesson.content_html |
+| 12 | src/pages/admin/autopost-regional/RegionalQueue.tsx | 394 | selectedItem.rewritten_content |
+| 13 | src/pages/public/esportes/GeneratedNewsDetail.tsx | 121 | news.content |
+| 14 | src/components/conexao-ai/AIContentPreview.tsx | 138 | content.conteudo |
+| 15 | src/components/admin/NewsPreview.tsx | 254 | content |
+| 16 | src/components/admin/noticias-ai/ArticlePreviewDialog.tsx | 214 | article.conteudo |
+| 17 | src/components/ui/chart.tsx | 70 | CSS injection (manter - e interno) |
 
-## 1. Resumo Executivo
+**Abordagem:**
+- Para conteudo HTML (noticias, descricoes): usar `useSanitizedHtml` ou `sanitizeHtml`
+- Para embeds de video (YouTube, player): usar `sanitizeEmbed` (mais permissivo)
+- Para CSS interno (chart.tsx): manter como esta (nao e input de usuario)
 
-### Estado Atual do Sistema (Nota 0-10)
+### 2.2 Corrigir Funcoes sem search_path (27 funcoes)
 
-| Área | Nota | Justificativa |
-|------|------|---------------|
-| **Segurança** | 5/10 | 99 warnings no linter, 68+ políticas RLS permissivas (USING true/WITH CHECK true), perfis públicos expostos, leaked password protection desabilitada |
-| **Importação/Notícias AI** | 8/10 | Regras de categoria, tags e SEO bem implementadas; falta sanitização HTML no conteúdo importado |
-| **SEO** | 8/10 | Schema.org NewsArticle implementado, meta tags corretas, 90% das notícias com meta_title/description |
-| **Performance** | 7/10 | Fallback timeout na homepage, lazy loading implementado, mas 271 tabelas pode impactar |
-| **UX/UI** | 7/10 | Layout responsivo, estados de loading, mas muitos `dangerouslySetInnerHTML` sem sanitização |
-| **Estabilidade** | 7/10 | 82 edge functions, arquitetura sólida, mas funções sem search_path fixo |
+Funcoes que precisam adicionar `SET search_path = public`:
 
-### Top 10 Riscos Críticos
-
-| # | Risco | Severidade | Localização |
-|---|-------|------------|-------------|
-| 1 | **Perfis públicos expostos** - Tabela `profiles` com SELECT público (`qual:true`) | CRÍTICO | RLS `profiles` |
-| 2 | **68+ políticas RLS permissivas** - INSERT/UPDATE/DELETE com `WITH CHECK (true)` | CRÍTICO | Múltiplas tabelas |
-| 3 | **dangerouslySetInnerHTML sem sanitização** - 21 arquivos renderizam HTML não sanitizado | CRÍTICO | ArticleContent.tsx, RichTextEditor.tsx, etc |
-| 4 | **Leaked password protection desabilitada** | ALTO | Auth config |
-| 5 | **Extension pg_trgm em schema public** | ALTO | Database |
-| 6 | **28 funções sem search_path fixo** | MÉDIO | Funções do banco |
-| 7 | **Security Definer View detectada** | MÉDIO | View no banco |
-| 8 | **Apenas 2 usuários com roles** (super_admin, collaborator) | BAIXO | user_roles |
-| 9 | **10% das notícias sem imagem destacada** | BAIXO | Tabela news |
-| 10 | **3-4 tags por notícia (média)** - algumas abaixo do mínimo recomendado de 3 | BAIXO | Tabela news_tags |
-
----
-
-## 2. Achados Detalhados
-
-### SEC-001: Perfis de Usuário Expostos Publicamente
-- **Onde**: Política RLS `Perfis são visíveis publicamente` na tabela `profiles`
-- **Evidência**: `qual:true` permite SELECT sem autenticação
-- **Impacto**: Atacantes podem extrair nomes, avatares, bios e preferências de todos os usuários
-- **Correção**:
 ```text
-1. Alterar a política para exigir autenticação:
-   CREATE POLICY "Perfis visíveis para autenticados" ON profiles
-   FOR SELECT TO authenticated USING (true);
-   
-2. Ou limitar campos públicos com uma VIEW específica
+audit_news_changes, autopost_item_before_insert, autopost_job_after_update,
+autopost_update_timestamp, award_comment_points, award_post_points,
+calculate_community_level, calculate_lead_score, calculate_next_run_time,
+can_invite_to_community, check_autopost_duplicate, check_community_unlock,
+check_duplicate_news, check_edition_access, cleanup_expired_sso_codes,
+create_site_default_style, create_social_posts_on_publish,
+ensure_single_current_version, ensure_single_default_billing_client,
+generate_content_hash, generate_school_slug, get_autopost_stats,
+get_business_stats, get_partner_advertiser_id, handle_invite_acceptance,
+handle_new_user, handle_new_user_role, e mais...
 ```
-- **Esforço**: P (1-2 horas)
-- **Dependências**: Verificar se frontend depende de leitura pública
 
-### SEC-002: 68+ Políticas RLS Permissivas
-- **Onde**: Múltiplas tabelas (autopost_*, broadcast_*, community_*, etc)
-- **Evidência**: Linter reporta 68 warnings de `USING (true)` ou `WITH CHECK (true)`
-- **Impacto**: Qualquer usuário autenticado pode INSERT/UPDATE/DELETE dados sem restrição
-- **Correção**:
-```text
-Para cada tabela afetada:
-1. Auditar se a permissividade é intencional
-2. Substituir WITH CHECK (true) por verificação de role:
-   WITH CHECK (is_admin_or_editor(auth.uid()))
-3. Priorizar tabelas sensíveis: user_roles, news, profiles
-```
-- **Esforço**: G (8-16 horas para todas)
-- **Dependências**: Documentar quais tabelas devem ser públicas
+### 2.3 Corrigir Politicas RLS Permissivas (69 warnings)
 
-### SEC-003: HTML Não Sanitizado em Renderização
-- **Onde**: 21 arquivos usam `dangerouslySetInnerHTML`
-- **Arquivos críticos**:
-  - `src/components/article/ArticleContent.tsx` (linha 15)
-  - `src/components/admin/RichTextEditor.tsx` (linha 226)
-  - `src/pages/EventDetail.tsx` (linha 306)
-  - `src/components/conexao-ai/AIContentPreview.tsx` (linha 138)
-- **Evidência**: Conteúdo de notícias renderizado sem passar por DOMPurify
-- **Impacto**: XSS armazenado se atacante injetar script via importação JSON ou editor
-- **Correção**:
-```text
-1. Instalar DOMPurify: npm install dompurify @types/dompurify
-2. Criar hook useSanitizedHtml:
-   const cleanHtml = DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
-3. Aplicar em todos os componentes que usam dangerouslySetInnerHTML
-```
-- **Esforço**: M (4-6 horas)
-- **Dependências**: Nenhuma
+Tabelas com politicas INSERT/UPDATE/DELETE com `WITH CHECK (true)`:
 
-### SEC-004: Leaked Password Protection Desabilitada
-- **Onde**: Configuração de autenticação
-- **Evidência**: Linter warning #99
-- **Impacto**: Usuários podem usar senhas já vazadas em data breaches
-- **Correção**: Habilitar via dashboard do backend ou API
-- **Esforço**: P (15 minutos)
+**Grupo A - Metricas/Analytics (PUBLIC INSERT INTENCIONAL)**
+Manter como esta - sao metricas anonimas de tracking:
+- banner_ab_impressions, banner_clicks, banner_impressions
+- broadcast_analytics, business_clicks, campaign_events
+- classified_interest_clicks, click_events, digital_edition_views
 
-### SEC-005: Funções sem search_path Fixo
-- **Onde**: 28 funções no schema public
-- **Evidência**: Linter warnings #2-28
-- **Impacto**: Potencial vulnerabilidade a ataques de schema poisoning
-- **Correção**: Já corrigidas 9 funções na última migração; aplicar mesmo padrão nas restantes
-- **Esforço**: M (2-3 horas)
+**Grupo B - Leads/Forms (PUBLIC INSERT INTENCIONAL)**
+Manter como esta - formularios publicos:
+- business_leads, campaign_leads, fact_check_claims
+- newsletter_subscribers, phone_leads, whatsapp_leads
+
+**Grupo C - Precisam Restricao**
+Restringir para `is_admin_or_editor(auth.uid())`:
+- autopost_audit_logs, autopost_ingest_items, autopost_ingest_jobs
+- autopost_media_assets, autopost_rewritten_posts
+- broadcast_autodj_settings, broadcast_chat_messages
+- community_notifications, community_points_history
+- conexao_ai_automation_logs, sso_exchange_codes
+
+### 2.4 Adicionar Validacao SEO na Edge Function
+
+Modificar `supabase/functions/noticias-ai-generate/index.ts`:
+- Adicionar truncamento automatico de `meta_titulo` (max 60 chars)
+- Adicionar truncamento automatico de `meta_descricao` (max 160 chars)
+- Adicionar sanitizacao HTML com DOMPurify (adaptar para Deno)
+
+### 2.5 Implementar Campo data_original (Opcional)
+
+Adicionar campo opcional na interface para preservar data original da fonte.
 
 ---
 
-## 3. Auditoria do Módulo Notícias AI / Importação JSON
+## FASE 3: Otimizacoes e Evolucao
 
-### Conformidade com Regras Oficiais
+### 3.1 Mover Extensions para Schema Separado
+- Criar schema `extensions` se nao existir
+- Mover `pg_trgm` e `unaccent` para esse schema
 
-| Regra | Status | Evidência |
-|-------|--------|-----------|
-| Não resumir conteúdo (95-105% do original) | PARCIAL | Edge function repassa conteúdo da IA sem validar tamanho |
-| Data original ISO 8601 | NÃO VERIFICADO | Campo `data_original` não encontrado na estrutura JSON |
-| Imagens: não inventar URLs | OK | `isValidImageUrl()` valida padrões de imagem |
-| Imagem única: replicar para hero/og/card | OK | Fallback implementado em `NoticiasAI.tsx` linha 289 |
-| Categoria inválida → usar "Geral" | OK | `isValidCategory()` com fallback em `constants/categories.ts` |
-| Tags: 3-12, primeira = cidade, incluir "Cotia" | OK | Regra blindada em `ensureRequiredFields()` linhas 96-119 |
-| Limites SEO: resumo ≤160, meta_titulo ≤60, meta_descricao ≤160 | PARCIAL | Validação no editor mas não no JSON import |
-| Estrutura HTML: lide em `<strong>` | OK | `autoFixFirstParagraph()` corrige automaticamente |
+### 3.2 Adicionar Headers de Seguranca
+- CSP (Content Security Policy)
+- X-Frame-Options
+- X-Content-Type-Options
 
-### Achados Específicos da Importação
-
-#### JSON-001: Validação de Limites SEO Ausente na Importação
-- **Onde**: `supabase/functions/noticias-ai-generate/index.ts`
-- **Evidência**: Não há validação de `meta_titulo.length <= 60` ou `meta_descricao.length <= 160` antes de retornar
-- **Impacto**: Títulos/descrições longas passam sem truncamento
-- **Correção**:
-```text
-Adicionar em ensureRequiredFields():
-seo: {
-  meta_titulo: article.seo?.meta_titulo?.substring(0, 60) || article.titulo.substring(0, 60),
-  meta_descricao: article.seo?.meta_descricao?.substring(0, 160) || article.resumo.substring(0, 160)
-}
-```
-- **Esforço**: P (30 minutos)
-
-#### JSON-002: Campo data_original Não Implementado
-- **Onde**: Interface NewsArticle
-- **Evidência**: Não existe campo para data original da fonte
-- **Impacto**: Todas as notícias importadas usam `now()` como data de publicação
-- **Correção**:
-```text
-1. Adicionar campo opcional data_original: string (ISO 8601) na interface
-2. Usar esse valor para published_at se fornecido
-3. Adicionar validação de formato ISO 8601
-```
-- **Esforço**: M (2 horas)
-
-#### JSON-003: Sanitização HTML do Conteúdo
-- **Onde**: `sanitizeContent()` linhas 68-92
-- **Evidência**: Remove `<img>` e URLs de imagem, mas não sanitiza tags perigosas (script, etc)
-- **Impacto**: XSS potencial se fonte injetar HTML malicioso
-- **Correção**: Usar biblioteca de sanitização HTML no edge function
-- **Esforço**: M (2-3 horas)
-
-### Dados Reais do Sistema (Amostra de 20 notícias)
-
-| Métrica | Valor |
-|---------|-------|
-| Total de notícias | 106 |
-| Com meta_title | 95 (90%) |
-| Com meta_description | 95 (90%) |
-| Com imagem destacada | 77 (73%) |
-| Com fonte | 95 (90%) |
-| Média de tags por notícia | 7 |
-| Tags em conformidade (3-12) | OK |
-| Meta títulos > 60 chars | 2 de 20 (10%) |
+### 3.3 Rate Limiting em Edge Functions Criticas
+- noticias-ai-generate (prevenir abuso de IA)
+- Login/auth endpoints
 
 ---
 
-## 4. Segurança - RLS e Acesso
+## Implementacao Tecnica
 
-### Tabelas Sensíveis e Políticas Atuais
+### Arquivos a Modificar (Frontend)
 
-| Tabela | SELECT | INSERT | UPDATE | DELETE | Risco |
-|--------|--------|--------|--------|--------|-------|
-| `profiles` | PUBLIC | auth.uid() | auth.uid() | - | ALTO (leitura pública) |
-| `user_roles` | admin OR owner | admin only | - | - | OK |
-| `news` | published OR editor | editor | editor | editor | OK |
-| `audit_logs` | - | true | - | - | MÉDIO (insert aberto) |
-| `autopost_*` (múltiplas) | true | true | true | - | ALTO |
-| `broadcast_autodj_settings` | true | auth | auth | - | MÉDIO |
-| `community_*` (múltiplas) | auth | auth | owner | - | OK |
+1. **19 arquivos com dangerouslySetInnerHTML**
+   - Importar `useSanitizedHtml` ou `sanitizeHtml`
+   - Aplicar sanitizacao antes de renderizar
 
-### Recomendações de Hardening
+2. **Edge function noticias-ai-generate**
+   - Adicionar validacao de limites SEO
+   - Adicionar sanitizacao HTML basica
 
-1. **Upload de arquivos**: Verificar buckets `ads` e `campaign-assets` possuem validação de tipo MIME
-2. **Headers de segurança**: Adicionar CSP, X-Frame-Options via edge function ou CDN
-3. **Rate limiting**: Implementar em endpoints críticos (login, importação JSON, edge functions de IA)
-4. **Brute force protection**: Habilitar proteção nativa do Supabase Auth
-5. **Sanitização HTML**: Obrigatória em todos os pontos de entrada de conteúdo
+### Migracao SQL
+
+Uma unica migracao para:
+1. Corrigir todas as funcoes sem search_path
+2. Atualizar politicas RLS que precisam restricao
+3. Mover extensions para schema separado
 
 ---
 
-## 5. Plano de Correção em 3 Fases
+## Resultado Esperado
 
-### Fase 1: Correções Críticas (1-2 dias)
-_Objetivo: Estabilizar segurança básica_
+Apos implementacao completa:
+- Linter warnings: de 99 para ~20 (restantes sao intencionais)
+- XSS: 0 vetores de ataque via dangerouslySetInnerHTML
+- RLS: Todas as tabelas sensiveis protegidas
+- Search_path: Todas as funcoes com path fixo
+- SEO: Validacao automatica de limites
 
-| Prioridade | Ação | Responsável | Estimativa |
-|------------|------|-------------|------------|
-| P1 | Restringir RLS da tabela `profiles` para autenticados | Backend | 1h |
-| P1 | Habilitar leaked password protection | Config | 15min |
-| P1 | Implementar DOMPurify em ArticleContent.tsx | Frontend | 2h |
-| P2 | Adicionar validação de limites SEO na edge function | Backend | 1h |
-| P2 | Corrigir 5 tabelas autopost mais críticas | Backend | 3h |
+### Notas Importantes
 
-### Fase 2: Melhorias Estruturais (1 semana)
-_Objetivo: Resolver débitos técnicos de segurança_
+1. **Embeds de video** (TvPage, RadioPage, EnemLesson): Usar `sanitizeEmbed` que permite `<iframe>` de forma controlada
+2. **chart.tsx**: Manter sem sanitizacao - e CSS gerado internamente, nao input de usuario
+3. **Politicas de metricas**: Manter publicas - sao essenciais para analytics
+4. **Extensions pg_trgm/unaccent**: Sao funcoes imutaveis, warnings podem ser ignorados
 
-| Prioridade | Ação | Responsável | Estimativa |
-|------------|------|-------------|------------|
-| P2 | Corrigir todas as 28 funções sem search_path | Backend | 3h |
-| P2 | Auditar e corrigir 68 políticas RLS permissivas | Backend | 8h |
-| P2 | Adicionar sanitização HTML na edge function de importação | Backend | 3h |
-| P2 | Implementar campo data_original no import JSON | Full-stack | 4h |
-| P3 | Migrar extensão pg_trgm para schema extensions | Backend | 2h |
-| P3 | Aplicar DOMPurify em todos os 21 arquivos com dangerouslySetInnerHTML | Frontend | 6h |
-
-### Fase 3: Otimizações e Evolução (2-4 semanas)
-_Objetivo: Robustez e observabilidade_
-
-| Prioridade | Ação | Responsável | Estimativa |
-|------------|------|-------------|------------|
-| P3 | Implementar rate limiting em edge functions | Backend | 4h |
-| P3 | Adicionar headers de segurança (CSP, HSTS) | DevOps | 2h |
-| P3 | Criar testes automatizados para validação de importação | QA | 8h |
-| P3 | Implementar auditoria de conteúdo (hash/fingerprint de duplicatas) | Backend | 4h |
-| P3 | Dashboard de métricas de segurança (tentativas de login, erros RLS) | Full-stack | 8h |
-| P4 | Documentar todas as políticas RLS e justificativas | Docs | 4h |
-
----
-
-## Observações Técnicas Adicionais
-
-### Arquitetura Atual
-- **271 tabelas** no schema public (quantidade alta, considerar modularização)
-- **82 edge functions** (boa separação de responsabilidades)
-- **120+ rotas** no frontend (conforme auditoria anterior)
-- **Whitelist de 26 categorias** funcionando corretamente
-
-### Pontos Positivos Identificados
-1. Sistema de roles via tabela separada (`user_roles`) - padrão correto de segurança
-2. Hook `useRequireRole` com verificação server-side
-3. Implementação de Schema.org NewsArticle para SEO
-4. Sistema de duplicação de notícias com verificação de slug/source/título
-5. Fallback timeout na homepage (5s) previne loading infinito
-6. Sanitização de embeds via `sanitizeEmbedCode()` bem implementada
-7. Categorias com whitelist e fallback para "Geral"
-8. Geração automática de WebStory e Podcast após publicação
-
-### Pontos de Atenção
-1. Verificar implementação de CSP headers
-2. Monitorar logs de edge functions para erros silenciosos
-3. Considerar implementar WAF para proteção adicional
-4. Validar configuração de CORS nas edge functions
-
----
-
-_Relatório gerado em: 05/02/2026_
-_Escopo: Varredura completa do projeto Portal Conexão na Cidade_
-_Autenticação: Superadmin bs7freitas@gmail.com_
