@@ -4206,6 +4206,7 @@ export type Database = {
           event_type: Database["public"]["Enums"]["campaign_event_type"]
           id: string
           metadata: Json | null
+          session_id: string | null
         }
         Insert: {
           campaign_id: string
@@ -4215,6 +4216,7 @@ export type Database = {
           event_type: Database["public"]["Enums"]["campaign_event_type"]
           id?: string
           metadata?: Json | null
+          session_id?: string | null
         }
         Update: {
           campaign_id?: string
@@ -4224,6 +4226,7 @@ export type Database = {
           event_type?: Database["public"]["Enums"]["campaign_event_type"]
           id?: string
           metadata?: Json | null
+          session_id?: string | null
         }
         Relationships: [
           {

@@ -16,7 +16,7 @@ export default function CampaignEditor() {
   const { id } = useParams<{ id: string }>();
   const isEditing = !!id;
 
-  const { data: campaign, isLoading } = useCampaignUnified(id);
+  const { data: campaign, isLoading, error } = useCampaignUnified(id);
   const createMutation = useCreateCampaignUnified();
   const updateMutation = useUpdateCampaignUnified();
 
@@ -89,6 +89,26 @@ export default function CampaignEditor() {
       <div className="container mx-auto py-6 space-y-6">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-96" />
+      </div>
+    );
+  }
+
+  if (isEditing && error) {
+    return (
+      <div className="container mx-auto py-6 space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={handleCancel}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-2xl font-bold">Editar Campanha</h1>
+        </div>
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center space-y-4">
+          <p className="text-destructive font-medium">Erro ao carregar campanha</p>
+          <p className="text-sm text-muted-foreground">{(error as Error).message || 'Erro desconhecido'}</p>
+          <Button variant="outline" onClick={() => window.location.reload()}>
+            Tentar novamente
+          </Button>
+        </div>
       </div>
     );
   }

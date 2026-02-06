@@ -1,0 +1,1 @@
+ALTER TABLE campaign_events ADD COLUMN IF NOT EXISTS session_id TEXT;

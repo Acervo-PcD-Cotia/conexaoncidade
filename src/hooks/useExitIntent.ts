@@ -109,6 +109,9 @@ export function useExitIntentCampaigns() {
       
       if (error) throw error;
     },
+    onError: (error) => {
+      console.error('[useExitIntent] Failed to record event:', error);
+    },
   });
 
   const recordEvent = (campaignId: string, eventType: EventType) => {
