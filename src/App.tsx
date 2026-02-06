@@ -347,7 +347,16 @@ import AppearanceSettings from "./pages/admin/settings/AppearanceSettings";
 
 import { ThemeProvider } from "@/contexts/ThemeContext";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1 * 60 * 1000,   // 1 minute default
+      gcTime: 10 * 60 * 1000,     // 10 minutes garbage collection
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <HelmetProvider>
