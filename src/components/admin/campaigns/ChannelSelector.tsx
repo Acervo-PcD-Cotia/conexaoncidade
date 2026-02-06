@@ -287,8 +287,7 @@ export function ChannelSelector({
                   >
                     <Checkbox
                       checked={isSelected(channel.type)}
-                      onCheckedChange={() => toggleChannel(channel.type)}
-                      className="mt-0.5"
+                      className="mt-0.5 pointer-events-none"
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
