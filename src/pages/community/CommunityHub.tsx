@@ -21,6 +21,7 @@ import { GamificationCard } from "@/components/community/GamificationCard";
 import { LevelProgressBar } from "@/components/community/LevelProgressBar";
 import { AntiFactCheckRanking } from "@/components/community/AntiFactCheckRanking";
 import { MemberOfTheWeek } from "@/components/community/MemberOfTheWeek";
+import { MemberSharePanel } from "@/components/community/MemberSharePanel";
 import { PhoneBenefitCard } from "@/components/community/PhoneBenefitCard";
 import { CommunityLayout } from "@/components/community/CommunityLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -248,6 +249,9 @@ export default function CommunityHub() {
 
         {/* Right Sidebar - Trending & Stats */}
         <div className="lg:col-span-1 space-y-4">
+          {/* Circulation Share Panel */}
+          <MemberSharePanel />
+
           {/* Member of the Week */}
           <MemberOfTheWeek />
 
