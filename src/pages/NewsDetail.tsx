@@ -23,6 +23,7 @@ import { useNewsAnalytics } from '@/hooks/useNewsAnalytics';
 import { useAuth } from '@/contexts/AuthContext';
 import { getCategoryDisplay } from '@/utils/categoryDisplay';
 import { getCategoryTheme, getArticleThemeStyle } from '@/lib/categoryTheme';
+import { normalizeSrc, parseUserAgentSimple } from '@/lib/circulationUtils';
 import { 
   ArticleHeader, 
   ArticleHero, 
@@ -221,28 +222,16 @@ function NewsDetailContent({ news }: NewsDetailContentProps) {
 
   // Track news click with ref + src for circulation tracking
   useEffect(() => {
-    const key = `nc_${news.id}`;
-    if (sessionStorage.getItem(key)) return;
-    
     const params = new URLSearchParams(window.location.search);
     const refCode = params.get('ref') || null;
-    const rawSrc = params.get('src') || 'direct';
+    const src = normalizeSrc(params.get('src'));
     
-    // Normalize src
-    const validSources = ['wa', 'ig', 'fb', 'x', 'direct'];
-    const src = validSources.includes(rawSrc.toLowerCase()) ? rawSrc.toLowerCase() : 'direct';
+    // Dedup key includes ref+src so different sources count as separate clicks
+    const key = `nc_${news.id}_${refCode || 'none'}_${src}`;
+    if (sessionStorage.getItem(key)) return;
     
-    // Parse user agent
     const ua = navigator.userAgent;
-    let deviceType = 'desktop';
-    if (/mobile|android|iphone|ipad/i.test(ua)) {
-      deviceType = /ipad|tablet/i.test(ua) ? 'tablet' : 'mobile';
-    }
-    let browser = 'other';
-    if (/chrome/i.test(ua) && !/edg/i.test(ua)) browser = 'chrome';
-    else if (/safari/i.test(ua) && !/chrome/i.test(ua)) browser = 'safari';
-    else if (/firefox/i.test(ua)) browser = 'firefox';
-    else if (/edg/i.test(ua)) browser = 'edge';
+    const { device_type, browser } = parseUserAgentSimple(ua);
 
     supabase
       .from('news_clicks' as any)
@@ -252,7 +241,7 @@ function NewsDetailContent({ news }: NewsDetailContentProps) {
         src,
         referrer: document.referrer || null,
         user_agent: ua,
-        device_type: deviceType,
+        device_type,
         browser,
       })
       .then(() => {
