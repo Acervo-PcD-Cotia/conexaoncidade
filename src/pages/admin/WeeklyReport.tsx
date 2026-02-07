@@ -7,6 +7,13 @@ import { MousePointerClick, Users, Newspaper, Copy, TrendingUp } from 'lucide-re
 import { SOURCE_LABELS, SOURCE_COLORS, type ValidSource } from '@/lib/circulationUtils';
 import { toast } from 'sonner';
 
+interface ClickRow {
+  news_id: string;
+  ref_code: string | null;
+  src: string;
+  clicked_at: string;
+}
+
 export default function WeeklyReport() {
   const [days, setDays] = useState(7);
 
@@ -21,7 +28,7 @@ export default function WeeklyReport() {
         .from('news_clicks' as any)
         .select('news_id, ref_code, src, clicked_at')
         .gte('clicked_at', sinceISO);
-      return (data as any[]) || [];
+      return (data as unknown as ClickRow[]) || [];
     },
   });
 
@@ -39,13 +46,13 @@ export default function WeeklyReport() {
 
   // Aggregations
   const totalClicks = clicks.length;
-  const uniqueRefs = new Set(clicks.filter((c: any) => c.ref_code).map((c: any) => c.ref_code));
+  const uniqueRefs = new Set(clicks.filter((c) => c.ref_code).map((c) => c.ref_code));
 
   const srcCounts: Record<string, number> = {};
   const newsCounts: Record<string, number> = {};
   const refCounts: Record<string, number> = {};
 
-  clicks.forEach((c: any) => {
+  clicks.forEach((c) => {
     srcCounts[c.src] = (srcCounts[c.src] || 0) + 1;
     newsCounts[c.news_id] = (newsCounts[c.news_id] || 0) + 1;
     if (c.ref_code) {
@@ -87,14 +94,14 @@ export default function WeeklyReport() {
         .select('ref_code, user_id, neighborhood')
         .in('ref_code', refCodes);
       if (!members || members.length === 0) return [];
-      const userIds = members.map((m: any) => m.user_id);
+      const userIds = members.map((m) => m.user_id);
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, full_name')
         .in('id', userIds);
-      return members.map((m: any) => ({
+      return members.map((m) => ({
         ref_code: m.ref_code,
-        name: profiles?.find((p: any) => p.id === m.user_id)?.full_name || 'Membro',
+        name: profiles?.find((p) => p.id === m.user_id)?.full_name || 'Membro',
         neighborhood: m.neighborhood,
       }));
     },
@@ -106,11 +113,11 @@ export default function WeeklyReport() {
   const handleCopySummary = async () => {
     const periodLabel = days === 7 ? 'semanal' : days === 14 ? 'quinzenal' : 'mensal';
     const top3News = topNewsIds.slice(0, 3).map(([id, count], i) => {
-      const title = newsTitles.find((n: any) => n.id === id)?.title || 'Sem título';
+      const title = newsTitles.find((n) => n.id === id)?.title || 'Sem título';
       return `${i + 1}. ${title} (${count} acessos)`;
     });
     const top5Refs = topRefs.slice(0, 5).map(([code, count], i) => {
-      const profile = memberProfiles.find((p: any) => p.ref_code === code);
+      const profile = memberProfiles.find((p) => p.ref_code === code);
       return `${i + 1}. ${profile?.name || code} — ${count} acessos`;
     });
 
@@ -218,7 +225,7 @@ ${top5Refs.join('\n')}`;
           <CardContent>
             <div className="space-y-2">
               {topNewsIds.map(([newsId, count], index) => {
-                const title = newsTitles.find((n: any) => n.id === newsId)?.title || 'Carregando...';
+                const title = newsTitles.find((n) => n.id === newsId)?.title || 'Carregando...';
                 return (
                   <div key={newsId} className="flex items-center justify-between p-2 rounded hover:bg-muted/50">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -243,7 +250,7 @@ ${top5Refs.join('\n')}`;
           <CardContent>
             <div className="space-y-2">
               {topRefs.map(([refCode, count], index) => {
-                const profile = memberProfiles.find((p: any) => p.ref_code === refCode);
+                const profile = memberProfiles.find((p) => p.ref_code === refCode);
                 return (
                   <div key={refCode} className="flex items-center justify-between p-2 rounded hover:bg-muted/50">
                     <div className="flex items-center gap-3">
