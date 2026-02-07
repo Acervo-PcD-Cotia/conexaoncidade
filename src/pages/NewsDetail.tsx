@@ -219,6 +219,47 @@ function NewsDetailContent({ news }: NewsDetailContentProps) {
       .then(() => {});
   }, [news.id, news.view_count]);
 
+  // Track news click with ref + src for circulation tracking
+  useEffect(() => {
+    const key = `nc_${news.id}`;
+    if (sessionStorage.getItem(key)) return;
+    
+    const params = new URLSearchParams(window.location.search);
+    const refCode = params.get('ref') || null;
+    const rawSrc = params.get('src') || 'direct';
+    
+    // Normalize src
+    const validSources = ['wa', 'ig', 'fb', 'x', 'direct'];
+    const src = validSources.includes(rawSrc.toLowerCase()) ? rawSrc.toLowerCase() : 'direct';
+    
+    // Parse user agent
+    const ua = navigator.userAgent;
+    let deviceType = 'desktop';
+    if (/mobile|android|iphone|ipad/i.test(ua)) {
+      deviceType = /ipad|tablet/i.test(ua) ? 'tablet' : 'mobile';
+    }
+    let browser = 'other';
+    if (/chrome/i.test(ua) && !/edg/i.test(ua)) browser = 'chrome';
+    else if (/safari/i.test(ua) && !/chrome/i.test(ua)) browser = 'safari';
+    else if (/firefox/i.test(ua)) browser = 'firefox';
+    else if (/edg/i.test(ua)) browser = 'edge';
+
+    supabase
+      .from('news_clicks' as any)
+      .insert({
+        news_id: news.id,
+        ref_code: refCode,
+        src,
+        referrer: document.referrer || null,
+        user_agent: ua,
+        device_type: deviceType,
+        browser,
+      })
+      .then(() => {
+        sessionStorage.setItem(key, '1');
+      });
+  }, [news.id]);
+
   const readTime = calculateReadTime(news.content);
   const wordCount = countWords(news.content);
 

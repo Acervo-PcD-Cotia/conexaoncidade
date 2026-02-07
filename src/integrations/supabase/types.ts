@@ -5843,6 +5843,7 @@ export type Database = {
           profile_type: string | null
           quiz_completed: boolean | null
           quiz_completed_at: string | null
+          ref_code: string | null
           share_count: number | null
           suspended_reason: string | null
           suspended_until: string | null
@@ -5869,6 +5870,7 @@ export type Database = {
           profile_type?: string | null
           quiz_completed?: boolean | null
           quiz_completed_at?: string | null
+          ref_code?: string | null
           share_count?: number | null
           suspended_reason?: string | null
           suspended_until?: string | null
@@ -5895,6 +5897,7 @@ export type Database = {
           profile_type?: string | null
           quiz_completed?: boolean | null
           quiz_completed_at?: string | null
+          ref_code?: string | null
           share_count?: number | null
           suspended_reason?: string | null
           suspended_until?: string | null
@@ -11105,6 +11108,53 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: true
             referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      news_clicks: {
+        Row: {
+          browser: string | null
+          clicked_at: string
+          device_type: string | null
+          id: string
+          ip_hash: string | null
+          news_id: string
+          ref_code: string | null
+          referrer: string | null
+          src: string
+          user_agent: string | null
+        }
+        Insert: {
+          browser?: string | null
+          clicked_at?: string
+          device_type?: string | null
+          id?: string
+          ip_hash?: string | null
+          news_id: string
+          ref_code?: string | null
+          referrer?: string | null
+          src?: string
+          user_agent?: string | null
+        }
+        Update: {
+          browser?: string | null
+          clicked_at?: string
+          device_type?: string | null
+          id?: string
+          ip_hash?: string | null
+          news_id?: string
+          ref_code?: string | null
+          referrer?: string | null
+          src?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_clicks_news_id_fkey"
+            columns: ["news_id"]
+            isOneToOne: false
+            referencedRelation: "news"
             referencedColumns: ["id"]
           },
         ]

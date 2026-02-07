@@ -187,6 +187,7 @@ const portalManagementItems: MenuItem[] = [
 const intelligenceItems: MenuItem[] = [
   { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
   { title: "Relatórios Editoriais", url: "/admin/reading-analytics", icon: FileText },
+  { title: "Relatório Semanal", url: "/admin/relatorio-semanal", icon: TrendingUp, badge: "Novo", badgeColor: "bg-primary" },
   { title: "Métricas Comerciais", url: "/admin/publidoor/metricas", icon: DollarSign },
 ];
 
