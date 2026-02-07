@@ -8,6 +8,12 @@ import { ArrowLeft, MousePointerClick, Users, Share2 } from 'lucide-react';
 import { SOURCE_LABELS, SOURCE_COLORS, type ValidSource } from '@/lib/circulationUtils';
 import { useState } from 'react';
 
+interface ClickRow {
+  ref_code: string | null;
+  src: string;
+  clicked_at: string;
+}
+
 export default function NewsAnalytics() {
   const { id } = useParams<{ id: string }>();
   const [days, setDays] = useState(30);
@@ -36,7 +42,7 @@ export default function NewsAnalytics() {
         .select('ref_code, src, clicked_at')
         .eq('news_id', id!)
         .gte('clicked_at', since.toISOString());
-      return (data as any[]) || [];
+      return (data as unknown as ClickRow[]) || [];
     },
     enabled: !!id,
   });
@@ -46,7 +52,7 @@ export default function NewsAnalytics() {
   const refCounts: Record<string, number> = {};
   const uniqueRefs = new Set<string>();
 
-  clicks.forEach((c: any) => {
+  clicks.forEach((c) => {
     srcCounts[c.src] = (srcCounts[c.src] || 0) + 1;
     if (c.ref_code) {
       uniqueRefs.add(c.ref_code);
@@ -71,15 +77,15 @@ export default function NewsAnalytics() {
       
       if (!members || members.length === 0) return [];
       
-      const userIds = members.map((m: any) => m.user_id);
+      const userIds = members.map((m) => m.user_id);
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, full_name')
         .in('id', userIds);
       
-      return members.map((m: any) => ({
+      return members.map((m) => ({
         ref_code: m.ref_code,
-        name: profiles?.find((p: any) => p.id === m.user_id)?.full_name || 'Membro',
+        name: profiles?.find((p) => p.id === m.user_id)?.full_name || 'Membro',
         neighborhood: m.neighborhood,
       }));
     },
@@ -205,7 +211,7 @@ export default function NewsAnalytics() {
           <CardContent>
             <div className="space-y-2">
               {topRefs.map(([refCode, count], index) => {
-                const profile = memberProfiles.find((p: any) => p.ref_code === refCode);
+                const profile = memberProfiles.find((p) => p.ref_code === refCode);
                 return (
                   <div key={refCode} className="flex items-center justify-between p-2 rounded hover:bg-muted/50">
                     <div className="flex items-center gap-3">
