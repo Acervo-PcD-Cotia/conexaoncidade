@@ -37,19 +37,22 @@ export function useMemberCirculation() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
   const { data: clickCounts = {} } = useQuery({
     queryKey: ['member-click-counts', refCode],
     queryFn: async () => {
       if (!refCode) return {};
       const { data } = await supabase
         .from('news_clicks' as any)
-        .select('news_id, src')
-        .eq('ref_code', refCode);
+        .select('news_id')
+        .eq('ref_code', refCode)
+        .gte('clicked_at', thirtyDaysAgo);
       
       if (!data) return {};
       
       const counts: Record<string, number> = {};
-      (data as any[]).forEach((row: any) => {
+      (data as unknown as Array<{ news_id: string }>).forEach((row) => {
         counts[row.news_id] = (counts[row.news_id] || 0) + 1;
       });
       return counts;

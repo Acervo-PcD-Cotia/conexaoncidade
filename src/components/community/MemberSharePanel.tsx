@@ -52,7 +52,7 @@ export function MemberSharePanel() {
             </div>
             <div>
               <p className="text-2xl font-bold text-primary">{totalClicks}</p>
-              <p className="text-sm text-muted-foreground">Alcance gerado</p>
+              <p className="text-sm text-muted-foreground">Alcance gerado (últimos 30 dias)</p>
               <p className="text-xs text-muted-foreground">Mede quantas vezes seu link foi acessado.</p>
             </div>
           </div>
