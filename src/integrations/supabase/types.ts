@@ -15213,6 +15213,65 @@ export type Database = {
         }
         Relationships: []
       }
+      vw_news_clicks_aggregated_30d: {
+        Row: {
+          click_count: number | null
+          news_id: string | null
+          ref_code: string | null
+          src: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_clicks_news_id_fkey"
+            columns: ["news_id"]
+            isOneToOne: false
+            referencedRelation: "news"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vw_news_clicks_by_neighborhood_30d: {
+        Row: {
+          city: string | null
+          neighborhood: string | null
+          total_clicks: number | null
+          unique_refs: number | null
+        }
+        Relationships: []
+      }
+      vw_news_clicks_by_neighborhood_news_30d: {
+        Row: {
+          city: string | null
+          neighborhood: string | null
+          news_id: string | null
+          total_clicks: number | null
+          unique_refs: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_clicks_news_id_fkey"
+            columns: ["news_id"]
+            isOneToOne: false
+            referencedRelation: "news"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vw_news_clicks_by_news_30d: {
+        Row: {
+          news_id: string | null
+          total_clicks: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_clicks_news_id_fkey"
+            columns: ["news_id"]
+            isOneToOne: false
+            referencedRelation: "news"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       calculate_community_level: {

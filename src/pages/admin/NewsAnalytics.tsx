@@ -4,14 +4,23 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, MousePointerClick, Users, Share2 } from 'lucide-react';
+import { ArrowLeft, MousePointerClick, Users, Share2, MapPin } from 'lucide-react';
 import { SOURCE_LABELS, SOURCE_COLORS, type ValidSource } from '@/lib/circulationUtils';
 import { useState } from 'react';
 
-interface ClickRow {
-  ref_code: string | null;
+interface AggregatedRow {
+  news_id: string;
   src: string;
-  clicked_at: string;
+  ref_code: string | null;
+  click_count: number;
+}
+
+interface NeighborhoodNewsRow {
+  news_id: string;
+  neighborhood: string;
+  city: string;
+  total_clicks: number;
+  unique_refs: number;
 }
 
 export default function NewsAnalytics() {
@@ -31,32 +40,46 @@ export default function NewsAnalytics() {
     enabled: !!id,
   });
 
-  const { data: clicks = [], isLoading: clicksLoading } = useQuery({
-    queryKey: ['news-clicks-analytics', id, days],
+  // Use aggregated view filtered by news_id
+  const { data: aggregated = [], isLoading: clicksLoading } = useQuery({
+    queryKey: ['news-clicks-aggregated', id],
     queryFn: async () => {
-      const since = new Date();
-      since.setDate(since.getDate() - days);
-      
       const { data } = await supabase
-        .from('news_clicks' as any)
-        .select('ref_code, src, clicked_at')
-        .eq('news_id', id!)
-        .gte('clicked_at', since.toISOString());
-      return (data as unknown as ClickRow[]) || [];
+        .from('vw_news_clicks_aggregated_30d' as any)
+        .select('news_id, src, ref_code, click_count')
+        .eq('news_id', id!);
+      return (data as unknown as AggregatedRow[]) || [];
     },
     enabled: !!id,
   });
 
-  // Aggregate by source
+  // Top neighborhoods for this article
+  const { data: articleNeighborhoods = [] } = useQuery({
+    queryKey: ['news-neighborhoods', id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('vw_news_clicks_by_neighborhood_news_30d' as any)
+        .select('news_id, neighborhood, city, total_clicks, unique_refs')
+        .eq('news_id', id!)
+        .order('total_clicks', { ascending: false })
+        .limit(3);
+      return (data as unknown as NeighborhoodNewsRow[]) || [];
+    },
+    enabled: !!id,
+  });
+
+  // Aggregate from pre-aggregated data
   const srcCounts: Record<string, number> = {};
   const refCounts: Record<string, number> = {};
   const uniqueRefs = new Set<string>();
+  let totalClicks = 0;
 
-  clicks.forEach((c) => {
-    srcCounts[c.src] = (srcCounts[c.src] || 0) + 1;
-    if (c.ref_code) {
-      uniqueRefs.add(c.ref_code);
-      refCounts[c.ref_code] = (refCounts[c.ref_code] || 0) + 1;
+  aggregated.forEach((r) => {
+    totalClicks += r.click_count;
+    srcCounts[r.src] = (srcCounts[r.src] || 0) + r.click_count;
+    if (r.ref_code) {
+      uniqueRefs.add(r.ref_code);
+      refCounts[r.ref_code] = (refCounts[r.ref_code] || 0) + r.click_count;
     }
   });
 
@@ -74,15 +97,15 @@ export default function NewsAnalytics() {
         .from('community_members')
         .select('ref_code, user_id, neighborhood')
         .in('ref_code', refCodes);
-      
+
       if (!members || members.length === 0) return [];
-      
+
       const userIds = members.map((m) => m.user_id);
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, full_name')
         .in('id', userIds);
-      
+
       return members.map((m) => ({
         ref_code: m.ref_code,
         name: profiles?.find((p) => p.id === m.user_id)?.full_name || 'Membro',
@@ -112,8 +135,6 @@ export default function NewsAnalytics() {
     );
   }
 
-  const totalClicks = clicks.length;
-
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -125,22 +146,8 @@ export default function NewsAnalytics() {
         </Link>
         <div className="flex-1">
           <h1 className="text-xl font-bold">{news.title}</h1>
-          <p className="text-sm text-muted-foreground">Circulação da matéria</p>
+          <p className="text-sm text-muted-foreground">Circulação da matéria (últimos 30 dias)</p>
         </div>
-      </div>
-
-      {/* Period Filter */}
-      <div className="flex gap-2">
-        {[7, 14, 30].map((d) => (
-          <Button
-            key={d}
-            variant={days === d ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setDays(d)}
-          >
-            {d} dias
-          </Button>
-        ))}
       </div>
 
       {/* Summary Cards */}
@@ -201,6 +208,37 @@ export default function NewsAnalytics() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Top Neighborhoods */}
+      {articleNeighborhoods.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <MapPin className="h-4 w-4" />
+              Destaques territoriais
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {articleNeighborhoods.map((item, index) => {
+                const cityLabel = item.city && item.city !== 'Cotia' ? ` · ${item.city}` : '';
+                return (
+                  <div key={`${item.neighborhood}-${item.city}`} className="flex items-center justify-between p-2 rounded hover:bg-muted/50">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-medium text-muted-foreground w-6">{index + 1}.</span>
+                      <div>
+                        <p className="text-sm font-medium">{item.neighborhood}{cityLabel}</p>
+                        <p className="text-xs text-muted-foreground">{item.unique_refs} contribuidores</p>
+                      </div>
+                    </div>
+                    <span className="text-sm font-bold text-primary">{item.total_clicks} acessos</span>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Top Contributors */}
       {topRefs.length > 0 && (
