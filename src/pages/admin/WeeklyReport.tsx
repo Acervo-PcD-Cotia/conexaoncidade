@@ -26,26 +26,38 @@ interface NeighborhoodRow {
   unique_refs: number;
 }
 
-export default function WeeklyReport() {
-  const [days, setDays] = useState(7);
+type PeriodDays = 7 | 14 | 30;
 
-  // Use aggregated view (always 30d window, filter client-side for 7/14)
+function getAggregatedViewName(days: PeriodDays): string {
+  return `vw_news_clicks_aggregated_${days}d`;
+}
+
+function getNewsByClicksViewName(days: PeriodDays): string {
+  return `vw_news_clicks_by_news_${days}d`;
+}
+
+function getNeighborhoodViewName(days: PeriodDays): string {
+  return `vw_news_clicks_by_neighborhood_${days}d`;
+}
+
+export default function WeeklyReport() {
+  const [days, setDays] = useState<PeriodDays>(7);
+
   const { data: aggregated = [] } = useQuery({
-    queryKey: ['weekly-aggregated'],
+    queryKey: ['weekly-aggregated', days],
     queryFn: async () => {
       const { data } = await supabase
-        .from('vw_news_clicks_aggregated_30d' as any)
+        .from(getAggregatedViewName(days) as any)
         .select('news_id, src, ref_code, click_count');
       return (data as unknown as AggregatedRow[]) || [];
     },
   });
 
-  // News by clicks view
   const { data: newsByClicks = [] } = useQuery({
-    queryKey: ['weekly-news-by-clicks'],
+    queryKey: ['weekly-news-by-clicks', days],
     queryFn: async () => {
       const { data } = await supabase
-        .from('vw_news_clicks_by_news_30d' as any)
+        .from(getNewsByClicksViewName(days) as any)
         .select('news_id, total_clicks')
         .order('total_clicks', { ascending: false })
         .limit(5);
@@ -53,12 +65,11 @@ export default function WeeklyReport() {
     },
   });
 
-  // Neighborhood view
   const { data: neighborhoods = [] } = useQuery({
-    queryKey: ['weekly-neighborhoods'],
+    queryKey: ['weekly-neighborhoods', days],
     queryFn: async () => {
       const { data } = await supabase
-        .from('vw_news_clicks_by_neighborhood_30d' as any)
+        .from(getNeighborhoodViewName(days) as any)
         .select('neighborhood, city, total_clicks, unique_refs')
         .order('total_clicks', { ascending: false })
         .limit(5);
@@ -80,20 +91,16 @@ export default function WeeklyReport() {
     },
   });
 
-  // Client-side filter for period (view is always 30d)
-  // Since the view doesn't have clicked_at, we use the full 30d data
-  // For 7/14 day filters, we'd need raw data — but using 30d view is the performance win
-  // The view already limits to 30 days which covers all filter options
-
   // Aggregations from pre-aggregated data
   const totalClicks = aggregated.reduce((sum, r) => sum + r.click_count, 0);
   const uniqueRefs = new Set(aggregated.filter((r) => r.ref_code).map((r) => r.ref_code));
 
-  const srcCounts: Record<string, number> = {};
+  const srcCounts: Partial<Record<ValidSource, number>> = {};
   const refCounts: Record<string, number> = {};
 
   aggregated.forEach((r) => {
-    srcCounts[r.src] = (srcCounts[r.src] || 0) + r.click_count;
+    const src = r.src as ValidSource;
+    srcCounts[src] = (srcCounts[src] || 0) + r.click_count;
     if (r.ref_code) {
       refCounts[r.ref_code] = (refCounts[r.ref_code] || 0) + r.click_count;
     }
@@ -183,6 +190,8 @@ ${top3Bairros.length > 0 ? top3Bairros.join('\n') : 'Sem dados territoriais no p
     }
   };
 
+  const periodLabel = `últimos ${days} dias`;
+
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
@@ -198,7 +207,7 @@ ${top3Bairros.length > 0 ? top3Bairros.join('\n') : 'Sem dados territoriais no p
 
       {/* Period Filter */}
       <div className="flex gap-2">
-        {[7, 14, 30].map((d) => (
+        {([7, 14, 30] as PeriodDays[]).map((d) => (
           <Button key={d} variant={days === d ? 'default' : 'outline'} size="sm" onClick={() => setDays(d)}>
             {d} dias
           </Button>
@@ -212,7 +221,7 @@ ${top3Bairros.length > 0 ? top3Bairros.join('\n') : 'Sem dados territoriais no p
             <MousePointerClick className="h-8 w-8 text-primary" />
             <div>
               <p className="text-2xl font-bold">{totalClicks}</p>
-              <p className="text-sm text-muted-foreground">Total de acessos (30 dias)</p>
+              <p className="text-sm text-muted-foreground">Total de acessos ({periodLabel})</p>
             </div>
           </CardContent>
         </Card>
@@ -221,7 +230,7 @@ ${top3Bairros.length > 0 ? top3Bairros.join('\n') : 'Sem dados territoriais no p
             <Users className="h-8 w-8 text-primary" />
             <div>
               <p className="text-2xl font-bold">{uniqueRefs.size}</p>
-              <p className="text-sm text-muted-foreground">Contribuidores ativos</p>
+              <p className="text-sm text-muted-foreground">Contribuidores ativos ({periodLabel})</p>
             </div>
           </CardContent>
         </Card>
@@ -230,7 +239,7 @@ ${top3Bairros.length > 0 ? top3Bairros.join('\n') : 'Sem dados territoriais no p
             <Newspaper className="h-8 w-8 text-primary" />
             <div>
               <p className="text-2xl font-bold">{publishedCount}</p>
-              <p className="text-sm text-muted-foreground">Matérias publicadas</p>
+              <p className="text-sm text-muted-foreground">Matérias publicadas ({periodLabel})</p>
             </div>
           </CardContent>
         </Card>
@@ -239,7 +248,7 @@ ${top3Bairros.length > 0 ? top3Bairros.join('\n') : 'Sem dados territoriais no p
       {/* Distribution by Source */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Distribuição por rede</CardTitle>
+          <CardTitle className="text-base">Distribuição por rede ({periodLabel})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -262,7 +271,7 @@ ${top3Bairros.length > 0 ? top3Bairros.join('\n') : 'Sem dados territoriais no p
       {newsByClicks.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Top matérias por acessos</CardTitle>
+            <CardTitle className="text-base">Top matérias por acessos ({periodLabel})</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -289,7 +298,7 @@ ${top3Bairros.length > 0 ? top3Bairros.join('\n') : 'Sem dados territoriais no p
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <MapPin className="h-4 w-4" />
-              Destaques territoriais
+              Destaques territoriais ({periodLabel})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -318,7 +327,7 @@ ${top3Bairros.length > 0 ? top3Bairros.join('\n') : 'Sem dados territoriais no p
       {topRefs.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Destaques de contribuição</CardTitle>
+            <CardTitle className="text-base">Destaques de contribuição ({periodLabel})</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">

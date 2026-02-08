@@ -44,10 +44,10 @@ export function useMemberCirculation() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Use aggregated view instead of raw news_clicks
-  const { data: clickCounts = {} } = useQuery({
+  // Use aggregated view (últimos 30 dias) instead of raw news_clicks
+  const { data: clickCounts = {} as Record<string, number> } = useQuery({
     queryKey: ['member-click-counts', refCode],
-    queryFn: async () => {
+    queryFn: async (): Promise<Record<string, number>> => {
       if (!refCode) return {};
       const { data } = await supabase
         .from('vw_news_clicks_aggregated_30d' as any)

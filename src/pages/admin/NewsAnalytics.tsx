@@ -23,9 +23,19 @@ interface NeighborhoodNewsRow {
   unique_refs: number;
 }
 
+type PeriodDays = 7 | 14 | 30;
+
+function getAggregatedViewName(days: PeriodDays): string {
+  return `vw_news_clicks_aggregated_${days}d`;
+}
+
+function getNeighborhoodNewsViewName(days: PeriodDays): string {
+  return `vw_news_clicks_by_neighborhood_news_${days}d`;
+}
+
 export default function NewsAnalytics() {
   const { id } = useParams<{ id: string }>();
-  const [days, setDays] = useState(30);
+  const [days, setDays] = useState<PeriodDays>(30);
 
   const { data: news, isLoading: newsLoading } = useQuery({
     queryKey: ['news-detail-admin', id],
@@ -40,12 +50,11 @@ export default function NewsAnalytics() {
     enabled: !!id,
   });
 
-  // Use aggregated view filtered by news_id
   const { data: aggregated = [], isLoading: clicksLoading } = useQuery({
-    queryKey: ['news-clicks-aggregated', id],
+    queryKey: ['news-clicks-aggregated', id, days],
     queryFn: async () => {
       const { data } = await supabase
-        .from('vw_news_clicks_aggregated_30d' as any)
+        .from(getAggregatedViewName(days) as any)
         .select('news_id, src, ref_code, click_count')
         .eq('news_id', id!);
       return (data as unknown as AggregatedRow[]) || [];
@@ -53,12 +62,11 @@ export default function NewsAnalytics() {
     enabled: !!id,
   });
 
-  // Top neighborhoods for this article
   const { data: articleNeighborhoods = [] } = useQuery({
-    queryKey: ['news-neighborhoods', id],
+    queryKey: ['news-neighborhoods', id, days],
     queryFn: async () => {
       const { data } = await supabase
-        .from('vw_news_clicks_by_neighborhood_news_30d' as any)
+        .from(getNeighborhoodNewsViewName(days) as any)
         .select('news_id, neighborhood, city, total_clicks, unique_refs')
         .eq('news_id', id!)
         .order('total_clicks', { ascending: false })
@@ -69,14 +77,15 @@ export default function NewsAnalytics() {
   });
 
   // Aggregate from pre-aggregated data
-  const srcCounts: Record<string, number> = {};
+  const srcCounts: Partial<Record<ValidSource, number>> = {};
   const refCounts: Record<string, number> = {};
   const uniqueRefs = new Set<string>();
   let totalClicks = 0;
 
   aggregated.forEach((r) => {
     totalClicks += r.click_count;
-    srcCounts[r.src] = (srcCounts[r.src] || 0) + r.click_count;
+    const src = r.src as ValidSource;
+    srcCounts[src] = (srcCounts[src] || 0) + r.click_count;
     if (r.ref_code) {
       uniqueRefs.add(r.ref_code);
       refCounts[r.ref_code] = (refCounts[r.ref_code] || 0) + r.click_count;
@@ -135,6 +144,8 @@ export default function NewsAnalytics() {
     );
   }
 
+  const periodLabel = `últimos ${days} dias`;
+
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -146,8 +157,17 @@ export default function NewsAnalytics() {
         </Link>
         <div className="flex-1">
           <h1 className="text-xl font-bold">{news.title}</h1>
-          <p className="text-sm text-muted-foreground">Circulação da matéria (últimos 30 dias)</p>
+          <p className="text-sm text-muted-foreground">Circulação da matéria ({periodLabel})</p>
         </div>
+      </div>
+
+      {/* Period Filter */}
+      <div className="flex gap-2">
+        {([7, 14, 30] as PeriodDays[]).map((d) => (
+          <Button key={d} variant={days === d ? 'default' : 'outline'} size="sm" onClick={() => setDays(d)}>
+            {d} dias
+          </Button>
+        ))}
       </div>
 
       {/* Summary Cards */}
@@ -184,7 +204,7 @@ export default function NewsAnalytics() {
       {/* Distribution by Source */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Distribuição por rede</CardTitle>
+          <CardTitle className="text-base">Distribuição por rede ({periodLabel})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -215,7 +235,7 @@ export default function NewsAnalytics() {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <MapPin className="h-4 w-4" />
-              Destaques territoriais
+              Destaques territoriais ({periodLabel})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -244,7 +264,7 @@ export default function NewsAnalytics() {
       {topRefs.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Destaques de contribuição</CardTitle>
+            <CardTitle className="text-base">Destaques de contribuição ({periodLabel})</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
