@@ -460,8 +460,16 @@ const App = () => (
                       <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
                       
                       {/* Public Streaming Pages */}
-                      <Route path="/radio" element={<RadioPage />} />
-                      <Route path="/tv" element={<TvPage />} />
+                      <Route path="/radio" element={
+                        <RouteModuleGuard module="web_radio">
+                          <RadioPage />
+                        </RouteModuleGuard>
+                      } />
+                      <Route path="/tv" element={
+                        <RouteModuleGuard module="web_tv">
+                          <TvPage />
+                        </RouteModuleGuard>
+                      } />
                       
                       {/* Public Esportes Routes */}
                       <Route path="/esportes/brasileirao" element={<BrasileiraoPage />} />
