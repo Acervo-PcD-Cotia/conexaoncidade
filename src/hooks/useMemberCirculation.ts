@@ -2,6 +2,13 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
+interface AggregatedRow {
+  news_id: string;
+  src: string;
+  ref_code: string | null;
+  click_count: number;
+}
+
 export function useMemberCirculation() {
   const { user } = useAuth();
 
@@ -37,23 +44,21 @@ export function useMemberCirculation() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-
+  // Use aggregated view instead of raw news_clicks
   const { data: clickCounts = {} } = useQuery({
     queryKey: ['member-click-counts', refCode],
     queryFn: async () => {
       if (!refCode) return {};
       const { data } = await supabase
-        .from('news_clicks' as any)
-        .select('news_id')
-        .eq('ref_code', refCode)
-        .gte('clicked_at', thirtyDaysAgo);
-      
+        .from('vw_news_clicks_aggregated_30d' as any)
+        .select('news_id, click_count')
+        .eq('ref_code', refCode);
+
       if (!data) return {};
-      
+
       const counts: Record<string, number> = {};
-      (data as unknown as Array<{ news_id: string }>).forEach((row) => {
-        counts[row.news_id] = (counts[row.news_id] || 0) + 1;
+      (data as unknown as AggregatedRow[]).forEach((row) => {
+        counts[row.news_id] = (counts[row.news_id] || 0) + row.click_count;
       });
       return counts;
     },

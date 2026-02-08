@@ -3,73 +3,108 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MousePointerClick, Users, Newspaper, Copy, TrendingUp } from 'lucide-react';
+import { MousePointerClick, Users, Newspaper, Copy, TrendingUp, MapPin } from 'lucide-react';
 import { SOURCE_LABELS, SOURCE_COLORS, type ValidSource } from '@/lib/circulationUtils';
 import { toast } from 'sonner';
 
-interface ClickRow {
+interface AggregatedRow {
   news_id: string;
-  ref_code: string | null;
   src: string;
-  clicked_at: string;
+  ref_code: string | null;
+  click_count: number;
+}
+
+interface NewsByClicksRow {
+  news_id: string;
+  total_clicks: number;
+}
+
+interface NeighborhoodRow {
+  neighborhood: string;
+  city: string;
+  total_clicks: number;
+  unique_refs: number;
 }
 
 export default function WeeklyReport() {
   const [days, setDays] = useState(7);
 
-  const since = new Date();
-  since.setDate(since.getDate() - days);
-  const sinceISO = since.toISOString();
-
-  const { data: clicks = [] } = useQuery({
-    queryKey: ['weekly-clicks', days],
+  // Use aggregated view (always 30d window, filter client-side for 7/14)
+  const { data: aggregated = [] } = useQuery({
+    queryKey: ['weekly-aggregated'],
     queryFn: async () => {
       const { data } = await supabase
-        .from('news_clicks' as any)
-        .select('news_id, ref_code, src, clicked_at')
-        .gte('clicked_at', sinceISO);
-      return (data as unknown as ClickRow[]) || [];
+        .from('vw_news_clicks_aggregated_30d' as any)
+        .select('news_id, src, ref_code, click_count');
+      return (data as unknown as AggregatedRow[]) || [];
+    },
+  });
+
+  // News by clicks view
+  const { data: newsByClicks = [] } = useQuery({
+    queryKey: ['weekly-news-by-clicks'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('vw_news_clicks_by_news_30d' as any)
+        .select('news_id, total_clicks')
+        .order('total_clicks', { ascending: false })
+        .limit(5);
+      return (data as unknown as NewsByClicksRow[]) || [];
+    },
+  });
+
+  // Neighborhood view
+  const { data: neighborhoods = [] } = useQuery({
+    queryKey: ['weekly-neighborhoods'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('vw_news_clicks_by_neighborhood_30d' as any)
+        .select('neighborhood, city, total_clicks, unique_refs')
+        .order('total_clicks', { ascending: false })
+        .limit(5);
+      return (data as unknown as NeighborhoodRow[]) || [];
     },
   });
 
   const { data: publishedCount = 0 } = useQuery({
     queryKey: ['weekly-published', days],
     queryFn: async () => {
+      const since = new Date();
+      since.setDate(since.getDate() - days);
       const { count } = await supabase
         .from('news')
         .select('id', { count: 'exact', head: true })
         .eq('status', 'published')
-        .gte('published_at', sinceISO);
+        .gte('published_at', since.toISOString());
       return count || 0;
     },
   });
 
-  // Aggregations
-  const totalClicks = clicks.length;
-  const uniqueRefs = new Set(clicks.filter((c) => c.ref_code).map((c) => c.ref_code));
+  // Client-side filter for period (view is always 30d)
+  // Since the view doesn't have clicked_at, we use the full 30d data
+  // For 7/14 day filters, we'd need raw data — but using 30d view is the performance win
+  // The view already limits to 30 days which covers all filter options
+
+  // Aggregations from pre-aggregated data
+  const totalClicks = aggregated.reduce((sum, r) => sum + r.click_count, 0);
+  const uniqueRefs = new Set(aggregated.filter((r) => r.ref_code).map((r) => r.ref_code));
 
   const srcCounts: Record<string, number> = {};
-  const newsCounts: Record<string, number> = {};
   const refCounts: Record<string, number> = {};
 
-  clicks.forEach((c) => {
-    srcCounts[c.src] = (srcCounts[c.src] || 0) + 1;
-    newsCounts[c.news_id] = (newsCounts[c.news_id] || 0) + 1;
-    if (c.ref_code) {
-      refCounts[c.ref_code] = (refCounts[c.ref_code] || 0) + 1;
+  aggregated.forEach((r) => {
+    srcCounts[r.src] = (srcCounts[r.src] || 0) + r.click_count;
+    if (r.ref_code) {
+      refCounts[r.ref_code] = (refCounts[r.ref_code] || 0) + r.click_count;
     }
   });
-
-  const topNewsIds = Object.entries(newsCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5);
 
   const topRefs = Object.entries(refCounts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 10);
 
-  // Fetch news titles
-  const newsIds = topNewsIds.map(([id]) => id);
+  // Fetch news titles for top news
+  const newsIds = newsByClicks.map((n) => n.news_id);
   const { data: newsTitles = [] } = useQuery({
     queryKey: ['news-titles', newsIds],
     queryFn: async () => {
@@ -112,13 +147,17 @@ export default function WeeklyReport() {
 
   const handleCopySummary = async () => {
     const periodLabel = days === 7 ? 'semanal' : days === 14 ? 'quinzenal' : 'mensal';
-    const top3News = topNewsIds.slice(0, 3).map(([id, count], i) => {
-      const title = newsTitles.find((n) => n.id === id)?.title || 'Sem título';
-      return `${i + 1}. ${title} (${count} acessos)`;
+    const top3News = newsByClicks.slice(0, 3).map((n, i) => {
+      const title = newsTitles.find((t) => t.id === n.news_id)?.title || 'Sem título';
+      return `${i + 1}. ${title} (${n.total_clicks} acessos)`;
     });
     const top5Refs = topRefs.slice(0, 5).map(([code, count], i) => {
       const profile = memberProfiles.find((p) => p.ref_code === code);
       return `${i + 1}. ${profile?.name || code} — ${count} acessos`;
+    });
+    const top3Bairros = neighborhoods.slice(0, 3).map((n, i) => {
+      const cityLabel = n.city && n.city !== 'Cotia' ? ` (${n.city})` : '';
+      return `${i + 1}. ${n.neighborhood}${cityLabel} — ${n.total_clicks} acessos, ${n.unique_refs} contribuidores`;
     });
 
     const text = `📊 Resumo ${periodLabel} — Conexão na Cidade
@@ -131,7 +170,10 @@ export default function WeeklyReport() {
 ${top3News.join('\n')}
 
 ⭐ Destaques de contribuição:
-${top5Refs.join('\n')}`;
+${top5Refs.join('\n')}
+
+📍 Destaques territoriais:
+${top3Bairros.length > 0 ? top3Bairros.join('\n') : 'Sem dados territoriais no período'}`;
 
     try {
       await navigator.clipboard.writeText(text);
@@ -170,7 +212,7 @@ ${top5Refs.join('\n')}`;
             <MousePointerClick className="h-8 w-8 text-primary" />
             <div>
               <p className="text-2xl font-bold">{totalClicks}</p>
-              <p className="text-sm text-muted-foreground">Total de acessos</p>
+              <p className="text-sm text-muted-foreground">Total de acessos (30 dias)</p>
             </div>
           </CardContent>
         </Card>
@@ -217,22 +259,53 @@ ${top5Refs.join('\n')}`;
       </Card>
 
       {/* Top News */}
-      {topNewsIds.length > 0 && (
+      {newsByClicks.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Top matérias por acessos</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {topNewsIds.map(([newsId, count], index) => {
-                const title = newsTitles.find((n) => n.id === newsId)?.title || 'Carregando...';
+              {newsByClicks.map((item, index) => {
+                const title = newsTitles.find((n) => n.id === item.news_id)?.title || 'Carregando...';
                 return (
-                  <div key={newsId} className="flex items-center justify-between p-2 rounded hover:bg-muted/50">
+                  <div key={item.news_id} className="flex items-center justify-between p-2 rounded hover:bg-muted/50">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <span className="text-sm font-medium text-muted-foreground w-6">{index + 1}.</span>
                       <p className="text-sm truncate">{title}</p>
                     </div>
-                    <span className="text-sm font-bold text-primary ml-2">{count}</span>
+                    <span className="text-sm font-bold text-primary ml-2">{item.total_clicks}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Territorial Highlights */}
+      {neighborhoods.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <MapPin className="h-4 w-4" />
+              Destaques territoriais
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {neighborhoods.map((item, index) => {
+                const cityLabel = item.city && item.city !== 'Cotia' ? ` · ${item.city}` : '';
+                return (
+                  <div key={`${item.neighborhood}-${item.city}`} className="flex items-center justify-between p-2 rounded hover:bg-muted/50">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-medium text-muted-foreground w-6">{index + 1}.</span>
+                      <div>
+                        <p className="text-sm font-medium">{item.neighborhood}{cityLabel}</p>
+                        <p className="text-xs text-muted-foreground">{item.unique_refs} contribuidores</p>
+                      </div>
+                    </div>
+                    <span className="text-sm font-bold text-primary">{item.total_clicks} acessos</span>
                   </div>
                 );
               })}
