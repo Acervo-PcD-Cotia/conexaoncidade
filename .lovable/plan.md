@@ -1,202 +1,162 @@
 
+# Views Agregadas + Destaques por Bairro
 
-# Motor de Circulacao + Tracking + Relatorios
+## Resumo
 
-## Mapeamento da Realidade do Projeto (PARTE 0)
-
-Tabelas reais identificadas:
-- **Noticias** = `news` (106 artigos publicados -- seed NAO necessario)
-- **Cliques** = `click_events` (usada pelo sistema de Links/Bio -- NAO reutilizar)
-- **Perfis** = `profiles` (id, full_name, avatar_url, bio)
-- **Membros** = `community_members` (user_id, level, points, share_count, city, neighborhood)
-- **Shares** = `community_shares` (user_id, content_type, content_id, platform)
-
-Pagina de noticia: `/noticia/:slug` em `src/pages/NewsDetail.tsx`
-Painel do membro: `/comunidade` em `src/pages/community/CommunityHub.tsx`
-Botoes de share: `src/components/news/ShareButtons.tsx`
-
-**Decisao critica**: `click_events` serve o sistema de Links/Bio e NAO tem `news_id` nem `ref_code`. Criar tabela nova `news_clicks` e a abordagem correta para nao quebrar o sistema existente.
+Criar 3 views SQL para mover agregacoes pesadas do frontend para o banco de dados, e adicionar uma nova secao de "Destaques territoriais" no Relatorio Semanal e na pagina de analitica por materia.
 
 ---
 
-## BUILD ORDER
+## Parte 1 -- Migration SQL (3 views)
 
-### Etapa 1: Migration SQL (aditiva, sem alterar RLS existente)
+Criar uma unica migration com as 3 views:
 
-```text
--- 1. Tabela news_clicks (tracking de circulacao de noticias)
-CREATE TABLE public.news_clicks (
-  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  news_id UUID NOT NULL REFERENCES public.news(id) ON DELETE CASCADE,
-  ref_code TEXT NULL,
-  src TEXT NOT NULL DEFAULT 'direct',
-  referrer TEXT NULL,
-  user_agent TEXT NULL,
-  device_type TEXT NULL,
-  browser TEXT NULL,
-  ip_hash TEXT NULL,
-  clicked_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
+### `vw_news_clicks_aggregated_30d`
+- Agrupa `news_clicks` por `news_id`, `src`, `ref_code`
+- Filtra `clicked_at >= now() - interval '30 days'`
+- Retorna `click_count` (COUNT)
 
-CREATE INDEX idx_news_clicks_news_date ON public.news_clicks(news_id, clicked_at);
-CREATE INDEX idx_news_clicks_ref ON public.news_clicks(ref_code, clicked_at);
-CREATE INDEX idx_news_clicks_src ON public.news_clicks(src, clicked_at);
+### `vw_news_clicks_by_news_30d`
+- Agrupa apenas por `news_id`
+- Filtra ultimos 30 dias
+- Retorna `total_clicks`
 
-ALTER TABLE public.news_clicks ENABLE ROW LEVEL SECURITY;
+### `vw_news_clicks_by_neighborhood_30d`
+- JOIN entre `news_clicks` e `community_members` via `ref_code`
+- Filtra ultimos 30 dias e `neighborhood IS NOT NULL`
+- Agrupa por `neighborhood`, `city`
+- Retorna `total_clicks` e `unique_refs` (COUNT DISTINCT ref_code)
 
--- Qualquer pessoa pode inserir (tracking publico)
-CREATE POLICY "Tracking publico insere news_clicks"
-  ON public.news_clicks FOR INSERT WITH CHECK (true);
+Todas sao views simples (nao materializadas), de leitura, sem alterar dados nem RLS.
 
--- Admins/editors podem ler
-CREATE POLICY "Admin le news_clicks"
-  ON public.news_clicks FOR SELECT
-  USING (is_admin_or_editor(auth.uid()));
+---
 
--- Membros podem ler seus proprios cliques (por ref_code)
-CREATE POLICY "Membro le proprios news_clicks"
-  ON public.news_clicks FOR SELECT
-  USING (
-    ref_code IS NOT NULL AND
-    ref_code = (
-      SELECT ref_code FROM public.community_members
-      WHERE user_id = auth.uid()
-      LIMIT 1
-    )
-  );
+## Parte 2 -- Atualizar `WeeklyReport.tsx`
 
--- 2. Adicionar ref_code aos membros da comunidade
-ALTER TABLE public.community_members
-  ADD COLUMN IF NOT EXISTS ref_code TEXT UNIQUE;
+### Substituir query principal
+- Trocar a query direta em `news_clicks` pela view `vw_news_clicks_aggregated_30d`
+- Derivar `srcCounts`, `refCounts`, `totalClicks` e `uniqueRefs` a partir dos dados pre-agregados (somando `click_count`)
+- Usar `vw_news_clicks_by_news_30d` para o bloco "Top materias"
+- A UI permanece identica; apenas a fonte de dados muda
 
--- Gerar ref_code automatico para membros existentes
-UPDATE public.community_members
-SET ref_code = LOWER(SUBSTR(MD5(user_id::text), 1, 8))
-WHERE ref_code IS NULL;
+### Novo bloco: "Destaques territoriais"
+- Nova query em `vw_news_clicks_by_neighborhood_30d` (top 5 por `total_clicks`)
+- Card com titulo "Destaques territoriais"
+- Exibe: Bairro, Cidade (se diferente de "Cotia"), Total de acessos, Contribuicoes unicas
+- Secao oculta se nao houver dados
+- Incluir dados territoriais no texto do "Copiar resumo"
 
--- Trigger para gerar ref_code em novos membros
-CREATE OR REPLACE FUNCTION generate_member_ref_code()
-RETURNS TRIGGER AS $$
-BEGIN
-  IF NEW.ref_code IS NULL THEN
-    NEW.ref_code := LOWER(SUBSTR(MD5(NEW.user_id::text), 1, 8));
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+---
 
-CREATE TRIGGER trg_member_ref_code
-  BEFORE INSERT ON public.community_members
-  FOR EACH ROW EXECUTE FUNCTION generate_member_ref_code();
+## Parte 3 -- Atualizar `NewsAnalytics.tsx`
+
+### Substituir query de cliques
+- Usar `vw_news_clicks_aggregated_30d` filtrada por `news_id` em vez de buscar linhas individuais
+
+### Novo bloco: Top 3 bairros
+- Query em `vw_news_clicks_by_neighborhood_30d` filtrada por `news_id` (via join interno da view, sera feita com query direta usando as mesmas tabelas ja que a view nao tem `news_id`)
+- Alternativa: criar query inline que replica a logica da view territorial mas filtrando por `news_id`
+- Card com top 3 bairros, oculto se sem dados
+
+---
+
+## Parte 4 -- Atualizar `useMemberCirculation.ts`
+
+- Substituir query direta em `news_clicks` pela view `vw_news_clicks_aggregated_30d` filtrada por `ref_code`
+- Manter comportamento identico
+
+---
+
+## Detalhes Tecnicos
+
+### Migration SQL
+
+```sql
+-- View 1: Agregada por news_id + src + ref_code (30 dias)
+CREATE OR REPLACE VIEW public.vw_news_clicks_aggregated_30d AS
+SELECT
+  news_id,
+  src,
+  ref_code,
+  COUNT(*)::int AS click_count
+FROM public.news_clicks
+WHERE clicked_at >= now() - interval '30 days'
+GROUP BY news_id, src, ref_code;
+
+-- View 2: Total por materia (30 dias)
+CREATE OR REPLACE VIEW public.vw_news_clicks_by_news_30d AS
+SELECT
+  news_id,
+  COUNT(*)::int AS total_clicks
+FROM public.news_clicks
+WHERE clicked_at >= now() - interval '30 days'
+GROUP BY news_id;
+
+-- View 3: Territorial (30 dias)
+CREATE OR REPLACE VIEW public.vw_news_clicks_by_neighborhood_30d AS
+SELECT
+  cm.neighborhood,
+  cm.city,
+  COUNT(*)::int AS total_clicks,
+  COUNT(DISTINCT nc.ref_code)::int AS unique_refs
+FROM public.news_clicks nc
+JOIN public.community_members cm ON cm.ref_code = nc.ref_code
+WHERE nc.clicked_at >= now() - interval '30 days'
+  AND cm.neighborhood IS NOT NULL
+GROUP BY cm.neighborhood, cm.city;
 ```
 
-### Etapa 2: Helper de normalizacao de `src`
+### Queries no Frontend
 
-Arquivo: `src/lib/circulationUtils.ts` (novo)
+As views serao acessadas via `supabase.from('vw_news_clicks_...' as any).select(...)`. Os tipos continuam com cast explicito para manter consistencia com o padrao existente.
 
-- Funcao `normalizeSrc(src: string): string` -- aceita apenas `wa`, `ig`, `fb`, `x`, `direct`. Qualquer outro valor vira `direct`.
-- Funcao `buildShareUrl(slug: string, refCode: string, src: string): string` -- gera `/noticia/{slug}?ref={refCode}&src={src}`
-- Funcao `buildShareText(titulo: string, resumo: string, link: string, cidade: string): string` -- template da mensagem pronta
-- Funcao `parseUserAgentSimple(ua: string)` -- extrair device_type e browser
+### Para NewsAnalytics (top bairros por materia)
 
-### Etapa 3: Tracking na pagina de noticia
+Como a view territorial nao inclui `news_id`, sera usada uma query direta:
 
-Arquivo: `src/pages/NewsDetail.tsx`
+```typescript
+const { data } = await supabase
+  .from('news_clicks' as any)
+  .select('ref_code')
+  .eq('news_id', id)
+  .gte('clicked_at', since.toISOString());
+// Depois faz join local com community_members para obter neighborhood
+```
 
-- No `useEffect` de mount, ler query params `ref` e `src` da URL
-- Normalizar `src` com o helper
-- Inserir em `news_clicks`: news_id, ref_code (de `ref`), src normalizado, user_agent (navigator.userAgent), referrer (document.referrer)
-- Manter o increment de `view_count` existente (linha 214-220)
-- Inserir apenas 1x por sessao (usar sessionStorage com chave `nc_{newsId}`)
+Alternativa mais limpa: criar uma 4a view `vw_news_clicks_by_neighborhood_news_30d` que inclui `news_id` no agrupamento. Isso evita join no frontend.
 
-### Etapa 4: Botoes de compartilhamento no painel do membro
+### Decisao: Criar view adicional com `news_id`
 
-Arquivo: `src/components/community/MemberSharePanel.tsx` (novo componente)
-
-Para cada noticia recente (ultimas 10 publicadas), mostrar:
-- Titulo da noticia
-- **4 botoes**: WhatsApp, Facebook, Instagram, X
-- **Botao principal**: "Copiar Link" (src=direct)
-- Ao clicar em qualquer botao: copia para clipboard o link COM `?ref={refCode}&src={rede}` + texto pronto
-- Textarea editavel com template: `{CIDADE} -- {TITULO}\n{RESUMO}\nConfira: {LINK}`
-- Label "Alcance gerado" em vez de "Cliques recebidos" com microcopy
-
-Arquivo: `src/hooks/useMemberCirculation.ts` (novo)
-- Buscar `ref_code` do membro logado em `community_members`
-- Buscar noticias recentes publicadas
-- Buscar contagem de cliques por `ref_code` do membro em `news_clicks`
-
-Integracao: Adicionar aba ou secao no `CommunityHub.tsx` com o `MemberSharePanel`
-
-### Etapa 5: Tela Admin "Materia X"
-
-Arquivo: `src/pages/admin/NewsAnalytics.tsx` (novo)
-Rota: `/admin/noticias/:id` (registrar no App.tsx)
-
-UI:
-- Titulo da noticia
-- Total de cliques (count de `news_clicks` para esse `news_id`)
-- Distribuicao por rede (`src`): cards com wa, ig, fb, x, direct
-- Refs unicos (count distinct `ref_code`)
-- "Destaques de contribuicao" (Top 10 ref_codes com mais cliques)
-  - JOIN com `community_members` + `profiles` para nome e bairro
-  - Se RLS bloquear join: 2 queries separadas
-- Botao "Voltar" para lista de noticias
-- Filtro opcional de periodo (7/14/30 dias)
-
-### Etapa 6: Relatorio Semanal Admin
-
-Arquivo: `src/pages/admin/WeeklyReport.tsx` (novo)
-Rota: `/admin/relatorio-semanal` (registrar no App.tsx + sidebar)
-
-UI:
-- Seletor de periodo: 7 / 14 / 30 dias
-- Cards: Total de cliques, Refs ativos (distintos), Materias publicadas
-- Top 5 materias por cliques
-- Distribuicao por rede (grafico ou cards com wa/ig/fb/x/direct)
-- "Destaques da semana" (Top 10 refs) com nome + bairro (nunca "ranking")
-- Botao "Copiar resumo" -- gera texto formatado para WhatsApp:
-  - Periodo, total cliques, rede que mais circulou, top 3 materias, 5 destaques
-
-### Etapa 7: Seed -- NAO NECESSARIO
-
-O banco ja tem 106 artigos publicados. Nenhuma acao necessaria.
-
-### Etapa 8: Ajustes OG / fallback
-
-- `NewsDetail.tsx` ja tem OG tags completos (linhas 299-327)
-- Ja tem fallback de imagem (og_image_url || featured_image_url)
-- Nenhuma acao adicional necessaria, pois a implementacao existente ja cobre o requisito
+```sql
+CREATE OR REPLACE VIEW public.vw_news_clicks_by_neighborhood_news_30d AS
+SELECT
+  nc.news_id,
+  cm.neighborhood,
+  cm.city,
+  COUNT(*)::int AS total_clicks,
+  COUNT(DISTINCT nc.ref_code)::int AS unique_refs
+FROM public.news_clicks nc
+JOIN public.community_members cm ON cm.ref_code = nc.ref_code
+WHERE nc.clicked_at >= now() - interval '30 days'
+  AND cm.neighborhood IS NOT NULL
+GROUP BY nc.news_id, cm.neighborhood, cm.city;
+```
 
 ---
 
-## Arquivos a Criar
+## Arquivos Modificados
 
-1. `src/lib/circulationUtils.ts` -- helpers de normalizacao
-2. `src/components/community/MemberSharePanel.tsx` -- botoes de share no painel
-3. `src/hooks/useMemberCirculation.ts` -- dados de circulacao do membro
-4. `src/pages/admin/NewsAnalytics.tsx` -- tela Materia X
-5. `src/pages/admin/WeeklyReport.tsx` -- relatorio semanal
+| Arquivo | Acao |
+|---|---|
+| Migration SQL | Criar 4 views |
+| `src/pages/admin/WeeklyReport.tsx` | Usar views + novo bloco territorial |
+| `src/pages/admin/NewsAnalytics.tsx` | Usar views + top 3 bairros |
+| `src/hooks/useMemberCirculation.ts` | Usar view agregada |
 
-## Arquivos a Modificar
+## Nenhuma alteracao em
 
-1. `src/pages/NewsDetail.tsx` -- adicionar tracking de ref+src
-2. `src/pages/community/CommunityHub.tsx` -- integrar MemberSharePanel
-3. `src/App.tsx` -- registrar rotas /admin/noticias/:id e /admin/relatorio-semanal
-4. `src/components/admin/AdminSidebar.tsx` -- adicionar link para relatorio semanal
-
-## Edge Function (OPCIONAL)
-
-A edge function `click-tracker` ja existe e faz hash de IP. Podemos reutilizar o padrao para criar uma variante `news-click-tracker` se necessario, mas para o MVP o tracking client-side com ip_hash=null e suficiente e mais simples.
-
----
-
-## O que NAO sera feito (conforme regras)
-
-- Nenhuma alteracao de RLS existente
-- Nenhuma refatoracao de arquitetura
-- Nenhum uso da palavra "ranking" ou "controle"
-- Nenhuma URL externa inventada para imagens
-- Nenhuma coleta de dados pessoais de quem clicou
-- Nenhum PDF no relatorio (apenas "Copiar resumo")
-
+- Tabelas existentes
+- Politicas RLS
+- Arquitetura do projeto
+- `circulationUtils.ts`
+- `NewsDetail.tsx` (tracking)
