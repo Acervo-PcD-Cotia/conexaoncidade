@@ -8,6 +8,7 @@ import { useKeyboardNavigation } from "@/hooks/useKeyboardNavigation";
 import MiniPlayer from "@/components/broadcast/MiniPlayer";
 import { useMiniPlayer } from "@/contexts/MiniPlayerContext";
 import { GlobalRadioProvider } from "@/contexts/GlobalRadioContext";
+import { ModuleGuard } from "@/components/guards/ModuleGuard";
 
 export function PublicLayout() {
   useKeyboardNavigation();
@@ -22,8 +23,10 @@ export function PublicLayout() {
     <GlobalRadioProvider>
     <div className="flex min-h-screen flex-col">
 
-      {/* Sticky Audio Player at the very top */}
-      <TopAudioPlayer />
+      {/* Sticky Audio Player at the very top (respects web_radio module toggle) */}
+      <ModuleGuard module="web_radio">
+        <TopAudioPlayer />
+      </ModuleGuard>
 
       {/* Skip link for keyboard navigation */}
       <a
