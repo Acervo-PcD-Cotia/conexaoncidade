@@ -1,12 +1,14 @@
 import { useGlobalRadio } from "@/contexts/GlobalRadioContext";
 import { RADIO_CONFIG } from "@/config/radio";
 import { useRadioConfig } from "@/hooks/useBroadcastConfig";
+import { useModuleEnabled } from "@/hooks/useModuleEnabled";
 import { Play, Pause, Volume2, VolumeX, Radio, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 
 export function TopAudioPlayer() {
+  const isRadioEnabled = useModuleEnabled('web_radio');
   const {
     isPlaying,
     volume,
@@ -26,6 +28,13 @@ export function TopAudioPlayer() {
     name: dynamicConfig?.name || RADIO_CONFIG.NAME,
     statusLabel: dynamicConfig?.status_label || RADIO_CONFIG.STATUS_LABEL,
   };
+
+  // When radio is disabled, render empty orange bar
+  if (!isRadioEnabled) {
+    return (
+      <div className="sticky top-0 z-50 h-12 bg-gradient-to-r from-primary via-primary/95 to-primary border-b border-primary-foreground/10 shadow-md" />
+    );
+  }
 
   return (
     <div className="sticky top-0 z-50 h-12 bg-gradient-to-r from-primary via-primary/95 to-primary border-b border-primary-foreground/10 shadow-md">

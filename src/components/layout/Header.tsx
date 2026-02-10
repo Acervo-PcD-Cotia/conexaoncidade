@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useModuleEnabled } from "@/hooks/useModuleEnabled";
 import { Link } from "react-router-dom";
 import { Menu, X, Search, Sun, Moon, LogOut, LayoutDashboard, Newspaper, FolderOpen, Megaphone, Settings, ShieldCheck, Bus, MapPin, Accessibility, Users, Radio, Tv, GraduationCap, Trophy, Home, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,8 @@ export function Header() {
   const { user, signOut } = useAuth();
   const { role, loading: roleLoading, isAdmin, isEditor } = useUserRole();
   const { data: categories } = useCategories();
+  const isRadioEnabled = useModuleEnabled('web_radio');
+  const isTvEnabled = useModuleEnabled('web_tv');
   
   const hasAdminAccess = !roleLoading && (isAdmin || isEditor || ['editor_chief', 'reporter', 'columnist', 'moderator'].includes(role || ''));
   
@@ -137,6 +140,7 @@ export function Header() {
                     <VocabText term="school_transport" fallback="Escolar" />
                   </Link>
                   {/* 8. Web Live - red (destaque) */}
+                  {(isRadioEnabled || isTvEnabled) && (
                   <Link
                     to="/web-radio-tv"
                     className="flex items-center gap-2 text-red-600 dark:text-red-400 hover:underline font-semibold"
@@ -145,6 +149,7 @@ export function Header() {
                     <Tv className="h-4 w-4 -ml-2" />
                     Web Live
                   </Link>
+                  )}
                   {/* 9. Imóveis - teal */}
                   <Link
                     to="/imoveis"
@@ -362,6 +367,7 @@ export function Header() {
               <VocabText term="school_transport" fallback="Escolar" />
             </Link>
             {/* 8. Web Live - red (destaque com pulse) */}
+            {(isRadioEnabled || isTvEnabled) && (
             <Link
               to="/web-radio-tv"
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-950/60 rounded-full hover:bg-red-200 dark:hover:bg-red-900/60 transition-colors border border-red-200 dark:border-red-800 animate-pulse"
@@ -370,6 +376,7 @@ export function Header() {
               <Tv className="h-4 w-4 -ml-1" />
               Web Live
             </Link>
+            )}
             {/* 9. Imóveis - teal with submenu */}
             <NavigationMenu>
               <NavigationMenuList>
