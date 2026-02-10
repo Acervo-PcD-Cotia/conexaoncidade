@@ -1,88 +1,57 @@
 
-# Correcao: Tela em branco ao estar logado
+# Correcao: Web TV continua aparecendo mesmo desativada
 
 ## Causa raiz
 
-O hook `useNews` (usado por HeroSection, LatestNewsList, etc.) faz **queries N+1**: para cada noticia (12+), dispara 2 queries individuais (1 para `profiles`, 1 para `news_tags`). Isso gera 24+ requisicoes HTTP sequenciais que levam 8+ segundos.
+A homepage e renderizada por secoes dinamicas (`DynamicHomeSection`), e cada secao pode ter um campo `moduleKey` que, quando presente, faz a secao ser ocultada se o modulo estiver desativado (logica em `useSiteConfig.ts` linha 209).
 
-Para usuarios autenticados, queries adicionais de tenant/config agravam o atraso. A tabela `profiles` nao tem politica RLS para `anon`, entao as queries de autor falham silenciosamente, mas a cascata de requisicoes trava o carregamento.
+O problema: a secao `video_block` (que renderiza o player "WebTV Conexao" na homepage) **nao tem `moduleKey` definido** no banco de dados. Portanto, ela sempre aparece, independentemente do toggle `web_tv`.
+
+Alem disso, a secao `live_broadcast` tem `moduleKey: "lives"` em vez de `"web_tv"`, entao tambem nao responde ao toggle.
+
+E o componente `LiveBroadcastWidget` renderiza tanto TV quanto Radio internamente, sem verificar se cada modulo esta ativo.
 
 ## Solucao
 
-### 1. Otimizar `useNews` — eliminar N+1 queries
+### 1. Migracao SQL — adicionar `moduleKey` correto nas `home_sections`
 
-**Arquivo**: `src/hooks/useNews.ts`
+Atualizar o campo `home_sections` do template `journalist` para:
+- `video_block` (ordem 2): adicionar `"moduleKey": "web_tv"`  
+- `live_broadcast` (ordem 6): trocar `"moduleKey": "lives"` por nenhum ou manter (depende do contexto — `lives` e um modulo diferente)
 
-**Antes** (N+1 — 24+ queries):
-```ts
-const newsWithDetails = await Promise.all(
-  (data || []).map(async (item) => {
-    // Query individual para cada autor
-    const { data: authorData } = await supabase
-      .from('profiles').select('...').eq('id', item.author_id).maybeSingle();
-    // Query individual para cada tag  
-    const { data: tagsData } = await supabase
-      .from('news_tags').select('...').eq('news_id', item.id);
-    return { ...item, author: authorData, tags };
-  })
-);
-```
-
-**Depois** (3 queries no total):
-```ts
-// 1. Buscar noticias (ja feito)
-// 2. Buscar TODOS os autores de uma vez
-const authorIds = [...new Set(data.map(n => n.author_id).filter(Boolean))];
-const { data: authors } = await supabase
-  .from('profiles')
-  .select('id, full_name, avatar_url, bio')
-  .in('id', authorIds);
-const authorsMap = new Map(authors?.map(a => [a.id, a]) || []);
-
-// 3. Buscar TODAS as tags de uma vez
-const newsIds = data.map(n => n.id);
-const { data: allTags } = await supabase
-  .from('news_tags')
-  .select('news_id, tag:tags(id, name, slug)')
-  .in('news_id', newsIds);
-const tagsMap = new Map();
-allTags?.forEach(t => {
-  if (!tagsMap.has(t.news_id)) tagsMap.set(t.news_id, []);
-  tagsMap.get(t.news_id).push(t.tag);
-});
-
-// Montar resultado sem queries extras
-const newsWithDetails = data.map(item => ({
-  ...item,
-  author: authorsMap.get(item.author_id) || null,
-  tags: tagsMap.get(item.id) || [],
-}));
-```
-
-Aplicar a mesma otimizacao nas funcoes: `useNews`, `useFeaturedNews`, `useNewsByCategory`, e qualquer outra que faca o mesmo padrao N+1.
-
-### 2. Adicionar politica RLS publica na tabela `profiles`
-
-A tabela `profiles` so tem politica SELECT para `authenticated`. Usuarios anonimos (visitantes publicos) nao conseguem ler perfis de autores.
-
-**Migracao SQL**:
 ```sql
-CREATE POLICY "Perfis publicos sao visiveis para todos"
-  ON public.profiles
-  FOR SELECT
-  TO public
-  USING (true);
+UPDATE portal_templates
+SET home_sections = jsonb_set(
+  home_sections::jsonb,
+  -- para cada item do array que tem type = video_block, adicionar moduleKey = web_tv
+)
+WHERE key = 'journalist';
 ```
 
-Isso permite que visitantes anonimos vejam nomes e avatares dos autores nas noticias.
+Na pratica, a migracao vai reescrever o array `home_sections` completo com os moduleKeys corretos.
 
-### 3. Adicionar tratamento de erro robusto nos componentes
+### 2. `LiveBroadcastWidget.tsx` — respeitar toggles de modulos
 
-**Arquivos**: `src/components/home/HeroSection.tsx`, `src/components/home/LatestNewsList.tsx`
+Importar `useModuleEnabled` e:
+- Ocultar a secao TV quando `web_tv` esta desativado
+- Ocultar a secao Radio quando `web_radio` esta desativado
+- Se ambos estiverem desativados, retornar `null`
 
-Adicionar timeout de seguranca nos hooks de dados para evitar loading infinito:
-- Se `useNews` estiver carregando por mais de 10 segundos, forcar renderizacao com dados vazios
-- Isso ja existe no `Index.tsx` (5s timeout), mas precisa existir tambem nos componentes internos
+```tsx
+const isRadioEnabled = useModuleEnabled('web_radio');
+const isTvEnabled = useModuleEnabled('web_tv');
+
+// Se ambos desativados, nao mostrar widget
+if (!isRadioEnabled && !isTvEnabled) return null;
+
+// Dentro do grid, renderizar condicionalmente cada secao
+{isTvEnabled && (/* TV section */)}
+{isRadioEnabled && (/* Radio section */)}
+```
+
+### 3. `HomeVideoBlock.tsx` — verificar modulo (seguranca extra)
+
+Adicionar verificacao `useModuleEnabled('web_tv')` como fallback de seguranca, retornando `null` se desativado. Isso protege mesmo se o `moduleKey` no banco nao estiver configurado.
 
 ---
 
@@ -90,13 +59,12 @@ Adicionar timeout de seguranca nos hooks de dados para evitar loading infinito:
 
 | Arquivo | Alteracao |
 |---|---|
-| `src/hooks/useNews.ts` | Otimizar N+1 queries para batch queries (3 queries no total) |
-| Migracao SQL | Adicionar politica RLS publica para `profiles` |
-| `src/components/home/HeroSection.tsx` | Timeout de seguranca no loading |
-| `src/components/home/LatestNewsList.tsx` | Timeout de seguranca no loading |
+| Migracao SQL | Adicionar `moduleKey: "web_tv"` na secao `video_block` do template |
+| `src/components/home/HomeVideoBlock.tsx` | Adicionar guard `useModuleEnabled('web_tv')` |
+| `src/components/home/LiveBroadcastWidget.tsx` | Renderizar TV/Radio condicionalmente baseado nos modulos |
 
-## Impacto esperado
+## Impacto
 
-- Carregamento da homepage: de 8+ segundos para menos de 1 segundo
-- Funciona identicamente para usuarios logados e anonimos
-- Sem alteracoes na estrutura de dados ou arquitetura
+- Desativar Web TV no dashboard remove imediatamente o player da homepage
+- Desativar Web Radio remove a secao de radio do widget
+- Sem alteracao na arquitetura ou em outros componentes
