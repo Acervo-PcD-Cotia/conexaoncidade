@@ -21,31 +21,24 @@ export interface NewsItem {
   category_id: string | null;
   author_id: string | null;
   source: string | null;
-  // Editor fields
   editor_id: string | null;
   editor_name: string | null;
-  // Audio fields
   audio_url: string | null;
   audio_status: string | null;
   audio_duration_seconds: number | null;
-  // Summary fields
   summary_short: string | null;
   summary_medium: string | null;
   ai_summary_bullets: string[] | null;
   ai_summary_generated_at: string | null;
   transcript_text?: string | null;
-  // Podcast fields
   podcast_enabled?: boolean | null;
   podcast_status?: string | null;
   podcast_audio_url?: string | null;
   spotify_url?: string | null;
-  // Display updated timestamp
   updated_at_display?: string | null;
-  // Meta fields
   meta_title: string | null;
   meta_description: string | null;
   og_image_url: string | null;
-  // Gallery images
   gallery_urls?: string[] | null;
   category?: {
     id: string;
@@ -70,6 +63,57 @@ export interface NewsItem {
   }>;
 }
 
+// ── Batch helpers ──────────────────────────────────────────────
+// Fetch all authors for a list of news items in a single query
+async function batchFetchAuthors(items: any[]) {
+  const authorIds = [...new Set(items.map(n => n.author_id).filter(Boolean))];
+  if (authorIds.length === 0) return new Map();
+
+  const { data: authors } = await supabase
+    .from('profiles')
+    .select('id, full_name, avatar_url, bio')
+    .in('id', authorIds);
+
+  return new Map((authors || []).map(a => [a.id, a]));
+}
+
+// Fetch all tags for a list of news items in a single query
+async function batchFetchTags(items: any[]) {
+  const newsIds = items.map(n => n.id);
+  if (newsIds.length === 0) return new Map<string, any[]>();
+
+  const { data: allTags } = await supabase
+    .from('news_tags')
+    .select('news_id, tag:tags(id, name, slug)')
+    .in('news_id', newsIds);
+
+  const tagsMap = new Map<string, any[]>();
+  (allTags || []).forEach((t: any) => {
+    if (!t.tag) return;
+    if (!tagsMap.has(t.news_id)) tagsMap.set(t.news_id, []);
+    tagsMap.get(t.news_id)!.push(t.tag);
+  });
+  return tagsMap;
+}
+
+// Enrich news items with batch-fetched authors and tags
+async function enrichNewsItems(items: any[], opts?: { authors?: boolean; tags?: boolean }): Promise<NewsItem[]> {
+  const fetchAuthors = opts?.authors !== false;
+  const fetchTags = opts?.tags !== false;
+
+  const [authorsMap, tagsMap] = await Promise.all([
+    fetchAuthors ? batchFetchAuthors(items) : Promise.resolve(new Map()),
+    fetchTags ? batchFetchTags(items) : Promise.resolve(new Map<string, any[]>()),
+  ]);
+
+  return items.map(item => ({
+    ...item,
+    author: fetchAuthors ? (authorsMap.get(item.author_id) || null) : null,
+    tags: fetchTags ? (tagsMap.get(item.id) || []) : [],
+  })) as NewsItem[];
+}
+
+// ── Hooks ──────────────────────────────────────────────────────
 export function useNews(limit?: number) {
   return useQuery({
     queryKey: ['news', limit],
@@ -89,35 +133,9 @@ export function useNews(limit?: number) {
       }
 
       const { data, error } = await query;
-
       if (error) throw error;
-      
-      // Fetch authors and tags separately
-      const newsWithDetails = await Promise.all(
-        (data || []).map(async (item) => {
-          let author = null;
-          if (item.author_id) {
-            const { data: authorData } = await supabase
-              .from('profiles')
-              .select('id, full_name, avatar_url, bio')
-              .eq('id', item.author_id)
-              .maybeSingle();
-            author = authorData;
-          }
-          
-          // Fetch tags for city detection
-          const { data: tagsData } = await supabase
-            .from('news_tags')
-            .select('tag:tags(id, name, slug)')
-            .eq('news_id', item.id);
-          
-          const tags = tagsData?.map((t) => t.tag).filter(Boolean) || [];
-          
-          return { ...item, author, tags } as NewsItem;
-        })
-      );
-      
-      return newsWithDetails;
+
+      return enrichNewsItems(data || []);
     },
   });
 }
@@ -138,7 +156,6 @@ export function useNewsById(id: string) {
       if (error) throw error;
       if (!data) return null;
       
-      // Fetch author separately
       let author = null;
       if (data.author_id) {
         const { data: authorData } = await supabase
@@ -180,48 +197,23 @@ export function useNewsBySlug(slug: string) {
         return null;
       }
       
-      // Fetch author separately
-      let author = null;
-      if (data.author_id) {
-        const { data: authorData, error: authorError } = await supabase
-          .from('profiles')
-          .select('id, full_name, avatar_url, bio')
-          .eq('id', data.author_id)
-          .maybeSingle();
-        
-        if (authorError) {
-          console.warn('[useNewsBySlug] Erro ao buscar autor:', authorError);
-        }
-        author = authorData;
-      }
+      // Fetch author and editor in parallel
+      const [authorResult, editorResult, tagsResult] = await Promise.all([
+        data.author_id
+          ? supabase.from('profiles').select('id, full_name, avatar_url, bio').eq('id', data.author_id).maybeSingle()
+          : Promise.resolve({ data: null, error: null }),
+        data.editor_id
+          ? supabase.from('profiles').select('id, full_name').eq('id', data.editor_id).maybeSingle()
+          : Promise.resolve({ data: null, error: null }),
+        supabase.from('news_tags').select('tag:tags(id, name, slug)').eq('news_id', data.id),
+      ]);
 
-      // Fetch editor separately
-      let editor = null;
-      if (data.editor_id) {
-        const { data: editorData, error: editorError } = await supabase
-          .from('profiles')
-          .select('id, full_name')
-          .eq('id', data.editor_id)
-          .maybeSingle();
-        
-        if (editorError) {
-          console.warn('[useNewsBySlug] Erro ao buscar editor:', editorError);
-        }
-        editor = editorData;
-      }
+      if (authorResult.error) console.warn('[useNewsBySlug] Erro ao buscar autor:', authorResult.error);
+      if (editorResult.error) console.warn('[useNewsBySlug] Erro ao buscar editor:', editorResult.error);
+      if (tagsResult.error) console.warn('[useNewsBySlug] Erro ao buscar tags:', tagsResult.error);
 
-      // Fetch tags separately
-      const { data: tagsData, error: tagsError } = await supabase
-        .from('news_tags')
-        .select('tag:tags(id, name, slug)')
-        .eq('news_id', data.id);
-
-      if (tagsError) {
-        console.warn('[useNewsBySlug] Erro ao buscar tags:', tagsError);
-      }
-
-      const tags = tagsData?.map((t) => t.tag).filter(Boolean) || [];
-      return { ...data, author, editor, tags } as NewsItem;
+      const tags = (tagsResult.data || []).map((t: any) => t.tag).filter(Boolean);
+      return { ...data, author: authorResult.data, editor: editorResult.data, tags } as NewsItem;
     },
     enabled: !!slug,
   });
@@ -231,7 +223,6 @@ export function useNewsByCategory(categorySlug: string, limit?: number) {
   return useQuery({
     queryKey: ['news', 'category', categorySlug, limit],
     queryFn: async () => {
-      // First get category id
       const { data: category } = await supabase
         .from('categories')
         .select('id')
@@ -256,35 +247,9 @@ export function useNewsByCategory(categorySlug: string, limit?: number) {
       }
 
       const { data, error } = await query;
-
       if (error) throw error;
-      
-      // Fetch authors and tags separately
-      const newsWithDetails = await Promise.all(
-        (data || []).map(async (item) => {
-          let author = null;
-          if (item.author_id) {
-            const { data: authorData } = await supabase
-              .from('profiles')
-              .select('id, full_name, avatar_url, bio')
-              .eq('id', item.author_id)
-              .maybeSingle();
-            author = authorData;
-          }
-          
-          // Fetch tags for city detection
-          const { data: tagsData } = await supabase
-            .from('news_tags')
-            .select('tag:tags(id, name, slug)')
-            .eq('news_id', item.id);
-          
-          const tags = tagsData?.map((t) => t.tag).filter(Boolean) || [];
-          
-          return { ...item, author, tags } as NewsItem;
-        })
-      );
-      
-      return newsWithDetails;
+
+      return enrichNewsItems(data || []);
     },
     enabled: !!categorySlug,
   });
@@ -299,8 +264,7 @@ export function useRelatedNews(
   return useQuery({
     queryKey: ['news', 'related', newsId, categoryId, tagIds, limit],
     queryFn: async () => {
-      // Strategy: Try tags first, then category, then just latest news
-      let results: NewsItem[] = [];
+      let results: any[] = [];
 
       // 1. If we have tags, try to find news with matching tags
       if (tagIds && tagIds.length > 0) {
@@ -315,44 +279,25 @@ export function useRelatedNews(
           
           const { data: taggedNews } = await supabase
             .from('news')
-            .select(`
-              *,
-              category:categories(id, name, slug, color)
-            `)
+            .select(`*, category:categories(id, name, slug, color)`)
             .in('id', uniqueIds)
             .eq('status', 'published')
             .is('deleted_at', null)
             .order('published_at', { ascending: false })
             .limit(limit);
 
-          if (taggedNews) {
-            // Fetch tags for each news item
-            const newsWithTags = await Promise.all(
-              taggedNews.map(async (item) => {
-                const { data: tagsData } = await supabase
-                  .from('news_tags')
-                  .select('tag:tags(id, name, slug)')
-                  .eq('news_id', item.id);
-                const tags = tagsData?.map((t) => t.tag).filter(Boolean) || [];
-                return { ...item, tags } as NewsItem;
-              })
-            );
-            results = newsWithTags;
-          }
+          if (taggedNews) results = taggedNews;
         }
       }
 
-      // 2. If not enough from tags, fill with category news
+      // 2. Fill with category news
       if (results.length < limit && categoryId) {
         const existingIds = results.map(r => r.id);
         const needed = limit - results.length;
 
         const { data: categoryNews } = await supabase
           .from('news')
-          .select(`
-            *,
-            category:categories(id, name, slug, color)
-          `)
+          .select(`*, category:categories(id, name, slug, color)`)
           .eq('category_id', categoryId)
           .eq('status', 'published')
           .is('deleted_at', null)
@@ -361,33 +306,17 @@ export function useRelatedNews(
           .order('published_at', { ascending: false })
           .limit(needed);
 
-        if (categoryNews) {
-          // Fetch tags for each news item
-          const newsWithTags = await Promise.all(
-            categoryNews.map(async (item) => {
-              const { data: tagsData } = await supabase
-                .from('news_tags')
-                .select('tag:tags(id, name, slug)')
-                .eq('news_id', item.id);
-              const tags = tagsData?.map((t) => t.tag).filter(Boolean) || [];
-              return { ...item, tags } as NewsItem;
-            })
-          );
-          results = [...results, ...newsWithTags];
-        }
+        if (categoryNews) results = [...results, ...categoryNews];
       }
 
-      // 3. If still not enough, fill with latest news
+      // 3. Fill with latest news
       if (results.length < limit) {
         const existingIds = results.map(r => r.id);
         const needed = limit - results.length;
 
         const { data: latestNews } = await supabase
           .from('news')
-          .select(`
-            *,
-            category:categories(id, name, slug, color)
-          `)
+          .select(`*, category:categories(id, name, slug, color)`)
           .eq('status', 'published')
           .is('deleted_at', null)
           .neq('id', newsId)
@@ -395,23 +324,11 @@ export function useRelatedNews(
           .order('published_at', { ascending: false })
           .limit(needed);
 
-        if (latestNews) {
-          // Fetch tags for each news item
-          const newsWithTags = await Promise.all(
-            latestNews.map(async (item) => {
-              const { data: tagsData } = await supabase
-                .from('news_tags')
-                .select('tag:tags(id, name, slug)')
-                .eq('news_id', item.id);
-              const tags = tagsData?.map((t) => t.tag).filter(Boolean) || [];
-              return { ...item, tags } as NewsItem;
-            })
-          );
-          results = [...results, ...newsWithTags];
-        }
+        if (latestNews) results = [...results, ...latestNews];
       }
 
-      return results.slice(0, limit);
+      const enriched = await enrichNewsItems(results.slice(0, limit), { authors: false });
+      return enriched;
     },
     enabled: !!newsId,
   });
@@ -434,21 +351,8 @@ export function useFeaturedNews(limit = 5) {
         .limit(limit);
 
       if (error) throw error;
-      
-      // Fetch tags for city detection
-      const newsWithTags = await Promise.all(
-        (data || []).map(async (item) => {
-          const { data: tagsData } = await supabase
-            .from('news_tags')
-            .select('tag:tags(id, name, slug)')
-            .eq('news_id', item.id);
-          
-          const tags = tagsData?.map((t) => t.tag).filter(Boolean) || [];
-          return { ...item, tags } as NewsItem;
-        })
-      );
-      
-      return newsWithTags;
+
+      return enrichNewsItems(data || [], { authors: false });
     },
   });
 }
@@ -469,27 +373,13 @@ export function useMostReadNews(limit = 10) {
         .limit(limit);
 
       if (error) throw error;
-      
-      // Fetch tags for city detection
-      const newsWithTags = await Promise.all(
-        (data || []).map(async (item) => {
-          const { data: tagsData } = await supabase
-            .from('news_tags')
-            .select('tag:tags(id, name, slug)')
-            .eq('news_id', item.id);
-          
-          const tags = tagsData?.map((t) => t.tag).filter(Boolean) || [];
-          return { ...item, tags } as NewsItem;
-        })
-      );
-      
-      return newsWithTags;
+
+      return enrichNewsItems(data || [], { authors: false });
     },
   });
 }
 
 export async function incrementViewCount(newsId: string) {
-  // Fetch current count and increment
   const { data } = await supabase
     .from('news')
     .select('view_count')
