@@ -1,67 +1,102 @@
 
-# Correções: Toggles de Streaming e Faixa do Rádio
+# Correcao: Tela em branco ao estar logado
 
-## Problema 1: TV Web "não funciona" ao desativar
+## Causa raiz
 
-**Diagnóstico**: A rota `/tv` está corretamente protegida por `RouteModuleGuard` e redireciona para a home quando desativada. Porém, o link "Web Live" no menu do Header aponta para `/web-radio-tv` (uma página comercial/landing page), que NÃO está protegida. Além disso, os links "Web Live" no Header (mobile e desktop) não estão envolvidos em `ModuleGuard`, então continuam visíveis mesmo com rádio e TV desativados.
+O hook `useNews` (usado por HeroSection, LatestNewsList, etc.) faz **queries N+1**: para cada noticia (12+), dispara 2 queries individuais (1 para `profiles`, 1 para `news_tags`). Isso gera 24+ requisicoes HTTP sequenciais que levam 8+ segundos.
 
-**Solução**: 
-- Envolver os links "Web Live" no Header (mobile e desktop) com lógica condicional: mostrar apenas quando `web_radio` OU `web_tv` estiverem ativos
-- Proteger a rota `/web-radio-tv` com guard que verifica se pelo menos um dos módulos (web_radio ou web_tv) está ativo
+Para usuarios autenticados, queries adicionais de tenant/config agravam o atraso. A tabela `profiles` nao tem politica RLS para `anon`, entao as queries de autor falham silenciosamente, mas a cascata de requisicoes trava o carregamento.
 
-**Arquivo**: `src/components/layout/Header.tsx`
-- Importar `useModuleEnabled` ou usar `ModuleGuard` 
-- Envolver o link "Web Live" mobile (linhas ~139-147) com condição
-- Envolver o link "Web Live" desktop (linhas ~364-372) com condição
+## Solucao
 
-**Arquivo**: `src/App.tsx`
-- Não é necessário proteger `/web-radio-tv` pois é uma página comercial (venda do serviço). Mas o link no Header deve sumir.
+### 1. Otimizar `useNews` — eliminar N+1 queries
+
+**Arquivo**: `src/hooks/useNews.ts`
+
+**Antes** (N+1 — 24+ queries):
+```ts
+const newsWithDetails = await Promise.all(
+  (data || []).map(async (item) => {
+    // Query individual para cada autor
+    const { data: authorData } = await supabase
+      .from('profiles').select('...').eq('id', item.author_id).maybeSingle();
+    // Query individual para cada tag  
+    const { data: tagsData } = await supabase
+      .from('news_tags').select('...').eq('news_id', item.id);
+    return { ...item, author: authorData, tags };
+  })
+);
+```
+
+**Depois** (3 queries no total):
+```ts
+// 1. Buscar noticias (ja feito)
+// 2. Buscar TODOS os autores de uma vez
+const authorIds = [...new Set(data.map(n => n.author_id).filter(Boolean))];
+const { data: authors } = await supabase
+  .from('profiles')
+  .select('id, full_name, avatar_url, bio')
+  .in('id', authorIds);
+const authorsMap = new Map(authors?.map(a => [a.id, a]) || []);
+
+// 3. Buscar TODAS as tags de uma vez
+const newsIds = data.map(n => n.id);
+const { data: allTags } = await supabase
+  .from('news_tags')
+  .select('news_id, tag:tags(id, name, slug)')
+  .in('news_id', newsIds);
+const tagsMap = new Map();
+allTags?.forEach(t => {
+  if (!tagsMap.has(t.news_id)) tagsMap.set(t.news_id, []);
+  tagsMap.get(t.news_id).push(t.tag);
+});
+
+// Montar resultado sem queries extras
+const newsWithDetails = data.map(item => ({
+  ...item,
+  author: authorsMap.get(item.author_id) || null,
+  tags: tagsMap.get(item.id) || [],
+}));
+```
+
+Aplicar a mesma otimizacao nas funcoes: `useNews`, `useFeaturedNews`, `useNewsByCategory`, e qualquer outra que faca o mesmo padrao N+1.
+
+### 2. Adicionar politica RLS publica na tabela `profiles`
+
+A tabela `profiles` so tem politica SELECT para `authenticated`. Usuarios anonimos (visitantes publicos) nao conseguem ler perfis de autores.
+
+**Migracao SQL**:
+```sql
+CREATE POLICY "Perfis publicos sao visiveis para todos"
+  ON public.profiles
+  FOR SELECT
+  TO public
+  USING (true);
+```
+
+Isso permite que visitantes anonimos vejam nomes e avatares dos autores nas noticias.
+
+### 3. Adicionar tratamento de erro robusto nos componentes
+
+**Arquivos**: `src/components/home/HeroSection.tsx`, `src/components/home/LatestNewsList.tsx`
+
+Adicionar timeout de seguranca nos hooks de dados para evitar loading infinito:
+- Se `useNews` estiver carregando por mais de 10 segundos, forcar renderizacao com dados vazios
+- Isso ja existe no `Index.tsx` (5s timeout), mas precisa existir tambem nos componentes internos
 
 ---
 
-## Problema 2: Manter faixa laranja vazia ao desativar rádio
+## Resumo de alteracoes
 
-**Diagnóstico atual**: O `ModuleGuard` remove completamente o `TopAudioPlayer` quando `web_radio` está desativado. O usuário quer manter a faixa laranja (barra sticky no topo) visível, porém vazia (sem controles do rádio).
-
-**Solução**: 
-- Em `src/components/layout/PublicLayout.tsx`: remover o `ModuleGuard` do `TopAudioPlayer`
-- Em `src/components/layout/TopAudioPlayer.tsx`: usar `useModuleEnabled('web_radio')` internamente e, quando desativado, renderizar apenas a barra laranja vazia (sem controles, sem nome da rádio)
-
-**Arquivo**: `src/components/layout/PublicLayout.tsx`
-- Remover o `<ModuleGuard module="web_radio">` que envolve o `<TopAudioPlayer />`
-
-**Arquivo**: `src/components/layout/TopAudioPlayer.tsx`
-- Importar `useModuleEnabled`
-- Se `web_radio` desativado: renderizar apenas `<div className="sticky top-0 z-50 h-12 bg-gradient-to-r from-primary via-primary/95 to-primary ...">` vazio
-- Se ativado: renderizar normalmente (comportamento atual)
-
----
-
-## Problema 3: Menu Publicidade e Monetização
-
-**Diagnóstico**: Todos os 6 itens do menu foram testados no navegador:
-- Campanhas 360 (`/admin/campaigns/unified`) — OK, carrega normalmente
-- Comprovantes (`/admin/comprovantes`) — OK, carrega normalmente
-- Anúncios (`/admin/ads`) — OK, carrega normalmente
-- Super Banners (`/admin/banners`) — OK, carrega normalmente
-- Publidoor (`/admin/publidoor`) — OK, carrega normalmente
-- Parceiros (`/admin/partners`) — OK, carrega normalmente
-
-Nenhum erro de JavaScript relacionado a estas páginas. O único erro encontrado é de CORS com a API de cotações (`economia.awesomeapi.com.br`), que não está relacionado ao menu de publicidade.
-
-**Resultado**: Nenhuma correção necessária no menu Publicidade e Monetização.
-
----
-
-## Resumo de alterações
-
-| Arquivo | Alteração |
+| Arquivo | Alteracao |
 |---|---|
-| `src/components/layout/Header.tsx` | Ocultar links "Web Live" quando ambos web_radio e web_tv estão desativados |
-| `src/components/layout/PublicLayout.tsx` | Remover `ModuleGuard` do `TopAudioPlayer` |
-| `src/components/layout/TopAudioPlayer.tsx` | Renderizar barra vazia quando web_radio desativado |
+| `src/hooks/useNews.ts` | Otimizar N+1 queries para batch queries (3 queries no total) |
+| Migracao SQL | Adicionar politica RLS publica para `profiles` |
+| `src/components/home/HeroSection.tsx` | Timeout de seguranca no loading |
+| `src/components/home/LatestNewsList.tsx` | Timeout de seguranca no loading |
 
-## Sem alterações em
-- Banco de dados / migrações
-- Rotas do App.tsx (já estão protegidas corretamente)
-- Páginas de Publicidade e Monetização (funcionando)
+## Impacto esperado
+
+- Carregamento da homepage: de 8+ segundos para menos de 1 segundo
+- Funciona identicamente para usuarios logados e anonimos
+- Sem alteracoes na estrutura de dados ou arquitetura
