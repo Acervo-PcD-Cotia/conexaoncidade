@@ -1,3 +1,4 @@
+import React from "react";
 import { Link } from "react-router-dom";
 import { Clock, Volume2, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +29,17 @@ export function HeroSection() {
   const { data: featuredNews, isLoading: loadingFeatured, error: errorFeatured } = useFeaturedNews(6);
   const { data: latestNews, isLoading: loadingLatest, error: errorLatest } = useNews(10);
 
-  const isLoading = loadingFeatured || loadingLatest;
+  // Safety timeout — avoid infinite loading
+  const [timedOut, setTimedOut] = React.useState(false);
+  React.useEffect(() => {
+    if (loadingFeatured || loadingLatest) {
+      const t = setTimeout(() => setTimedOut(true), 10000);
+      return () => clearTimeout(t);
+    }
+    setTimedOut(false);
+  }, [loadingFeatured, loadingLatest]);
+
+  const isLoading = (loadingFeatured || loadingLatest) && !timedOut;
   const hasError = errorFeatured || errorLatest;
 
   if (hasError) {

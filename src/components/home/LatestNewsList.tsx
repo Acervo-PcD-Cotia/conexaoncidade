@@ -1,3 +1,4 @@
+import React from "react";
 import { Link } from "react-router-dom";
 import { Clock, RefreshCw, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,19 @@ function formatTimeAgo(date: string) {
 }
 
 export function LatestNewsList() {
-  const { data: news, isLoading, error } = useNews(12);
+  const { data: news, isLoading: rawLoading, error } = useNews(12);
+
+  // Safety timeout — avoid infinite loading
+  const [timedOut, setTimedOut] = React.useState(false);
+  React.useEffect(() => {
+    if (rawLoading) {
+      const t = setTimeout(() => setTimedOut(true), 10000);
+      return () => clearTimeout(t);
+    }
+    setTimedOut(false);
+  }, [rawLoading]);
+
+  const isLoading = rawLoading && !timedOut;
 
   if (error) {
     console.error('[LatestNewsList] Erro ao carregar notícias:', error);
