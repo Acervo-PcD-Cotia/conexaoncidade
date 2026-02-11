@@ -1,135 +1,72 @@
 
 
-# Plano de Correcoes Completas - Modulo Publicidade e Monetizacao
+# Fix definitivo do Error #185 - Fontes remanescentes
 
-Este e um plano abrangente dividido em fases, priorizando os erros criticos primeiro.
+## Diagnostico
 
----
+Apos revisar todos os arquivos na arvore de renderizacao de `/admin/campaigns/new`, identifiquei **2 fontes remanescentes** que podem causar o Error #185:
 
-## Fase 1: Correcao Critica - React Error #185 (Campanhas 360)
+### Fonte 1: `AdImageUploader.tsx` - Collapsible com CollapsibleTrigger asChild
 
-O `ChannelSelector.tsx` ja foi corrigido (Collapsible removido, usando renderizacao condicional). Porem, o erro pode persistir no site publicado se o codigo nao foi publicado. Alem disso, ha um problema no `MaintenanceGuard` que gera warnings de refs no console.
+O `AdImageUploader` ainda usa `Collapsible` + `CollapsibleTrigger asChild` (linhas 217-247). Este componente e renderizado dentro de **5 formularios de canal** (Ads, Publidoor, WebStories, Exit-Intent, Login Panel). Apesar de ter `onOpenChange`, o padrao `CollapsibleTrigger asChild` com `Button` pode causar conflito de eventos (duplo toggle), gerando oscilacao de estado.
 
-**Arquivos a alterar:**
+### Fonte 2: `BatchAssetUploader.tsx` - Select com valor vazio
 
-- `src/components/maintenance/MaintenanceGuard.tsx` - Envolver com `React.forwardRef` para eliminar o warning "Function components cannot be given refs"
-- Verificar se o `ChannelSelector.tsx` esta correto (ja esta com renderizacao condicional - confirmar que funciona)
+Nas linhas 348 e 370, o componente `Select` recebe `value={asset.selectedSlot?.slotKey || ''}` - string vazia que causa crash no Radix Select.
 
----
+### Fonte 3: `PushChannelForm.tsx` - Select com valor default inconsistente
 
-## Fase 2: Validacoes e Estados Globais
+O fallback `'subscribers'` nao corresponde a nenhum valor possivel vindo do `CampaignForm` (que usa `'all'`). Embora nao cause o crash, e uma inconsistencia.
 
-**2.1 - CampaignForm.tsx** - Adicionar guards de seguranca:
-- Adicionar `if (!selectedChannels) return null` antes de renderizar ChannelSelector
-- Garantir que `initialData?.enabledChannels` nunca seja `undefined`
+## Solucao
 
-**2.2 - CampaignEditor.tsx** - Adicionar fallback seguro:
-- Usar optional chaining consistente: `campaign?.channels?.filter(...)` 
-- Adicionar estado de loading padronizado
+### 1. `AdImageUploader.tsx` - Remover Collapsible, usar renderizacao condicional
 
-**2.3 - NewsletterChannelForm.tsx** - Ja corrigido (valores default `'all'` e `'default'`)
+Substituir:
+```tsx
+<Collapsible open={showUrlOption} onOpenChange={setShowUrlOption}>
+  <CollapsibleTrigger asChild>
+    <Button ...>
+  </CollapsibleTrigger>
+  <CollapsibleContent>
+    ...
+  </CollapsibleContent>
+</Collapsible>
+```
 
----
+Por:
+```tsx
+<Button onClick={() => setShowUrlOption(!showUrlOption)} ...>
+  ...
+</Button>
+{showUrlOption && (
+  <div className="mt-2">
+    ...
+  </div>
+)}
+```
 
-## Fase 3: Super Banners - Metricas, Heatmap, Alertas
+Remover o import de `Collapsible`, `CollapsibleContent`, `CollapsibleTrigger`.
 
-**3.1 - BannerMetrics.tsx:**
-- Corrigir calculo CTR: garantir `CTR = (cliques / impressoes) * 100` com divisao segura (evitar divisao por zero)
-- Adicionar loading state com Skeleton
+### 2. `BatchAssetUploader.tsx` - Corrigir valor vazio no Select
 
-**3.2 - BannerHeatmap.tsx:**
-- Adicionar guard `if (!selectedBannerId) return` com mensagem "Selecione um banner"
-- Corrigir renderizacao condicional do grid
+Substituir `value={asset.selectedSlot?.slotKey || ''}` por `value={asset.selectedSlot?.slotKey || undefined}` em ambas as instancias do Select (linhas 348 e 370), e adicionar `placeholder` adequado.
 
-**3.3 - BannerAlerts.tsx:**
-- Alertas ja usam tabelas `banner_alerts_config` e `banner_alerts_log` - confirmar persistencia
-- Adicionar tratamento de erro nos mutations
+### 3. `PushChannelForm.tsx` - Corrigir valor default do Select
 
----
+Mudar de `value={config?.target_audience || 'subscribers'}` para `value={config?.target_audience || 'all'}` para consistencia com o default do CampaignForm.
 
-## Fase 4: Comprovantes - Persistencia e Validacao
+## Arquivos a alterar
 
-**4.1 - ProofDataForm.tsx:**
-- Validacao Zod ja existe e e solida (client_name, campaign_name, insertion_order, site_name, site_domain, start_date, end_date obrigatorios)
-- `internal_code` ja e opcional (salva como `undefined`/`null`)
-- Adicionar autosave draft com debounce
-
-**4.2 - CampaignProofEditor.tsx:**
-- Adicionar tratamento de erro quando `proof` nao carrega
-- Garantir navegacao correta entre abas
-
----
-
-## Fase 5: Anuncios (Ads.tsx) - Upload e Validacao
-
-**5.1 - Ads.tsx:**
-- Adicionar validacao de tipo de arquivo (JPG, PNG, WEBP)
-- Adicionar limite de 2MB com mensagem
-- Adicionar validacao de URL com regex `^https?:\/\/.+`
-- Garantir vinculo com `campaign_id` via FK
-
----
-
-## Fase 6: Publidoor - Metricas e Preview
-
-**6.1 - Corrigir contadores** nos dashboards de metricas
-**6.2 - Corrigir preview em tempo real** com `useEffect` sincronizado
-**6.3 - Garantir persistencia de agendamentos** na tabela `publidoor_schedules`
-
----
-
-## Fase 7: Padronizacao UX/UI
-
-- Botoes primarios em laranja (ja configurado no tema)
-- Estados visuais: Verde (Ativo), Cinza (Rascunho), Vermelho (Erro) - ja parcialmente implementado
-- Skeleton loading em todos os modulos
-- Toast notifications (ja usa `sonner`)
-- Dialogo de confirmacao antes de deletar (adicionar `AlertDialog` nos botoes de delete)
-
----
-
-## Fase 8: Logs e Error Boundary
-
-**8.1 - AdminErrorBoundary.tsx** - Ja existe e funciona bem
-**8.2 - Criar servico de logging:**
-- `src/lib/logService.ts` - Centralizar logs com `console.error` -> tabela `system_logs`
-- Criar tabela `system_logs` com colunas: `modulo`, `erro`, `usuario_id`, `timestamp`, `metadata`
-
----
-
-## Detalhes Tecnicos
-
-### Arquivos que serao criados:
-| Arquivo | Descricao |
-|---|---|
-| `src/lib/logService.ts` | Servico centralizado de logging |
-
-### Arquivos que serao modificados:
 | Arquivo | Alteracao |
 |---|---|
-| `MaintenanceGuard.tsx` | Adicionar forwardRef |
-| `CampaignForm.tsx` | Guards de seguranca nos estados |
-| `CampaignEditor.tsx` | Optional chaining + loading state |
-| `BannerMetrics.tsx` | CTR seguro + skeleton loading |
-| `BannerHeatmap.tsx` | Guard de banner selecionado |
-| `BannerAlerts.tsx` | Tratamento de erro nos mutations |
-| `ProofDataForm.tsx` | Autosave draft |
-| `CampaignProofEditor.tsx` | Tratamento de erro |
-| `Ads.tsx` | Validacoes de upload e URL |
-| Publidoor pages | Correcoes de metricas e preview |
+| `AdImageUploader.tsx` | Remover Collapsible, usar div + condicional |
+| `BatchAssetUploader.tsx` | Corrigir valor vazio nos Select |
+| `PushChannelForm.tsx` | Corrigir valor default do Select |
 
-### Migracao de banco necessaria:
-- Criar tabela `system_logs` para logging centralizado
+## Por que isso resolve
 
-### Ordem de execucao:
-1. Fase 1 (MaintenanceGuard + confirmar ChannelSelector)
-2. Fase 2 (Guards e validacoes)
-3. Fase 3 (Super Banners)
-4. Fase 4 (Comprovantes)
-5. Fase 5 (Anuncios)
-6. Fase 6 (Publidoor)
-7. Fase 7 (UX/UI)
-8. Fase 8 (Logs)
-
-**Nota:** Devido ao tamanho deste trabalho, a implementacao sera feita em etapas. Cada fase sera implementada e testada antes de avancar para a proxima.
+1. Elimina o **ultimo** uso de Collapsible na arvore de componentes do formulario de campanhas
+2. Remove todas as strings vazias como valor de Select (causa conhecida de crash no Radix)
+3. Garante consistencia de valores default entre componentes
 
