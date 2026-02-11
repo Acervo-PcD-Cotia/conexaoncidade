@@ -1,6 +1,6 @@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
 import { ChevronDown, Layout, Megaphone, Smartphone, Bell, Mail, DoorOpen, LogIn, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -286,7 +286,6 @@ export function ChannelSelector({
               <Collapsible 
                 key={channel.type} 
                 open={isSelected(channel.type)}
-                onOpenChange={() => toggleChannel(channel.type)}
                 className={cn(
                   "border rounded-lg transition-colors",
                   isSelected(channel.type) 
@@ -294,33 +293,32 @@ export function ChannelSelector({
                     : "border-border"
                 )}
               >
-                <CollapsibleTrigger asChild>
-                  <div
-                    className="flex items-start gap-3 p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-                  >
-                    <Checkbox
-                      checked={isSelected(channel.type)}
-                      className="mt-0.5 pointer-events-none"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        {channel.icon}
-                        <span className="font-medium">{channel.label}</span>
-                        {channel.requiresConfirmation && (
-                          <Badge variant="outline" className="text-xs">
-                            Requer confirmação
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-0.5">
-                        {channel.description}
-                      </p>
+                <div
+                  className="flex items-start gap-3 p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+                  onClick={() => toggleChannel(channel.type)}
+                >
+                  <Checkbox
+                    checked={isSelected(channel.type)}
+                    className="mt-0.5 pointer-events-none"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      {channel.icon}
+                      <span className="font-medium">{channel.label}</span>
+                      {channel.requiresConfirmation && (
+                        <Badge variant="outline" className="text-xs">
+                          Requer confirmação
+                        </Badge>
+                      )}
                     </div>
-                    {isSelected(channel.type) && (
-                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                    )}
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      {channel.description}
+                    </p>
                   </div>
-                </CollapsibleTrigger>
+                  {isSelected(channel.type) && (
+                    <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                  )}
+                </div>
                 
                 <CollapsibleContent>
                   <div className="px-4 pb-4 pt-2 border-t border-border/50">
