@@ -1,72 +1,190 @@
 
+# Correcao Definitiva: React Error #185 + Estabilizacao Campanhas 360
 
-# Fix definitivo do Error #185 - Fontes remanescentes
+## Diagnostico Completo (Auditoria do Codigo Atual)
 
-## Diagnostico
+Revisei todos os 12 arquivos na arvore de renderizacao de `/admin/campaigns/new`. Segue o status real de cada correcao anterior e os problemas remanescentes.
 
-Apos revisar todos os arquivos na arvore de renderizacao de `/admin/campaigns/new`, identifiquei **2 fontes remanescentes** que podem causar o Error #185:
+### Correcoes ja aplicadas e confirmadas no codigo
 
-### Fonte 1: `AdImageUploader.tsx` - Collapsible com CollapsibleTrigger asChild
+| Arquivo | Status | Detalhe |
+|---|---|---|
+| `ChannelSelector.tsx` | OK | Sem Collapsible, usa renderizacao condicional |
+| `AdImageUploader.tsx` | OK | Sem Collapsible, usa Button + condicional |
+| `PushChannelForm.tsx` | OK | Default `'all'` |
+| `NewsletterChannelForm.tsx` | OK | Defaults `'all'` e `'default'` |
+| `AdminErrorBoundary.tsx` | OK | Ja envolve todo o admin via AdminLayout |
+| `campaigns-unified.ts` | OK | `ChannelType` centralizado com type guard |
 
-O `AdImageUploader` ainda usa `Collapsible` + `CollapsibleTrigger asChild` (linhas 217-247). Este componente e renderizado dentro de **5 formularios de canal** (Ads, Publidoor, WebStories, Exit-Intent, Login Panel). Apesar de ter `onOpenChange`, o padrao `CollapsibleTrigger asChild` com `Button` pode causar conflito de eventos (duplo toggle), gerando oscilacao de estado.
+### Problemas remanescentes identificados
 
-### Fonte 2: `BatchAssetUploader.tsx` - Select com valor vazio
+**Problema 1: BatchAssetUploader - controlled/uncontrolled switch nos Selects**
 
-Nas linhas 348 e 370, o componente `Select` recebe `value={asset.selectedSlot?.slotKey || ''}` - string vazia que causa crash no Radix Select.
+Linhas 347-348 e 369-370 usam `value={asset.selectedSlot?.slotKey || undefined}`. Quando `selectedSlot` e `null`, value e `undefined` (modo uncontrolled). Quando um slot e atribuido, vira controlled. Essa alternancia e uma causa classica do Error #185. O fix anterior trocou `''` por `undefined`, mas o correto e nunca alternar entre controlled e uncontrolled.
 
-### Fonte 3: `PushChannelForm.tsx` - Select com valor default inconsistente
+**Problema 2: CampaignForm - keys em listas com index**
 
-O fallback `'subscribers'` nao corresponde a nenhum valor possivel vindo do `CampaignForm` (que usa `'all'`). Embora nao cause o crash, e uma inconsistencia.
+Linha 246: `validationErrors.map((error, idx) => <li key={idx}>)` usa index como key. Embora nao cause #185 diretamente, e uma ma pratica que pode causar reconciliacao incorreta.
 
-## Solucao
+**Problema 3: AdminErrorBoundary - nao envia para logService**
 
-### 1. `AdImageUploader.tsx` - Remover Collapsible, usar renderizacao condicional
+O `componentDidCatch` faz `console.error` mas nao persiste no `system_logs` via `logService`.
 
-Substituir:
+**Problema 4: MaintenanceGuard - sem forwardRef (warning no console)**
+
+Pode gerar warning "Function components cannot be given refs" dependendo do contexto de uso.
+
+---
+
+## Plano de Implementacao (por Task)
+
+### Task 0: Logs de diagnostico
+
+- Adicionar logging estruturado no `AdminErrorBoundary.componentDidCatch` usando `logService.error('campaigns_new', error)`
+- Isso garante que qualquer erro futuro nesta rota seja persistido com module/stack
+
+**Arquivo:** `src/components/admin/AdminErrorBoundary.tsx`
+
+### Task 1: Confirmar correcoes (validado)
+
+Todas as 3 correcoes anteriores estao confirmadas no codigo:
+- `AdImageUploader.tsx`: Collapsible removido (linha 217-244, usa Button + condicional)
+- `BatchAssetUploader.tsx`: `value={... || undefined}` (linhas 348, 370)
+- `PushChannelForm.tsx`: default `'all'` (linha 86)
+
+### Task 2: Eliminar controlled/uncontrolled switching
+
+**BatchAssetUploader.tsx** - O `Select` com `value={undefined}` cria alternancia controlled/uncontrolled. Fix:
+
+Quando `selectedSlot` e null, nao renderizar o Select pre-preenchido. Em vez disso, usar o Select sempre com um valor valido ou nao passar `value` (deixar sempre uncontrolled com `defaultValue`).
+
+A abordagem mais segura: separar os dois Selects em dois cenarios - quando ha `selectedSlot`, renderizar com `value` (controlled). Quando nao ha, renderizar sem `value` e com `placeholder` (uncontrolled).
+
+Na pratica, o fix mais simples e remover o prop `value` quando e `undefined`, deixando o Select sempre em modo uncontrolled com `onValueChange`:
+
 ```tsx
-<Collapsible open={showUrlOption} onOpenChange={setShowUrlOption}>
-  <CollapsibleTrigger asChild>
-    <Button ...>
-  </CollapsibleTrigger>
-  <CollapsibleContent>
-    ...
-  </CollapsibleContent>
-</Collapsible>
+// De:
+<Select value={asset.selectedSlot?.slotKey || undefined} onValueChange={...}>
+
+// Para:
+<Select
+  value={asset.selectedSlot?.slotKey ?? undefined}
+  onValueChange={...}
+  key={asset.selectedSlot?.slotKey ?? 'no-slot'}
+>
 ```
 
-Por:
+Usar `key` diferente forca o React a recriar o componente quando alterna entre "sem slot" e "com slot", evitando o switch controlled/uncontrolled.
+
+**Arquivos:** `src/components/admin/campaigns/BatchAssetUploader.tsx`
+
+### Task 3: Validar valores de Select
+
+Todos os Selects nos sub-formularios ja usam valores validos das opcoes:
+- `AdsChannelForm`: default `'home_top'` (existe em SLOT_OPTIONS)
+- `PublidoorChannelForm`: default `'narrativo'` (existe em TYPE_OPTIONS)
+- `ExitIntentChannelForm`: defaults `'banner'` e `'commercial'`
+- `LoginPanelChannelForm`: default `'publidoor'`
+- `NewsletterChannelForm`: defaults `'all'` e `'default'`
+- `PushChannelForm`: default `'all'`
+- `CampaignForm` status: default `'draft'`
+
+Nenhuma correcao necessaria aqui.
+
+### Task 4: Keys estaveis em listas
+
+- `CampaignForm.tsx` linha 246: trocar `key={idx}` por `key={error}` (cada mensagem e unica)
+- `BatchAssetUploader.tsx` linha 302: ja usa `key={asset.id}` - OK
+- `ChannelSelector.tsx` linhas 278, 284: ja usam `key={category}` e `key={channel.type}` - OK
+
+**Arquivo:** `src/components/admin/campaigns/CampaignForm.tsx`
+
+### Task 5: Tipos e enums centralizados
+
+Ja esta implementado. `ChannelType` esta centralizado em `src/types/campaigns-unified.ts` com:
+- `CHANNEL_TYPES` array constante
+- `isChannelType()` type guard
+- `normalizeChannels()` para sanitizar arrays
+- `toChannelType()` para cast seguro
+
+Nenhuma correcao necessaria.
+
+### Task 6: Estado inicial a prova de undefined
+
+`CampaignForm.tsx` ja inicializa todos os estados com defaults seguros (linhas 41-62, 66-88). Todos os configs usam `initialData?.x || {}` ou objetos com defaults explicitos.
+
+Nenhuma correcao necessaria.
+
+### Task 7: Guards de render
+
+`ChannelSelector.tsx` ja tem `safeRenderChannelForm()` com try-catch (linhas 186-197).
+`CampaignForm.tsx` ja tem defaults para arrays (`enabledChannels: []`, `assets: []`).
+`CampaignEditor.tsx` ja tem loading state e error state com guards.
+
+Uma melhoria: adicionar guard no `BatchAssetUploader` para lista vazia de assets.
+
+### Task 8: Error Boundary + logService
+
+Integrar `logService` no `AdminErrorBoundary.componentDidCatch` para persistir erros no banco.
+
+**Arquivo:** `src/components/admin/AdminErrorBoundary.tsx`
+
+---
+
+## Resumo de alteracoes
+
+| Arquivo | Alteracao | Task |
+|---|---|---|
+| `BatchAssetUploader.tsx` | Adicionar `key` dinamica nos Selects para evitar switch controlled/uncontrolled | 2 |
+| `CampaignForm.tsx` | Trocar `key={idx}` por `key={error}` na lista de validacao | 4 |
+| `AdminErrorBoundary.tsx` | Integrar `logService` no `componentDidCatch` | 0, 8 |
+
+### Detalhes tecnicos das alteracoes
+
+**BatchAssetUploader.tsx (2 pontos):**
 ```tsx
-<Button onClick={() => setShowUrlOption(!showUrlOption)} ...>
-  ...
-</Button>
-{showUrlOption && (
-  <div className="mt-2">
-    ...
-  </div>
-)}
+// Linha ~347: Adicionar key para forcar recriacao
+<Select
+  key={asset.selectedSlot?.slotKey ?? `fallback-${asset.id}`}
+  value={asset.selectedSlot?.slotKey ?? undefined}
+  onValueChange={(value) => changeSlot(asset.id, value)}
+>
+
+// Linha ~369: Mesmo padrao
+<Select
+  key={asset.selectedSlot?.slotKey ?? `fallback2-${asset.id}`}
+  value={asset.selectedSlot?.slotKey ?? undefined}
+  onValueChange={(value) => changeSlot(asset.id, value)}
+>
 ```
 
-Remover o import de `Collapsible`, `CollapsibleContent`, `CollapsibleTrigger`.
+**CampaignForm.tsx:**
+```tsx
+// Linha 246: Trocar key
+{validationErrors.map((error) => (
+  <li key={error}>{error}</li>
+))}
+```
 
-### 2. `BatchAssetUploader.tsx` - Corrigir valor vazio no Select
+**AdminErrorBoundary.tsx:**
+```tsx
+// No componentDidCatch, adicionar:
+import { logService } from '@/lib/logService';
 
-Substituir `value={asset.selectedSlot?.slotKey || ''}` por `value={asset.selectedSlot?.slotKey || undefined}` em ambas as instancias do Select (linhas 348 e 370), e adicionar `placeholder` adequado.
+componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  this.setState({ errorInfo });
+  console.error('[AdminErrorBoundary] Error caught:', { ... });
+  // Persistir no banco
+  logService.error('admin_error_boundary', error, {
+    componentStack: errorInfo.componentStack,
+    route: window.location.pathname,
+  });
+}
+```
 
-### 3. `PushChannelForm.tsx` - Corrigir valor default do Select
+### Resultado esperado
 
-Mudar de `value={config?.target_audience || 'subscribers'}` para `value={config?.target_audience || 'all'}` para consistencia com o default do CampaignForm.
-
-## Arquivos a alterar
-
-| Arquivo | Alteracao |
-|---|---|
-| `AdImageUploader.tsx` | Remover Collapsible, usar div + condicional |
-| `BatchAssetUploader.tsx` | Corrigir valor vazio nos Select |
-| `PushChannelForm.tsx` | Corrigir valor default do Select |
-
-## Por que isso resolve
-
-1. Elimina o **ultimo** uso de Collapsible na arvore de componentes do formulario de campanhas
-2. Remove todas as strings vazias como valor de Select (causa conhecida de crash no Radix)
-3. Garante consistencia de valores default entre componentes
-
+- Zero alternancia controlled/uncontrolled nos Selects
+- Keys estaveis em todas as listas
+- Erros persistidos no banco via logService
+- Error #185 eliminado na rota `/admin/campaigns/new`
