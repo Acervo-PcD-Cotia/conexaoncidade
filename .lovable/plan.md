@@ -1,102 +1,47 @@
 
-# Correcao: Formularios de canais crashing ao clicar
+# Fix: React Error #185 (Maximum update depth exceeded) na pagina de campanhas
 
-## Diagnostico
+## Causa raiz
 
-Apos analise extensiva do codigo, foram identificados **3 problemas** que podem causar crashes nos formularios de canais:
+O erro ocorre por um conflito de eventos entre `CollapsibleTrigger` e `onOpenChange` no componente `ChannelSelector.tsx`. Quando o `CollapsibleTrigger asChild` e clicado, ele dispara seu handler interno E o `onOpenChange` do `Collapsible`. O handler `toggleChannel` ignora o parametro booleano e faz toggle cego, o que pode criar uma oscilacao de estado (abrir-fechar-abrir infinitamente), atingindo o limite do React de 50 atualizacoes aninhadas.
 
-### Problema 1: Conflito Collapsible + onClick
-O `ChannelSelector` usa `CollapsibleTrigger asChild` envolvendo um `<div>` que tem seu proprio `onClick`. Isso causa DOIS handlers de click simultaneos: o do `onClick` do div (que chama `toggleChannel`) e o interno do `CollapsibleTrigger` (que tenta alternar o estado interno). Como o `Collapsible` e controlado (`open={...}`) mas **nao tem `onOpenChange`**, isso pode gerar comportamento inesperado ou erros dependendo da versao do Radix.
-
-### Problema 2: SelectItem com value=""
-Em `NewsletterChannelForm.tsx` (linha 85), existe:
-```tsx
-<SelectItem value="">Template padrao</SelectItem>
-```
-O Radix UI Select nao aceita valor vazio em `SelectItem` e lanca um erro de runtime.
-
-### Problema 3: Erro invisivel no Error Boundary
-O `AdminErrorBoundary` so mostra detalhes do erro em modo DEV (`import.meta.env.DEV`). Na preview de producao, o usuario ve apenas "Ops, algo deu errado" sem saber a causa real.
+Alem disso, dois `Select` no `NewsletterChannelForm` usam `value=""` quando nao ha valor configurado, o que nao tem `SelectItem` correspondente e pode causar erros adicionais do Radix.
 
 ## Solucao
 
-### 1. ChannelSelector.tsx -- Remover conflito de click
+### 1. ChannelSelector.tsx -- Remover CollapsibleTrigger completamente
 
-Separar a logica de toggle do `CollapsibleTrigger`. O `Collapsible` deve usar `onOpenChange` para controlar o estado, e o `CollapsibleTrigger` nao deve interferir:
+Eliminar o componente `CollapsibleTrigger` e o `onOpenChange` do `Collapsible`. Usar um `Collapsible` puramente controlado com um `onClick` simples no div wrapper:
 
 ```tsx
 <Collapsible 
+  key={channel.type} 
   open={isSelected(channel.type)}
-  onOpenChange={() => toggleChannel(channel.type)}
+  className={cn("border rounded-lg transition-colors", ...)}
 >
-  <CollapsibleTrigger asChild>
-    <div className="flex items-start gap-3 p-4 cursor-pointer hover:bg-muted/50 transition-colors">
-      <Checkbox
-        checked={isSelected(channel.type)}
-        className="mt-0.5 pointer-events-none"
-      />
-      {/* ... rest of content */}
-    </div>
-  </CollapsibleTrigger>
+  <div
+    className="flex items-start gap-3 p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+    onClick={() => toggleChannel(channel.type)}
+  >
+    <Checkbox checked={isSelected(channel.type)} className="mt-0.5 pointer-events-none" />
+    {/* ...conteudo do canal... */}
+  </div>
   <CollapsibleContent>
     <div className="px-4 pb-4 pt-2 border-t border-border/50">
-      {renderChannelForm(channel)}
+      {safeRenderChannelForm(channel)}
     </div>
   </CollapsibleContent>
 </Collapsible>
 ```
 
-A mudanca principal e:
-- Remover `onClick={() => toggleChannel(channel.type)}` do div
-- Adicionar `onOpenChange={() => toggleChannel(channel.type)}` no `Collapsible`
-- Isso garante que o toggle so acontece por UM caminho, controlado pelo Radix
+Isso elimina QUALQUER possibilidade de conflito de eventos do Radix, pois nao ha `CollapsibleTrigger` nem `onOpenChange`. O estado e 100% controlado manualmente.
 
-### 2. NewsletterChannelForm.tsx -- Corrigir SelectItem vazio
+### 2. NewsletterChannelForm.tsx -- Corrigir Select com valor vazio
 
-Trocar `value=""` por `value="default"`:
+Dois `Select` podem ter `value=""` sem `SelectItem` correspondente:
 
-```tsx
-<SelectItem value="default">Template padrao</SelectItem>
-```
-
-E ajustar a logica para tratar "default" como template padrao.
-
-### 3. AdminErrorBoundary.tsx -- Mostrar erro real
-
-Remover a condicao `isDev` para mostrar detalhes do erro sempre (util para debugging):
-
-```tsx
-{this.state.error && (
-  <div className="w-full mt-4 p-3 rounded-lg bg-muted text-left">
-    <div className="flex items-center gap-2 mb-2">
-      <Bug className="h-4 w-4 text-orange-500" />
-      <span className="text-xs font-medium uppercase text-orange-600">Detalhes do erro</span>
-    </div>
-    <p className="text-xs font-mono text-destructive break-all">
-      {this.state.error.message}
-    </p>
-  </div>
-)}
-```
-
-### 4. ChannelSelector.tsx -- Protecao extra no renderChannelForm
-
-Envolver a chamada `renderChannelForm` em try-catch para capturar erros individuais por canal:
-
-```tsx
-const safeRenderChannelForm = (channel: ChannelOption) => {
-  try {
-    return renderChannelForm(channel);
-  } catch (error) {
-    console.error(`Error rendering form for ${channel.type}:`, error);
-    return (
-      <div className="p-4 text-sm text-destructive">
-        Erro ao carregar formulario deste canal.
-      </div>
-    );
-  }
-};
-```
+- Linha 44: `value={config?.target_list || ''}` -- mudar para `value={config?.target_list || 'all'}` (com "all" como default)
+- Linha 79: `value={config?.template_id || ''}` -- mudar para `value={config?.template_id || 'default'}`
 
 ---
 
@@ -104,12 +49,12 @@ const safeRenderChannelForm = (channel: ChannelOption) => {
 
 | Arquivo | Alteracao |
 |---|---|
-| `src/components/admin/campaigns/ChannelSelector.tsx` | Usar `onOpenChange` no Collapsible, remover `onClick` do div, adicionar try-catch no render |
-| `src/components/admin/campaigns/NewsletterChannelForm.tsx` | Trocar `value=""` por `value="default"` no SelectItem |
-| `src/components/admin/AdminErrorBoundary.tsx` | Mostrar detalhes do erro sem condicao isDev |
+| `src/components/admin/campaigns/ChannelSelector.tsx` | Remover `CollapsibleTrigger` e `onOpenChange`; usar div com `onClick` direto |
+| `src/components/admin/campaigns/NewsletterChannelForm.tsx` | Garantir valores default validos nos Select components |
 
 ## Impacto
 
-- Elimina conflito de eventos click no ChannelSelector
-- Corrige erro de runtime causado por SelectItem com valor vazio
-- Se houver outro erro nao identificado, ele sera visivel na tela de erro para debugging futuro
+- Elimina completamente o conflito de eventos que causa o erro #185
+- A pagina de criacao de campanhas volta a funcionar
+- Todos os formularios de canais (Ads, Publidoor, WebStories, etc.) ficam acessiveis
+- Sem mudanca na aparencia ou comportamento visivel para o usuario
