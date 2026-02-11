@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -250,7 +251,7 @@ export function BannerMetrics() {
             <MousePointer className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{isLoading ? "..." : totalClicks}</div>
+            <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-16" /> : totalClicks}</div>
             <p className="text-xs text-muted-foreground">no período selecionado</p>
           </CardContent>
         </Card>
@@ -261,7 +262,7 @@ export function BannerMetrics() {
             <Eye className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{isLoading ? "..." : totalImpressions}</div>
+            <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-16" /> : totalImpressions}</div>
             <p className="text-xs text-muted-foreground">visualizações de banners</p>
           </CardContent>
         </Card>
@@ -273,7 +274,7 @@ export function BannerMetrics() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {isLoading ? "..." : `${avgCtr.toFixed(2)}%`}
+              {isLoading ? <Skeleton className="h-8 w-16" /> : `${avgCtr.toFixed(2)}%`}
             </div>
             <p className="text-xs text-muted-foreground">taxa de cliques</p>
           </CardContent>
@@ -285,7 +286,7 @@ export function BannerMetrics() {
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{isLoading ? "..." : metrics.length}</div>
+            <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-16" /> : metrics.length}</div>
             <p className="text-xs text-muted-foreground">com dados no período</p>
           </CardContent>
         </Card>
@@ -303,8 +304,8 @@ export function BannerMetrics() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="flex h-[300px] items-center justify-center text-muted-foreground">
-                Carregando...
+              <div className="flex h-[300px] items-center justify-center">
+                <div className="space-y-3 w-full"><Skeleton className="h-[280px] w-full" /></div>
               </div>
             ) : dailyData.length === 0 ? (
               <div className="flex h-[300px] items-center justify-center text-muted-foreground">
