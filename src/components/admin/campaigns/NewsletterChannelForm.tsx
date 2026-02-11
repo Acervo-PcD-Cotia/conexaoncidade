@@ -82,7 +82,7 @@ export function NewsletterChannelForm({ config, onChange }: NewsletterChannelFor
               <SelectValue placeholder="Template padrão" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Template padrão</SelectItem>
+              <SelectItem value="default">Template padrão</SelectItem>
               <SelectItem value="minimal">Minimalista</SelectItem>
               <SelectItem value="featured">Destaque</SelectItem>
               <SelectItem value="promotional">Promocional</SelectItem>
