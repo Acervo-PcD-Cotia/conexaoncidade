@@ -69,7 +69,7 @@ export class AdminErrorBoundary extends Component<Props, State> {
                 </p>
               </div>
 
-              {isDev && this.state.error && (
+              {this.state.error && (
                 <div className="w-full mt-4 p-3 rounded-lg bg-muted text-left">
                   <div className="flex items-center gap-2 mb-2">
                     <Bug className="h-4 w-4 text-orange-500" />

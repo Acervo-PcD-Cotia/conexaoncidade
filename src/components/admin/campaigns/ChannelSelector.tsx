@@ -184,6 +184,19 @@ export function ChannelSelector({
     return acc;
   }, {} as Record<string, ChannelOption[]>);
 
+  const safeRenderChannelForm = (channel: ChannelOption) => {
+    try {
+      return renderChannelForm(channel);
+    } catch (error) {
+      console.error(`Error rendering form for ${channel.type}:`, error);
+      return (
+        <div className="p-4 text-sm text-destructive">
+          Erro ao carregar formulário deste canal.
+        </div>
+      );
+    }
+  };
+
   const renderChannelForm = (channel: ChannelOption) => {
     switch (channel.type) {
       case 'ads':
@@ -273,6 +286,7 @@ export function ChannelSelector({
               <Collapsible 
                 key={channel.type} 
                 open={isSelected(channel.type)}
+                onOpenChange={() => toggleChannel(channel.type)}
                 className={cn(
                   "border rounded-lg transition-colors",
                   isSelected(channel.type) 
@@ -283,7 +297,6 @@ export function ChannelSelector({
                 <CollapsibleTrigger asChild>
                   <div
                     className="flex items-start gap-3 p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-                    onClick={() => toggleChannel(channel.type)}
                   >
                     <Checkbox
                       checked={isSelected(channel.type)}
@@ -311,7 +324,7 @@ export function ChannelSelector({
                 
                 <CollapsibleContent>
                   <div className="px-4 pb-4 pt-2 border-t border-border/50">
-                    {renderChannelForm(channel)}
+                    {safeRenderChannelForm(channel)}
                   </div>
                 </CollapsibleContent>
               </Collapsible>
