@@ -46,7 +46,7 @@ interface AlertConfigForm {
 }
 
 const defaultForm: AlertConfigForm = {
-  banner_id: "",
+  banner_id: "all",
   alert_type: "expiring",
   threshold_days: 3,
   threshold_ctr: 1,
@@ -105,7 +105,7 @@ export function BannerAlerts() {
   const createConfigMutation = useMutation({
     mutationFn: async (data: AlertConfigForm) => {
       const { error } = await supabase.from("banner_alerts_config").insert({
-        banner_id: data.banner_id || null,
+        banner_id: data.banner_id && data.banner_id !== "all" ? data.banner_id : null,
         alert_type: data.alert_type,
         threshold_days: data.threshold_days,
         threshold_ctr: data.threshold_ctr,
@@ -271,7 +271,7 @@ export function BannerAlerts() {
                     <SelectValue placeholder="Todos os banners" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos os banners</SelectItem>
+                    <SelectItem value="all">Todos os banners</SelectItem>
                     {banners?.map((b) => (
                       <SelectItem key={b.id} value={b.id}>
                         {b.title || "Sem título"}
