@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { Upload, X, Loader2, Link } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+
 
 // Constantes de dimensões por formato
 const FORMAT_DIMENSIONS = {
@@ -213,38 +213,35 @@ export function AdImageUploader({
             )}
           </div>
 
-          {/* URL Externa (colapsável) */}
-          <Collapsible open={showUrlOption} onOpenChange={setShowUrlOption}>
-            <CollapsibleTrigger asChild>
+          {/* URL Externa */}
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            type="button"
+            className="text-xs text-muted-foreground"
+            onClick={() => setShowUrlOption(!showUrlOption)}
+          >
+            <Link className="h-3 w-3 mr-1" />
+            {showUrlOption ? 'Ocultar opção de URL' : 'Usar URL externa (avançado)'}
+          </Button>
+          {showUrlOption && (
+            <div className="flex gap-2 mt-2">
+              <Input
+                placeholder="https://exemplo.com/imagem.jpg"
+                value={urlInput}
+                onChange={(e) => setUrlInput(e.target.value)}
+                className="text-sm"
+              />
               <Button 
-                variant="ghost" 
-                size="sm" 
-                type="button"
-                className="text-xs text-muted-foreground"
+                type="button" 
+                onClick={handleUrlSubmit} 
+                disabled={!urlInput.trim()}
+                size="sm"
               >
-                <Link className="h-3 w-3 mr-1" />
-                {showUrlOption ? 'Ocultar opção de URL' : 'Usar URL externa (avançado)'}
+                Aplicar
               </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="mt-2">
-              <div className="flex gap-2">
-                <Input
-                  placeholder="https://exemplo.com/imagem.jpg"
-                  value={urlInput}
-                  onChange={(e) => setUrlInput(e.target.value)}
-                  className="text-sm"
-                />
-                <Button 
-                  type="button" 
-                  onClick={handleUrlSubmit} 
-                  disabled={!urlInput.trim()}
-                  size="sm"
-                >
-                  Aplicar
-                </Button>
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
+            </div>
+          )}
         </div>
       )}
 

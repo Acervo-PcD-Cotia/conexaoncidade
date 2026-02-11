@@ -83,7 +83,7 @@ export function PushChannelForm({ config, onChange }: PushChannelFormProps) {
         <div className="space-y-2">
           <Label htmlFor="push-audience">Público-alvo</Label>
           <Select
-            value={config?.target_audience || 'subscribers'}
+            value={config?.target_audience || 'all'}
             onValueChange={(value) => updateConfig('target_audience', value)}
           >
             <SelectTrigger id="push-audience">
