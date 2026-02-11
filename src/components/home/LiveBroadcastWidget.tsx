@@ -5,9 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useLiveBroadcasts, useChannels } from "@/hooks/useBroadcast";
 import { AutoDJPlayer } from "@/components/broadcast/AutoDJPlayer";
+import { useModuleEnabled } from "@/hooks/useModuleEnabled";
 import { cn } from "@/lib/utils";
 
 export function LiveBroadcastWidget() {
+  const isTvEnabled = useModuleEnabled('web_tv');
+  const isRadioEnabled = useModuleEnabled('web_radio');
   const { data: liveBroadcasts } = useLiveBroadcasts();
   const { data: channels } = useChannels();
   
@@ -16,17 +19,17 @@ export function LiveBroadcastWidget() {
   const radioChannel = channels?.find(c => c.type === "radio" && c.is_active);
   const tvChannel = channels?.find(c => c.type === "tv" && c.is_active);
   
-  // If no channels configured, don't show the widget
-  if (!radioChannel && !tvChannel) {
+  // If both modules disabled or no channels configured, don't show
+  if ((!isTvEnabled && !isRadioEnabled) || (!radioChannel && !tvChannel)) {
     return null;
   }
 
   return (
     <section className="container py-6">
       <Card className="overflow-hidden border-2 border-primary/20 bg-gradient-to-br from-card via-card to-primary/5">
-        <div className="grid lg:grid-cols-2 gap-0 divide-y lg:divide-y-0 lg:divide-x divide-border">
+        <div className={cn("grid gap-0 divide-y lg:divide-y-0 lg:divide-x divide-border", isTvEnabled && isRadioEnabled ? "lg:grid-cols-2" : "lg:grid-cols-1")}>
           {/* Web TV Section */}
-          <div className="p-5">
+          {isTvEnabled && <div className="p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-lg bg-red-500/10">
@@ -98,10 +101,10 @@ export function LiveBroadcastWidget() {
                 </Button>
               </div>
             ) : null}
-          </div>
+          </div>}
           
           {/* Web Rádio Section */}
-          <div className="p-5">
+          {isRadioEnabled && <div className="p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-lg bg-primary/10">
@@ -153,7 +156,7 @@ export function LiveBroadcastWidget() {
                 </div>
               </div>
             )}
-          </div>
+          </div>}
         </div>
       </Card>
     </section>

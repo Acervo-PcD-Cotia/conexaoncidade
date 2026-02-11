@@ -1,13 +1,17 @@
 import { Link } from "react-router-dom";
 import { TV_CONFIG } from "@/config/tv";
 import { useTVConfig } from "@/hooks/useBroadcastConfig";
+import { useModuleEnabled } from "@/hooks/useModuleEnabled";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Play, ChevronRight, Tv } from "lucide-react";
 
 export function HomeVideoBlock() {
+  const isTvEnabled = useModuleEnabled('web_tv');
   const dynamicConfig = useTVConfig();
+  
+  if (!isTvEnabled) return null;
   
   // Merge static defaults with dynamic config
   const config = {
