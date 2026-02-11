@@ -345,7 +345,8 @@ export function BatchAssetUploader({
                         </Badge>
                         {/* Manual slot selection fallback */}
                         <Select
-                          value={asset.selectedSlot?.slotKey || undefined}
+                          key={asset.selectedSlot?.slotKey ?? `fallback-${asset.id}`}
+                          value={asset.selectedSlot?.slotKey ?? undefined}
                           onValueChange={(value) => changeSlot(asset.id, value)}
                         >
                           <SelectTrigger className="h-8 w-48 text-xs">
@@ -367,7 +368,8 @@ export function BatchAssetUploader({
                     ) : (
                       <div className="flex items-center gap-2 flex-wrap">
                       <Select
-                          value={asset.selectedSlot?.slotKey || undefined}
+                          key={asset.selectedSlot?.slotKey ?? `fallback2-${asset.id}`}
+                          value={asset.selectedSlot?.slotKey ?? undefined}
                           onValueChange={(value) => changeSlot(asset.id, value)}
                         >
                           <SelectTrigger className="h-8 w-48 text-xs">

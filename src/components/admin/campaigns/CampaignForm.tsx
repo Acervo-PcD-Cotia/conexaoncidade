@@ -243,8 +243,8 @@ export function CampaignForm({
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
             <ul className="list-disc list-inside space-y-1">
-              {validationErrors.map((error, idx) => (
-                <li key={idx}>{error}</li>
+              {validationErrors.map((error) => (
+                <li key={error}>{error}</li>
               ))}
             </ul>
           </AlertDescription>

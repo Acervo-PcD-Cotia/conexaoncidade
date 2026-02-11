@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertTriangle, RefreshCw, ArrowLeft, Home, Bug } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { logService } from '@/lib/logService';
 
 interface Props {
   children: ReactNode;
@@ -33,6 +34,12 @@ export class AdminErrorBoundary extends Component<Props, State> {
       stack: error.stack,
       componentStack: errorInfo.componentStack,
       timestamp: new Date().toISOString(),
+      route: window.location.pathname,
+    });
+
+    // Persist to system_logs
+    logService.error('admin_error_boundary', error, {
+      componentStack: errorInfo.componentStack,
       route: window.location.pathname,
     });
   }
