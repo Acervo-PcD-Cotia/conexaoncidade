@@ -1,57 +1,42 @@
 
-# Correcao: Web TV continua aparecendo mesmo desativada
+# Correcao: Erro na pagina de criacao de campanhas e botao "Voltar"
 
-## Causa raiz
+## Problemas identificados
 
-A homepage e renderizada por secoes dinamicas (`DynamicHomeSection`), e cada secao pode ter um campo `moduleKey` que, quando presente, faz a secao ser ocultada se o modulo estiver desativado (logica em `useSiteConfig.ts` linha 209).
+### 1. Erro de build bloqueando a aplicacao
+O arquivo `src/hooks/usePushSubscription.ts` tem erros TypeScript nas linhas 57, 124 e 174: `Property 'pushManager' does not exist on type 'ServiceWorkerRegistration'`. Este erro de build impede a compilacao correta da aplicacao, causando a tela de erro ao acessar `/admin/campaigns/new`.
 
-O problema: a secao `video_block` (que renderiza o player "WebTV Conexao" na homepage) **nao tem `moduleKey` definido** no banco de dados. Portanto, ela sempre aparece, independentemente do toggle `web_tv`.
-
-Alem disso, a secao `live_broadcast` tem `moduleKey: "lives"` em vez de `"web_tv"`, entao tambem nao responde ao toggle.
-
-E o componente `LiveBroadcastWidget` renderiza tanto TV quanto Radio internamente, sem verificar se cada modulo esta ativo.
+### 2. Botao "Voltar" na tela de erro navega para o lugar errado
+O componente `AdminErrorBoundary.tsx` usa `window.history.back()` no botao "Voltar". Quando o usuario veio da lista de campanhas, o "Voltar" o leva de volta para la em vez de tentar recarregar a pagina atual (criacao de campanha).
 
 ## Solucao
 
-### 1. Migracao SQL — adicionar `moduleKey` correto nas `home_sections`
+### 1. Corrigir erro de tipo em `usePushSubscription.ts`
 
-Atualizar o campo `home_sections` do template `journalist` para:
-- `video_block` (ordem 2): adicionar `"moduleKey": "web_tv"`  
-- `live_broadcast` (ordem 6): trocar `"moduleKey": "lives"` por nenhum ou manter (depende do contexto — `lives` e um modulo diferente)
+A propriedade `pushManager` existe em runtime nos navegadores modernos, mas o TypeScript nao a reconhece sem a tipagem correta. A solucao e fazer um cast para `any` nas 3 ocorrencias (linhas 57, 124, 174):
 
-```sql
-UPDATE portal_templates
-SET home_sections = jsonb_set(
-  home_sections::jsonb,
-  -- para cada item do array que tem type = video_block, adicionar moduleKey = web_tv
-)
-WHERE key = 'journalist';
+```ts
+// Antes:
+const subscription = await registration.pushManager.getSubscription();
+
+// Depois:
+const subscription = await (registration as any).pushManager.getSubscription();
 ```
 
-Na pratica, a migracao vai reescrever o array `home_sections` completo com os moduleKeys corretos.
+Aplicar o mesmo cast nas 3 linhas.
 
-### 2. `LiveBroadcastWidget.tsx` — respeitar toggles de modulos
+### 2. Corrigir botao "Voltar" no `AdminErrorBoundary.tsx`
 
-Importar `useModuleEnabled` e:
-- Ocultar a secao TV quando `web_tv` esta desativado
-- Ocultar a secao Radio quando `web_radio` esta desativado
-- Se ambos estiverem desativados, retornar `null`
+Trocar `window.history.back()` por `window.location.reload()` no `handleGoBack`, para que o botao "Voltar" recarregue a pagina atual em vez de navegar para a pagina anterior:
 
 ```tsx
-const isRadioEnabled = useModuleEnabled('web_radio');
-const isTvEnabled = useModuleEnabled('web_tv');
-
-// Se ambos desativados, nao mostrar widget
-if (!isRadioEnabled && !isTvEnabled) return null;
-
-// Dentro do grid, renderizar condicionalmente cada secao
-{isTvEnabled && (/* TV section */)}
-{isRadioEnabled && (/* Radio section */)}
+handleGoBack = () => {
+  this.setState({ hasError: false, error: null, errorInfo: null });
+  window.location.reload();
+};
 ```
 
-### 3. `HomeVideoBlock.tsx` — verificar modulo (seguranca extra)
-
-Adicionar verificacao `useModuleEnabled('web_tv')` como fallback de seguranca, retornando `null` se desativado. Isso protege mesmo se o `moduleKey` no banco nao estiver configurado.
+Alternativamente, renomear o botao de "Voltar" para "Tentar novamente" para refletir melhor a acao.
 
 ---
 
@@ -59,12 +44,11 @@ Adicionar verificacao `useModuleEnabled('web_tv')` como fallback de seguranca, r
 
 | Arquivo | Alteracao |
 |---|---|
-| Migracao SQL | Adicionar `moduleKey: "web_tv"` na secao `video_block` do template |
-| `src/components/home/HomeVideoBlock.tsx` | Adicionar guard `useModuleEnabled('web_tv')` |
-| `src/components/home/LiveBroadcastWidget.tsx` | Renderizar TV/Radio condicionalmente baseado nos modulos |
+| `src/hooks/usePushSubscription.ts` | Cast `registration as any` nas linhas 57, 124 e 174 para resolver erro de tipo `pushManager` |
+| `src/components/admin/AdminErrorBoundary.tsx` | Trocar `window.history.back()` por reload da pagina e ajustar label do botao |
 
-## Impacto
+## Impacto esperado
 
-- Desativar Web TV no dashboard remove imediatamente o player da homepage
-- Desativar Web Radio remove a secao de radio do widget
-- Sem alteracao na arquitetura ou em outros componentes
+- A aplicacao volta a compilar corretamente, eliminando a tela de erro
+- O botao "Voltar" na tela de erro recarrega a pagina atual em vez de navegar para a lista de campanhas
+- Os formularios de canais (Ads, Publidoor, WebStories, etc.) voltam a funcionar normalmente
