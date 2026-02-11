@@ -1,6 +1,5 @@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
 import { ChevronDown, Layout, Megaphone, Smartphone, Bell, Mail, DoorOpen, LogIn, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -283,9 +282,8 @@ export function ChannelSelector({
           </h4>
           <div className="space-y-2">
             {channels.map(channel => (
-              <Collapsible 
+              <div 
                 key={channel.type} 
-                open={isSelected(channel.type)}
                 className={cn(
                   "border rounded-lg transition-colors",
                   isSelected(channel.type) 
@@ -320,12 +318,12 @@ export function ChannelSelector({
                   )}
                 </div>
                 
-                <CollapsibleContent>
+                {isSelected(channel.type) && (
                   <div className="px-4 pb-4 pt-2 border-t border-border/50">
                     {safeRenderChannelForm(channel)}
                   </div>
-                </CollapsibleContent>
-              </Collapsible>
+                )}
+              </div>
             ))}
           </div>
         </div>
