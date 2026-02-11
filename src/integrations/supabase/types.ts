@@ -14199,6 +14199,33 @@ export type Database = {
           },
         ]
       }
+      system_logs: {
+        Row: {
+          created_at: string
+          erro: string
+          id: string
+          metadata: Json | null
+          modulo: string
+          usuario_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          erro: string
+          id?: string
+          metadata?: Json | null
+          modulo: string
+          usuario_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          erro?: string
+          id?: string
+          metadata?: Json | null
+          modulo?: string
+          usuario_id?: string | null
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
           id: string
