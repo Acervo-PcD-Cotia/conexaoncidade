@@ -41,7 +41,7 @@ export function NewsletterChannelForm({ config, onChange }: NewsletterChannelFor
         <div className="space-y-2">
           <Label htmlFor="newsletter-list">Lista de destino *</Label>
           <Select
-            value={config?.target_list || ''}
+            value={config?.target_list || 'all'}
             onValueChange={(value) => updateConfig('target_list', value)}
           >
             <SelectTrigger id="newsletter-list">
@@ -75,7 +75,7 @@ export function NewsletterChannelForm({ config, onChange }: NewsletterChannelFor
         <div className="space-y-2">
           <Label htmlFor="newsletter-template">Template (opcional)</Label>
           <Select
-            value={config?.template_id || ''}
+            value={config?.template_id || 'default'}
             onValueChange={(value) => updateConfig('template_id', value)}
           >
             <SelectTrigger id="newsletter-template">
