@@ -43,7 +43,7 @@ export class AdminErrorBoundary extends Component<Props, State> {
 
   handleGoBack = () => {
     this.setState({ hasError: false, error: null, errorInfo: null });
-    window.history.back();
+    window.location.reload();
   };
 
   handleReset = () => {
@@ -92,8 +92,8 @@ export class AdminErrorBoundary extends Component<Props, State> {
                   Recarregar Página
                 </Button>
                 <Button variant="outline" onClick={this.handleGoBack}>
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Voltar
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Tentar Novamente
                 </Button>
                 <Button variant="ghost" asChild>
                   <Link to="/admin">
