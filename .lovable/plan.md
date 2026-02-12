@@ -1,74 +1,104 @@
 
+# Fix Definitivo: Root Cause Confirmada no Radix Select + Form
 
-# Fix Definitivo: React Error #185 + Validacao Completa
+## Causa Raiz (Confirmada no Codigo-Fonte da Biblioteca)
 
-## Problema Encontrado
+O `@radix-ui/react-select@2.2.5` renderiza um `<select>` nativo oculto quando detecta que esta dentro de um `<form>` (para compatibilidade com formularios nativos). Este `<select>` oculto tem um bug de loop:
 
-Apos varredura completa dos 15 arquivos no fluxo de render, o codigo esta quase todo correto. Porem ha **um bug remanescente** no `BatchAssetUploader.tsx`:
+1. Cada `SelectItem` ao montar registra uma `<option>` nativa via `onNativeOptionAdd`
+2. Isso muda `nativeOptionsSet` -> muda `nativeSelectKey` -> remonta o `<select>` oculto
+3. Na remontagem, `usePrevious(value)` reseta para `undefined`
+4. O `useEffect` interno detecta `prevValue !== value` (undefined !== 'draft') e dispara um `new Event("change")`
+5. O evento de change chama `setValue(event.target.value)` no Select root
+6. Isso dispara `onValueChange` -> `setStatus` -> re-render
+7. Re-render faz SelectItems re-montarem -> volta ao passo 1
 
-### Bug: Select com value sem SelectItem correspondente
+Este loop ocorre APENAS quando o Select esta dentro de um `<form>` (que e o caso do CampaignForm).
 
-No segundo Select (branch "has compatible slots", linhas 370-415), o valor pode ser `__none__` quando `asset.selectedSlot` e null, mas **nao existe nenhum `SelectItem value="__none__"`** nessa branch. O primeiro Select (branch "no compatible slots", linhas 347-366) tem o placeholder corretamente, mas o segundo nao.
+## Solucao: Substituir Radix Select por RadioGroup para Status
 
-Quando Radix Select recebe um `value` que nao corresponde a nenhum `SelectItem`, ele tenta reconciliar internamente, o que pode disparar re-renders em cascata.
+Em vez de tentar contornar o bug interno do Radix Select, a solucao de engenharia e **eliminar o componente problematico** e usar o Radix RadioGroup (que NAO tem o mecanismo de `<select>` nativo oculto).
 
-```text
-Branch 1 (sem slots compativeis):
-  Select value="__none__" --> SelectItem value="__none__" EXISTE --> OK
+### Alteracao 1: `src/components/admin/campaigns/CampaignForm.tsx`
 
-Branch 2 (com slots compativeis):
-  Select value="__none__" --> NENHUM SelectItem correspondente --> BUG
-```
+Substituir o bloco do Select de status (linhas 294-310) por um RadioGroup inline:
 
-## Alteracoes (3 arquivos)
-
-### 1. `src/components/admin/campaigns/BatchAssetUploader.tsx`
-
-Adicionar `SelectItem value="__none__"` como placeholder no segundo Select (branch com slots compativeis):
-
-**Antes (linha 377):**
 ```tsx
-<SelectContent>
-  {/* Compatible slots first */}
-  {asset.compatibleSlots.length > 0 && (
+// ANTES (Radix Select com bug de loop interno):
+<Select value={status} onValueChange={...}>
+  <SelectTrigger><SelectValue /></SelectTrigger>
+  <SelectContent>
+    <SelectItem value="draft">Rascunho</SelectItem>
+    <SelectItem value="active">Ativa</SelectItem>
+    <SelectItem value="paused">Pausada</SelectItem>
+    <SelectItem value="ended">Encerrada</SelectItem>
+  </SelectContent>
+</Select>
+
+// DEPOIS (RadioGroup - sem <select> nativo oculto):
+<RadioGroup
+  value={status}
+  onValueChange={(value) => setStatus(value as CampaignStatus)}
+  className="flex flex-wrap gap-2"
+>
+  {[
+    { value: 'draft', label: 'Rascunho' },
+    { value: 'active', label: 'Ativa' },
+    { value: 'paused', label: 'Pausada' },
+    { value: 'ended', label: 'Encerrada' },
+  ].map((opt) => (
+    <div key={opt.value} className="flex items-center space-x-2">
+      <RadioGroupItem value={opt.value} id={`status-${opt.value}`} />
+      <Label htmlFor={`status-${opt.value}`} className="font-normal cursor-pointer">
+        {opt.label}
+      </Label>
+    </div>
+  ))}
+</RadioGroup>
 ```
 
-**Depois:**
-```tsx
-<SelectContent>
-  <SelectItem value="__none__" disabled className="text-xs text-muted-foreground">Selecione...</SelectItem>
-  {/* Compatible slots first */}
-  {asset.compatibleSlots.length > 0 && (
-```
+Imports a adicionar: `RadioGroup, RadioGroupItem` de `@/components/ui/radio-group`.
+Imports a remover: `Select, SelectContent, SelectItem, SelectTrigger, SelectValue`.
 
-### 2. `src/components/admin/campaigns/CampaignForm.tsx`
+**Por que RadioGroup e seguro**: O Radix RadioGroup nao renderiza um elemento nativo oculto e nao tem o mecanismo de `nativeOptionsSet` + `BubbleInput` que causa o loop.
 
-Remover import nao utilizado de `useEffect` (linha 1):
+### Alteracao 2: `src/config/buildInfo.ts`
 
-**Antes:** `import { useState, useEffect } from 'react';`
-**Depois:** `import { useState } from 'react';`
+Atualizar BUILD_ID para `'2026-02-12-v9'` para confirmar o deploy.
 
-### 3. `src/config/buildInfo.ts`
+## Arquivos alterados
 
-Atualizar BUILD_ID para nova versao para confirmar deploy:
+| Arquivo | Alteracao |
+|---|---|
+| `src/components/admin/campaigns/CampaignForm.tsx` | Substituir Select por RadioGroup para campo status |
+| `src/config/buildInfo.ts` | BUILD_ID -> v9 |
 
-**Antes:** `export const BUILD_ID = '2026-02-12-v7';`
-**Depois:** `export const BUILD_ID = '2026-02-12-v8';`
+## Por que isso resolve de vez
 
-## Resultado da Varredura Completa
+- O Radix RadioGroup usa `<input type="radio">` nativos (que nao tem o bug de BubbleInput + key + usePrevious)
+- Remove completamente o unico Radix Select que renderiza no mount inicial da pagina
+- Os outros Selects (nos channel forms) so renderizam quando o usuario ativa um canal, entao nao causam crash no mount
+- Comportamento identico para o usuario: seleciona um status entre 4 opcoes
 
-| Verificacao | Status | Evidencia |
-|---|---|---|
-| Controlled/uncontrolled (Select/Input) | CORRIGIDO | Todos os Selects usam valor string estavel. Nenhum `undefined` como value. |
-| Select com value fora das options | **1 BUG** | BatchAssetUploader branch 2 - Select value=`__none__` sem SelectItem correspondente |
-| Loops de setState | LIMPO | Nenhum useEffect, nenhum Collapsible, nenhum watch/setValue |
-| Keys instaveis | LIMPO | Todos usam `key={asset.id}`, `key={slot.key}`, `key={channel.type}`, `key={error}` |
-| Collapsible | ZERO | Confirmado: nenhum import em nenhum arquivo do fluxo |
-| react-hook-form watch/setValue | ZERO | Removidos. Status usa useState local |
+## Detalhes tecnicos da causa raiz
+
+O arquivo `node_modules/@radix-ui/react-select/dist/index.mjs` contem:
+
+1. **Linha 75-76**: `isFormControl = trigger ? form || !!trigger.closest("form") : true` - detecta que esta dentro de um form
+2. **Linha 76**: `nativeOptionsSet` e um `Set` que recebe novos elementos a cada mount de SelectItem
+3. **Linha 77**: `nativeSelectKey = Array.from(nativeOptionsSet).map(...).join(";")` - muda a cada item adicionado
+4. **Linha 115-133**: `SelectBubbleInput` (native select oculto) e renderizado com `key={nativeSelectKey}`
+5. **Linha 1074-1088**: `usePrevious(value)` reseta a `undefined` na remontagem, causando `prevValue !== value` -> dispara `new Event("change")` -> loop
+
+Este bug e uma combinacao de:
+- Select controlado dentro de `<form>`
+- Multiplos SelectItems montando em sequencia
+- Cada mount causa remontagem do native select
+- Cada remontagem dispara change event via useEffect
 
 ## Checklist pos-deploy
 
-1. Verificar rodape mostra `Build: 2026-02-12-v8`
+1. Verificar rodape mostra `Build: 2026-02-12-v9`
 2. Abrir `/admin/campaigns/new` sem crash
-3. Console: zero warnings/errors
-4. Ativar canais, trocar configs, testar BatchAssetUploader
+3. Confirmar que o campo Status aparece como RadioGroup com 4 opcoes
+4. Console: zero warnings/errors
