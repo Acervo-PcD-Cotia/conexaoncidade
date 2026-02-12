@@ -1,144 +1,74 @@
 
-# Fix Definitivo: React Error #185 + Build ID + ErrorBoundary Copiavel
 
-## Diagnostico Final
+# Fix Definitivo: React Error #185 + Validacao Completa
 
-O erro #185 persiste em producao porque **o codigo corrigido nunca foi publicado**. O log mais recente (2026-02-12 12:01:55) ainda vem do bundle antigo (`index-n1e1U0fs.js`) que contem o Collapsible e o `watch('status')`.
+## Problema Encontrado
 
-Alem disso, o `BatchAssetUploader.tsx` ainda usa `value={... ?? undefined}` com `key` dinamica como workaround -- isso precisa ser corrigido com engenharia real.
+Apos varredura completa dos 15 arquivos no fluxo de render, o codigo esta quase todo correto. Porem ha **um bug remanescente** no `BatchAssetUploader.tsx`:
 
----
+### Bug: Select com value sem SelectItem correspondente
 
-## Alteracoes (5 arquivos)
+No segundo Select (branch "has compatible slots", linhas 370-415), o valor pode ser `__none__` quando `asset.selectedSlot` e null, mas **nao existe nenhum `SelectItem value="__none__"`** nessa branch. O primeiro Select (branch "no compatible slots", linhas 347-366) tem o placeholder corretamente, mas o segundo nao.
 
-### 1. Criar `src/config/buildInfo.ts` (novo)
+Quando Radix Select recebe um `value` que nao corresponde a nenhum `SelectItem`, ele tenta reconciliar internamente, o que pode disparar re-renders em cascata.
 
-Constante fixa com BUILD_ID e deteccao de ambiente:
+```text
+Branch 1 (sem slots compativeis):
+  Select value="__none__" --> SelectItem value="__none__" EXISTE --> OK
 
-```ts
-export const BUILD_ID = '2026-02-12-v7';
-export const BUILD_ENV = window.location.hostname.includes('preview') ? 'preview' : 'production';
+Branch 2 (com slots compativeis):
+  Select value="__none__" --> NENHUM SelectItem correspondente --> BUG
 ```
 
-Isso permite confirmar visualmente se producao recebeu o deploy.
+## Alteracoes (3 arquivos)
 
----
+### 1. `src/components/admin/campaigns/BatchAssetUploader.tsx`
 
-### 2. `src/components/admin/AdminLayout.tsx` -- Rodape com Build ID
+Adicionar `SelectItem value="__none__"` como placeholder no segundo Select (branch com slots compativeis):
 
-Adicionar um rodape discreto dentro do layout admin (abaixo do `main`), exibindo:
-
-```
-Build: 2026-02-12-v7 | Env: production
-```
-
-Estilo: texto `text-[10px] text-muted-foreground` no canto inferior direito.
-
----
-
-### 3. `src/components/admin/campaigns/BatchAssetUploader.tsx` -- Fix Select controlado
-
-**Problema atual (linhas 347-350 e 370-373):**
+**Antes (linha 377):**
 ```tsx
-<Select
-  key={asset.selectedSlot?.slotKey ?? `fallback-${asset.id}`}
-  value={asset.selectedSlot?.slotKey ?? undefined}  // undefined = uncontrolled!
-  onValueChange={...}
->
+<SelectContent>
+  {/* Compatible slots first */}
+  {asset.compatibleSlots.length > 0 && (
 ```
 
-Passar `undefined` como `value` faz o Select operar em modo uncontrolled. Quando o usuario seleciona um slot, `value` passa a ser string = controlled. Essa alternancia e a causa classica do #185.
-
-**Correcao real (sem key dinamica como muleta):**
-
+**Depois:**
 ```tsx
-<Select
-  value={asset.selectedSlot?.slotKey ?? ''}
-  onValueChange={(value) => {
-    if (value === '') return; // ignora placeholder
-    changeSlot(asset.id, value);
-  }}
->
-  <SelectTrigger className="h-8 w-48 text-xs">
-    <SelectValue placeholder="Selecionar slot..." />
-  </SelectTrigger>
-  <SelectContent>
-    <SelectItem value="" disabled className="text-xs text-muted-foreground">
-      Selecione...
-    </SelectItem>
-    {/* ...slots */}
-  </SelectContent>
-</Select>
+<SelectContent>
+  <SelectItem value="__none__" disabled className="text-xs text-muted-foreground">Selecione...</SelectItem>
+  {/* Compatible slots first */}
+  {asset.compatibleSlots.length > 0 && (
 ```
 
-Nota: Radix Select nao aceita `value=""` em `SelectItem`. A solucao correta e usar um valor sentinela:
+### 2. `src/components/admin/campaigns/CampaignForm.tsx`
 
-```tsx
-const PLACEHOLDER_VALUE = '__none__';
+Remover import nao utilizado de `useEffect` (linha 1):
 
-<Select
-  value={asset.selectedSlot?.slotKey ?? PLACEHOLDER_VALUE}
-  onValueChange={(value) => {
-    if (value === PLACEHOLDER_VALUE) return;
-    changeSlot(asset.id, value);
-  }}
->
-  <SelectContent>
-    <SelectItem value={PLACEHOLDER_VALUE} disabled>Selecione...</SelectItem>
-    {/* ...real slots */}
-  </SelectContent>
-</Select>
-```
+**Antes:** `import { useState, useEffect } from 'react';`
+**Depois:** `import { useState } from 'react';`
 
-- Sempre controlled (string para string)
-- Nunca `undefined`
-- Sem `key` dinamica como workaround
-- Aplicado nos DOIS Selects (linhas ~347 e ~370)
+### 3. `src/config/buildInfo.ts`
 
----
+Atualizar BUILD_ID para nova versao para confirmar deploy:
 
-### 4. `src/components/admin/AdminErrorBoundary.tsx` -- Relatorio copiavel com Build ID
+**Antes:** `export const BUILD_ID = '2026-02-12-v7';`
+**Depois:** `export const BUILD_ID = '2026-02-12-v8';`
 
-Adicionar ao render de erro:
+## Resultado da Varredura Completa
 
-- Exibir `Build: {BUILD_ID} | Env: {BUILD_ENV}`
-- Exibir `Route: {window.location.pathname}`
-- Exibir `componentStack` formatado
-- Botao "Copiar erro" que copia tudo para clipboard (`navigator.clipboard.writeText(...)`)
-
-O conteudo copiado sera:
-
-```
-BUILD: 2026-02-12-v7
-ENV: production
-ROUTE: /admin/campaigns/new
-ERROR: Maximum update depth exceeded...
-STACK: ...
-COMPONENT_STACK: ...
-```
-
----
-
-### 5. `src/components/admin/campaigns/CampaignForm.tsx` -- Confirmar fix do status
-
-Ja corrigido no ultimo diff (watch/setValue removidos, useState no lugar). Nenhuma alteracao adicional necessaria. Apenas confirmar que esta no codigo.
-
----
-
-## Resumo de arquivos
-
-| Arquivo | Tipo | Alteracao |
+| Verificacao | Status | Evidencia |
 |---|---|---|
-| `src/config/buildInfo.ts` | NOVO | Constantes BUILD_ID e BUILD_ENV |
-| `src/components/admin/AdminLayout.tsx` | EDIT | Rodape com build info |
-| `src/components/admin/campaigns/BatchAssetUploader.tsx` | EDIT | Select sempre controlled com valor sentinela `__none__` |
-| `src/components/admin/AdminErrorBoundary.tsx` | EDIT | Build info + botao "Copiar erro" |
+| Controlled/uncontrolled (Select/Input) | CORRIGIDO | Todos os Selects usam valor string estavel. Nenhum `undefined` como value. |
+| Select com value fora das options | **1 BUG** | BatchAssetUploader branch 2 - Select value=`__none__` sem SelectItem correspondente |
+| Loops de setState | LIMPO | Nenhum useEffect, nenhum Collapsible, nenhum watch/setValue |
+| Keys instaveis | LIMPO | Todos usam `key={asset.id}`, `key={slot.key}`, `key={channel.type}`, `key={error}` |
+| Collapsible | ZERO | Confirmado: nenhum import em nenhum arquivo do fluxo |
+| react-hook-form watch/setValue | ZERO | Removidos. Status usa useState local |
 
-## Apos implementacao
+## Checklist pos-deploy
 
-O usuario devera:
-1. Verificar preview funciona em `/admin/campaigns/new`
-2. Clicar **Publicar** para enviar ao dominio de producao
-3. Abrir `conexaoncidade.lovable.app/admin/campaigns/new` em aba anonima
-4. Confirmar que o rodape mostra `Build: 2026-02-12-v7 | Env: production`
-5. Confirmar zero crash e zero warnings no console
+1. Verificar rodape mostra `Build: 2026-02-12-v8`
+2. Abrir `/admin/campaigns/new` sem crash
+3. Console: zero warnings/errors
+4. Ativar canais, trocar configs, testar BatchAssetUploader
