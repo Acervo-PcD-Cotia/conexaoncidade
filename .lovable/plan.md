@@ -1,102 +1,144 @@
 
-# Fix Definitivo: React Error #185 -- CampaignForm
+# Fix Definitivo: React Error #185 + Build ID + ErrorBoundary Copiavel
 
-## Causa Raiz Confirmada (com evidencia)
+## Diagnostico Final
 
-A tabela `system_logs` registra 4 ocorrencias do Error #185, todas na rota `/admin/campaigns/new`, **incluindo apos todas as correcoes anteriores** (Collapsible removido, Select values corrigidos). Isso confirma que a causa raiz NAO era o Collapsible nem os valores vazios dos Selects.
+O erro #185 persiste em producao porque **o codigo corrigido nunca foi publicado**. O log mais recente (2026-02-12 12:01:55) ainda vem do bundle antigo (`index-n1e1U0fs.js`) que contem o Collapsible e o `watch('status')`.
 
-A analise do component stack do erro mostra:
-```text
-button -> Radix Slot -> Radix Primitives -> SelectTrigger -> SelectValue -> Select
--> ... -> Card -> CardContent -> form -> CampaignForm -> CampaignEditor
+Alem disso, o `BatchAssetUploader.tsx` ainda usa `value={... ?? undefined}` com `key` dinamica como workaround -- isso precisa ser corrigido com engenharia real.
+
+---
+
+## Alteracoes (5 arquivos)
+
+### 1. Criar `src/config/buildInfo.ts` (novo)
+
+Constante fixa com BUILD_ID e deteccao de ambiente:
+
+```ts
+export const BUILD_ID = '2026-02-12-v7';
+export const BUILD_ENV = window.location.hostname.includes('preview') ? 'preview' : 'production';
 ```
 
-O erro origina-se no Select de **status** dentro do `CampaignForm.tsx`, que e o UNICO Select usando o padrao `watch()` + `setValue()` do react-hook-form. Todos os outros Selects (canais, configs) usam `useState` e NAO crasham.
+Isso permite confirmar visualmente se producao recebeu o deploy.
 
-### O Problema Tecnico
+---
 
+### 2. `src/components/admin/AdminLayout.tsx` -- Rodape com Build ID
+
+Adicionar um rodape discreto dentro do layout admin (abaixo do `main`), exibindo:
+
+```
+Build: 2026-02-12-v7 | Env: production
+```
+
+Estilo: texto `text-[10px] text-muted-foreground` no canto inferior direito.
+
+---
+
+### 3. `src/components/admin/campaigns/BatchAssetUploader.tsx` -- Fix Select controlado
+
+**Problema atual (linhas 347-350 e 370-373):**
 ```tsx
-// ESTE padrao causa o loop:
-const status = watch('status');  // Cria subscription -> re-render quando status muda
-
 <Select
-  value={status}
-  onValueChange={(value) => setValue('status', value)}  // Dispara update -> watch detecta -> re-render -> ...
+  key={asset.selectedSlot?.slotKey ?? `fallback-${asset.id}`}
+  value={asset.selectedSlot?.slotKey ?? undefined}  // undefined = uncontrolled!
+  onValueChange={...}
 >
 ```
 
-`watch('status')` forca re-render a cada mudanca. O Radix Select internamente sincroniza o `value` prop com seu estado, o que pode disparar `onValueChange` durante a reconciliacao, criando o ciclo:
+Passar `undefined` como `value` faz o Select operar em modo uncontrolled. Quando o usuario seleciona um slot, `value` passa a ser string = controlled. Essa alternancia e a causa classica do #185.
 
-1. `watch` detecta mudanca -> re-render
-2. Select recebe novo `value` -> sincroniza internamente
-3. Sincronizacao dispara `onValueChange`
-4. `setValue` atualiza form state
-5. `watch` detecta mudanca -> volta ao passo 1
-
-Este bug e uma [classe conhecida de problemas](https://github.com/react-hook-form/react-hook-form/issues/4646) entre react-hook-form e componentes Radix controlados.
-
-## Solucao
-
-Substituir `watch('status')` + `setValue('status')` por `useState`, seguindo o MESMO padrao ja usado para TODOS os outros campos controlados do formulario (selectedChannels, adsConfig, pushConfig, etc.).
-
-### Alteracao 1: CampaignForm.tsx
-
-**Remover** o uso de `watch` e `setValue` para o campo status:
+**Correcao real (sem key dinamica como muleta):**
 
 ```tsx
-// ANTES (causa o loop):
-const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<CampaignFormData>({...});
-const status = watch('status');
-// ...
-<Select value={status} onValueChange={(value) => setValue('status', value as CampaignStatus)}>
-
-// DEPOIS (seguro):
-const { register, handleSubmit, formState: { errors } } = useForm<CampaignFormData>({...});
-const [status, setStatus] = useState<CampaignStatus>(initialData?.status || 'draft');
-// ...
-<Select value={status} onValueChange={(v) => setStatus(v as CampaignStatus)}>
+<Select
+  value={asset.selectedSlot?.slotKey ?? ''}
+  onValueChange={(value) => {
+    if (value === '') return; // ignora placeholder
+    changeSlot(asset.id, value);
+  }}
+>
+  <SelectTrigger className="h-8 w-48 text-xs">
+    <SelectValue placeholder="Selecionar slot..." />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="" disabled className="text-xs text-muted-foreground">
+      Selecione...
+    </SelectItem>
+    {/* ...slots */}
+  </SelectContent>
+</Select>
 ```
 
-E no submit handler, incluir `status` no payload:
+Nota: Radix Select nao aceita `value=""` em `SelectItem`. A solucao correta e usar um valor sentinela:
 
 ```tsx
-onSubmit({
-  ...data,
-  status,  // <-- adicionar aqui
-  enabledChannels: selectedChannels,
-  ...
-});
+const PLACEHOLDER_VALUE = '__none__';
+
+<Select
+  value={asset.selectedSlot?.slotKey ?? PLACEHOLDER_VALUE}
+  onValueChange={(value) => {
+    if (value === PLACEHOLDER_VALUE) return;
+    changeSlot(asset.id, value);
+  }}
+>
+  <SelectContent>
+    <SelectItem value={PLACEHOLDER_VALUE} disabled>Selecione...</SelectItem>
+    {/* ...real slots */}
+  </SelectContent>
+</Select>
 ```
 
-### Alteracao 2: Remover `watch` e `setValue` dos imports
+- Sempre controlled (string para string)
+- Nunca `undefined`
+- Sem `key` dinamica como workaround
+- Aplicado nos DOIS Selects (linhas ~347 e ~370)
 
-Como `watch` e `setValue` nao serao mais usados em nenhum lugar do componente, remover dos imports do `useForm`.
+---
 
-## Arquivos alterados
+### 4. `src/components/admin/AdminErrorBoundary.tsx` -- Relatorio copiavel com Build ID
 
-| Arquivo | Alteracao |
-|---|---|
-| `src/components/admin/campaigns/CampaignForm.tsx` | Substituir `watch('status')` + `setValue` por `useState` para o campo status |
+Adicionar ao render de erro:
 
-## Detalhes tecnicos
+- Exibir `Build: {BUILD_ID} | Env: {BUILD_ENV}`
+- Exibir `Route: {window.location.pathname}`
+- Exibir `componentStack` formatado
+- Botao "Copiar erro" que copia tudo para clipboard (`navigator.clipboard.writeText(...)`)
 
-1. Adicionar `const [status, setStatus] = useState<CampaignStatus>(initialData?.status || 'draft')` junto dos outros useState (linha ~92)
-2. Remover `watch` e `setValue` do destructuring do `useForm` (linha 41)
-3. Remover `const status = watch('status')` (linha 110)
-4. Alterar o Select onValueChange de `setValue('status', value)` para `setStatus(value as CampaignStatus)` (linha 304)
-5. Incluir `status` no objeto passado ao `onSubmit` (linha 224)
-6. Remover `status` do `defaultValues` do `useForm` (opcional, limpeza)
+O conteudo copiado sera:
 
-## Por que isso resolve
+```
+BUILD: 2026-02-12-v7
+ENV: production
+ROUTE: /admin/campaigns/new
+ERROR: Maximum update depth exceeded...
+STACK: ...
+COMPONENT_STACK: ...
+```
 
-- Elimina a interacao entre `watch()` (que forca re-render via subscription) e o Radix Select (que pode disparar `onValueChange` durante reconciliacao)
-- Usa o padrao `useState` que ja funciona corretamente para TODOS os outros 8+ campos controlados do formulario
-- Nao muda comportamento visivel -- o Select continua controlado, so muda a fonte de verdade de react-hook-form para useState local
+---
 
-## Evidencia de que e a causa
+### 5. `src/components/admin/campaigns/CampaignForm.tsx` -- Confirmar fix do status
 
-1. O component stack do erro mostra o crash originando em `button -> SelectTrigger -> Select -> Card -> form -> CampaignForm`
-2. O UNICO Select diretamente dentro de CampaignForm (nao dentro de ChannelSelector) e o Select de status
-3. O UNICO campo usando `watch()` + `setValue()` e o status -- todos os outros usam `useState`
-4. O erro persiste APOS remocao do Collapsible e correcao dos valores de Select (4 ocorrencias no banco apos as correcoes)
-5. A classe de bug `watch + setValue + Radix Select` e documentada em issues do react-hook-form
+Ja corrigido no ultimo diff (watch/setValue removidos, useState no lugar). Nenhuma alteracao adicional necessaria. Apenas confirmar que esta no codigo.
+
+---
+
+## Resumo de arquivos
+
+| Arquivo | Tipo | Alteracao |
+|---|---|---|
+| `src/config/buildInfo.ts` | NOVO | Constantes BUILD_ID e BUILD_ENV |
+| `src/components/admin/AdminLayout.tsx` | EDIT | Rodape com build info |
+| `src/components/admin/campaigns/BatchAssetUploader.tsx` | EDIT | Select sempre controlled com valor sentinela `__none__` |
+| `src/components/admin/AdminErrorBoundary.tsx` | EDIT | Build info + botao "Copiar erro" |
+
+## Apos implementacao
+
+O usuario devera:
+1. Verificar preview funciona em `/admin/campaigns/new`
+2. Clicar **Publicar** para enviar ao dominio de producao
+3. Abrir `conexaoncidade.lovable.app/admin/campaigns/new` em aba anonima
+4. Confirmar que o rodape mostra `Build: 2026-02-12-v7 | Env: production`
+5. Confirmar zero crash e zero warnings no console
