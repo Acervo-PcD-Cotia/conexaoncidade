@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,17 +10,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
 import { ChannelSelector } from './ChannelSelector';
 import { BatchAssetUploader } from './BatchAssetUploader';
+import { useCampaignFormReducer } from './useCampaignFormReducer';
 import type { 
   CampaignFormData, 
   CampaignStatus,
-  ChannelType,
-  AdsChannelConfig,
-  PublidoorChannelConfig,
-  WebStoriesChannelConfig,
-  PushChannelConfig,
-  NewsletterChannelConfig,
-  ExitIntentChannelConfig,
-  LoginPanelChannelConfig,
   CampaignAsset,
 } from '@/types/campaigns-unified';
 
@@ -52,92 +44,44 @@ export function CampaignForm({
     },
   });
 
-  // Status as local state (avoids watch+setValue loop with Radix Select — Error #185)
-  const [status, setStatus] = useState<CampaignStatus>(initialData?.status || 'draft');
+  const {
+    state,
+    setStatus,
+    toggleChannel,
+    setChannelConfig,
+    setAsset,
+    setValidationErrors,
+  } = useCampaignFormReducer(initialData);
 
-  // Channel states
-  const [selectedChannels, setSelectedChannels] = useState<ChannelType[]>(
-    initialData?.enabledChannels || []
-  );
-  const [adsConfig, setAdsConfig] = useState<Partial<AdsChannelConfig>>(
-    initialData?.adsConfig || { slot_type: 'home_top', size: '970x250', sort_order: 0, link_target: '_blank' }
-  );
-  const [publidoorConfig, setPublidoorConfig] = useState<Partial<PublidoorChannelConfig>>(
-    initialData?.publidoorConfig || { type: 'narrativo', phrase_1: '' }
-  );
-  const [webstoriesConfig, setWebstoriesConfig] = useState<Partial<WebStoriesChannelConfig>>(
-    initialData?.webstoriesConfig || { story_type: 'external' }
-  );
-  const [pushConfig, setPushConfig] = useState<Partial<PushChannelConfig>>(
-    initialData?.pushConfig || { title: '', body: '', action_url: '', target_audience: 'all' }
-  );
-  const [newsletterConfig, setNewsletterConfig] = useState<Partial<NewsletterChannelConfig>>(
-    initialData?.newsletterConfig || { subject: '', preview_text: '', target_list: '' }
-  );
-  const [exitIntentConfig, setExitIntentConfig] = useState<Partial<ExitIntentChannelConfig>>(
-    initialData?.exitIntentConfig || { hero_type: 'publidoor', cta_text: 'Continuar navegando', priority_type: 'commercial' }
-  );
-  const [loginPanelConfig, setLoginPanelConfig] = useState<Partial<LoginPanelChannelConfig>>(
-    initialData?.loginPanelConfig || { display_type: 'publidoor' }
-  );
-
-  // Asset states
-  const [adsAssetUrl, setAdsAssetUrl] = useState('');
-  const [publidoorAssetUrl, setPublidoorAssetUrl] = useState('');
-  const [storyAssetUrl, setStoryAssetUrl] = useState('');
-  const [adsAltText, setAdsAltText] = useState('');
-  const [publidoorAltText, setPublidoorAltText] = useState('');
-  const [storyAltText, setStoryAltText] = useState('');
-  
-  // Exit-Intent Assets
-  const [exitIntentHeroUrl, setExitIntentHeroUrl] = useState('');
-  const [exitIntentSecondary1Url, setExitIntentSecondary1Url] = useState('');
-  const [exitIntentSecondary2Url, setExitIntentSecondary2Url] = useState('');
-  
-  // Login Panel Assets
-  const [loginPanelAssetUrl, setLoginPanelAssetUrl] = useState('');
-
-  // Validation state
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
-
-  
+  const { status, selectedChannels, channelConfigs, assets, validationErrors } = state;
 
   // Validate channels before submit
   const validateChannels = (): string[] => {
-    const errors: string[] = [];
+    const errs: string[] = [];
 
     if (selectedChannels.includes('push')) {
-      if (!pushConfig.title?.trim()) {
-        errors.push('Push: Título é obrigatório');
-      }
-      if (!pushConfig.body?.trim()) {
-        errors.push('Push: Corpo da mensagem é obrigatório');
-      }
+      if (!channelConfigs.push.title?.trim()) errs.push('Push: Título é obrigatório');
+      if (!channelConfigs.push.body?.trim()) errs.push('Push: Corpo da mensagem é obrigatório');
     }
 
     if (selectedChannels.includes('newsletter')) {
-      if (!newsletterConfig.subject?.trim()) {
-        errors.push('Newsletter: Assunto é obrigatório');
-      }
+      if (!channelConfigs.newsletter.subject?.trim()) errs.push('Newsletter: Assunto é obrigatório');
     }
 
     if (selectedChannels.includes('webstories')) {
-      if (webstoriesConfig.story_type === 'external' && !webstoriesConfig.story_url?.trim()) {
-        errors.push('WebStories: URL do story é obrigatória para tipo externo');
+      if (channelConfigs.webstories.story_type === 'external' && !channelConfigs.webstories.story_url?.trim()) {
+        errs.push('WebStories: URL do story é obrigatória para tipo externo');
       }
     }
 
     if (selectedChannels.includes('exit_intent')) {
-      if (!exitIntentConfig.cta_text?.trim()) {
-        errors.push('Exit-Intent: Texto do CTA é obrigatório');
-      }
+      if (!channelConfigs.exit_intent.cta_text?.trim()) errs.push('Exit-Intent: Texto do CTA é obrigatório');
     }
 
-    return errors;
+    return errs;
   };
 
   const handleFormSubmit = handleSubmit((data) => {
-    // Validate channels
     const channelErrors = validateChannels();
     if (channelErrors.length > 0) {
       setValidationErrors(channelErrors);
@@ -146,69 +90,52 @@ export function CampaignForm({
     setValidationErrors([]);
 
     // Build assets array
-    const assets: CampaignFormData['assets'] = [];
-    
-    if (selectedChannels.includes('ads') && adsAssetUrl) {
-      assets.push({
+    const formAssets: CampaignFormData['assets'] = [];
+
+    if (selectedChannels.includes('ads') && assets.ads.url) {
+      formAssets.push({
         asset_type: 'banner',
-        file_url: adsAssetUrl,
-        alt_text: adsAltText,
+        file_url: assets.ads.url,
+        alt_text: assets.ads.alt,
         channel_type: 'ads',
-        format_key: adsConfig.slot_type,
+        format_key: channelConfigs.ads.slot_type,
       });
     }
-    
-    if (selectedChannels.includes('publidoor') && publidoorAssetUrl) {
-      assets.push({
+
+    if (selectedChannels.includes('publidoor') && assets.publidoor.url) {
+      formAssets.push({
         asset_type: 'publidoor',
-        file_url: publidoorAssetUrl,
-        alt_text: publidoorAltText,
+        file_url: assets.publidoor.url,
+        alt_text: assets.publidoor.alt,
         channel_type: 'publidoor',
       });
     }
-    
-    if (selectedChannels.includes('webstories') && storyAssetUrl) {
-      assets.push({
+
+    if (selectedChannels.includes('webstories') && assets.webstories.url) {
+      formAssets.push({
         asset_type: 'story_cover',
-        file_url: storyAssetUrl,
-        alt_text: storyAltText,
+        file_url: assets.webstories.url,
+        alt_text: assets.webstories.alt,
         channel_type: 'webstories',
       });
     }
 
-    // Exit-Intent assets
     if (selectedChannels.includes('exit_intent')) {
-      if (exitIntentHeroUrl) {
-        assets.push({
-          asset_type: 'banner',
-          file_url: exitIntentHeroUrl,
-          channel_type: 'exit_intent',
-          format_key: 'exit_hero',
-        });
+      if (assets.exitIntentHero.url) {
+        formAssets.push({ asset_type: 'banner', file_url: assets.exitIntentHero.url, channel_type: 'exit_intent', format_key: 'exit_hero' });
       }
-      if (exitIntentSecondary1Url) {
-        assets.push({
-          asset_type: 'banner',
-          file_url: exitIntentSecondary1Url,
-          channel_type: 'exit_intent',
-          format_key: 'exit_secondary_1',
-        });
+      if (assets.exitIntentSecondary1.url) {
+        formAssets.push({ asset_type: 'banner', file_url: assets.exitIntentSecondary1.url, channel_type: 'exit_intent', format_key: 'exit_secondary_1' });
       }
-      if (exitIntentSecondary2Url) {
-        assets.push({
-          asset_type: 'banner',
-          file_url: exitIntentSecondary2Url,
-          channel_type: 'exit_intent',
-          format_key: 'exit_secondary_2',
-        });
+      if (assets.exitIntentSecondary2.url) {
+        formAssets.push({ asset_type: 'banner', file_url: assets.exitIntentSecondary2.url, channel_type: 'exit_intent', format_key: 'exit_secondary_2' });
       }
     }
 
-    // Login Panel assets
-    if (selectedChannels.includes('login_panel') && loginPanelAssetUrl) {
-      assets.push({
-        asset_type: loginPanelConfig.display_type === 'story' ? 'story_cover' : 'publidoor',
-        file_url: loginPanelAssetUrl,
+    if (selectedChannels.includes('login_panel') && assets.loginPanel.url) {
+      formAssets.push({
+        asset_type: channelConfigs.login_panel.display_type === 'story' ? 'story_cover' : 'publidoor',
+        file_url: assets.loginPanel.url,
         channel_type: 'login_panel',
         format_key: 'login_panel',
       });
@@ -218,14 +145,14 @@ export function CampaignForm({
       ...data,
       status,
       enabledChannels: selectedChannels,
-      adsConfig,
-      publidoorConfig,
-      webstoriesConfig,
-      pushConfig,
-      newsletterConfig,
-      exitIntentConfig,
-      loginPanelConfig,
-      assets,
+      adsConfig: channelConfigs.ads,
+      publidoorConfig: channelConfigs.publidoor,
+      webstoriesConfig: channelConfigs.webstories,
+      pushConfig: channelConfigs.push,
+      newsletterConfig: channelConfigs.newsletter,
+      exitIntentConfig: channelConfigs.exit_intent,
+      loginPanelConfig: channelConfigs.login_panel,
+      assets: formAssets,
     });
   });
 
@@ -397,44 +324,11 @@ export function CampaignForm({
         <CardContent>
           <ChannelSelector
             selectedChannels={selectedChannels}
-            onChannelsChange={setSelectedChannels}
-            adsConfig={adsConfig}
-            onAdsConfigChange={setAdsConfig}
-            publidoorConfig={publidoorConfig}
-            onPublidoorConfigChange={setPublidoorConfig}
-            webstoriesConfig={webstoriesConfig}
-            onWebstoriesConfigChange={setWebstoriesConfig}
-            pushConfig={pushConfig}
-            onPushConfigChange={setPushConfig}
-            newsletterConfig={newsletterConfig}
-            onNewsletterConfigChange={setNewsletterConfig}
-            exitIntentConfig={exitIntentConfig}
-            onExitIntentConfigChange={setExitIntentConfig}
-            loginPanelConfig={loginPanelConfig}
-            onLoginPanelConfigChange={setLoginPanelConfig}
-            adsAssetUrl={adsAssetUrl}
-            onAdsAssetChange={(url, alt) => {
-              setAdsAssetUrl(url);
-              if (alt) setAdsAltText(alt);
-            }}
-            publidoorAssetUrl={publidoorAssetUrl}
-            onPublidoorAssetChange={(url, alt) => {
-              setPublidoorAssetUrl(url);
-              if (alt) setPublidoorAltText(alt);
-            }}
-            storyAssetUrl={storyAssetUrl}
-            onStoryAssetChange={(url, alt) => {
-              setStoryAssetUrl(url);
-              if (alt) setStoryAltText(alt);
-            }}
-            exitIntentHeroUrl={exitIntentHeroUrl}
-            onExitIntentHeroChange={(url) => setExitIntentHeroUrl(url)}
-            exitIntentSecondary1Url={exitIntentSecondary1Url}
-            onExitIntentSecondary1Change={(url) => setExitIntentSecondary1Url(url)}
-            exitIntentSecondary2Url={exitIntentSecondary2Url}
-            onExitIntentSecondary2Change={(url) => setExitIntentSecondary2Url(url)}
-            loginPanelAssetUrl={loginPanelAssetUrl}
-            onLoginPanelAssetChange={(url) => setLoginPanelAssetUrl(url)}
+            onToggleChannel={toggleChannel}
+            channelConfigs={channelConfigs}
+            onConfigChange={setChannelConfig}
+            channelAssets={assets}
+            onAssetChange={setAsset}
           />
         </CardContent>
       </Card>
@@ -449,16 +343,15 @@ export function CampaignForm({
         </CardHeader>
         <CardContent>
           <BatchAssetUploader
-            onAssetsUploaded={(assets) => {
-              // Add uploaded assets to form state
-              assets.forEach(asset => {
+            onAssetsUploaded={(uploadedAssets) => {
+              uploadedAssets.forEach(asset => {
                 const channel = asset.channel_type;
                 if (channel === 'ads') {
-                  setAdsAssetUrl(asset.file_url);
+                  setAsset('ads', asset.file_url);
                 } else if (channel === 'publidoor') {
-                  setPublidoorAssetUrl(asset.file_url);
+                  setAsset('publidoor', asset.file_url);
                 } else if (channel === 'webstories') {
-                  setStoryAssetUrl(asset.file_url);
+                  setAsset('webstories', asset.file_url);
                 }
               });
             }}

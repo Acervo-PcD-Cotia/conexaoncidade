@@ -1,18 +1,11 @@
+import React from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { ChevronDown, Layout, Megaphone, Smartphone, Bell, Mail, DoorOpen, LogIn, FileText } from 'lucide-react';
+import { ChevronDown, Layout, Megaphone, Smartphone, Bell, Mail, DoorOpen, LogIn } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { 
-  ChannelType, 
-  AdsChannelConfig, 
-  PublidoorChannelConfig, 
-  WebStoriesChannelConfig,
-  PushChannelConfig,
-  NewsletterChannelConfig,
-  ExitIntentChannelConfig,
-  LoginPanelChannelConfig,
-} from '@/types/campaigns-unified';
+import type { ChannelType } from '@/types/campaigns-unified';
+import type { ChannelConfigs, ChannelAssets } from './useCampaignFormReducer';
 import { AdsChannelForm } from './AdsChannelForm';
 import { PublidoorChannelForm } from './PublidoorChannelForm';
 import { WebStoriesChannelForm } from './WebStoriesChannelForm';
@@ -21,44 +14,13 @@ import { NewsletterChannelForm } from './NewsletterChannelForm';
 import { ExitIntentChannelForm } from './ExitIntentChannelForm';
 import { LoginPanelChannelForm } from './LoginPanelChannelForm';
 
-interface ChannelSelectorProps {
+export interface ChannelSelectorProps {
   selectedChannels: ChannelType[];
-  onChannelsChange: (channels: ChannelType[]) => void;
-  // Ads
-  adsConfig?: Partial<AdsChannelConfig>;
-  onAdsConfigChange: (config: Partial<AdsChannelConfig>) => void;
-  adsAssetUrl?: string;
-  onAdsAssetChange: (url: string, alt?: string) => void;
-  // Publidoor
-  publidoorConfig?: Partial<PublidoorChannelConfig>;
-  onPublidoorConfigChange: (config: Partial<PublidoorChannelConfig>) => void;
-  publidoorAssetUrl?: string;
-  onPublidoorAssetChange: (url: string, alt?: string) => void;
-  // WebStories
-  webstoriesConfig?: Partial<WebStoriesChannelConfig>;
-  onWebstoriesConfigChange: (config: Partial<WebStoriesChannelConfig>) => void;
-  storyAssetUrl?: string;
-  onStoryAssetChange: (url: string, alt?: string) => void;
-  // Push
-  pushConfig?: Partial<PushChannelConfig>;
-  onPushConfigChange: (config: Partial<PushChannelConfig>) => void;
-  // Newsletter
-  newsletterConfig?: Partial<NewsletterChannelConfig>;
-  onNewsletterConfigChange: (config: Partial<NewsletterChannelConfig>) => void;
-  // Exit-Intent
-  exitIntentConfig?: Partial<ExitIntentChannelConfig>;
-  onExitIntentConfigChange: (config: Partial<ExitIntentChannelConfig>) => void;
-  exitIntentHeroUrl?: string;
-  onExitIntentHeroChange?: (url: string, alt?: string) => void;
-  exitIntentSecondary1Url?: string;
-  onExitIntentSecondary1Change?: (url: string, alt?: string) => void;
-  exitIntentSecondary2Url?: string;
-  onExitIntentSecondary2Change?: (url: string, alt?: string) => void;
-  // Login Panel
-  loginPanelConfig?: Partial<LoginPanelChannelConfig>;
-  onLoginPanelConfigChange: (config: Partial<LoginPanelChannelConfig>) => void;
-  loginPanelAssetUrl?: string;
-  onLoginPanelAssetChange?: (url: string, alt?: string) => void;
+  onToggleChannel: (channel: ChannelType) => void;
+  channelConfigs: ChannelConfigs;
+  onConfigChange: (channel: ChannelType, config: Partial<Record<string, unknown>>) => void;
+  channelAssets: ChannelAssets;
+  onAssetChange: (key: keyof ChannelAssets, url: string, alt?: string) => void;
 }
 
 interface ChannelOption {
@@ -130,49 +92,14 @@ const CATEGORY_LABELS: Record<string, string> = {
   direct: 'Comunicação Direta',
 };
 
-// No-op function for fallback
-const noop = () => {};
-
-export function ChannelSelector({
+export const ChannelSelector = React.memo(function ChannelSelector({
   selectedChannels,
-  onChannelsChange,
-  adsConfig,
-  onAdsConfigChange,
-  publidoorConfig,
-  onPublidoorConfigChange,
-  webstoriesConfig,
-  onWebstoriesConfigChange,
-  pushConfig,
-  onPushConfigChange = noop,
-  newsletterConfig,
-  onNewsletterConfigChange = noop,
-  exitIntentConfig,
-  onExitIntentConfigChange = noop,
-  loginPanelConfig,
-  onLoginPanelConfigChange = noop,
-  adsAssetUrl,
-  onAdsAssetChange,
-  publidoorAssetUrl,
-  onPublidoorAssetChange,
-  storyAssetUrl,
-  onStoryAssetChange,
-  exitIntentHeroUrl,
-  onExitIntentHeroChange,
-  exitIntentSecondary1Url,
-  onExitIntentSecondary1Change,
-  exitIntentSecondary2Url,
-  onExitIntentSecondary2Change,
-  loginPanelAssetUrl,
-  onLoginPanelAssetChange,
+  onToggleChannel,
+  channelConfigs,
+  onConfigChange,
+  channelAssets,
+  onAssetChange,
 }: ChannelSelectorProps) {
-  const toggleChannel = (type: ChannelType) => {
-    if (selectedChannels.includes(type)) {
-      onChannelsChange(selectedChannels.filter(c => c !== type));
-    } else {
-      onChannelsChange([...selectedChannels, type]);
-    }
-  };
-
   const isSelected = (type: ChannelType) => selectedChannels.includes(type);
 
   const groupedChannels = CHANNELS.reduce((acc, channel) => {
@@ -201,64 +128,64 @@ export function ChannelSelector({
       case 'ads':
         return (
           <AdsChannelForm
-            config={adsConfig}
-            onChange={onAdsConfigChange}
-            assetUrl={adsAssetUrl}
-            onAssetChange={onAdsAssetChange}
+            config={channelConfigs.ads}
+            onChange={(config) => onConfigChange('ads', config)}
+            assetUrl={channelAssets.ads.url}
+            onAssetChange={(url, alt) => onAssetChange('ads', url, alt)}
           />
         );
       case 'publidoor':
         return (
           <PublidoorChannelForm
-            config={publidoorConfig}
-            onChange={onPublidoorConfigChange}
-            assetUrl={publidoorAssetUrl}
-            onAssetChange={onPublidoorAssetChange}
+            config={channelConfigs.publidoor}
+            onChange={(config) => onConfigChange('publidoor', config)}
+            assetUrl={channelAssets.publidoor.url}
+            onAssetChange={(url, alt) => onAssetChange('publidoor', url, alt)}
           />
         );
       case 'webstories':
         return (
           <WebStoriesChannelForm
-            config={webstoriesConfig}
-            onChange={onWebstoriesConfigChange}
-            assetUrl={storyAssetUrl}
-            onAssetChange={onStoryAssetChange}
+            config={channelConfigs.webstories}
+            onChange={(config) => onConfigChange('webstories', config)}
+            assetUrl={channelAssets.webstories.url}
+            onAssetChange={(url, alt) => onAssetChange('webstories', url, alt)}
           />
         );
       case 'push':
         return (
           <PushChannelForm
-            config={pushConfig}
-            onChange={onPushConfigChange}
+            config={channelConfigs.push}
+            onChange={(config) => onConfigChange('push', config)}
           />
         );
       case 'newsletter':
         return (
           <NewsletterChannelForm
-            config={newsletterConfig}
-            onChange={onNewsletterConfigChange}
+            config={channelConfigs.newsletter}
+            onChange={(config) => onConfigChange('newsletter', config)}
           />
         );
       case 'exit_intent':
         return (
           <ExitIntentChannelForm
-            config={exitIntentConfig}
-            onChange={onExitIntentConfigChange}
-            heroAssetUrl={exitIntentHeroUrl}
-            onHeroAssetChange={onExitIntentHeroChange}
-            secondary1AssetUrl={exitIntentSecondary1Url}
-            onSecondary1AssetChange={onExitIntentSecondary1Change}
-            secondary2AssetUrl={exitIntentSecondary2Url}
-            onSecondary2AssetChange={onExitIntentSecondary2Change}
+            config={channelConfigs.exit_intent}
+            onChange={(config) => onConfigChange('exit_intent', config)}
+            heroAssetUrl={channelAssets.exitIntentHero.url}
+            onHeroAssetChange={(url, alt) => onAssetChange('exitIntentHero', url, alt)}
+            secondary1AssetUrl={channelAssets.exitIntentSecondary1.url}
+            onSecondary1AssetChange={(url, alt) => onAssetChange('exitIntentSecondary1', url, alt)}
+            secondary2AssetUrl={channelAssets.exitIntentSecondary2.url}
+            onSecondary2AssetChange={(url, alt) => onAssetChange('exitIntentSecondary2', url, alt)}
           />
         );
       case 'login_panel':
         return (
           <LoginPanelChannelForm
-            config={loginPanelConfig}
-            onChange={onLoginPanelConfigChange}
-            assetUrl={loginPanelAssetUrl}
-            onAssetChange={onLoginPanelAssetChange}
+            config={channelConfigs.login_panel}
+            onChange={(config) => onConfigChange('login_panel', config)}
+            assetUrl={channelAssets.loginPanel.url}
+            onAssetChange={(url, alt) => onAssetChange('loginPanel', url, alt)}
           />
         );
       default:
@@ -293,7 +220,7 @@ export function ChannelSelector({
               >
                 <div
                   className="flex items-start gap-3 p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => toggleChannel(channel.type)}
+                  onClick={() => onToggleChannel(channel.type)}
                 >
                   <Checkbox
                     checked={isSelected(channel.type)}
@@ -330,4 +257,4 @@ export function ChannelSelector({
       ))}
     </div>
   );
-}
+});
