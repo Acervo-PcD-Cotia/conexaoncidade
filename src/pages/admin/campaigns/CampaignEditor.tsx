@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,17 @@ import {
   useCreateCampaignUnified, 
   useUpdateCampaignUnified 
 } from '@/hooks/useCampaignsUnified';
-import type { CampaignFormData, ChannelType, AdsChannelConfig, PublidoorChannelConfig, WebStoriesChannelConfig } from '@/types/campaigns-unified';
+import type { 
+  CampaignFormData, 
+  ChannelType, 
+  AdsChannelConfig, 
+  PublidoorChannelConfig, 
+  WebStoriesChannelConfig,
+  PushChannelConfig,
+  NewsletterChannelConfig,
+  ExitIntentChannelConfig,
+  LoginPanelChannelConfig,
+} from '@/types/campaigns-unified';
 
 export default function CampaignEditor() {
   const navigate = useNavigate();
@@ -37,8 +48,8 @@ export default function CampaignEditor() {
     navigate('/admin/campaigns/unified');
   };
 
-  // Transform campaign data to form data
-  const getInitialData = (): Partial<CampaignFormData> | undefined => {
+  // Memoized initial data — only recalculates when campaign changes
+  const initialData = useMemo((): Partial<CampaignFormData> | undefined => {
     if (!campaign) return undefined;
 
     const enabledChannels: ChannelType[] = campaign.channels
@@ -68,10 +79,10 @@ export default function CampaignEditor() {
       adsConfig: adsChannel?.config as AdsChannelConfig | undefined,
       publidoorConfig: publidoorChannel?.config as PublidoorChannelConfig | undefined,
       webstoriesConfig: storiesChannel?.config as WebStoriesChannelConfig | undefined,
-      pushConfig: pushChannel?.config as any,
-      newsletterConfig: newsletterChannel?.config as any,
-      exitIntentConfig: exitIntentChannel?.config as any,
-      loginPanelConfig: loginPanelChannel?.config as any,
+      pushConfig: pushChannel?.config as PushChannelConfig | undefined,
+      newsletterConfig: newsletterChannel?.config as NewsletterChannelConfig | undefined,
+      exitIntentConfig: exitIntentChannel?.config as ExitIntentChannelConfig | undefined,
+      loginPanelConfig: loginPanelChannel?.config as LoginPanelChannelConfig | undefined,
       assets: campaign.assets?.map(a => ({
         asset_type: a.asset_type,
         file_url: a.file_url,
@@ -82,7 +93,7 @@ export default function CampaignEditor() {
         format_key: a.format_key,
       })) || [],
     };
-  };
+  }, [campaign]);
 
   if (isEditing && isLoading) {
     return (
@@ -146,7 +157,7 @@ export default function CampaignEditor() {
 
       {/* Form */}
       <CampaignForm
-        initialData={getInitialData()}
+        initialData={initialData}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
         isLoading={createMutation.isPending || updateMutation.isPending}
