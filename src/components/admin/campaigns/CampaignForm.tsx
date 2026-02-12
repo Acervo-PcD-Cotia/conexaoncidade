@@ -38,29 +38,22 @@ export function CampaignForm({
   onCancel,
   isLoading,
 }: CampaignFormProps) {
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<CampaignFormData>({
+  const { register, handleSubmit, formState: { errors } } = useForm<CampaignFormData>({
     defaultValues: {
       name: initialData?.name || '',
       advertiser: initialData?.advertiser || '',
       description: initialData?.description || '',
-      status: initialData?.status || 'draft',
       starts_at: initialData?.starts_at || '',
       ends_at: initialData?.ends_at || '',
       priority: initialData?.priority || 0,
       cta_text: initialData?.cta_text || '',
       cta_url: initialData?.cta_url || '',
       frequency_cap_per_day: initialData?.frequency_cap_per_day || 0,
-      enabledChannels: initialData?.enabledChannels || [],
-      adsConfig: initialData?.adsConfig || {},
-      publidoorConfig: initialData?.publidoorConfig || {},
-      webstoriesConfig: initialData?.webstoriesConfig || {},
-      pushConfig: initialData?.pushConfig || {},
-      newsletterConfig: initialData?.newsletterConfig || {},
-      exitIntentConfig: initialData?.exitIntentConfig || {},
-      loginPanelConfig: initialData?.loginPanelConfig || {},
-      assets: initialData?.assets || [],
     },
   });
+
+  // Status as local state (avoids watch+setValue loop with Radix Select — Error #185)
+  const [status, setStatus] = useState<CampaignStatus>(initialData?.status || 'draft');
 
   // Channel states
   const [selectedChannels, setSelectedChannels] = useState<ChannelType[]>(
@@ -107,7 +100,7 @@ export function CampaignForm({
   // Validation state
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
-  const status = watch('status');
+  
 
   // Validate channels before submit
   const validateChannels = (): string[] => {
@@ -223,6 +216,7 @@ export function CampaignForm({
 
     onSubmit({
       ...data,
+      status,
       enabledChannels: selectedChannels,
       adsConfig,
       publidoorConfig,
@@ -301,7 +295,7 @@ export function CampaignForm({
               <Label htmlFor="status">Status</Label>
               <Select
                 value={status}
-                onValueChange={(value) => setValue('status', value as CampaignStatus)}
+                onValueChange={(value) => setStatus(value as CampaignStatus)}
               >
                 <SelectTrigger>
                   <SelectValue />
