@@ -1,104 +1,186 @@
 
-# Fix Definitivo: Root Cause Confirmada no Radix Select + Form
+# Refatoracao Completa: CampaignForm + ChannelSelector + CampaignEditor
 
-## Causa Raiz (Confirmada no Codigo-Fonte da Biblioteca)
+## Visao Geral
 
-O `@radix-ui/react-select@2.2.5` renderiza um `<select>` nativo oculto quando detecta que esta dentro de um `<form>` (para compatibilidade com formularios nativos). Este `<select>` oculto tem um bug de loop:
+4 refatoracoes de engenharia para eliminar divida tecnica no modulo de Campanhas 360, mais publicacao e teste.
 
-1. Cada `SelectItem` ao montar registra uma `<option>` nativa via `onNativeOptionAdd`
-2. Isso muda `nativeOptionsSet` -> muda `nativeSelectKey` -> remonta o `<select>` oculto
-3. Na remontagem, `usePrevious(value)` reseta para `undefined`
-4. O `useEffect` interno detecta `prevValue !== value` (undefined !== 'draft') e dispara um `new Event("change")`
-5. O evento de change chama `setValue(event.target.value)` no Select root
-6. Isso dispara `onValueChange` -> `setStatus` -> re-render
-7. Re-render faz SelectItems re-montarem -> volta ao passo 1
+---
 
-Este loop ocorre APENAS quando o Select esta dentro de um `<form>` (que e o caso do CampaignForm).
+## 1. Publicar e Testar Error #185
 
-## Solucao: Substituir Radix Select por RadioGroup para Status
+**Acao do usuario**: Clicar "Publicar" e verificar em aba anonima que `/admin/campaigns/new` carrega sem crash com `Build: 2026-02-12-v9`.
 
-Em vez de tentar contornar o bug interno do Radix Select, a solucao de engenharia e **eliminar o componente problematico** e usar o Radix RadioGroup (que NAO tem o mecanismo de `<select>` nativo oculto).
+Nenhuma alteracao de codigo necessaria — apenas deploy do que ja foi implementado.
 
-### Alteracao 1: `src/components/admin/campaigns/CampaignForm.tsx`
+---
 
-Substituir o bloco do Select de status (linhas 294-310) por um RadioGroup inline:
+## 2. Refatorar CampaignForm: 20+ useState para useReducer
 
-```tsx
-// ANTES (Radix Select com bug de loop interno):
-<Select value={status} onValueChange={...}>
-  <SelectTrigger><SelectValue /></SelectTrigger>
-  <SelectContent>
-    <SelectItem value="draft">Rascunho</SelectItem>
-    <SelectItem value="active">Ativa</SelectItem>
-    <SelectItem value="paused">Pausada</SelectItem>
-    <SelectItem value="ended">Encerrada</SelectItem>
-  </SelectContent>
-</Select>
+**Problema**: 22 chamadas `useState` separadas tornam o estado dificil de rastrear e causam re-renders granulares excessivos.
 
-// DEPOIS (RadioGroup - sem <select> nativo oculto):
-<RadioGroup
-  value={status}
-  onValueChange={(value) => setStatus(value as CampaignStatus)}
-  className="flex flex-wrap gap-2"
->
-  {[
-    { value: 'draft', label: 'Rascunho' },
-    { value: 'active', label: 'Ativa' },
-    { value: 'paused', label: 'Pausada' },
-    { value: 'ended', label: 'Encerrada' },
-  ].map((opt) => (
-    <div key={opt.value} className="flex items-center space-x-2">
-      <RadioGroupItem value={opt.value} id={`status-${opt.value}`} />
-      <Label htmlFor={`status-${opt.value}`} className="font-normal cursor-pointer">
-        {opt.label}
-      </Label>
-    </div>
-  ))}
-</RadioGroup>
+**Solucao**: Criar um `useReducer` unificado com um tipo de estado e actions tipadas.
+
+### Novo tipo de estado
+
+```ts
+interface CampaignFormState {
+  status: CampaignStatus;
+  selectedChannels: ChannelType[];
+  channelConfigs: {
+    ads: Partial<AdsChannelConfig>;
+    publidoor: Partial<PublidoorChannelConfig>;
+    webstories: Partial<WebStoriesChannelConfig>;
+    push: Partial<PushChannelConfig>;
+    newsletter: Partial<NewsletterChannelConfig>;
+    exit_intent: Partial<ExitIntentChannelConfig>;
+    login_panel: Partial<LoginPanelChannelConfig>;
+  };
+  assets: {
+    ads: { url: string; alt: string };
+    publidoor: { url: string; alt: string };
+    webstories: { url: string; alt: string };
+    exitIntentHero: { url: string };
+    exitIntentSecondary1: { url: string };
+    exitIntentSecondary2: { url: string };
+    loginPanel: { url: string };
+  };
+  validationErrors: string[];
+}
 ```
 
-Imports a adicionar: `RadioGroup, RadioGroupItem` de `@/components/ui/radio-group`.
-Imports a remover: `Select, SelectContent, SelectItem, SelectTrigger, SelectValue`.
+### Actions tipadas
 
-**Por que RadioGroup e seguro**: O Radix RadioGroup nao renderiza um elemento nativo oculto e nao tem o mecanismo de `nativeOptionsSet` + `BubbleInput` que causa o loop.
+```ts
+type CampaignFormAction =
+  | { type: 'SET_STATUS'; payload: CampaignStatus }
+  | { type: 'TOGGLE_CHANNEL'; payload: ChannelType }
+  | { type: 'SET_CHANNEL_CONFIG'; payload: { channel: ChannelType; config: Partial<ChannelConfig> } }
+  | { type: 'SET_ASSET'; payload: { key: string; url: string; alt?: string } }
+  | { type: 'SET_VALIDATION_ERRORS'; payload: string[] };
+```
 
-### Alteracao 2: `src/config/buildInfo.ts`
+### Arquivo novo: `src/components/admin/campaigns/useCampaignFormReducer.ts`
 
-Atualizar BUILD_ID para `'2026-02-12-v9'` para confirmar o deploy.
+Contera:
+- `CampaignFormState` e `CampaignFormAction` types
+- `createInitialState(initialData)` factory
+- `campaignFormReducer(state, action)` reducer puro
+- Export do hook `useCampaignFormReducer(initialData)`
 
-## Arquivos alterados
+### Alteracao em `CampaignForm.tsx`
 
-| Arquivo | Alteracao |
-|---|---|
-| `src/components/admin/campaigns/CampaignForm.tsx` | Substituir Select por RadioGroup para campo status |
-| `src/config/buildInfo.ts` | BUILD_ID -> v9 |
+- Remover os 22 `useState`
+- Importar e usar `useCampaignFormReducer`
+- Todas as callbacks de onChange passam a fazer `dispatch({ type: ..., payload: ... })`
+- `react-hook-form` continua gerenciando apenas os campos de texto (name, advertiser, etc.)
 
-## Por que isso resolve de vez
+---
 
-- O Radix RadioGroup usa `<input type="radio">` nativos (que nao tem o bug de BubbleInput + key + usePrevious)
-- Remove completamente o unico Radix Select que renderiza no mount inicial da pagina
-- Os outros Selects (nos channel forms) so renderizam quando o usuario ativa um canal, entao nao causam crash no mount
-- Comportamento identico para o usuario: seleciona um status entre 4 opcoes
+## 3. Reduzir props do ChannelSelector: 38 props para objeto unico
 
-## Detalhes tecnicos da causa raiz
+**Problema**: `ChannelSelectorProps` tem 38 propriedades individuais — cada config, cada asset, cada onChange separados.
 
-O arquivo `node_modules/@radix-ui/react-select/dist/index.mjs` contem:
+**Solucao**: Agrupar em um unico objeto de configuracao + um unico dispatch.
 
-1. **Linha 75-76**: `isFormControl = trigger ? form || !!trigger.closest("form") : true` - detecta que esta dentro de um form
-2. **Linha 76**: `nativeOptionsSet` e um `Set` que recebe novos elementos a cada mount de SelectItem
-3. **Linha 77**: `nativeSelectKey = Array.from(nativeOptionsSet).map(...).join(";")` - muda a cada item adicionado
-4. **Linha 115-133**: `SelectBubbleInput` (native select oculto) e renderizado com `key={nativeSelectKey}`
-5. **Linha 1074-1088**: `usePrevious(value)` reseta a `undefined` na remontagem, causando `prevValue !== value` -> dispara `new Event("change")` -> loop
+### Nova interface
 
-Este bug e uma combinacao de:
-- Select controlado dentro de `<form>`
-- Multiplos SelectItems montando em sequencia
-- Cada mount causa remontagem do native select
-- Cada remontagem dispara change event via useEffect
+```ts
+interface ChannelSelectorProps {
+  selectedChannels: ChannelType[];
+  onToggleChannel: (channel: ChannelType) => void;
+  channelConfigs: CampaignFormState['channelConfigs'];
+  onConfigChange: (channel: ChannelType, config: Partial<ChannelConfig>) => void;
+  channelAssets: CampaignFormState['assets'];
+  onAssetChange: (key: string, url: string, alt?: string) => void;
+}
+```
 
-## Checklist pos-deploy
+De 38 props para 6.
 
-1. Verificar rodape mostra `Build: 2026-02-12-v9`
-2. Abrir `/admin/campaigns/new` sem crash
-3. Confirmar que o campo Status aparece como RadioGroup com 4 opcoes
-4. Console: zero warnings/errors
+### Alteracoes nos channel forms filhos
+
+Os channel forms (AdsChannelForm, PublidoorChannelForm, etc.) mantem suas interfaces atuais — o ChannelSelector adapta internamente, passando `channelConfigs.ads` como `config` e criando callbacks inline `(config) => onConfigChange('ads', config)`.
+
+### React.memo
+
+Envolver `ChannelSelector` em `React.memo` ja que agora recebe objetos estaveis do reducer (mesma referencia entre renders quando nao mudam).
+
+---
+
+## 4. Eliminar `as any` no CampaignEditor.tsx
+
+**Problema**: 4 casts `as any` nas linhas 71-74 para configs de Push, Newsletter, ExitIntent e LoginPanel.
+
+**Solucao**: Usar as interfaces corretas ja definidas em `campaigns-unified.ts`.
+
+```ts
+// ANTES:
+pushConfig: pushChannel?.config as any,
+newsletterConfig: newsletterChannel?.config as any,
+exitIntentConfig: exitIntentChannel?.config as any,
+loginPanelConfig: loginPanelChannel?.config as any,
+
+// DEPOIS:
+pushConfig: pushChannel?.config as PushChannelConfig | undefined,
+newsletterConfig: newsletterChannel?.config as NewsletterChannelConfig | undefined,
+exitIntentConfig: exitIntentChannel?.config as ExitIntentChannelConfig | undefined,
+loginPanelConfig: loginPanelChannel?.config as LoginPanelChannelConfig | undefined,
+```
+
+Adicionar os imports que faltam na linha 12:
+
+```ts
+import type { 
+  CampaignFormData, ChannelType, 
+  AdsChannelConfig, PublidoorChannelConfig, WebStoriesChannelConfig,
+  PushChannelConfig, NewsletterChannelConfig, ExitIntentChannelConfig, LoginPanelChannelConfig
+} from '@/types/campaigns-unified';
+```
+
+---
+
+## 5. useMemo no getInitialData
+
+**Problema**: `getInitialData()` e chamado inline no JSX (linha 149), criando um novo objeto a cada render do CampaignEditor. Isso forca o CampaignForm a reinicializar desnecessariamente.
+
+**Solucao**: Memoizar com `useMemo` dependendo de `campaign`.
+
+```ts
+const initialData = useMemo(() => {
+  if (!campaign) return undefined;
+  // ... mesma logica do getInitialData atual
+}, [campaign]);
+```
+
+E passar `initialData` diretamente:
+
+```tsx
+<CampaignForm initialData={initialData} ... />
+```
+
+---
+
+## Resumo de arquivos
+
+| Arquivo | Tipo | Alteracao |
+|---|---|---|
+| `src/components/admin/campaigns/useCampaignFormReducer.ts` | NOVO | Reducer, types, estado inicial |
+| `src/components/admin/campaigns/CampaignForm.tsx` | EDIT | Substituir 22 useState por useReducer, nova interface com ChannelSelector |
+| `src/components/admin/campaigns/ChannelSelector.tsx` | EDIT | Reduzir de 38 para 6 props, envolver em React.memo |
+| `src/pages/admin/campaigns/CampaignEditor.tsx` | EDIT | useMemo no initialData, tipos corretos nos casts |
+| `src/config/buildInfo.ts` | EDIT | BUILD_ID -> v10 |
+
+## Ordem de implementacao
+
+1. Criar `useCampaignFormReducer.ts` (novo, sem dependencias)
+2. Editar `ChannelSelector.tsx` (nova interface + React.memo)
+3. Editar `CampaignForm.tsx` (useReducer + nova interface do ChannelSelector)
+4. Editar `CampaignEditor.tsx` (useMemo + tipos corretos)
+5. Atualizar BUILD_ID
+
+## Riscos e mitigacoes
+
+- **Risco**: Channel forms filhos quebrarem por mudanca de props. **Mitigacao**: ChannelSelector adapta internamente, channel forms nao mudam.
+- **Risco**: useReducer criar novo objeto de state a cada dispatch. **Mitigacao**: Spread operators sao shallow e rapidos; React.memo no ChannelSelector compara props por referencia.
+- **Risco**: useMemo no initialData causar stale data. **Mitigacao**: Depende de `campaign` que vem do React Query — quando muda, recalcula.
