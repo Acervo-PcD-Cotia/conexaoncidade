@@ -375,6 +375,7 @@ export function BatchAssetUploader({
                             <SelectValue placeholder="Selecionar slot" />
                           </SelectTrigger>
                           <SelectContent>
+                            <SelectItem value="__none__" disabled className="text-xs text-muted-foreground">Selecione...</SelectItem>
                             {/* Compatible slots first */}
                             {asset.compatibleSlots.length > 0 && (
                               <>
