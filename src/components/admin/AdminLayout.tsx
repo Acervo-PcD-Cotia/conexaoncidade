@@ -10,6 +10,7 @@ import { useNewsCreationModal } from "@/contexts/NewsCreationModalContext";
 import { AccessDeniedScreen } from "@/components/auth/AccessDeniedScreen";
 import { AdminErrorBoundary } from "./AdminErrorBoundary";
 import { cn } from "@/lib/utils";
+import { BUILD_ID, BUILD_ENV } from "@/config/buildInfo";
 
 // Focus Mode Context
 interface FocusModeContextType {
@@ -99,6 +100,11 @@ export function AdminLayout() {
                 <Outlet />
               </AdminErrorBoundary>
             </main>
+            <footer className="flex justify-end px-4 py-1 border-t border-border/30">
+              <span className="text-[10px] text-muted-foreground font-mono">
+                Build: {BUILD_ID} | Env: {BUILD_ENV}
+              </span>
+            </footer>
           </div>
         </div>
         <NewsCreationModal open={isOpen} onOpenChange={(open) => !open && closeModal()} />

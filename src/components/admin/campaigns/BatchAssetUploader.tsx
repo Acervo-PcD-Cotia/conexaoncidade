@@ -344,15 +344,15 @@ export function BatchAssetUploader({
                           Nenhum slot compatível
                         </Badge>
                         {/* Manual slot selection fallback */}
-                        <Select
-                          key={asset.selectedSlot?.slotKey ?? `fallback-${asset.id}`}
-                          value={asset.selectedSlot?.slotKey ?? undefined}
-                          onValueChange={(value) => changeSlot(asset.id, value)}
+                         <Select
+                          value={asset.selectedSlot?.slotKey ?? '__none__'}
+                          onValueChange={(value) => { if (value !== '__none__') changeSlot(asset.id, value); }}
                         >
                           <SelectTrigger className="h-8 w-48 text-xs">
                             <SelectValue placeholder="Selecionar manualmente..." />
                           </SelectTrigger>
                           <SelectContent>
+                            <SelectItem value="__none__" disabled className="text-xs text-muted-foreground">Selecione...</SelectItem>
                             {AD_SLOTS.map(slot => (
                               <SelectItem 
                                 key={slot.key} 
@@ -368,9 +368,8 @@ export function BatchAssetUploader({
                     ) : (
                       <div className="flex items-center gap-2 flex-wrap">
                       <Select
-                          key={asset.selectedSlot?.slotKey ?? `fallback2-${asset.id}`}
-                          value={asset.selectedSlot?.slotKey ?? undefined}
-                          onValueChange={(value) => changeSlot(asset.id, value)}
+                          value={asset.selectedSlot?.slotKey ?? '__none__'}
+                          onValueChange={(value) => { if (value !== '__none__') changeSlot(asset.id, value); }}
                         >
                           <SelectTrigger className="h-8 w-48 text-xs">
                             <SelectValue placeholder="Selecionar slot" />
