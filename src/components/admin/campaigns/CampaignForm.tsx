@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -292,21 +292,26 @@ export function CampaignForm({
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select
+              <Label>Status</Label>
+              <RadioGroup
                 value={status}
                 onValueChange={(value) => setStatus(value as CampaignStatus)}
+                className="flex flex-wrap gap-3"
               >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">Rascunho</SelectItem>
-                  <SelectItem value="active">Ativa</SelectItem>
-                  <SelectItem value="paused">Pausada</SelectItem>
-                  <SelectItem value="ended">Encerrada</SelectItem>
-                </SelectContent>
-              </Select>
+                {[
+                  { value: 'draft', label: 'Rascunho' },
+                  { value: 'active', label: 'Ativa' },
+                  { value: 'paused', label: 'Pausada' },
+                  { value: 'ended', label: 'Encerrada' },
+                ].map((opt) => (
+                  <div key={opt.value} className="flex items-center space-x-2">
+                    <RadioGroupItem value={opt.value} id={`status-${opt.value}`} />
+                    <Label htmlFor={`status-${opt.value}`} className="font-normal cursor-pointer">
+                      {opt.label}
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
             </div>
 
             <div className="space-y-2">
