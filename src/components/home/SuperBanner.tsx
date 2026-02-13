@@ -5,6 +5,19 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useDeviceType } from "@/hooks/useDeviceType";
 import { AD_FORMATS, type DeviceType } from "@/lib/adFormats";
+import { trackCampaignEvent } from "@/lib/trackCampaignEvent";
+
+interface BannerItem {
+  id: string;
+  image_url: string;
+  alt_text?: string | null;
+  title?: string | null;
+  link_url?: string | null;
+  link_target?: string | null;
+  click_count?: number;
+  source: 'legacy' | 'campaign360';
+  campaignId?: string;
+}
 
 export function SuperBanner() {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -12,11 +25,8 @@ export function SuperBanner() {
   const trackedImpressions = useRef<Set<string>>(new Set());
   const device = useDeviceType();
   
-  // Get format config for responsive sizing
   const formatConfig = AD_FORMATS.SUPER_BANNER_TOPO;
-  const dimensions = formatConfig[device as DeviceType];
 
-  // Generate or retrieve session ID for tracking
   const sessionId = useMemo(() => {
     if (typeof window === "undefined") return "";
     const stored = sessionStorage.getItem("banner_session_id");
@@ -27,10 +37,13 @@ export function SuperBanner() {
   }, []);
 
   const { data: banners = [] } = useQuery({
-    queryKey: ["super-banners"],
-    queryFn: async () => {
+    queryKey: ["super-banners-unified"],
+    queryFn: async (): Promise<BannerItem[]> => {
       const now = new Date().toISOString();
-      const { data, error } = await supabase
+      const results: BannerItem[] = [];
+
+      // 1. Fetch legacy super_banners
+      const { data: legacyBanners } = await supabase
         .from("super_banners")
         .select("*")
         .eq("is_active", true)
@@ -38,8 +51,82 @@ export function SuperBanner() {
         .or(`ends_at.is.null,ends_at.gte.${now}`)
         .order("sort_order")
         .limit(7);
-      if (error) throw error;
-      return data;
+
+      if (legacyBanners) {
+        for (const b of legacyBanners) {
+          results.push({
+            id: b.id,
+            image_url: b.image_url,
+            alt_text: b.alt_text || b.title,
+            title: b.title,
+            link_url: b.link_url,
+            link_target: b.link_target,
+            click_count: b.click_count || 0,
+            source: 'legacy',
+          });
+        }
+      }
+
+      // 2. Fetch campaigns 360 with 'ads' channel for home_top/super_banner slots
+      const { data: campaigns } = await supabase
+        .from("campaigns_unified")
+        .select(`
+          id,
+          name,
+          cta_url,
+          priority,
+          channels:campaign_channels!inner(
+            channel_type,
+            enabled,
+            config
+          ),
+          assets:campaign_assets(
+            id,
+            file_url,
+            alt_text,
+            channel_type
+          )
+        `)
+        .eq("status", "active")
+        .lte("starts_at", now)
+        .or(`ends_at.is.null,ends_at.gte.${now}`)
+        .order("priority", { ascending: false })
+        .limit(5);
+
+      if (campaigns) {
+        for (const c of campaigns) {
+          const adsChannel = c.channels?.find(
+            (ch: any) => ch.channel_type === 'ads' && ch.enabled
+          );
+          if (!adsChannel) continue;
+
+          const config = adsChannel.config as Record<string, any> | null;
+          const slot = config?.slot_type;
+          // Only include if slot is for top banner area
+          if (slot && !['home_top', 'home_banner', 'super_banner'].includes(slot)) continue;
+
+          const asset = c.assets?.find((a: any) => a.channel_type === 'ads');
+          if (asset?.file_url) {
+            // Avoid duplicates if already in legacy
+            const alreadyExists = results.some(r => r.image_url === asset.file_url);
+            if (!alreadyExists) {
+              results.push({
+                id: asset.id,
+                image_url: asset.file_url,
+                alt_text: asset.alt_text || c.name,
+                title: c.name,
+                link_url: c.cta_url,
+                link_target: '_blank',
+                click_count: 0,
+                source: 'campaign360',
+                campaignId: c.id,
+              });
+            }
+          }
+        }
+      }
+
+      return results;
     },
   });
 
@@ -59,73 +146,79 @@ export function SuperBanner() {
 
   useEffect(() => {
     if (isPaused || banners.length <= 1) return;
-
     const interval = setInterval(goToNext, 5000);
     return () => clearInterval(interval);
   }, [isPaused, goToNext, banners.length]);
 
-  // Reset index when banners change
   useEffect(() => {
     if (currentIndex >= banners.length && banners.length > 0) {
       setCurrentIndex(0);
     }
   }, [banners.length, currentIndex]);
 
-  // Track impressions when banner is viewed
+  // Track impressions
   useEffect(() => {
     if (banners.length === 0 || !sessionId) return;
-    
     const currentBanner = banners[currentIndex];
     if (!currentBanner) return;
     
     const impressionKey = `${currentBanner.id}-${sessionId}`;
-    
-    // Only track once per session per banner
     if (trackedImpressions.current.has(impressionKey)) return;
     trackedImpressions.current.add(impressionKey);
     
-    // Record impression
-    supabase
-      .from("banner_impressions")
-      .insert({
-        banner_id: currentBanner.id,
-        session_id: sessionId,
-      })
-      .then();
-  }, [currentIndex, banners, sessionId]);
+    if (currentBanner.source === 'legacy') {
+      supabase
+        .from("banner_impressions")
+        .insert({ banner_id: currentBanner.id, session_id: sessionId })
+        .then();
+    } else if (currentBanner.campaignId) {
+      trackCampaignEvent({
+        campaignId: currentBanner.campaignId,
+        channelType: 'ads',
+        eventType: 'impression',
+        metadata: { slot: 'super_banner', device },
+      });
+    }
+  }, [currentIndex, banners, sessionId, device]);
 
   const handleBannerClick = (
     e: React.MouseEvent<HTMLAnchorElement>,
-    banner: NonNullable<typeof banners>[number]
+    banner: BannerItem
   ) => {
-    // Capture click coordinates for heatmap
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = Math.round(((e.clientX - rect.left) / rect.width) * 100);
     const clickY = Math.round(((e.clientY - rect.top) / rect.height) * 100);
     const bannerWidth = Math.round(rect.width);
     const bannerHeight = Math.round(rect.height);
 
-    // Increment accumulated click count
-    supabase
-      .from("super_banners")
-      .update({ click_count: (banner.click_count || 0) + 1 })
-      .eq("id", banner.id)
-      .then();
+    if (banner.source === 'legacy') {
+      supabase
+        .from("super_banners")
+        .update({ click_count: (banner.click_count || 0) + 1 })
+        .eq("id", banner.id)
+        .then();
 
-    // Record detailed click for analytics with coordinates
-    supabase
-      .from("banner_clicks")
-      .insert({
-        banner_id: banner.id,
-        session_id: sessionId,
-        user_agent: navigator.userAgent,
-        referer: document.referrer || null,
-        click_x: clickX,
-        click_y: clickY,
-        banner_width: bannerWidth,
-        banner_height: bannerHeight,
-      })
-      .then();
+      supabase
+        .from("banner_clicks")
+        .insert({
+          banner_id: banner.id,
+          session_id: sessionId,
+          user_agent: navigator.userAgent,
+          referer: document.referrer || null,
+          click_x: clickX,
+          click_y: clickY,
+          banner_width: bannerWidth,
+          banner_height: bannerHeight,
+        })
+        .then();
+    } else if (banner.campaignId) {
+      trackCampaignEvent({
+        campaignId: banner.campaignId,
+        channelType: 'ads',
+        eventType: 'click',
+        metadata: { slot: 'super_banner', clickX, clickY, device },
+      });
+    }
   };
 
   if (banners.length === 0) return null;
@@ -136,12 +229,9 @@ export function SuperBanner() {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Banner container with aspect-ratio */}
       <div
         className="flex transition-transform duration-700 ease-out"
-        style={{ 
-          transform: `translateX(-${currentIndex * 100}%)`,
-        }}
+        style={{ transform: `translateX(-${currentIndex * 100}%)` }}
       >
         {banners.map((banner) => (
           <a
@@ -152,7 +242,6 @@ export function SuperBanner() {
             className="relative w-full shrink-0"
             onClick={(e) => handleBannerClick(e, banner)}
           >
-            {/* Responsive container with aspect-ratio from format config */}
             <div 
               className="relative w-full overflow-hidden bg-muted"
               style={{ 
@@ -172,17 +261,13 @@ export function SuperBanner() {
         ))}
       </div>
 
-      {/* Navigation arrows - larger and more visible */}
       {banners.length > 1 && (
         <>
           <Button
             variant="ghost"
             size="icon"
             className="absolute left-2 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full bg-black/40 text-white backdrop-blur-sm hover:bg-black/60 hover:text-white md:left-4 md:h-12 md:w-12"
-            onClick={(e) => {
-              e.preventDefault();
-              goToPrev();
-            }}
+            onClick={(e) => { e.preventDefault(); goToPrev(); }}
           >
             <ChevronLeft className="h-6 w-6 md:h-8 md:w-8" />
           </Button>
@@ -190,26 +275,19 @@ export function SuperBanner() {
             variant="ghost"
             size="icon"
             className="absolute right-2 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full bg-black/40 text-white backdrop-blur-sm hover:bg-black/60 hover:text-white md:right-4 md:h-12 md:w-12"
-            onClick={(e) => {
-              e.preventDefault();
-              goToNext();
-            }}
+            onClick={(e) => { e.preventDefault(); goToNext(); }}
           >
             <ChevronRight className="h-6 w-6 md:h-8 md:w-8" />
           </Button>
         </>
       )}
 
-      {/* Dots - larger and more visible */}
       {banners.length > 1 && (
         <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2 md:bottom-4 md:gap-3">
           {banners.map((_, index) => (
             <button
               key={index}
-              onClick={(e) => {
-                e.preventDefault();
-                goToSlide(index);
-              }}
+              onClick={(e) => { e.preventDefault(); goToSlide(index); }}
               className={`h-2.5 w-2.5 rounded-full transition-all duration-300 md:h-3 md:w-3 ${
                 index === currentIndex
                   ? "w-6 scale-110 bg-white md:w-8"
@@ -221,7 +299,6 @@ export function SuperBanner() {
         </div>
       )}
 
-      {/* Counter badge */}
       {banners.length > 1 && (
         <div className="absolute right-2 top-2 rounded-full bg-black/50 px-2 py-1 text-xs font-medium text-white backdrop-blur-sm md:right-4 md:top-4 md:px-3 md:text-sm">
           {currentIndex + 1} / {banners.length}

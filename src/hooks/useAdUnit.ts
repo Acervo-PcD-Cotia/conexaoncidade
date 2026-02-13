@@ -14,6 +14,7 @@ interface AdData {
   link_target?: string;
   name?: string;
   title?: string;
+  campaignId?: string;
 }
 
 interface UseAdUnitOptions {
@@ -24,7 +25,8 @@ interface UseAdUnitOptions {
 }
 
 /**
- * Hook to fetch and display ads from either legacy 'ads' table or 'publidoor' system
+ * Hook to fetch and display ads from legacy 'ads' table, 'publidoor' system,
+ * or from unified 360 campaigns (campaign_assets) as fallback.
  */
 export function useAdUnit({ format, slotId, source = 'ads', enabled = true }: UseAdUnitOptions) {
   const device = useDeviceType();
@@ -35,8 +37,8 @@ export function useAdUnit({ format, slotId, source = 'ads', enabled = true }: Us
       const now = new Date().toISOString();
 
       if (source === 'ads') {
-        // Fetch from legacy ads table
-        const { data, error } = await supabase
+        // 1. Try legacy ads table first
+        const { data: legacyAd, error: legacyError } = await supabase
           .from('ads')
           .select('id, image_url, alt_text, link_url, link_target, name')
           .eq('slot_type', slotId)
@@ -47,14 +49,16 @@ export function useAdUnit({ format, slotId, source = 'ads', enabled = true }: Us
           .limit(1)
           .maybeSingle();
 
-        if (error) throw error;
-        return data;
+        if (legacyError) console.warn('[useAdUnit] legacy error:', legacyError);
+        if (legacyAd) return legacyAd;
+
+        // 2. Fallback: fetch from campaigns_unified (360 system)
+        const campaign360Ad = await fetchCampaign360Ad(slotId, now);
+        if (campaign360Ad) return campaign360Ad;
+
+        return null;
       } else {
         // Fetch from publidoor system
-        // Note: publidoor_items uses different field names:
-        // - media_url instead of image_url
-        // - cta_link instead of link_url
-        // - internal_name instead of title
         const { data, error } = await supabase
           .from('publidoor_items')
           .select('id, internal_name, media_url, cta_link, status')
@@ -77,7 +81,7 @@ export function useAdUnit({ format, slotId, source = 'ads', enabled = true }: Us
       }
     },
     enabled,
-    staleTime: 60000, // 1 minute
+    staleTime: 60000,
   });
 
   // Metrics tracking
@@ -113,4 +117,78 @@ export function useAdUnit({ format, slotId, source = 'ads', enabled = true }: Us
     handleClick,
     formatKey: slotTypeToFormatKey(slotId),
   };
+}
+
+/**
+ * Fetch ad from campaigns_unified (360 system) matching the given slot.
+ * Looks for active campaigns with 'ads' channel enabled and matching slot_type config.
+ */
+async function fetchCampaign360Ad(slotId: string, now: string): Promise<AdData | null> {
+  try {
+    const { data: campaigns, error } = await supabase
+      .from('campaigns_unified')
+      .select(`
+        id,
+        name,
+        cta_url,
+        cta_text,
+        priority,
+        channels:campaign_channels!inner(
+          channel_type,
+          enabled,
+          config
+        ),
+        assets:campaign_assets(
+          id,
+          file_url,
+          alt_text,
+          channel_type
+        )
+      `)
+      .eq('status', 'active')
+      .lte('starts_at', now)
+      .or(`ends_at.is.null,ends_at.gte.${now}`)
+      .order('priority', { ascending: false })
+      .limit(10);
+
+    if (error || !campaigns) return null;
+
+    for (const campaign of campaigns) {
+      // Check if campaign has an 'ads' channel enabled with matching slot
+      const adsChannel = campaign.channels?.find(
+        (ch: any) => ch.channel_type === 'ads' && ch.enabled
+      );
+      
+      if (!adsChannel) continue;
+
+      // Check if the channel config matches the requested slot
+      const channelConfig = adsChannel.config as Record<string, any> | null;
+      const configSlot = channelConfig?.slot_type;
+      
+      // If slot_type matches or no specific slot (show anywhere)
+      if (configSlot && configSlot !== slotId) continue;
+
+      // Find an asset for the 'ads' channel
+      const asset = campaign.assets?.find(
+        (a: any) => a.channel_type === 'ads'
+      );
+
+      if (asset?.file_url) {
+        return {
+          id: asset.id,
+          image_url: asset.file_url,
+          alt_text: asset.alt_text || campaign.name,
+          link_url: campaign.cta_url || undefined,
+          link_target: '_blank',
+          name: campaign.name,
+          campaignId: campaign.id,
+        };
+      }
+    }
+
+    return null;
+  } catch (err) {
+    console.warn('[useAdUnit] campaign360 fallback error:', err);
+    return null;
+  }
 }
