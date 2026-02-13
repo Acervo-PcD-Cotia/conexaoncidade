@@ -1,47 +1,84 @@
 
 
-# Reset de Senha do Super Admin
+# Renomear Rotas `/auth` e `/admin` para `/spah`
 
 ## Objetivo
-Forcar o reset da senha do usuario `bs7freitas@gmail.com` para `@Sph5273#` usando uma Edge Function com service role key.
+Substituir todas as rotas `/auth` e `/admin` por `/spah` para ofuscar o acesso ao painel administrativo, dificultando tentativas de acesso nao autorizado.
 
-## Implementacao
+## Escopo da Mudanca
 
-### 1. Criar Edge Function `reset-admin-password`
+A mudanca afeta **~130 arquivos** no total:
+- **114 arquivos** referenciam `/admin` (navegacao, links, redirects)
+- **23 arquivos** referenciam `/auth` (login, redirects de autenticacao)
+- **2 arquivos** em hooks (`useRequireRole.ts`, `useSidebarPersistence.ts`)
 
-Arquivo: `supabase/functions/reset-admin-password/index.ts`
+## Estrategia
 
-- Usa `SUPABASE_SERVICE_ROLE_KEY` para chamar `auth.admin.updateUserById`
-- Aceita `userId` e `newPassword` no body
-- Requer autorizacao (token de admin) OU sera uma funcao one-shot que hardcoda o user ID para seguranca
+### Fase 1 - Criar constantes centralizadas de rotas
 
-**Abordagem segura**: A funcao vai buscar o user por email `bs7freitas@gmail.com`, validar que existe, e atualizar a senha para o valor enviado. Nao expora endpoint generico — sera especifica para este reset.
+Criar um arquivo `src/config/routes.ts` com todas as rotas administrativas como constantes. Isso facilita futuras mudancas e evita hardcoding espalhado.
 
-```ts
-// Pseudocodigo
-const supabaseAdmin = createClient(url, serviceRoleKey);
-const { data } = await supabaseAdmin.auth.admin.listUsers();
-const user = data.users.find(u => u.email === 'bs7freitas@gmail.com');
-await supabaseAdmin.auth.admin.updateUserById(user.id, { password: newPassword });
+```text
+ROUTES.AUTH = "/spah"
+ROUTES.ADMIN = "/spah/painel"
+ROUTES.LOGIN = "/spah"  (alias)
 ```
 
-### 2. Chamar a funcao via curl
+A rota `/auth` vira `/spah` e `/admin` vira `/spah/painel`. Assim o login fica em `/spah` e o dashboard em `/spah/painel`.
 
-Apos deploy, chamar a funcao com o body `{ "password": "@Sph5273#" }` para efetivar o reset.
+### Fase 2 - Atualizar App.tsx (definicao de rotas)
 
-### 3. Limpar apos uso
+- `<Route path="/auth">` muda para `<Route path="/spah">`
+- `<Route path="/admin">` muda para `<Route path="/spah/painel">`
+- Adicionar redirects de compatibilidade: `/auth` -> `/spah`, `/admin` -> `/spah/painel`, `/login` -> `/spah`
 
-Apos confirmar que o login funciona, a edge function pode ser removida por seguranca (funcao one-shot).
+### Fase 3 - Atualizar todos os 114+ arquivos com referencias
 
-## Arquivos
+Substituir em massa:
+- `"/admin/` por `"/spah/painel/`
+- `"/admin"` por `"/spah/painel"`
+- `"/auth"` por `"/spah"`
+- `"/auth?` por `"/spah?`
+- `to="/admin` por `to="/spah/painel`
+- `navigate("/admin` por `navigate("/spah/painel`
+
+### Fase 4 - Atualizar hooks e contextos
+
+- `useRequireRole.ts`: redirect para `/spah` em vez de `/auth`
+- `useSidebarPersistence.ts`: atualizar mapa de rotas de `/admin` para `/spah/painel`
+
+### Fase 5 - Redirects de seguranca
+
+Manter redirects das rotas antigas para as novas (temporariamente), para que links salvos nao quebrem:
+- `/auth` -> redireciona para `/spah`
+- `/admin` -> redireciona para `/spah/painel`
+- `/login` -> redireciona para `/spah`
+- `/dashboard` -> redireciona para `/spah/painel`
+
+**Nota**: Esses redirects podem ser removidos futuramente para esconder completamente as rotas antigas.
+
+## Arquivos Modificados
 
 | Arquivo | Tipo | Descricao |
 |---|---|---|
-| `supabase/functions/reset-admin-password/index.ts` | NOVO | Edge function para reset de senha |
+| `src/config/routes.ts` | NOVO | Constantes centralizadas de rotas |
+| `src/App.tsx` | MODIFICAR | Atualizar definicoes de Route e redirects |
+| `src/hooks/useRequireRole.ts` | MODIFICAR | Redirect para `/spah` |
+| `src/hooks/useSidebarPersistence.ts` | MODIFICAR | Mapa de rotas atualizado |
+| ~114 arquivos em `src/pages/admin/` | MODIFICAR | Links e navegacao `/admin` -> `/spah/painel` |
+| ~23 arquivos em `src/pages/`, `src/components/` | MODIFICAR | Links `/auth` -> `/spah` |
 
-## Resultado esperado
+## Detalhes Tecnicos
 
-Login em `conexaonacidade.com.br/auth` com:
-- Email: `bs7freitas@gmail.com`
-- Senha: `@Sph5273#`
+- A rota `/auth-comunidade` NAO sera alterada (login da comunidade e publico, nao administrativo)
+- O `AdminLayout` continua o mesmo componente, apenas montado em path diferente
+- A autenticacao e RLS nao sao afetadas (seguranca real permanece no backend)
+- `reset-password` permanece inalterado pois e fluxo publico
+
+## Resultado Esperado
+
+- Login admin: `conexaonacidade.com.br/spah`
+- Dashboard: `conexaonacidade.com.br/spah/painel`
+- Todas as sub-rotas: `conexaonacidade.com.br/spah/painel/news`, etc.
+- Rotas antigas redirecionam temporariamente para as novas
 
