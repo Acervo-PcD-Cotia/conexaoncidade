@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { campaignRoutes } from '@/lib/campaignRoutes';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -61,7 +62,7 @@ export default function CampaignMetrics() {
     return (
       <div className="text-center py-12">
         <p className="text-muted-foreground">Campanha não encontrada</p>
-        <Button variant="link" onClick={() => navigate('/spah/painel/campaigns/unified')}>
+        <Button variant="link" onClick={() => navigate(campaignRoutes.unified())}>
           Voltar para campanhas
         </Button>
       </div>
@@ -134,7 +135,7 @@ export default function CampaignMetrics() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/spah/painel/campaigns/unified')}>
+        <Button variant="ghost" size="icon" onClick={() => navigate(campaignRoutes.unified())}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">

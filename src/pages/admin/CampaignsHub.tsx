@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
+import { campaignRoutes } from '@/lib/campaignRoutes';
 import {
   MapPin,
   Users,
@@ -54,7 +55,7 @@ export default function CampaignsHub() {
       icon: Megaphone,
       color: 'text-purple-500',
       bgColor: 'bg-purple-100 dark:bg-purple-900/30',
-      href: '/spah/painel/campaigns/unified',
+      href: campaignRoutes.unified(),
       stats: [
         { label: 'Ativas', value: stats?.campaigns360Active || 0 },
         { label: 'Total', value: stats?.campaigns360Total || 0 },
@@ -69,7 +70,7 @@ export default function CampaignsHub() {
       icon: MapPin,
       color: 'text-green-500',
       bgColor: 'bg-green-100 dark:bg-green-900/30',
-      href: '/spah/painel/campaigns/google-maps',
+      href: campaignRoutes.googleMaps(),
       stats: [
         { label: 'Leads', value: stats?.googleMapsLeads || 0 },
       ],

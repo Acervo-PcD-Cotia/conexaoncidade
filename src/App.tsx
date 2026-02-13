@@ -16,6 +16,7 @@ import { MaintenanceGuard } from "@/components/maintenance/MaintenanceGuard";
 import { RouteModuleGuard } from "@/components/guards/RouteModuleGuard";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { AdminLayout } from "@/components/admin/AdminLayout";
+import { CampaignErrorBoundary } from "@/components/admin/campaigns/CampaignErrorBoundary";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NewsDetail from "./pages/NewsDetail";
@@ -639,12 +640,12 @@ const App = () => (
                         <Route path="community/phone-import" element={<PhoneImportAssisted />} />
                         
                         {/* Campaign Admin Routes */}
-                        <Route path="campaigns" element={<CampaignsHub />} />
-                        <Route path="campaigns/google-maps" element={<GoogleMapsLeads />} />
-                        <Route path="campaigns/unified" element={<CampaignsUnified />} />
-                        <Route path="campaigns/new" element={<CampaignEditor />} />
-                        <Route path="campaigns/edit/:id" element={<CampaignEditor />} />
-                        <Route path="campaigns/metrics/:id" element={<CampaignMetrics />} />
+                        <Route path="campaigns" element={<CampaignErrorBoundary><CampaignsHub /></CampaignErrorBoundary>} />
+                        <Route path="campaigns/google-maps" element={<CampaignErrorBoundary><GoogleMapsLeads /></CampaignErrorBoundary>} />
+                        <Route path="campaigns/unified" element={<CampaignErrorBoundary><CampaignsUnified /></CampaignErrorBoundary>} />
+                        <Route path="campaigns/new" element={<CampaignErrorBoundary><CampaignEditor /></CampaignErrorBoundary>} />
+                        <Route path="campaigns/edit/:id" element={<CampaignErrorBoundary><CampaignEditor /></CampaignErrorBoundary>} />
+                        <Route path="campaigns/metrics/:id" element={<CampaignErrorBoundary><CampaignMetrics /></CampaignErrorBoundary>} />
                         
                         {/* Transporte Escolar Admin Routes */}
                         <Route path="transporte-escolar" element={<TransporteEscolarAdmin />} />
