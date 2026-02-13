@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { campaignRoutes } from '@/lib/campaignRoutes';
 import { Plus, Search, Filter, LayoutGrid, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,7 +41,7 @@ export default function CampaignsUnified() {
   const updateMutation = useUpdateCampaignUnified();
 
   const handleEdit = (id: string) => {
-    navigate(`/spah/painel/campaigns/edit/${id}`);
+    navigate(campaignRoutes.edit(id));
   };
 
   const handleDelete = () => {
@@ -56,7 +57,7 @@ export default function CampaignsUnified() {
   };
 
   const handleViewMetrics = (id: string) => {
-    navigate(`/spah/painel/campaigns/metrics/${id}`);
+    navigate(campaignRoutes.metrics(id));
   };
 
   return (
@@ -69,7 +70,7 @@ export default function CampaignsUnified() {
             Gerencie campanhas que rodam em Ads, Publidoor e WebStories
           </p>
         </div>
-        <Button onClick={() => navigate('/spah/painel/campaigns/new')}>
+        <Button onClick={() => navigate(campaignRoutes.new())}>
           <Plus className="h-4 w-4 mr-2" />
           Nova Campanha
         </Button>
@@ -132,7 +133,7 @@ export default function CampaignsUnified() {
               : 'Crie sua primeira campanha unificada'}
           </p>
           {!search && statusFilter === 'all' && channelFilter === 'all' && (
-            <Button className="mt-4" onClick={() => navigate('/spah/painel/campaigns/new')}>
+            <Button className="mt-4" onClick={() => navigate(campaignRoutes.new())}>
               <Plus className="h-4 w-4 mr-2" />
               Criar Campanha
             </Button>

@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { campaignRoutes } from '@/lib/campaignRoutes';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -35,17 +36,17 @@ export default function CampaignEditor() {
     if (isEditing && id) {
       updateMutation.mutate(
         { id, data },
-        { onSuccess: () => navigate('/spah/painel/campaigns/unified') }
+        { onSuccess: () => navigate(campaignRoutes.unified()) }
       );
     } else {
       createMutation.mutate(data, {
-        onSuccess: () => navigate('/spah/painel/campaigns/unified'),
+        onSuccess: () => navigate(campaignRoutes.unified()),
       });
     }
   };
 
   const handleCancel = () => {
-    navigate('/spah/painel/campaigns/unified');
+    navigate(campaignRoutes.unified());
   };
 
   // Memoized initial data — only recalculates when campaign changes
