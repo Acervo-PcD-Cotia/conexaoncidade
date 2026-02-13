@@ -90,6 +90,11 @@ export function AdImageUploader({
         .getPublicUrl(filePath);
 
       onChange(publicUrl);
+      // Auto-generate alt text from label/format context
+      if (onAltChange && !alt) {
+        const autoAlt = `${label} - ${formatConfig.label} (${formatConfig.width}x${formatConfig.height}px)`;
+        onAltChange(autoAlt);
+      }
       toast.success('Imagem enviada!');
     } catch (error) {
       console.error('Upload error:', error);
@@ -117,6 +122,11 @@ export function AdImageUploader({
   const handleUrlSubmit = () => {
     if (urlInput.trim()) {
       onChange(urlInput.trim());
+      // Auto-generate alt text for URL too
+      if (onAltChange && !alt) {
+        const autoAlt = `${label} - ${formatConfig.label} (${formatConfig.width}x${formatConfig.height}px)`;
+        onAltChange(autoAlt);
+      }
       setUrlInput('');
       setShowUrlOption(false);
       toast.success('URL definida!');
