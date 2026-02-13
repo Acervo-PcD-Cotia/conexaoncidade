@@ -102,6 +102,15 @@ export const ChannelSelector = React.memo(function ChannelSelector({
 }: ChannelSelectorProps) {
   const isSelected = (type: ChannelType) => selectedChannels.includes(type);
 
+  const handleToggle = React.useCallback((channelType: ChannelType) => {
+    console.log('[ChannelSelector] toggle', {
+      channel: channelType,
+      currentSelected: selectedChannels,
+      willBeSelected: !selectedChannels.includes(channelType),
+    });
+    onToggleChannel(channelType);
+  }, [selectedChannels, onToggleChannel]);
+
   const groupedChannels = CHANNELS.reduce((acc, channel) => {
     if (!acc[channel.category]) {
       acc[channel.category] = [];
@@ -220,7 +229,10 @@ export const ChannelSelector = React.memo(function ChannelSelector({
               >
                 <div
                   className="flex items-start gap-3 p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => onToggleChannel(channel.type)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggle(channel.type);
+                  }}
                 >
                   <Checkbox
                     checked={isSelected(channel.type)}
@@ -246,7 +258,10 @@ export const ChannelSelector = React.memo(function ChannelSelector({
                 </div>
                 
                 {isSelected(channel.type) && (
-                  <div className="px-4 pb-4 pt-2 border-t border-border/50">
+                  <div
+                    className="px-4 pb-4 pt-2 border-t border-border/50"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     {safeRenderChannelForm(channel)}
                   </div>
                 )}

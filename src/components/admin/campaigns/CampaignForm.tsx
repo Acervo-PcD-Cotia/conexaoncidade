@@ -157,7 +157,7 @@ export function CampaignForm({
   });
 
   return (
-    <form onSubmit={handleFormSubmit} className="space-y-6">
+    <div className="space-y-6">
       {/* Validation Errors */}
       {validationErrors.length > 0 && (
         <Alert variant="destructive">
@@ -364,10 +364,10 @@ export function CampaignForm({
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancelar
         </Button>
-        <Button type="submit" disabled={isLoading}>
+        <Button type="button" disabled={isLoading} onClick={handleFormSubmit}>
           {isLoading ? 'Salvando...' : 'Salvar Campanha'}
         </Button>
       </div>
-    </form>
+    </div>
   );
 }
