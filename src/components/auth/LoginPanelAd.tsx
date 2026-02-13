@@ -3,25 +3,29 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { trackCampaignEvent } from '@/lib/trackCampaignEvent';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface LoginPanelAdProps {
   className?: string;
 }
 
-/**
- * LoginPanelAd - Creative displayed on the left side of the login page
- * 
- * Replaces static text with dynamic campaign creative (Publidoor or Story).
- * Features:
- * - Optional short text overlay
- * - CTA opens in new tab
- * - Never blocks login functionality
- */
+interface CampaignItem {
+  id: string;
+  name: string;
+  advertiser: string | null;
+  cta_text: string | null;
+  cta_url: string | null;
+  assets: {
+    id: string;
+    file_url: string;
+    alt_text: string | null;
+  }[];
+}
+
 export function LoginPanelAd({ className }: LoginPanelAdProps) {
-  const { data: campaign, isLoading } = useQuery({
-    queryKey: ['login-panel-campaign'],
+  const { data: campaigns, isLoading } = useQuery({
+    queryKey: ['login-panel-campaigns'],
     queryFn: async () => {
-      // Fetch active campaign with login_panel channel enabled
       const { data, error } = await supabase
         .from('campaigns_unified')
         .select(`
@@ -30,140 +34,95 @@ export function LoginPanelAd({ className }: LoginPanelAdProps) {
           advertiser,
           cta_text,
           cta_url,
-          channels:campaign_channels!inner(
-            channel_type,
-            enabled,
-            config
-          ),
           assets:campaign_assets(
             id,
-            asset_type,
             file_url,
-            alt_text,
-            width,
-            height,
-            channel_type
+            alt_text
           )
         `)
         .eq('status', 'active')
+        .eq('login_panel_visible', true)
         .lte('starts_at', new Date().toISOString())
         .or(`ends_at.is.null,ends_at.gte.${new Date().toISOString()}`)
-        .order('priority', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .order('priority', { ascending: false });
 
       if (error) throw error;
-
-      // Check if login_panel channel is enabled
-      const loginPanelChannel = data?.channels?.find(
-        ch => ch.channel_type === 'login_panel' && ch.enabled
-      );
-
-      if (!loginPanelChannel) return null;
-
-      // Get the config for login panel
-      const config = loginPanelChannel.config as {
-        short_text?: string;
-        display_type?: 'publidoor' | 'story';
-      } | null;
-
-      // Find the appropriate asset
-      const asset = data?.assets?.find(a => 
-        a.channel_type === 'login_panel' ||
-        a.channel_type === 'publidoor' ||
-        a.asset_type === 'story_cover'
-      );
-
-      if (!asset) return null;
-
-      return {
-        id: data.id,
-        name: data.name,
-        advertiser: data.advertiser,
-        cta_text: data.cta_text,
-        cta_url: data.cta_url,
-        short_text: config?.short_text,
-        asset,
-      };
+      
+      // Filter campaigns that have at least one asset
+      return (data as CampaignItem[])?.filter(c => c.assets && c.assets.length > 0) || [];
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Track impression on mount
+  // Track impressions
   useEffect(() => {
-    if (campaign) {
-      trackCampaignEvent({
-        campaignId: campaign.id,
-        channelType: 'login_panel',
-        eventType: 'impression',
+    if (campaigns && campaigns.length > 0) {
+      campaigns.forEach(campaign => {
+        trackCampaignEvent({
+          campaignId: campaign.id,
+          channelType: 'login_panel',
+          eventType: 'impression',
+        });
       });
     }
-  }, [campaign]);
+  }, [campaigns]);
 
-  const handleClick = () => {
-    if (!campaign) return;
+  const handleClick = (campaignId: string) => {
     trackCampaignEvent({
-      campaignId: campaign.id,
+      campaignId,
       channelType: 'login_panel',
       eventType: 'click',
     });
   };
 
-  if (isLoading || !campaign) {
-    return null; // Return null to show default branding
+  if (isLoading || !campaigns || campaigns.length === 0) {
+    return null;
   }
 
   return (
-    <div className={cn("relative w-full h-full", className)}>
-      {campaign.cta_url ? (
-        <a
-          href={campaign.cta_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block w-full h-full"
-          onClick={handleClick}
-        >
-          <img
-            src={campaign.asset.file_url}
-            alt={campaign.asset.alt_text || campaign.name}
-            className="w-full h-full object-cover"
-          />
-          {campaign.short_text && (
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
-              <p className="text-white text-lg font-medium">
-                {campaign.short_text}
-              </p>
-              {campaign.cta_text && (
-                <span className="inline-block mt-2 text-primary-foreground bg-primary px-4 py-2 rounded-lg text-sm font-medium">
-                  {campaign.cta_text}
-                </span>
-              )}
-            </div>
-          )}
-        </a>
-      ) : (
-        <div className="w-full h-full">
-          <img
-            src={campaign.asset.file_url}
-            alt={campaign.asset.alt_text || campaign.name}
-            className="w-full h-full object-cover"
-          />
-          {campaign.short_text && (
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
-              <p className="text-white text-lg font-medium">
-                {campaign.short_text}
-              </p>
-            </div>
-          )}
+    <div className={cn("flex flex-col gap-4", className)}>
+      <p className="text-xs font-medium text-yellow-800/60 uppercase tracking-wider text-center">
+        Conteúdo de Marca
+      </p>
+      <ScrollArea className="flex-1">
+        <div className="flex flex-col gap-4">
+          {campaigns.map((campaign) => {
+            const asset = campaign.assets[0];
+            return (
+              <div key={campaign.id} className="rounded-xl overflow-hidden shadow-md bg-white/80">
+                {campaign.cta_url ? (
+                  <a
+                    href={campaign.cta_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => handleClick(campaign.id)}
+                    className="block"
+                  >
+                    <img
+                      src={asset.file_url}
+                      alt={asset.alt_text || campaign.name}
+                      className="w-full h-auto object-cover"
+                    />
+                    {campaign.cta_text && (
+                      <div className="p-3 text-center">
+                        <span className="text-sm font-medium text-primary hover:underline">
+                          {campaign.cta_text}
+                        </span>
+                      </div>
+                    )}
+                  </a>
+                ) : (
+                  <img
+                    src={asset.file_url}
+                    alt={asset.alt_text || campaign.name}
+                    className="w-full h-auto object-cover"
+                  />
+                )}
+              </div>
+            );
+          })}
         </div>
-      )}
-      
-      {/* Brand badge - mandatory per spec */}
-      <div className="absolute top-4 left-4">
-        <span className="px-2 py-1 bg-black/50 text-white text-xs rounded">
-          Conteúdo de Marca
-        </span>
-      </div>
+      </ScrollArea>
     </div>
   );
 }

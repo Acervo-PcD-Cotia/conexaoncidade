@@ -8,22 +8,22 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
 import { Loader2, Mail, Lock, Eye, EyeOff } from 'lucide-react';
-import logoFull from "@/assets/logo-full.png";
+import conexaoLogo from "@/assets/conexao-logo-login.png";
 import { LoginPanelAd } from '@/components/auth/LoginPanelAd';
 
 const ADMIN_ROLES = ['super_admin', 'admin', 'editor', 'editor_chief', 'reporter', 'columnist', 'moderator', 'commercial', 'financial'];
 
 // Redirecionamento específico por perfil
 const ROLE_ROUTES: Record<string, string> = {
-  super_admin: '/admin',
-  admin: '/admin',
-  editor_chief: '/admin',
-  editor: '/admin/news',
-  reporter: '/admin/news',
-  columnist: '/admin/news',
-  moderator: '/admin',
-  commercial: '/admin/ads',
-  financial: '/admin/financial',
+  super_admin: '/spah/painel',
+  admin: '/spah/painel',
+  editor_chief: '/spah/painel',
+  editor: '/spah/painel/news',
+  reporter: '/spah/painel/news',
+  columnist: '/spah/painel/news',
+  moderator: '/spah/painel',
+  commercial: '/spah/painel/ads',
+  financial: '/spah/painel/financial',
 };
 
 const loginSchema = z.object({
@@ -55,7 +55,7 @@ export default function Auth() {
         .then(({ data }) => {
           if (data && ADMIN_ROLES.includes(data.role)) {
             // Redirecionar para rota específica do perfil
-            const route = ROLE_ROUTES[data.role] || '/admin';
+            const route = ROLE_ROUTES[data.role] || '/spah/painel';
             navigate(route);
           } else {
             navigate('/');
@@ -120,48 +120,30 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen bg-muted/30 flex flex-col lg:grid lg:grid-cols-[60%_40%]">
-      {/* Coluna Esquerda - Dynamic Campaign Creative or Branding */}
-      <div className="relative hidden lg:flex lg:border-r lg:border-border/30 overflow-hidden">
-        {/* LoginPanelAd will render campaign creative if available */}
-        <LoginPanelAd className="absolute inset-0" />
+      {/* Coluna Esquerda - Fundo amarelo com logo e campanhas */}
+      <div className="relative hidden lg:flex lg:flex-col bg-yellow-400 overflow-hidden">
+        {/* Logo no topo */}
+        <div className="flex justify-center pt-12 pb-6 px-6">
+          <img 
+            src={conexaoLogo} 
+            alt="Conexão na Cidade" 
+            className="h-36 w-auto"
+          />
+        </div>
         
-        {/* Fallback branding shown when no campaign is active (LoginPanelAd returns null) */}
-        <div className="flex flex-col items-center justify-center w-full h-full py-12 px-6">
-          <div className="flex flex-col items-center gap-6 max-w-md text-center">
-            <img 
-              src={logoFull} 
-              alt="Conexão na Cidade" 
-              className="h-20 lg:h-28 w-auto"
-            />
-            <div className="space-y-2">
-              <h1 className="text-2xl lg:text-3xl font-heading font-bold text-foreground">
-                Acesse sua conta
-              </h1>
-              <p className="text-muted-foreground text-base lg:text-lg">
-                Painel Conexões
-              </p>
-            </div>
-          </div>
+        {/* Área de campanhas */}
+        <div className="flex-1 overflow-y-auto px-6 pb-6">
+          <LoginPanelAd className="w-full" />
         </div>
       </div>
 
-      {/* Mobile header - shows when no left panel */}
-      <div className="flex flex-col items-center justify-center py-12 px-6 lg:hidden">
-        <div className="flex flex-col items-center gap-6 max-w-md text-center">
-          <img 
-            src={logoFull} 
-            alt="Conexão na Cidade" 
-            className="h-20 w-auto"
-          />
-          <div className="space-y-2">
-            <h1 className="text-2xl font-heading font-bold text-foreground">
-              Acesse sua conta
-            </h1>
-            <p className="text-muted-foreground text-base">
-              Painel Conexões
-            </p>
-          </div>
-        </div>
+      {/* Mobile header */}
+      <div className="flex flex-col items-center justify-center py-8 px-6 lg:hidden bg-yellow-400">
+        <img 
+          src={conexaoLogo} 
+          alt="Conexão na Cidade" 
+          className="h-24 w-auto"
+        />
       </div>
 
       {/* Coluna Direita - Card de Login */}

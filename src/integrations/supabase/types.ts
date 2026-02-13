@@ -4854,6 +4854,7 @@ export type Database = {
           ends_at: string | null
           frequency_cap_per_day: number | null
           id: string
+          login_panel_visible: boolean | null
           name: string
           priority: number | null
           starts_at: string | null
@@ -4871,6 +4872,7 @@ export type Database = {
           ends_at?: string | null
           frequency_cap_per_day?: number | null
           id?: string
+          login_panel_visible?: boolean | null
           name: string
           priority?: number | null
           starts_at?: string | null
@@ -4888,6 +4890,7 @@ export type Database = {
           ends_at?: string | null
           frequency_cap_per_day?: number | null
           id?: string
+          login_panel_visible?: boolean | null
           name?: string
           priority?: number | null
           starts_at?: string | null
