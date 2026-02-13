@@ -9,4 +9,5 @@ export const campaignRoutes = {
   edit: (id: string) => `${CAMPAIGNS_BASE}/edit/${id}`,
   metrics: (id: string) => `${CAMPAIGNS_BASE}/metrics/${id}`,
   googleMaps: () => `${CAMPAIGNS_BASE}/google-maps`,
+  tutorial: () => `${CAMPAIGNS_BASE}/tutorial`,
 } as const;
