@@ -181,6 +181,7 @@ const portalManagementItems: MenuItem[] = [
   { title: "Modelo do Portal", url: "/spah/painel/settings/template", icon: Settings },
   { title: "Vocabulário", url: "/spah/painel/settings/vocabulary", icon: Languages },
   { title: "Módulos", url: "/spah/painel/settings/modules", icon: ToggleLeft },
+  { title: "Menus do Site", url: "/spah/painel/settings/menus", icon: ToggleLeft },
 ];
 
 // 6️⃣ INTELIGÊNCIA & MÉTRICAS - Dados

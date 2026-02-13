@@ -346,6 +346,7 @@ import TemplateSelector from "./pages/admin/settings/TemplateSelector";
 import VocabularyEditor from "./pages/admin/settings/VocabularyEditor";
 import ModulesManager from "./pages/admin/settings/ModulesManager";
 import AppearanceSettings from "./pages/admin/settings/AppearanceSettings";
+import MenuToggleSettings from "./pages/admin/settings/MenuToggleSettings";
 
 import { ThemeProvider } from "@/contexts/ThemeContext";
 
@@ -526,6 +527,7 @@ const App = () => (
                         <Route path="settings/template" element={<TemplateSelector />} />
                         <Route path="settings/vocabulary" element={<VocabularyEditor />} />
                         <Route path="settings/modules" element={<ModulesManager />} />
+                        <Route path="settings/menus" element={<MenuToggleSettings />} />
                         <Route path="settings/appearance" element={<AppearanceSettings />} />
                         <Route path="solutions" element={<Solutions />} />
                         <Route path="events" element={<EventsList />} />

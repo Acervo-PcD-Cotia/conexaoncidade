@@ -40,6 +40,14 @@ export function Header() {
   const { data: categories } = useCategories();
   const isRadioEnabled = useModuleEnabled('web_radio');
   const isTvEnabled = useModuleEnabled('web_tv');
+  const isMenuGoogleEnabled = useModuleEnabled('menu_google');
+  const isMenuBrasileiraoEnabled = useModuleEnabled('menu_brasileirao');
+  const isMenuCensoEnabled = useModuleEnabled('menu_censo');
+  const isMenuConexoesEnabled = useModuleEnabled('menu_conexoes');
+  const isMenuEnemEnabled = useModuleEnabled('menu_enem');
+  const isMenuFakenewsEnabled = useModuleEnabled('menu_fakenews');
+  const isMenuEscolarEnabled = useModuleEnabled('menu_escolar');
+  const isMenuImoveisEnabled = useModuleEnabled('menu_imoveis');
   
   const hasAdminAccess = !roleLoading && (isAdmin || isEditor || ['editor_chief', 'reporter', 'columnist', 'moderator'].includes(role || ''));
   
@@ -84,6 +92,7 @@ export function Header() {
                     <VocabText term="services" fallback="Serviços" />
                   </p>
                   {/* 1. Você no Google - blue */}
+                  {isMenuGoogleEnabled && (
                   <Link
                     to="/google-maps"
                     className="flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:underline"
@@ -91,7 +100,9 @@ export function Header() {
                     <MapPin className="h-4 w-4" />
                     <VocabText term="google_maps_cta" fallback="Você no Google" />
                   </Link>
+                  )}
                   {/* 2. Brasileirão - emerald */}
+                  {isMenuBrasileiraoEnabled && (
                   <Link
                     to="/esportes/brasileirao"
                     className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 hover:underline"
@@ -99,7 +110,9 @@ export function Header() {
                     <Trophy className="h-4 w-4" />
                     Brasileirão
                   </Link>
+                  )}
                   {/* 3. Censo SP - purple */}
+                  {isMenuCensoEnabled && (
                   <Link
                     to="/censo-pcd"
                     className="flex items-center gap-2 text-purple-600 dark:text-purple-400 hover:underline"
@@ -107,7 +120,9 @@ export function Header() {
                     <Accessibility className="h-4 w-4" />
                     <VocabText term="pcd_census" fallback="Censo SP" />
                   </Link>
+                  )}
                   {/* 4. Conexões - pink */}
+                  {isMenuConexoesEnabled && (
                   <Link
                     to="/comunidade"
                     className="flex items-center gap-2 text-pink-600 dark:text-pink-400 hover:underline"
@@ -115,7 +130,9 @@ export function Header() {
                     <Users className="h-4 w-4" />
                     <VocabText term="community" fallback="Conexões" />
                   </Link>
+                  )}
                   {/* 5. ENEM - indigo */}
+                  {isMenuEnemEnabled && (
                   <Link
                     to="/enem-2026"
                     className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 hover:underline font-semibold"
@@ -123,7 +140,9 @@ export function Header() {
                     <GraduationCap className="h-4 w-4" />
                     ENEM
                   </Link>
+                  )}
                   {/* 6. Fake News - green */}
+                  {isMenuFakenewsEnabled && (
                   <Link
                     to="/anti-fake-news"
                     className="flex items-center gap-2 text-green-600 dark:text-green-400 hover:underline"
@@ -131,7 +150,9 @@ export function Header() {
                     <ShieldCheck className="h-4 w-4" />
                     <VocabText term="fake_news" fallback="Fake News" />
                   </Link>
+                  )}
                   {/* 7. Escolar - amber */}
+                  {isMenuEscolarEnabled && (
                   <Link
                     to="/transporte-escolar"
                     className="flex items-center gap-2 text-amber-600 dark:text-amber-400 hover:underline"
@@ -139,6 +160,7 @@ export function Header() {
                     <Bus className="h-4 w-4" />
                     <VocabText term="school_transport" fallback="Escolar" />
                   </Link>
+                  )}
                   {/* 8. Web Live - red (destaque) */}
                   {(isRadioEnabled || isTvEnabled) && (
                   <Link
@@ -151,6 +173,7 @@ export function Header() {
                   </Link>
                   )}
                   {/* 9. Imóveis - teal */}
+                  {isMenuImoveisEnabled && (
                   <Link
                     to="/imoveis"
                     className="flex items-center gap-2 text-teal-600 dark:text-teal-400 hover:underline font-semibold"
@@ -158,6 +181,7 @@ export function Header() {
                     <Home className="h-4 w-4" />
                     Imóveis
                   </Link>
+                  )}
                 </div>
                 
                 {/* Admin Links for Mobile */}
@@ -311,6 +335,7 @@ export function Header() {
         <div className="hidden border-t bg-muted/50 lg:block">
           <div className="container flex items-center justify-center gap-3 py-2">
             {/* 1. Você no Google - blue */}
+            {isMenuGoogleEnabled && (
             <Link
               to="/campanha/google-maps"
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-blue-700 dark:text-blue-400 bg-blue-100 dark:bg-blue-950/60 rounded-full hover:bg-blue-200 dark:hover:bg-blue-900/60 transition-colors border border-blue-200 dark:border-blue-800"
@@ -318,7 +343,9 @@ export function Header() {
               <MapPin className="h-4 w-4" />
               <VocabText term="google_maps_cta" fallback="Você no Google" />
             </Link>
+            )}
             {/* 2. Brasileirão - emerald */}
+            {isMenuBrasileiraoEnabled && (
             <Link
               to="/esportes/brasileirao"
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/60 rounded-full hover:bg-emerald-200 dark:hover:bg-emerald-900/60 transition-colors border border-emerald-200 dark:border-emerald-800"
@@ -326,7 +353,9 @@ export function Header() {
               <Trophy className="h-4 w-4" />
               Brasileirão
             </Link>
+            )}
             {/* 3. Censo SP - purple */}
+            {isMenuCensoEnabled && (
             <Link
               to="/censo-pcd"
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-purple-700 dark:text-purple-400 bg-purple-100 dark:bg-purple-950/60 rounded-full hover:bg-purple-200 dark:hover:bg-purple-900/60 transition-colors border border-purple-200 dark:border-purple-800"
@@ -334,7 +363,9 @@ export function Header() {
               <Accessibility className="h-4 w-4" />
               <VocabText term="pcd_census" fallback="Censo SP" />
             </Link>
+            )}
             {/* 4. Conexões - pink */}
+            {isMenuConexoesEnabled && (
             <Link
               to="/comunidade"
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-pink-700 dark:text-pink-400 bg-pink-100 dark:bg-pink-950/60 rounded-full hover:bg-pink-200 dark:hover:bg-pink-900/60 transition-colors border border-pink-200 dark:border-pink-800"
@@ -342,7 +373,9 @@ export function Header() {
               <Users className="h-4 w-4" />
               <VocabText term="community" fallback="Conexões" />
             </Link>
+            )}
             {/* 5. ENEM - indigo */}
+            {isMenuEnemEnabled && (
             <Link
               to="/enem-2026"
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-indigo-700 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-950/60 rounded-full hover:bg-indigo-200 dark:hover:bg-indigo-900/60 transition-colors border border-indigo-200 dark:border-indigo-800"
@@ -350,7 +383,9 @@ export function Header() {
               <GraduationCap className="h-4 w-4" />
               ENEM
             </Link>
+            )}
             {/* 6. Fake News - green */}
+            {isMenuFakenewsEnabled && (
             <Link
               to="/anti-fake-news"
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-950/60 rounded-full hover:bg-green-200 dark:hover:bg-green-900/60 transition-colors border border-green-200 dark:border-green-800"
@@ -358,7 +393,9 @@ export function Header() {
               <ShieldCheck className="h-4 w-4" />
               <VocabText term="fake_news" fallback="Fake News" />
             </Link>
+            )}
             {/* 7. Escolar - amber */}
+            {isMenuEscolarEnabled && (
             <Link
               to="/transporte-escolar"
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 rounded-full hover:bg-amber-200 dark:hover:bg-amber-900/60 transition-colors border border-amber-200 dark:border-amber-800"
@@ -366,6 +403,7 @@ export function Header() {
               <Bus className="h-4 w-4" />
               <VocabText term="school_transport" fallback="Escolar" />
             </Link>
+            )}
             {/* 8. Web Live - red (destaque com pulse) */}
             {(isRadioEnabled || isTvEnabled) && (
             <Link
@@ -378,6 +416,7 @@ export function Header() {
             </Link>
             )}
             {/* 9. Imóveis - teal with submenu */}
+            {isMenuImoveisEnabled && (
             <NavigationMenu>
               <NavigationMenuList>
                 <NavigationMenuItem>
@@ -458,6 +497,7 @@ export function Header() {
                 </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
+            )}
           </div>
         </div>
 

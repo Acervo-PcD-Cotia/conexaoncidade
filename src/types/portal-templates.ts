@@ -224,7 +224,9 @@ export type ModuleKey =
   | 'headline_banner' | 'web_radio' | 'web_tv' | 'stories' | 'push'
   | 'schedule' | 'donations' | 'vod' | 'members' | 'chat'
   | 'exclusive_content' | 'monetization' | 'webinars' | 'internal_content'
-  | 'reports' | 'player';
+  | 'reports' | 'player'
+  | 'menu_google' | 'menu_brasileirao' | 'menu_censo' | 'menu_conexoes'
+  | 'menu_enem' | 'menu_fakenews' | 'menu_escolar' | 'menu_imoveis';
 
 // Core modules that are always enabled
 export const CORE_MODULES: ModuleKey[] = [
@@ -255,6 +257,14 @@ export const MODULE_METADATA: Record<ModuleKey, { label: string; description: st
   internal_content: { label: 'Conteúdo Interno', description: 'Conteúdo restrito a equipe', icon: 'Shield' },
   reports: { label: 'Relatórios', description: 'Relatórios e analytics', icon: 'BarChart3' },
   player: { label: 'Player Unificado', description: 'Player de áudio/vídeo', icon: 'Play' },
+  menu_google: { label: 'Você no Google', description: 'Menu Você no Google', icon: 'MapPin' },
+  menu_brasileirao: { label: 'Brasileirão', description: 'Menu Brasileirão', icon: 'Trophy' },
+  menu_censo: { label: 'Censo SP', description: 'Menu Censo SP', icon: 'Accessibility' },
+  menu_conexoes: { label: 'Conexões', description: 'Menu Conexões', icon: 'Users' },
+  menu_enem: { label: 'ENEM', description: 'Menu ENEM', icon: 'GraduationCap' },
+  menu_fakenews: { label: 'Fake News', description: 'Menu Fake News', icon: 'ShieldCheck' },
+  menu_escolar: { label: 'Escolar', description: 'Menu Escolar', icon: 'Bus' },
+  menu_imoveis: { label: 'Imóveis', description: 'Menu Imóveis', icon: 'Home' },
 };
 
 // ============================================
