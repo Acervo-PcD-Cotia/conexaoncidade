@@ -53,9 +53,9 @@ export function AdImageUploader({
       return;
     }
 
-    // Validar tamanho (2MB)
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error('Imagem muito grande (máximo 2MB)');
+    // Validar tamanho (30MB)
+    if (file.size > 30 * 1024 * 1024) {
+      toast.error('Imagem muito grande (máximo 30MB)');
       return;
     }
 
@@ -136,7 +136,7 @@ export function AdImageUploader({
       </Label>
       
       <p className="text-xs text-muted-foreground">
-        Formato: {formatConfig.label} ({formatConfig.width}x{formatConfig.height}px) • Máx: 2MB • JPG, PNG, WebP
+        Formato: {formatConfig.label} ({formatConfig.width}x{formatConfig.height}px) • Máx: 30MB • JPG, PNG, WebP
       </p>
 
       {value ? (
@@ -201,7 +201,7 @@ export function AdImageUploader({
                   Arraste uma imagem ou clique para selecionar
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  JPG, PNG, WebP até 2MB
+                  JPG, PNG, WebP até 30MB
                 </p>
                 <input
                   type="file"
