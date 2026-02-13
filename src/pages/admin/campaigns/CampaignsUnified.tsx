@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { campaignRoutes } from '@/lib/campaignRoutes';
-import { Plus, Search, Filter, LayoutGrid, List } from 'lucide-react';
+import { Plus, Search, Filter, LayoutGrid, List, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -70,10 +70,16 @@ export default function CampaignsUnified() {
             Gerencie campanhas que rodam em Ads, Publidoor e WebStories
           </p>
         </div>
-        <Button onClick={() => navigate(campaignRoutes.new())}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nova Campanha
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => navigate(campaignRoutes.tutorial())}>
+            <BookOpen className="h-4 w-4 mr-2" />
+            Tutorial
+          </Button>
+          <Button onClick={() => navigate(campaignRoutes.new())}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nova Campanha
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
