@@ -1,5 +1,5 @@
 import { Bell, Search, LogOut, ExternalLink } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useRequireRole";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,13 @@ import { ThemeToggle } from "./ThemeToggle";
 export function AdminHeader() {
   const { user, signOut } = useAuth();
   const { role } = useUserRole();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/spah");
+  };
+
 
   const userInitials = user?.email?.slice(0, 2).toUpperCase() || "AD";
 
@@ -89,7 +96,7 @@ export function AdminHeader() {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={signOut} className="text-destructive">
+            <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
               <LogOut className="mr-2 h-4 w-4" />
               Sair
             </DropdownMenuItem>

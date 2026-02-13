@@ -1,0 +1,1 @@
+ALTER TABLE public.campaigns_unified ADD COLUMN login_panel_visible boolean DEFAULT false;
