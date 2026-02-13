@@ -1,69 +1,122 @@
 
 
-# Toggles para Menus Especiais do Site
+# Redesenhar Pagina de Login e Corrigir Logout
 
-## Objetivo
-Criar uma pagina administrativa para ativar/desativar individualmente cada botao do menu especial (barra de chips coloridos) no site publico.
+## Resumo
 
-## Menus controlados
+Tres mudancas principais:
+1. Ao clicar "Sair" no painel, redirecionar direto para `/spah` (pagina de login)
+2. Redesenhar o lado esquerdo da pagina de login: fundo amarelo, logo maior no topo, area de campanhas abaixo
+3. Corrigir rotas `/admin` remanescentes em `Auth.tsx` (ROLE_ROUTES ainda aponta para `/admin`)
 
-| Menu | Module Key | Cor |
-|---|---|---|
-| Voce no Google | `menu_google` | Blue |
-| Brasileirao | `menu_brasileirao` | Emerald |
-| Censo SP | `menu_censo` | Purple |
-| Conexoes | `menu_conexoes` | Pink |
-| ENEM | `menu_enem` | Indigo |
-| Fake News | `menu_fakenews` | Green |
-| Escolar | `menu_escolar` | Amber |
-| Imoveis | `menu_imoveis` | Teal |
+---
 
-## Implementacao
+## Mudancas Detalhadas
 
-### 1. Expandir ModuleKey (portal-templates.ts)
+### 1. Corrigir Logout - Redirecionar para `/spah`
 
-Adicionar 8 novas chaves ao tipo `ModuleKey`:
+**Arquivo**: `src/components/admin/AdminHeader.tsx`
+
+Atualmente o `signOut` apenas desloga sem redirecionar. Precisa navegar para `/spah` apos o signOut.
+
+Adicionar `useNavigate` e fazer:
+```text
+const handleSignOut = async () => {
+  await signOut();
+  navigate("/spah");
+};
 ```
-'menu_google' | 'menu_brasileirao' | 'menu_censo' | 'menu_conexoes'
-| 'menu_enem' | 'menu_fakenews' | 'menu_escolar' | 'menu_imoveis'
+
+### 2. Corrigir ROLE_ROUTES em Auth.tsx
+
+**Arquivo**: `src/pages/Auth.tsx`
+
+As rotas de redirecionamento pos-login ainda apontam para `/admin` em vez de `/spah/painel`:
+
+```text
+ROLE_ROUTES = {
+  super_admin: '/spah/painel',
+  admin: '/spah/painel',
+  editor_chief: '/spah/painel',
+  editor: '/spah/painel/news',
+  reporter: '/spah/painel/news',
+  columnist: '/spah/painel/news',
+  moderator: '/spah/painel',
+  commercial: '/spah/painel/ads',
+  financial: '/spah/painel/financial',
+}
 ```
 
-Adicionar metadata correspondente em `MODULE_METADATA`.
+E o fallback na linha 58 tambem muda de `'/admin'` para `'/spah/painel'`.
 
-### 2. Criar pagina admin: MenuToggleSettings
+### 3. Redesenhar Painel Esquerdo da Pagina de Login
 
-Arquivo: `src/pages/admin/settings/MenuToggleSettings.tsx`
+**Arquivo**: `src/pages/Auth.tsx`
 
-Uma pagina simples com uma lista de switches, semelhante ao `StreamingTogglePanel`, onde cada item mostra o icone colorido, o nome do menu e um Switch on/off. Utiliza `useToggleModule` para persistir no banco via `modules_overrides`.
+O lado esquerdo da pagina sera redesenhado:
+- **Fundo amarelo** (mantendo a identidade visual, como o usuario solicitou)
+- **Logo maior** posicionado mais acima (nao centralizado verticalmente, mas no terco superior)
+- **Area de campanhas** abaixo do logo, exibindo campanhas ativas marcadas como `login_panel_visible`
+- Remover o texto "Acesse sua conta / Painel Conexoes" do lado esquerdo (fica apenas no mobile)
 
-### 3. Adicionar rota no App.tsx
+O componente `LoginPanelAd` sera atualizado para:
+- Buscar **multiplas** campanhas ativas (nao apenas 1) que tenham o campo `login_panel_visible = true`
+- Exibir como cards/banners empilhados verticalmente com scroll
+- Cada campanha mostra imagem, nome do anunciante e CTA
 
-Montar a nova pagina em `/spah/painel/settings/menus`.
+### 4. Campo `login_panel_visible` nas campanhas
 
-### 4. Adicionar link na sidebar
+**Banco de dados**: Adicionar coluna `login_panel_visible` (boolean, default false) na tabela `campaigns_unified`.
 
-Incluir item "Menus do Site" dentro do grupo de Configuracoes na sidebar administrativa.
+Isso permite que o admin escolha quais campanhas aparecem na pagina de login sem depender do canal `login_panel` das Campanhas 360.
 
-### 5. Atualizar Header.tsx
+### 5. Toggle no admin para campanhas no login
 
-Envolver cada chip de menu com verificacao `useModuleEnabled('menu_xxx')`. Se o modulo estiver desativado, o chip nao renderiza. A logica se aplica tanto na versao desktop (barra de chips) quanto na versao mobile (lista no Sheet).
+**Arquivo**: Na listagem de campanhas ou na edicao de campanha, adicionar um switch "Exibir no Painel de Login" que controla o campo `login_panel_visible`.
 
-Todos os menus iniciam como **ativados por padrao** (fallback `true` quando nao ha override), para manter o comportamento atual.
+Alternativa mais simples: adicionar a opcao diretamente na pagina de campanhas existente como uma coluna/toggle.
 
-## Detalhes Tecnicos
+---
 
-### Arquivos modificados
+## Arquivos Modificados
 
 | Arquivo | Tipo | Descricao |
 |---|---|---|
-| `src/types/portal-templates.ts` | MODIFICAR | Adicionar 8 ModuleKeys + metadata |
-| `src/pages/admin/settings/MenuToggleSettings.tsx` | NOVO | Pagina de toggles dos menus |
-| `src/App.tsx` | MODIFICAR | Rota `/spah/painel/settings/menus` |
-| `src/components/admin/AdminSidebar.tsx` | MODIFICAR | Link "Menus do Site" |
-| `src/components/layout/Header.tsx` | MODIFICAR | Condicionar renderizacao dos chips |
-| `src/hooks/useModuleEnabled.ts` | MODIFICAR | Tratar `menu_*` keys com default `true` |
+| `src/components/admin/AdminHeader.tsx` | MODIFICAR | Redirect para `/spah` no signOut |
+| `src/pages/Auth.tsx` | MODIFICAR | ROLE_ROUTES + redesign do painel esquerdo |
+| `src/components/auth/LoginPanelAd.tsx` | MODIFICAR | Buscar multiplas campanhas visiveis, layout vertical |
+| Migracao SQL | NOVO | Coluna `login_panel_visible` em `campaigns_unified` |
 
-### Comportamento padrao
+## Detalhes Tecnicos
 
-Os novos module keys `menu_*` nao estao em `CORE_MODULES` nem em `default_modules` dos templates. Para que iniciem ativados, o hook `useModuleEnabled` sera ajustado para retornar `true` como fallback para chaves que comecam com `menu_`, a menos que exista um override explicito em `modules_overrides` setando `false`.
+### Layout do painel esquerdo (Auth.tsx)
 
+```text
++---------------------------+
+| [bg-yellow-400]           |
+|                           |
+|     [LOGO grande]         |
+|     (h-32 a h-40)         |
+|                           |
+|  --- area campanhas ---   |
+|  [Banner campanha 1]     |
+|  [Banner campanha 2]     |
+|  [Banner campanha 3]     |
+|  (scroll se necessario)   |
+|                           |
+|  "Conteudo de Marca"      |
++---------------------------+
+```
+
+### Consulta de campanhas para o login
+
+O `LoginPanelAd` passara a buscar todas campanhas com `login_panel_visible = true` e `status = active`, exibindo-as em formato de carrossel ou lista vertical com scroll.
+
+### Migracao SQL
+
+```text
+ALTER TABLE campaigns_unified 
+ADD COLUMN login_panel_visible boolean DEFAULT false;
+```
+
+Nenhuma RLS adicional necessaria pois a tabela ja possui politicas.
