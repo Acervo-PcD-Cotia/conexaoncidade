@@ -1,122 +1,100 @@
 
 
-# Redesenhar Pagina de Login e Corrigir Logout
+# Correcao Definitiva + Anti-Regressao — Campanhas 360
 
-## Resumo
+## Evidencias Coletadas (Provas Reais)
 
-Tres mudancas principais:
-1. Ao clicar "Sair" no painel, redirecionar direto para `/spah` (pagina de login)
-2. Redesenhar o lado esquerdo da pagina de login: fundo amarelo, logo maior no topo, area de campanhas abaixo
-3. Corrigir rotas `/admin` remanescentes em `Auth.tsx` (ROLE_ROUTES ainda aponta para `/admin`)
+### PROVA 1 — Rotas no Router (App.tsx, linhas 641-647)
+
+```text
+{/* Campaign Admin Routes */}
+<Route path="campaigns" element={<CampaignsHub />} />
+<Route path="campaigns/google-maps" element={<GoogleMapsLeads />} />
+<Route path="campaigns/unified" element={<CampaignsUnified />} />
+<Route path="campaigns/new" element={<CampaignEditor />} />
+<Route path="campaigns/edit/:id" element={<CampaignEditor />} />
+<Route path="campaigns/metrics/:id" element={<CampaignMetrics />} />
+```
+
+Todas dentro de `<Route path="/spah/painel" element={<AdminLayout />}>` (linha 486).
+Resultado: as 4 rotas exigidas existem e estao corretas.
+
+### PROVA 2 — Padrao de rota (mismatch)
+
+Busca por `campaigns/:id/edit`: **0 resultados**.
+Busca por `campaigns/edit/`: ocorrencias apenas no Router (App.tsx) e em `CampaignsUnified.tsx` usando `navigate('/spah/painel/campaigns/edit/${id}')`.
+Padrao unico confirmado: `/spah/painel/campaigns/edit/:id`.
+
+### PROVA 3 — Busca global /admin no modulo Campanhas
+
+- `navigate('/admin/campaigns...`: **0 resultados**
+- `to="/admin/campaigns...`: **0 resultados**
+- `/admin/publicidade`: **0 resultados**
+
+As correcoes do diff anterior eliminaram todas as referencias legadas no modulo de campanhas.
+
+**POREM**: Existem **54+ ocorrencias** de `navigate('/admin/...)` e **561 ocorrencias** de `to="/admin/...` em outros modulos (PostSocial, TV, AutoPost, Community, etc). Esses NAO afetam o modulo Campanhas, mas sao divida tecnica.
+
+### Diagnostico React #185
+
+O erro #185 do React ("Objects are not valid as a React child") ocorria quando o usuario navegava para `/admin/campaigns/new` — uma rota que **nao existia** no Router. O Router nao encontrava match, caia no fallback (NotFound ou catch-all), e o componente de fallback tentava renderizar o `location.pathname` ou um objeto de erro como children de um elemento React, gerando o crash. A correcao foi apontar a navegacao para `/spah/painel/campaigns/new`, que resolve corretamente para `CampaignEditor`.
+
+Nao ha bug interno no `CampaignEditor` nem no `CampaignForm` — o problema era exclusivamente rota inexistente.
 
 ---
 
-## Mudancas Detalhadas
+## Plano de Implementacao
 
-### 1. Corrigir Logout - Redirecionar para `/spah`
+### 1. Criar `src/lib/campaignRoutes.ts` (anti-regressao)
 
-**Arquivo**: `src/components/admin/AdminHeader.tsx`
-
-Atualmente o `signOut` apenas desloga sem redirecionar. Precisa navegar para `/spah` apos o signOut.
-
-Adicionar `useNavigate` e fazer:
-```text
-const handleSignOut = async () => {
-  await signOut();
-  navigate("/spah");
-};
-```
-
-### 2. Corrigir ROLE_ROUTES em Auth.tsx
-
-**Arquivo**: `src/pages/Auth.tsx`
-
-As rotas de redirecionamento pos-login ainda apontam para `/admin` em vez de `/spah/painel`:
+Arquivo centralizado com todas as rotas do modulo Campanhas:
 
 ```text
-ROLE_ROUTES = {
-  super_admin: '/spah/painel',
-  admin: '/spah/painel',
-  editor_chief: '/spah/painel',
-  editor: '/spah/painel/news',
-  reporter: '/spah/painel/news',
-  columnist: '/spah/painel/news',
-  moderator: '/spah/painel',
-  commercial: '/spah/painel/ads',
-  financial: '/spah/painel/financial',
-}
+CAMPAIGNS_BASE = ROUTES.ADMIN + '/campaigns'
+campaignsHub()        -> /spah/painel/campaigns
+campaignsUnified()    -> /spah/painel/campaigns/unified
+campaignNew()         -> /spah/painel/campaigns/new
+campaignEdit(id)      -> /spah/painel/campaigns/edit/{id}
+campaignMetrics(id)   -> /spah/painel/campaigns/metrics/{id}
+campaignsGoogleMaps() -> /spah/painel/campaigns/google-maps
 ```
 
-E o fallback na linha 58 tambem muda de `'/admin'` para `'/spah/painel'`.
+Usa `ROUTES.ADMIN` de `src/config/routes.ts` como base, nunca string hardcoded.
 
-### 3. Redesenhar Painel Esquerdo da Pagina de Login
+### 2. Substituir strings hardcoded nos arquivos de campanhas
 
-**Arquivo**: `src/pages/Auth.tsx`
+| Arquivo | Mudanca |
+|---|---|
+| `src/pages/admin/campaigns/CampaignsUnified.tsx` | Trocar 3x `'/spah/painel/campaigns/...'` por funcoes do `campaignRoutes` |
+| `src/pages/admin/campaigns/CampaignEditor.tsx` | Trocar 3x `'/spah/painel/campaigns/unified'` por `campaignRoutes.campaignsUnified()` |
+| `src/pages/admin/campaigns/CampaignMetrics.tsx` | Trocar 2x navigate por `campaignRoutes.campaignsUnified()` |
+| `src/pages/admin/CampaignsHub.tsx` | Trocar href/Link por funcoes centralizadas |
 
-O lado esquerdo da pagina sera redesenhado:
-- **Fundo amarelo** (mantendo a identidade visual, como o usuario solicitou)
-- **Logo maior** posicionado mais acima (nao centralizado verticalmente, mas no terco superior)
-- **Area de campanhas** abaixo do logo, exibindo campanhas ativas marcadas como `login_panel_visible`
-- Remover o texto "Acesse sua conta / Painel Conexoes" do lado esquerdo (fica apenas no mobile)
+### 3. ErrorBoundary local para o modulo Campanhas
 
-O componente `LoginPanelAd` sera atualizado para:
-- Buscar **multiplas** campanhas ativas (nao apenas 1) que tenham o campo `login_panel_visible = true`
-- Exibir como cards/banners empilhados verticalmente com scroll
-- Cada campanha mostra imagem, nome do anunciante e CTA
+Criar `src/components/admin/campaigns/CampaignErrorBoundary.tsx`:
+- Captura erros de render apenas no modulo Campanhas
+- Loga stack completo no console
+- Exibe fallback com botao "Tentar Novamente" e mensagem do erro
+- NAO mascara o bug (mostra a mensagem real)
 
-### 4. Campo `login_panel_visible` nas campanhas
+Envolver as rotas de campanhas no App.tsx com este ErrorBoundary.
 
-**Banco de dados**: Adicionar coluna `login_panel_visible` (boolean, default false) na tabela `campaigns_unified`.
+### Arquivos
 
-Isso permite que o admin escolha quais campanhas aparecem na pagina de login sem depender do canal `login_panel` das Campanhas 360.
+| Arquivo | Tipo |
+|---|---|
+| `src/lib/campaignRoutes.ts` | NOVO |
+| `src/components/admin/campaigns/CampaignErrorBoundary.tsx` | NOVO |
+| `src/pages/admin/campaigns/CampaignsUnified.tsx` | MODIFICAR |
+| `src/pages/admin/campaigns/CampaignEditor.tsx` | MODIFICAR |
+| `src/pages/admin/campaigns/CampaignMetrics.tsx` | MODIFICAR |
+| `src/pages/admin/CampaignsHub.tsx` | MODIFICAR |
+| `src/App.tsx` | MODIFICAR (ErrorBoundary wrapper) |
 
-### 5. Toggle no admin para campanhas no login
+### Garantia de nao-regressao
 
-**Arquivo**: Na listagem de campanhas ou na edicao de campanha, adicionar um switch "Exibir no Painel de Login" que controla o campo `login_panel_visible`.
+1. Nenhum arquivo de campanhas contera strings `/admin/` ou `/spah/painel/` hardcoded — tudo vem de `campaignRoutes`
+2. Se alguem mudar o prefixo do painel, basta alterar `ROUTES.ADMIN` em `src/config/routes.ts`
+3. O ErrorBoundary captura e exibe qualquer erro futuro de render sem tela branca
 
-Alternativa mais simples: adicionar a opcao diretamente na pagina de campanhas existente como uma coluna/toggle.
-
----
-
-## Arquivos Modificados
-
-| Arquivo | Tipo | Descricao |
-|---|---|---|
-| `src/components/admin/AdminHeader.tsx` | MODIFICAR | Redirect para `/spah` no signOut |
-| `src/pages/Auth.tsx` | MODIFICAR | ROLE_ROUTES + redesign do painel esquerdo |
-| `src/components/auth/LoginPanelAd.tsx` | MODIFICAR | Buscar multiplas campanhas visiveis, layout vertical |
-| Migracao SQL | NOVO | Coluna `login_panel_visible` em `campaigns_unified` |
-
-## Detalhes Tecnicos
-
-### Layout do painel esquerdo (Auth.tsx)
-
-```text
-+---------------------------+
-| [bg-yellow-400]           |
-|                           |
-|     [LOGO grande]         |
-|     (h-32 a h-40)         |
-|                           |
-|  --- area campanhas ---   |
-|  [Banner campanha 1]     |
-|  [Banner campanha 2]     |
-|  [Banner campanha 3]     |
-|  (scroll se necessario)   |
-|                           |
-|  "Conteudo de Marca"      |
-+---------------------------+
-```
-
-### Consulta de campanhas para o login
-
-O `LoginPanelAd` passara a buscar todas campanhas com `login_panel_visible = true` e `status = active`, exibindo-as em formato de carrossel ou lista vertical com scroll.
-
-### Migracao SQL
-
-```text
-ALTER TABLE campaigns_unified 
-ADD COLUMN login_panel_visible boolean DEFAULT false;
-```
-
-Nenhuma RLS adicional necessaria pois a tabela ja possui politicas.
