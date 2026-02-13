@@ -178,7 +178,7 @@ export default function AutoPostSourceForm() {
       } else {
         await createSource.mutateAsync(payload);
       }
-      navigate("/admin/autopost/sources");
+      navigate("/spah/painel/autopost/sources");
     } catch (error) {
       // Error handled by hook
     }
@@ -195,7 +195,7 @@ export default function AutoPostSourceForm() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/admin/autopost/sources")}>
+        <Button variant="ghost" size="icon" onClick={() => navigate("/spah/painel/autopost/sources")}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
@@ -556,7 +556,7 @@ export default function AutoPostSourceForm() {
             <Button 
               type="button" 
               variant="outline" 
-              onClick={() => navigate("/admin/autopost/sources")}
+              onClick={() => navigate("/spah/painel/autopost/sources")}
             >
               Cancelar
             </Button>

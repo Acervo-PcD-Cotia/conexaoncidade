@@ -137,7 +137,7 @@ export default function BroadcastStudio() {
       if (error) throw error;
       
       toast.success("Transmissão encerrada!");
-      navigate("/admin/broadcast");
+      navigate("/spah/painel/broadcast");
     } catch (err) {
       console.error("Stop broadcast error:", err);
       toast.error("Erro ao encerrar transmissão");
@@ -162,7 +162,7 @@ export default function BroadcastStudio() {
       <div className="p-6 flex flex-col items-center justify-center gap-4">
         <AlertCircle className="h-12 w-12 text-destructive" />
         <p className="text-lg">Transmissão não encontrada</p>
-        <Button onClick={() => navigate("/admin/broadcast")}>Voltar</Button>
+        <Button onClick={() => navigate("/spah/painel/broadcast")}>Voltar</Button>
       </div>
     );
   }
@@ -172,7 +172,7 @@ export default function BroadcastStudio() {
       {/* Header */}
       <div className="border-b p-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/admin/broadcast")}>
+          <Button variant="ghost" size="icon" onClick={() => navigate("/spah/painel/broadcast")}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>

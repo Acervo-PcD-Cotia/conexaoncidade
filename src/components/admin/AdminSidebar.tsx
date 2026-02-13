@@ -117,131 +117,131 @@ interface SidebarGroupConfig {
 
 // 1️⃣ CONTEÚDO - Produção editorial
 const contentItems: MenuItem[] = [
-  { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
-  { title: "Notícias", url: "/admin/news", icon: Newspaper },
+  { title: "Dashboard", url: "/spah/painel", icon: LayoutDashboard },
+  { title: "Notícias", url: "/spah/painel/news", icon: Newspaper },
   { title: "Nova Notícia", url: "#create-news", icon: FilePlus2, action: true },
-  { title: "Notícias IA", url: "/admin/noticias-ai", icon: Sparkles, badge: "IA", badgeColor: "bg-ai" },
-  { title: "Notas Rápidas", url: "/admin/quick-notes", icon: Zap },
-  { title: "Web Stories", url: "/admin/stories", icon: PlaySquare },
-  { title: "Podcasts", url: "/admin/podcasts", icon: Mic },
-  { title: "Edição Digital", url: "/admin/editions", icon: BookOpen },
-  { title: "Auto Post Regional", url: "/admin/autopost-regional", icon: MapPin, badge: "Grande Cotia", badgeColor: "bg-amber-500" },
-  { title: "Correção de Conteúdo", url: "/admin/content-fix", icon: Wrench, badge: "Novo", badgeColor: "bg-primary" },
+  { title: "Notícias IA", url: "/spah/painel/noticias-ai", icon: Sparkles, badge: "IA", badgeColor: "bg-ai" },
+  { title: "Notas Rápidas", url: "/spah/painel/quick-notes", icon: Zap },
+  { title: "Web Stories", url: "/spah/painel/stories", icon: PlaySquare },
+  { title: "Podcasts", url: "/spah/painel/podcasts", icon: Mic },
+  { title: "Edição Digital", url: "/spah/painel/editions", icon: BookOpen },
+  { title: "Auto Post Regional", url: "/spah/painel/autopost-regional", icon: MapPin, badge: "Grande Cotia", badgeColor: "bg-amber-500" },
+  { title: "Correção de Conteúdo", url: "/spah/painel/content-fix", icon: Wrench, badge: "Novo", badgeColor: "bg-primary" },
 ];
 
 // 2️⃣ DISTRIBUIÇÃO & ALCANCE - Audiência e tráfego
 const distributionItems: MenuItem[] = [
-  { title: "Distribuição Social", url: "/admin/social", icon: Share2 },
-  { title: "Gerador de Links", url: "/admin/links", icon: Link2 },
-  { title: "SEO & Performance", url: "/admin/analytics", icon: TrendingUp },
-  { title: "Check Fake News", url: "/admin/anti-fake-news", icon: ShieldCheck },
+  { title: "Distribuição Social", url: "/spah/painel/social", icon: Share2 },
+  { title: "Gerador de Links", url: "/spah/painel/links", icon: Link2 },
+  { title: "SEO & Performance", url: "/spah/painel/analytics", icon: TrendingUp },
+  { title: "Check Fake News", url: "/spah/painel/anti-fake-news", icon: ShieldCheck },
 ];
 
 // 3️⃣ PUBLICIDADE & MONETIZAÇÃO - Receita
 const monetizationItems: MenuItem[] = [
-  { title: "Campanhas 360", url: "/admin/campaigns/unified", icon: Megaphone, badge: "Novo", badgeColor: "bg-primary" },
-  { title: "Comprovantes", url: "/admin/comprovantes", icon: FileText },
-  { title: "Anúncios", url: "/admin/ads", icon: Megaphone },
-  { title: "Super Banners", url: "/admin/banners", icon: Image },
-  { title: "Publidoor", url: "/admin/publidoor", icon: Building2, badge: "Premium", badgeColor: "bg-money" },
-  { title: "Parceiros", url: "/admin/partners", icon: Handshake },
+  { title: "Campanhas 360", url: "/spah/painel/campaigns/unified", icon: Megaphone, badge: "Novo", badgeColor: "bg-primary" },
+  { title: "Comprovantes", url: "/spah/painel/comprovantes", icon: FileText },
+  { title: "Anúncios", url: "/spah/painel/ads", icon: Megaphone },
+  { title: "Super Banners", url: "/spah/painel/banners", icon: Image },
+  { title: "Publidoor", url: "/spah/painel/publidoor", icon: Building2, badge: "Premium", badgeColor: "bg-money" },
+  { title: "Parceiros", url: "/spah/painel/partners", icon: Handshake },
 ];
 
 // 4️⃣ STREAMING & MÍDIA - Transmissão
 const broadcastItems: MenuItem[] = [
-  { title: "Dashboard", url: "/admin/broadcast", icon: Radio },
-  { title: "Transmissões", url: "/admin/broadcast/list", icon: Play },
-  { title: "Canais", url: "/admin/broadcast/channels", icon: Tv },
-  { title: "Programas", url: "/admin/broadcast/programs", icon: Calendar },
-  { title: "Playlist Rádio", url: "/admin/broadcast/playlist", icon: Music },
-  { title: "Grade de Vídeos", url: "/admin/broadcast/videos", icon: Tv },
+  { title: "Dashboard", url: "/spah/painel/broadcast", icon: Radio },
+  { title: "Transmissões", url: "/spah/painel/broadcast/list", icon: Play },
+  { title: "Canais", url: "/spah/painel/broadcast/channels", icon: Tv },
+  { title: "Programas", url: "/spah/painel/broadcast/programs", icon: Calendar },
+  { title: "Playlist Rádio", url: "/spah/painel/broadcast/playlist", icon: Music },
+  { title: "Grade de Vídeos", url: "/spah/painel/broadcast/videos", icon: Tv },
 ];
 
 const conexaoStudioItems: MenuItem[] = [
-  { title: "Dashboard", url: "/admin/conexao-studio", icon: Video },
-  { title: "Estúdios", url: "/admin/conexao-studio/studios", icon: Tv },
-  { title: "Biblioteca", url: "/admin/conexao-studio/library", icon: FolderOpen },
-  { title: "Destinos", url: "/admin/conexao-studio/destinations", icon: Share2 },
-  { title: "Webinários", url: "/admin/conexao-studio/webinars", icon: Presentation },
-  { title: "Branding", url: "/admin/conexao-studio/branding", icon: Palette },
-  { title: "Equipe", url: "/admin/conexao-studio/team", icon: Users },
+  { title: "Dashboard", url: "/spah/painel/conexao-studio", icon: Video },
+  { title: "Estúdios", url: "/spah/painel/conexao-studio/studios", icon: Tv },
+  { title: "Biblioteca", url: "/spah/painel/conexao-studio/library", icon: FolderOpen },
+  { title: "Destinos", url: "/spah/painel/conexao-studio/destinations", icon: Share2 },
+  { title: "Webinários", url: "/spah/painel/conexao-studio/webinars", icon: Presentation },
+  { title: "Branding", url: "/spah/painel/conexao-studio/branding", icon: Palette },
+  { title: "Equipe", url: "/spah/painel/conexao-studio/team", icon: Users },
 ];
 
 const streamingConfigItems: MenuItem[] = [
-  { title: "Rádio Web", url: "/admin/streaming/radio", icon: Radio },
-  { title: "TV Web", url: "/admin/streaming/tv", icon: Tv },
+  { title: "Rádio Web", url: "/spah/painel/streaming/radio", icon: Radio },
+  { title: "TV Web", url: "/spah/painel/streaming/tv", icon: Tv },
 ];
 
 // 5️⃣ GESTÃO DO PORTAL - Governança
 const portalManagementItems: MenuItem[] = [
-  { title: "Editor da Home", url: "/admin/home-editor", icon: PanelTop },
-  { title: "Categorias", url: "/admin/categories", icon: FolderTree },
-  { title: "Tags", url: "/admin/tags", icon: Tag },
-  { title: "Aparência", url: "/admin/settings/appearance", icon: Palette },
-  { title: "Modelo do Portal", url: "/admin/settings/template", icon: Settings },
-  { title: "Vocabulário", url: "/admin/settings/vocabulary", icon: Languages },
-  { title: "Módulos", url: "/admin/settings/modules", icon: ToggleLeft },
+  { title: "Editor da Home", url: "/spah/painel/home-editor", icon: PanelTop },
+  { title: "Categorias", url: "/spah/painel/categories", icon: FolderTree },
+  { title: "Tags", url: "/spah/painel/tags", icon: Tag },
+  { title: "Aparência", url: "/spah/painel/settings/appearance", icon: Palette },
+  { title: "Modelo do Portal", url: "/spah/painel/settings/template", icon: Settings },
+  { title: "Vocabulário", url: "/spah/painel/settings/vocabulary", icon: Languages },
+  { title: "Módulos", url: "/spah/painel/settings/modules", icon: ToggleLeft },
 ];
 
 // 6️⃣ INTELIGÊNCIA & MÉTRICAS - Dados
 const intelligenceItems: MenuItem[] = [
-  { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
-  { title: "Relatórios Editoriais", url: "/admin/reading-analytics", icon: FileText },
-  { title: "Relatório Semanal", url: "/admin/relatorio-semanal", icon: TrendingUp, badge: "Novo", badgeColor: "bg-primary" },
-  { title: "Métricas Comerciais", url: "/admin/publidoor/metricas", icon: DollarSign },
+  { title: "Analytics", url: "/spah/painel/analytics", icon: BarChart3 },
+  { title: "Relatórios Editoriais", url: "/spah/painel/reading-analytics", icon: FileText },
+  { title: "Relatório Semanal", url: "/spah/painel/relatorio-semanal", icon: TrendingUp, badge: "Novo", badgeColor: "bg-primary" },
+  { title: "Métricas Comerciais", url: "/spah/painel/publidoor/metricas", icon: DollarSign },
 ];
 
 // Conexão Academy - Primeiro nível
 const academyItems: MenuItem[] = [
-  { title: "Dashboard", url: "/admin/academy", icon: LayoutDashboard },
-  { title: "Categorias", url: "/admin/academy/admin/categorias", icon: FolderTree },
-  { title: "Cursos", url: "/admin/academy/admin/cursos", icon: BookOpen },
+  { title: "Dashboard", url: "/spah/painel/academy", icon: LayoutDashboard },
+  { title: "Categorias", url: "/spah/painel/academy/admin/categorias", icon: FolderTree },
+  { title: "Cursos", url: "/spah/painel/academy/admin/cursos", icon: BookOpen },
 ];
 
 // Conexão.AI - Primeiro nível
 const conexaoAIItems: MenuItem[] = [
-  { title: "Dashboard", url: "/admin/conexao-ai", icon: LayoutDashboard },
-  { title: "Assistente", url: "/admin/conexao-ai/assistente", icon: Bot },
-  { title: "Criador", url: "/admin/conexao-ai/criador", icon: FilePlus2 },
-  { title: "Ferramentas", url: "/admin/conexao-ai/ferramentas", icon: Zap },
-  { title: "Automações", url: "/admin/conexao-ai/automacoes", icon: Play },
-  { title: "Insights", url: "/admin/conexao-ai/insights", icon: BarChart3 },
+  { title: "Dashboard", url: "/spah/painel/conexao-ai", icon: LayoutDashboard },
+  { title: "Assistente", url: "/spah/painel/conexao-ai/assistente", icon: Bot },
+  { title: "Criador", url: "/spah/painel/conexao-ai/criador", icon: FilePlus2 },
+  { title: "Ferramentas", url: "/spah/painel/conexao-ai/ferramentas", icon: Zap },
+  { title: "Automações", url: "/spah/painel/conexao-ai/automacoes", icon: Play },
+  { title: "Insights", url: "/spah/painel/conexao-ai/insights", icon: BarChart3 },
 ];
 
 // Negócios - Módulos especiais
 const businessItems: MenuItem[] = [
-  { title: "Soluções", url: "/admin/solutions", icon: Puzzle },
-  { title: "Financeiro", url: "/admin/financial", icon: Receipt },
-  { title: "Auto Post PRO", url: "/admin/autopost", icon: Bot },
-  { title: "Campanhas", url: "/admin/campaigns/google-maps", icon: MapPin },
-  { title: "Censo PcD", url: "/admin/censo-pcd", icon: Accessibility },
+  { title: "Soluções", url: "/spah/painel/solutions", icon: Puzzle },
+  { title: "Financeiro", url: "/spah/painel/financial", icon: Receipt },
+  { title: "Auto Post PRO", url: "/spah/painel/autopost", icon: Bot },
+  { title: "Campanhas", url: "/spah/painel/campaigns/google-maps", icon: MapPin },
+  { title: "Censo PcD", url: "/spah/painel/censo-pcd", icon: Accessibility },
   { title: "Geração Cotia", url: "#sso-gcotia", icon: ExternalLink, action: true },
 ];
 
 // Educação & Esportes - Módulos educacionais e esportivos
 const educationSportsItems: MenuItem[] = [
-  { title: "Esportes", url: "/admin/esportes", icon: Trophy },
-  { title: "Brasileirão", url: "/admin/esportes/brasileirao", icon: Trophy },
-  { title: "ENEM 2026", url: "/admin/academy/enem", icon: GraduationCap, badge: "Novo", badgeColor: "bg-primary" },
+  { title: "Esportes", url: "/spah/painel/esportes", icon: Trophy },
+  { title: "Brasileirão", url: "/spah/painel/esportes/brasileirao", icon: Trophy },
+  { title: "ENEM 2026", url: "/spah/painel/academy/enem", icon: GraduationCap, badge: "Novo", badgeColor: "bg-primary" },
 ];
 
 // Transporte Escolar
 const transporteEscolarItems: MenuItem[] = [
-  { title: "Dashboard", url: "/admin/transporte-escolar", icon: LayoutDashboard },
-  { title: "Escolas", url: "/admin/transporte-escolar/escolas", icon: School },
-  { title: "Transportadores", url: "/admin/transporte-escolar/transportadores", icon: Bus },
-  { title: "Leads", url: "/admin/transporte-escolar/leads", icon: Users },
-  { title: "Denúncias", url: "/admin/transporte-escolar/reports", icon: AlertTriangle },
+  { title: "Dashboard", url: "/spah/painel/transporte-escolar", icon: LayoutDashboard },
+  { title: "Escolas", url: "/spah/painel/transporte-escolar/escolas", icon: School },
+  { title: "Transportadores", url: "/spah/painel/transporte-escolar/transportadores", icon: Bus },
+  { title: "Leads", url: "/spah/painel/transporte-escolar/leads", icon: Users },
+  { title: "Denúncias", url: "/spah/painel/transporte-escolar/reports", icon: AlertTriangle },
 ];
 
 // Admin only
 const adminOnlyItems: MenuItem[] = [
-  { title: "Usuários", url: "/admin/users", icon: Users },
-  { title: "Conexões", url: "/admin/community", icon: UsersRound },
-  { title: "Cadastro Assistido", url: "/admin/community/phone-import", icon: Smartphone },
-  { title: "Monitor SSO", url: "/admin/sso-monitor", icon: Shield },
-  { title: "Logs", url: "/admin/logs", icon: History },
-  { title: "Configurações", url: "/admin/settings", icon: Settings },
+  { title: "Usuários", url: "/spah/painel/users", icon: Users },
+  { title: "Conexões", url: "/spah/painel/community", icon: UsersRound },
+  { title: "Cadastro Assistido", url: "/spah/painel/community/phone-import", icon: Smartphone },
+  { title: "Monitor SSO", url: "/spah/painel/sso-monitor", icon: Shield },
+  { title: "Logs", url: "/spah/painel/logs", icon: History },
+  { title: "Configurações", url: "/spah/painel/settings", icon: Settings },
 ];
 
 // ============ GRUPOS CONSOLIDADOS ============
@@ -269,7 +269,7 @@ const sidebarGroups: SidebarGroupConfig[] = [
     id: "streaming",
     title: "Streaming & Mídia",
     icon: Satellite,
-    items: [{ title: "Hub Central", url: "/admin/stream", icon: Satellite }],
+    items: [{ title: "Hub Central", url: "/spah/painel/stream", icon: Satellite }],
     subGroups: [
       { id: "ao-vivo", title: "Ao Vivo", icon: Play, items: broadcastItems },
       { id: "studio", title: "Studio", icon: Video, items: conexaoStudioItems },
@@ -350,8 +350,8 @@ export function AdminSidebar() {
   };
 
   const isItemActive = (url: string) => {
-    if (url === "/admin") {
-      return location.pathname === "/admin";
+    if (url === "/spah/painel") {
+      return location.pathname === "/spah/painel";
     }
     return location.pathname.startsWith(url);
   };
@@ -396,7 +396,7 @@ export function AdminSidebar() {
                   ) : (
                     <NavLink
                       to={item.url}
-                      end={item.url === "/admin"}
+                      end={item.url === "/spah/painel"}
                       className="flex items-center justify-center p-2"
                       activeClassName="bg-sidebar-active-bg text-cta"
                     >
@@ -447,7 +447,7 @@ export function AdminSidebar() {
           ) : (
             <NavLink
               to={item.url}
-              end={item.url === "/admin" || item.url === "/admin/transporte-escolar"}
+              end={item.url === "/spah/painel" || item.url === "/spah/painel/transporte-escolar"}
               className="relative flex items-center gap-2 text-sm group"
               activeClassName="bg-sidebar-active-bg text-sidebar-foreground font-medium before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-6 before:w-1 before:rounded-r-full before:bg-cta"
             >
@@ -567,7 +567,7 @@ export function AdminSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b p-3">
         <div className="flex items-center justify-between">
-          <NavLink to="/admin" className="flex items-center">
+          <NavLink to="/spah/painel" className="flex items-center">
             {collapsed ? (
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow">
                 <Newspaper className="h-4 w-4" />
@@ -637,7 +637,7 @@ function SubAccordion({ id, title, icon: Icon, items, handleMenuClick, isItemAct
               <SidebarMenuButton asChild>
                 <NavLink
                   to={item.url}
-                  end={item.url.includes("/admin/broadcast") && item.url === "/admin/broadcast"}
+                  end={item.url.includes("/spah/painel/broadcast") && item.url === "/spah/painel/broadcast"}
                   className="relative flex items-center gap-2 text-xs"
                   activeClassName="bg-sidebar-active-bg text-sidebar-foreground font-medium before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-0.5 before:rounded-r-full before:bg-cta"
                 >

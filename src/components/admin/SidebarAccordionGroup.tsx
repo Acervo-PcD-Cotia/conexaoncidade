@@ -106,7 +106,7 @@ export function SidebarAccordionGroup({
                 ) : (
                   <NavLink
                     to={item.url}
-                    end={item.url.endsWith("/admin") || item.url.endsWith("-escolar")}
+                    end={item.url.endsWith("/spah/painel") || item.url.endsWith("-escolar")}
                     className="flex items-center gap-2 text-sm"
                     activeClassName="bg-primary/10 text-primary font-medium"
                   >

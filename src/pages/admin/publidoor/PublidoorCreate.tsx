@@ -44,7 +44,7 @@ export default function PublidoorCreate() {
     }
     
     await createMutation.mutateAsync(formData);
-    navigate("/admin/publidoor");
+    navigate("/spah/painel/publidoor");
   };
 
   const updateField = <K extends keyof PublidoorItemFormData>(

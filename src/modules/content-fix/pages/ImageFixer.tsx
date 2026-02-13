@@ -84,7 +84,7 @@ export default function ImageFixer() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/admin/content-fix")}>
+          <Button variant="ghost" size="icon" onClick={() => navigate("/spah/painel/content-fix")}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="p-2 rounded-lg bg-red-100 dark:bg-red-950/30">

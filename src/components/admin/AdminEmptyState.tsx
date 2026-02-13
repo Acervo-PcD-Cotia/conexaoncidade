@@ -80,7 +80,7 @@ export function IntegrationPendingState({
         </div>
 
         <Button variant="outline" asChild className="mt-2">
-          <Link to="/admin">Voltar ao Dashboard</Link>
+          <Link to="/spah/painel">Voltar ao Dashboard</Link>
         </Button>
       </CardContent>
     </Card>

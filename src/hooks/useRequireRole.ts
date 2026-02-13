@@ -35,7 +35,7 @@ export function useRequireRole(allowedRoles: AppRole[]) {
           
           if (countdown <= 0) {
             if (redirectTimerRef.current) clearInterval(redirectTimerRef.current);
-            navigate("/auth");
+            navigate("/spah");
           }
         }, 1000);
         

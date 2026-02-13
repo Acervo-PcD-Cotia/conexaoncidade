@@ -8,75 +8,75 @@ const STORAGE_KEY_COLLAPSED = "adminSidebarCollapsed";
 // Map routes to their parent group IDs
 const ROUTE_TO_GROUP: Record<string, string> = {
   // CONTEÚDO
-  "/admin": "conteudo",
-  "/admin/news": "conteudo",
-  "/admin/noticias-ai": "conteudo",
-  "/admin/quick-notes": "conteudo",
-  "/admin/stories": "conteudo",
-  "/admin/podcasts": "conteudo",
-  "/admin/editions": "conteudo",
-  "/admin/autopost-regional": "conteudo",
+  "/spah/painel": "conteudo",
+  "/spah/painel/news": "conteudo",
+  "/spah/painel/noticias-ai": "conteudo",
+  "/spah/painel/quick-notes": "conteudo",
+  "/spah/painel/stories": "conteudo",
+  "/spah/painel/podcasts": "conteudo",
+  "/spah/painel/editions": "conteudo",
+  "/spah/painel/autopost-regional": "conteudo",
   
   // DISTRIBUIÇÃO & ALCANCE
-  "/admin/social": "distribuicao",
-  "/admin/links": "distribuicao",
-  "/admin/anti-fake-news": "distribuicao",
+  "/spah/painel/social": "distribuicao",
+  "/spah/painel/links": "distribuicao",
+  "/spah/painel/anti-fake-news": "distribuicao",
   
   // PUBLICIDADE & MONETIZAÇÃO
-  "/admin/ads": "monetizacao",
-  "/admin/banners": "monetizacao",
-  "/admin/publidoor": "monetizacao",
-  "/admin/partners": "monetizacao",
+  "/spah/painel/ads": "monetizacao",
+  "/spah/painel/banners": "monetizacao",
+  "/spah/painel/publidoor": "monetizacao",
+  "/spah/painel/partners": "monetizacao",
   
   // STREAMING & MÍDIA
-  "/admin/stream": "streaming",
-  "/admin/broadcast": "streaming",
-  "/admin/conexao-studio": "streaming",
-  "/admin/streaming/radio": "streaming",
-  "/admin/streaming/tv": "streaming",
+  "/spah/painel/stream": "streaming",
+  "/spah/painel/broadcast": "streaming",
+  "/spah/painel/conexao-studio": "streaming",
+  "/spah/painel/streaming/radio": "streaming",
+  "/spah/painel/streaming/tv": "streaming",
   
   // GESTÃO DO PORTAL
-  "/admin/home-editor": "gestao",
-  "/admin/categories": "gestao",
-  "/admin/tags": "gestao",
-  "/admin/settings/template": "gestao",
-  "/admin/settings/vocabulary": "gestao",
-  "/admin/settings/modules": "gestao",
+  "/spah/painel/home-editor": "gestao",
+  "/spah/painel/categories": "gestao",
+  "/spah/painel/tags": "gestao",
+  "/spah/painel/settings/template": "gestao",
+  "/spah/painel/settings/vocabulary": "gestao",
+  "/spah/painel/settings/modules": "gestao",
   
   // INTELIGÊNCIA & MÉTRICAS
-  "/admin/analytics": "inteligencia",
-  "/admin/reading-analytics": "inteligencia",
+  "/spah/painel/analytics": "inteligencia",
+  "/spah/painel/reading-analytics": "inteligencia",
   
   // CONEXÃO ACADEMY (primeiro nível)
-  "/admin/academy": "academy",
-  "/admin/academy/curso": "academy",
-  "/admin/academy/aula": "academy",
-  "/admin/academy/admin": "academy",
+  "/spah/painel/academy": "academy",
+  "/spah/painel/academy/curso": "academy",
+  "/spah/painel/academy/aula": "academy",
+  "/spah/painel/academy/admin": "academy",
   
   // CONEXÃO.AI (primeiro nível)
-  "/admin/conexao-ai": "conexao-ai",
-  "/admin/conexao-ai/assistente": "conexao-ai",
-  "/admin/conexao-ai/criador": "conexao-ai",
-  "/admin/conexao-ai/ferramentas": "conexao-ai",
-  "/admin/conexao-ai/automacoes": "conexao-ai",
-  "/admin/conexao-ai/insights": "conexao-ai",
+  "/spah/painel/conexao-ai": "conexao-ai",
+  "/spah/painel/conexao-ai/assistente": "conexao-ai",
+  "/spah/painel/conexao-ai/criador": "conexao-ai",
+  "/spah/painel/conexao-ai/ferramentas": "conexao-ai",
+  "/spah/painel/conexao-ai/automacoes": "conexao-ai",
+  "/spah/painel/conexao-ai/insights": "conexao-ai",
   
   // NEGÓCIOS
-  "/admin/solutions": "negocios",
-  "/admin/financial": "negocios",
-  "/admin/autopost": "negocios",
-  "/admin/campaigns": "negocios",
-  "/admin/censo-pcd": "negocios",
+  "/spah/painel/solutions": "negocios",
+  "/spah/painel/financial": "negocios",
+  "/spah/painel/autopost": "negocios",
+  "/spah/painel/campaigns": "negocios",
+  "/spah/painel/censo-pcd": "negocios",
   
   // TRANSPORTE ESCOLAR
-  "/admin/transporte-escolar": "transporte",
+  "/spah/painel/transporte-escolar": "transporte",
   
   // ADMINISTRAÇÃO
-  "/admin/community": "admin",
-  "/admin/sso-monitor": "admin",
-  "/admin/users": "admin",
-  "/admin/logs": "admin",
-  "/admin/settings": "admin",
+  "/spah/painel/community": "admin",
+  "/spah/painel/sso-monitor": "admin",
+  "/spah/painel/users": "admin",
+  "/spah/painel/logs": "admin",
+  "/spah/painel/settings": "admin",
 };
 
 function getGroupFromPath(pathname: string): string | null {
@@ -85,10 +85,10 @@ function getGroupFromPath(pathname: string): string | null {
     return ROUTE_TO_GROUP[pathname];
   }
   
-  // Check for partial matches (e.g., /admin/broadcast/list matches /admin/broadcast)
+  // Check for partial matches (e.g., /spah/painel/broadcast/list matches /spah/painel/broadcast)
   const sortedRoutes = Object.keys(ROUTE_TO_GROUP).sort((a, b) => b.length - a.length);
   for (const route of sortedRoutes) {
-    if (pathname.startsWith(route) && route !== "/admin") {
+    if (pathname.startsWith(route) && route !== "/spah/painel") {
       return ROUTE_TO_GROUP[route];
     }
   }

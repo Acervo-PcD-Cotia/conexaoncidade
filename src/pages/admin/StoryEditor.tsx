@@ -198,7 +198,7 @@ export default function StoryEditor() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-stories"] });
       toast.success(isEditing ? "Story atualizada!" : "Story criada!");
-      navigate("/admin/stories");
+      navigate("/spah/painel/stories");
     },
     onError: (error) => {
       toast.error("Erro ao salvar: " + (error as Error).message);

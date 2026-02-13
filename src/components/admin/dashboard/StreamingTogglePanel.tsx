@@ -32,7 +32,7 @@ export function StreamingTogglePanel() {
       icon={Radio}
       iconColor="text-primary"
       action={
-        <Link to="/admin/settings/modules" className="text-muted-foreground hover:text-foreground transition-colors">
+        <Link to="/spah/painel/settings/modules" className="text-muted-foreground hover:text-foreground transition-colors">
           <Settings className="h-4 w-4" />
         </Link>
       }

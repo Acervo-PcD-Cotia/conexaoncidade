@@ -38,7 +38,7 @@ export default function CommunityHub() {
 
   useEffect(() => {
     if (!user) {
-      navigate("/auth?redirect=/comunidade");
+      navigate("/spah?redirect=/comunidade");
     }
   }, [user, navigate]);
 

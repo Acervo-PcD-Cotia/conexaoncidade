@@ -66,7 +66,7 @@ export default function PublidoorEdit() {
     }
     
     await updateMutation.mutateAsync({ id, ...formData });
-    navigate("/admin/publidoor");
+    navigate("/spah/painel/publidoor");
   };
 
   const updateField = <K extends keyof PublidoorItemFormData>(
@@ -88,7 +88,7 @@ export default function PublidoorEdit() {
     return (
       <div className="text-center py-12">
         <p className="text-muted-foreground">Publidoor não encontrado</p>
-        <Button variant="link" onClick={() => navigate("/admin/publidoor")}>
+        <Button variant="link" onClick={() => navigate("/spah/painel/publidoor")}>
           Voltar ao Dashboard
         </Button>
       </div>

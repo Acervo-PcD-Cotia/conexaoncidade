@@ -40,7 +40,7 @@ export function ImportLogsPanel() {
           <h3 className="text-sm font-semibold">Logs de Importação</h3>
         </div>
         <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" asChild>
-          <Link to="/admin/autopost">
+          <Link to="/spah/painel/autopost">
             Ver todos
             <ChevronRight className="h-3 w-3" />
           </Link>

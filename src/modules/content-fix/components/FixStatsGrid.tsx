@@ -56,7 +56,7 @@ export function FixStatsGrid() {
         icon={Image}
         color="text-red-600"
         bgColor="bg-red-50 dark:bg-red-950/20"
-        onClick={() => navigate("/admin/content-fix/images")}
+        onClick={() => navigate("/spah/painel/content-fix/images")}
         isLoading={isLoading}
       />
       <StatCard
@@ -65,7 +65,7 @@ export function FixStatsGrid() {
         icon={Calendar}
         color="text-amber-600"
         bgColor="bg-amber-50 dark:bg-amber-950/20"
-        onClick={() => navigate("/admin/content-fix/dates")}
+        onClick={() => navigate("/spah/painel/content-fix/dates")}
         isLoading={isLoading}
       />
       <StatCard
@@ -74,7 +74,7 @@ export function FixStatsGrid() {
         icon={CalendarClock}
         color="text-orange-600"
         bgColor="bg-orange-50 dark:bg-orange-950/20"
-        onClick={() => navigate("/admin/content-fix/dates")}
+        onClick={() => navigate("/spah/painel/content-fix/dates")}
         isLoading={isLoading}
       />
       <StatCard
@@ -83,7 +83,7 @@ export function FixStatsGrid() {
         icon={FolderTree}
         color="text-purple-600"
         bgColor="bg-purple-50 dark:bg-purple-950/20"
-        onClick={() => navigate("/admin/content-fix/validator")}
+        onClick={() => navigate("/spah/painel/content-fix/validator")}
         isLoading={isLoading}
       />
     </div>

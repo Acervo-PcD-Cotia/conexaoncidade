@@ -32,13 +32,13 @@ export function EmptyAnalyticsState({
         {action || (
           <div className="flex gap-3">
             <Button variant="outline" asChild>
-              <Link to="/admin/settings">
+              <Link to="/spah/painel/settings">
                 <Settings className="mr-2 h-4 w-4" />
                 Configurar Tracking
               </Link>
             </Button>
             <Button asChild>
-              <Link to="/admin/news">
+              <Link to="/spah/painel/news">
                 Ver Notícias
               </Link>
             </Button>

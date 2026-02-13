@@ -44,7 +44,7 @@ export default function ContentFixDashboard() {
 
       {/* Quick Actions */}
       <div className="grid md:grid-cols-3 gap-4">
-        <Card className="hover:shadow-md transition-shadow cursor-pointer group" onClick={() => navigate("/admin/content-fix/images")}>
+        <Card className="hover:shadow-md transition-shadow cursor-pointer group" onClick={() => navigate("/spah/painel/content-fix/images")}>
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
               <div className="p-2 rounded-lg bg-red-100 dark:bg-red-950/30">
@@ -63,7 +63,7 @@ export default function ContentFixDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-md transition-shadow cursor-pointer group" onClick={() => navigate("/admin/content-fix/dates")}>
+        <Card className="hover:shadow-md transition-shadow cursor-pointer group" onClick={() => navigate("/spah/painel/content-fix/dates")}>
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
               <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-950/30">
@@ -82,7 +82,7 @@ export default function ContentFixDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-md transition-shadow cursor-pointer group" onClick={() => navigate("/admin/content-fix/validator")}>
+        <Card className="hover:shadow-md transition-shadow cursor-pointer group" onClick={() => navigate("/spah/painel/content-fix/validator")}>
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
               <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-950/30">

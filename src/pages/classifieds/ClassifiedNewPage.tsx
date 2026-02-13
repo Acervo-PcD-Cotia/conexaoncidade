@@ -82,7 +82,7 @@ export default function ClassifiedNewPage() {
   };
 
   if (!user) {
-    navigate("/auth?redirect=/classificados/novo");
+    navigate("/spah?redirect=/classificados/novo");
     return null;
   }
 
