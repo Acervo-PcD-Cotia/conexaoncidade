@@ -456,13 +456,7 @@ const App = () => (
                       <Route path="/spah" element={<Auth />} />
                       <Route path="/auth-comunidade" element={<CommunityAuth />} />
                       <Route path="/reset-password" element={<ResetPassword />} />
-                      {/* Redirects de compatibilidade */}
-                      <Route path="/auth" element={<Navigate to="/spah" replace />} />
-                      <Route path="/login" element={<Navigate to="/spah" replace />} />
-                      <Route path="/admin" element={<Navigate to="/spah/painel" replace />} />
-                      <Route path="/admin/*" element={<Navigate to="/spah/painel" replace />} />
-                      <Route path="/dashboard" element={<Navigate to="/spah/painel" replace />} />
-                      
+                       
                       {/* Public Streaming Pages */}
                       <Route path="/radio" element={
                         <RouteModuleGuard module="web_radio">
