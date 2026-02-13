@@ -40,13 +40,11 @@ export default function Auth() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = useState(false);
   
-  // Login form state
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
 
   useEffect(() => {
     if (user) {
-      // Verificar se o usuário tem papel administrativo e redirecionar
       supabase
         .from("user_roles")
         .select("role")
@@ -54,7 +52,6 @@ export default function Auth() {
         .single()
         .then(({ data }) => {
           if (data && ADMIN_ROLES.includes(data.role)) {
-            // Redirecionar para rota específica do perfil
             const route = ROLE_ROUTES[data.role] || '/spah/painel';
             navigate(route);
           } else {
@@ -119,35 +116,45 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30 flex flex-col lg:grid lg:grid-cols-[60%_40%]">
-      {/* Coluna Esquerda - Fundo amarelo com logo e campanhas */}
-      <div className="relative hidden lg:flex lg:flex-col bg-yellow-400 overflow-hidden">
-        {/* Logo no topo */}
-        <div className="flex justify-center pt-12 pb-6 px-6">
+    <div className="min-h-screen flex flex-col lg:grid lg:grid-cols-[1.2fr_0.8fr]">
+      {/* Coluna Esquerda — Painel de Propaganda */}
+      <div className="relative hidden lg:flex lg:flex-col items-center bg-[hsl(30,60%,95%)]">
+        {/* Logo centralizado no topo */}
+        <div className="flex justify-center pt-10 pb-6 px-8">
           <img 
             src={conexaoLogo} 
             alt="Conexão na Cidade" 
-            className="h-36 w-auto"
+            width={280}
+            height={100}
+            loading="eager"
+            className="max-w-[260px] h-auto object-contain"
           />
         </div>
         
-        {/* Área de campanhas */}
-        <div className="flex-1 overflow-y-auto px-6 pb-6">
-          <LoginPanelAd className="w-full" />
+        {/* Painel de banners */}
+        <div className="flex-1 w-full max-w-[720px] px-8 pb-8">
+          <LoginPanelAd className="w-full h-full" />
         </div>
       </div>
 
       {/* Mobile header */}
-      <div className="flex flex-col items-center justify-center py-8 px-6 lg:hidden bg-yellow-400">
+      <div className="flex flex-col items-center justify-center py-6 px-6 lg:hidden bg-[hsl(30,60%,95%)]">
         <img 
           src={conexaoLogo} 
           alt="Conexão na Cidade" 
-          className="h-24 w-auto"
+          width={200}
+          height={72}
+          loading="eager"
+          className="max-w-[200px] h-auto object-contain"
         />
+        {/* Mobile: ad compacto */}
+        <div className="mt-4 w-full max-w-sm">
+          <LoginPanelAd className="w-full" compact />
+        </div>
       </div>
 
-      {/* Coluna Direita - Card de Login */}
-      <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
+      {/* Coluna Direita — Card de Login */}
+      <div className="flex-1 flex items-center justify-center p-6 lg:p-12 bg-muted/30">
         <div className="w-full max-w-md bg-background border border-border/50 shadow-lg rounded-xl p-8">
           <form onSubmit={handleLogin} className="space-y-6">
             {/* Campo Email */}
@@ -234,7 +241,6 @@ export default function Auth() {
             </div>
           </form>
           
-          {/* Separador e Texto Admin */}
           <div className="mt-8 pt-6 border-t border-border/50">
             <p className="text-sm text-muted-foreground text-center">
               Não tem uma conta?{' '}
@@ -244,7 +250,6 @@ export default function Auth() {
             </p>
           </div>
           
-          {/* Footer Copyright */}
           <div className="mt-8 text-center">
             <p className="text-xs text-muted-foreground">
               © Conexão na Cidade - Todos os direitos reservados
