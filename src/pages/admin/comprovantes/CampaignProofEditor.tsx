@@ -41,14 +41,14 @@ export default function CampaignProofEditor() {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/admin/comprovantes")}>
+          <Button variant="ghost" size="icon" onClick={() => navigate("/spah/painel/comprovantes")}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <h1 className="text-2xl font-bold">Comprovante não encontrado</h1>
         </div>
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center space-y-4">
           <p className="text-destructive font-medium">Não foi possível carregar este comprovante.</p>
-          <Button variant="outline" onClick={() => navigate("/admin/comprovantes")}>
+          <Button variant="outline" onClick={() => navigate("/spah/painel/comprovantes")}>
             Voltar à lista
           </Button>
         </div>
@@ -60,7 +60,7 @@ export default function CampaignProofEditor() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/admin/comprovantes")}>
+        <Button variant="ghost" size="icon" onClick={() => navigate("/spah/painel/comprovantes")}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>

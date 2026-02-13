@@ -99,7 +99,7 @@ export default function CampaignProofsList() {
             Geração de PDFs de veiculação e analytics para clientes
           </p>
         </div>
-        <Button onClick={() => navigate("/admin/comprovantes/novo")}>
+        <Button onClick={() => navigate("/spah/painel/comprovantes/novo")}>
           <Plus className="mr-2 h-4 w-4" />
           Nova Campanha
         </Button>

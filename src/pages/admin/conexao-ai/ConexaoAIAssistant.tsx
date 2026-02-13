@@ -72,7 +72,7 @@ export default function ConexaoAIAssistant() {
     <div className="flex h-[calc(100vh-8rem)] flex-col">
       {/* Header */}
       <div className="flex items-center gap-4 border-b pb-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/admin/conexao-ai")}>
+        <Button variant="ghost" size="icon" onClick={() => navigate("/spah/painel/conexao-ai")}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>

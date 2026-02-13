@@ -73,7 +73,7 @@ export function ModuleUnavailable({ moduleKey }: ModuleUnavailableProps) {
             </Button>
 
             <Button asChild variant="outline" className="w-full">
-              <Link to="/admin">
+              <Link to="/spah/painel">
                 <Home className="mr-2 h-4 w-4" />
                 Voltar ao Dashboard
               </Link>

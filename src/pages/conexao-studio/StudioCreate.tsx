@@ -79,7 +79,7 @@ export default function StudioCreate() {
     },
     onSuccess: () => {
       toast.success("Estúdio criado com sucesso!");
-      navigate("/admin/conexao-studio/studios");
+      navigate("/spah/painel/conexao-studio/studios");
     },
     onError: (error: any) => {
       if (error.message?.includes("duplicate key")) {

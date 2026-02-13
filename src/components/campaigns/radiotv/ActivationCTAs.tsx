@@ -26,7 +26,7 @@ export function ActivationCTAs({ variant = "default" }: ActivationCTAsProps) {
             className={`bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 ${buttonClass}`}
             asChild
           >
-            <Link to="/admin/broadcast">
+            <Link to="/spah/painel/broadcast">
               <Radio className="h-5 w-5 mr-2" />
               Ativar minha Web Rádio / TV
               <ArrowRight className="h-5 w-5 ml-2" />

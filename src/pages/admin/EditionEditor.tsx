@@ -123,7 +123,7 @@ export default function EditionEditor() {
           title: "Edição criada",
           description: "A nova edição foi criada com sucesso.",
         });
-        navigate("/admin/editions");
+        navigate("/spah/painel/editions");
       }
     } catch (error: any) {
       toast({
@@ -171,7 +171,7 @@ export default function EditionEditor() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/admin/editions")}>
+        <Button variant="ghost" size="icon" onClick={() => navigate("/spah/painel/editions")}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>

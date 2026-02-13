@@ -167,21 +167,21 @@ export function Header() {
                       <VocabText term="admin" fallback="Administração" />
                     </p>
                     <Link
-                      to="/admin"
+                      to="/spah/painel"
                       className="flex items-center gap-2 text-primary hover:underline"
                     >
                       <LayoutDashboard className="h-4 w-4" />
                       <VocabText term="dashboard" fallback="Dashboard" />
                     </Link>
                     <Link
-                      to="/admin/news"
+                      to="/spah/painel/news"
                       className="flex items-center gap-2 text-muted-foreground hover:text-primary"
                     >
                       <Newspaper className="h-4 w-4" />
                       <VocabText term="manage_news" fallback="Gerenciar Notícias" />
                     </Link>
                     <Link
-                      to="/admin/categories"
+                      to="/spah/painel/categories"
                       className="flex items-center gap-2 text-muted-foreground hover:text-primary"
                     >
                       <FolderOpen className="h-4 w-4" />
@@ -192,7 +192,7 @@ export function Header() {
                 
                 {!user && (
                   <div className="mt-4 border-t pt-4">
-                    <Link to="/auth" className="text-primary hover:underline">
+                    <Link to="/spah" className="text-primary hover:underline">
                       <VocabText term="login" fallback="Entrar / Cadastrar" />
                     </Link>
                   </div>
@@ -250,31 +250,31 @@ export function Header() {
                   {hasAdminAccess && (
                     <>
                       <DropdownMenuItem asChild>
-                        <Link to="/admin">
+                        <Link to="/spah/painel">
                           <LayoutDashboard className="h-4 w-4 mr-2" />
                           <VocabText term="dashboard" fallback="Dashboard" />
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link to="/admin/news">
+                        <Link to="/spah/painel/news">
                           <Newspaper className="h-4 w-4 mr-2" />
                           <VocabText term="manage_news" fallback="Gerenciar Notícias" />
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link to="/admin/categories">
+                        <Link to="/spah/painel/categories">
                           <FolderOpen className="h-4 w-4 mr-2" />
                           Categorias
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link to="/admin/ads">
+                        <Link to="/spah/painel/ads">
                           <Megaphone className="h-4 w-4 mr-2" />
                           Anúncios
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link to="/admin/settings">
+                        <Link to="/spah/painel/settings">
                           <Settings className="h-4 w-4 mr-2" />
                           <VocabText term="settings" fallback="Configurações" />
                         </Link>

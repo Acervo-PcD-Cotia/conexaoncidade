@@ -260,7 +260,7 @@ export default function BroadcastChat({ broadcastId, isLive = true, className }:
           </div>
         ) : (
           <p className="text-center text-sm text-muted-foreground">
-            <a href="/auth" className="text-primary hover:underline">
+            <a href="/spah" className="text-primary hover:underline">
               Faça login
             </a>{" "}
             para participar do chat

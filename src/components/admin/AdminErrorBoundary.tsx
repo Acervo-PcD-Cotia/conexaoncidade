@@ -145,7 +145,7 @@ export class AdminErrorBoundary extends Component<Props, State> {
                   Tentar Novamente
                 </Button>
                 <Button variant="ghost" asChild>
-                  <Link to="/admin">
+                  <Link to="/spah/painel">
                     <Home className="mr-2 h-4 w-4" />
                     Dashboard
                   </Link>

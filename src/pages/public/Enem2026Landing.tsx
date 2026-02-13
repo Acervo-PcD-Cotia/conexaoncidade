@@ -134,7 +134,7 @@ export default function Enem2026Landing() {
                 asChild
                 className="border-white/40 text-white hover:bg-white/10"
               >
-                <Link to="/auth">
+                <Link to="/spah">
                   Criar Conta Grátis
                 </Link>
               </Button>
@@ -358,7 +358,7 @@ export default function Enem2026Landing() {
               asChild
               className="border-white/40 text-white hover:bg-white/10"
             >
-              <Link to="/auth">
+              <Link to="/spah">
                 Criar Conta
               </Link>
             </Button>

@@ -130,7 +130,7 @@ export function Breadcrumb() {
   return (
     <nav className="flex items-center gap-1.5 text-sm text-muted-foreground mb-4">
       <Link
-        to="/admin"
+        to="/spah/painel"
         className="flex items-center gap-1 hover:text-foreground transition-colors"
       >
         <Home className="h-4 w-4" />

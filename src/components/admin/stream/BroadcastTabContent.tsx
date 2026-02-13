@@ -90,7 +90,7 @@ export function BroadcastTabContent() {
           </CardHeader>
           <CardContent className="pt-0">
             <Button className="w-full" asChild>
-              <Link to="/admin/broadcast/new">Criar</Link>
+              <Link to="/spah/painel/broadcast/new">Criar</Link>
             </Button>
           </CardContent>
         </Card>
@@ -105,7 +105,7 @@ export function BroadcastTabContent() {
           </CardHeader>
           <CardContent className="pt-0">
             <Button variant="outline" className="w-full" asChild>
-              <Link to="/admin/broadcast/channels">Ver Canais</Link>
+              <Link to="/spah/painel/broadcast/channels">Ver Canais</Link>
             </Button>
           </CardContent>
         </Card>
@@ -120,7 +120,7 @@ export function BroadcastTabContent() {
           </CardHeader>
           <CardContent className="pt-0">
             <Button variant="outline" className="w-full" asChild>
-              <Link to="/admin/broadcast/programs">Ver Programas</Link>
+              <Link to="/spah/painel/broadcast/programs">Ver Programas</Link>
             </Button>
           </CardContent>
         </Card>
@@ -178,7 +178,7 @@ export function BroadcastTabContent() {
             <CardDescription>Agendadas para os próximos dias</CardDescription>
           </div>
           <Button variant="ghost" size="sm" asChild>
-            <Link to="/admin/broadcast/list" className="flex items-center gap-1">
+            <Link to="/spah/painel/broadcast/list" className="flex items-center gap-1">
               Ver todas <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
@@ -215,7 +215,7 @@ export function BroadcastTabContent() {
               <Calendar className="h-12 w-12 mx-auto mb-3 opacity-50" />
               <p>Nenhuma transmissão agendada</p>
               <Button size="sm" className="mt-3" asChild>
-                <Link to="/admin/broadcast/new">Agendar primeira</Link>
+                <Link to="/spah/painel/broadcast/new">Agendar primeira</Link>
               </Button>
             </div>
           )}

@@ -52,7 +52,7 @@ export function AccessDeniedScreen({ type, redirectCountdown }: AccessDeniedScre
               </Button>
               {type === 'not_authenticated' && (
                 <Button asChild className="flex-1">
-                  <Link to="/auth">
+                  <Link to="/spah">
                     <LogIn className="h-4 w-4 mr-2" />
                     Entrar
                   </Link>

@@ -141,7 +141,7 @@ export default function ContentValidator() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/admin/content-fix")}>
+          <Button variant="ghost" size="icon" onClick={() => navigate("/spah/painel/content-fix")}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-950/30">
@@ -241,9 +241,9 @@ export default function ContentValidator() {
                         size="sm"
                         onClick={() => {
                           if (check.id === "images") {
-                            navigate("/admin/content-fix/images");
+                            navigate("/spah/painel/content-fix/images");
                           } else if (check.id === "categories") {
-                            navigate("/admin/news");
+                            navigate("/spah/painel/news");
                           }
                         }}
                       >

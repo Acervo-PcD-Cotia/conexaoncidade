@@ -132,7 +132,7 @@ export default function BroadcastForm() {
         navigate(`/admin/broadcast/studio/${result.id}`);
         return;
       }
-      navigate("/admin/broadcast/list");
+      navigate("/spah/painel/broadcast/list");
     } catch (error) {
       console.error("Error saving broadcast:", error);
     }

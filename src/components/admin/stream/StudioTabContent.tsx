@@ -126,7 +126,7 @@ export function StudioTabContent() {
           </CardHeader>
           <CardContent className="pt-0">
             <Button className="w-full" asChild>
-              <Link to="/admin/conexao-studio/studios/new">Criar</Link>
+              <Link to="/spah/painel/conexao-studio/studios/new">Criar</Link>
             </Button>
           </CardContent>
         </Card>
@@ -141,7 +141,7 @@ export function StudioTabContent() {
           </CardHeader>
           <CardContent className="pt-0">
             <Button variant="outline" className="w-full" asChild>
-              <Link to="/admin/conexao-studio/destinations">Configurar</Link>
+              <Link to="/spah/painel/conexao-studio/destinations">Configurar</Link>
             </Button>
           </CardContent>
         </Card>
@@ -156,7 +156,7 @@ export function StudioTabContent() {
           </CardHeader>
           <CardContent className="pt-0">
             <Button variant="outline" className="w-full" asChild>
-              <Link to="/admin/conexao-studio/branding">Personalizar</Link>
+              <Link to="/spah/painel/conexao-studio/branding">Personalizar</Link>
             </Button>
           </CardContent>
         </Card>
@@ -212,7 +212,7 @@ export function StudioTabContent() {
             <CardDescription>Salas de produção disponíveis</CardDescription>
           </div>
           <Button variant="ghost" size="sm" asChild>
-            <Link to="/admin/conexao-studio/studios" className="flex items-center gap-1">
+            <Link to="/spah/painel/conexao-studio/studios" className="flex items-center gap-1">
               Ver todos <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
@@ -252,7 +252,7 @@ export function StudioTabContent() {
               <Tv className="h-12 w-12 mx-auto mb-3 opacity-50" />
               <p>Nenhum estúdio criado</p>
               <Button size="sm" className="mt-3" asChild>
-                <Link to="/admin/conexao-studio/studios/new">Criar primeiro</Link>
+                <Link to="/spah/painel/conexao-studio/studios/new">Criar primeiro</Link>
               </Button>
             </div>
           )}

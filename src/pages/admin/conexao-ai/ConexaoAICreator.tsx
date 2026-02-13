@@ -112,7 +112,7 @@ export default function ConexaoAICreator() {
       });
 
       // Navigate to the news list
-      navigate("/admin/noticias");
+      navigate("/spah/painel/noticias");
     } catch (error) {
       toast({
         variant: "destructive",
@@ -128,7 +128,7 @@ export default function ConexaoAICreator() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/admin/conexao-ai")}>
+        <Button variant="ghost" size="icon" onClick={() => navigate("/spah/painel/conexao-ai")}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>

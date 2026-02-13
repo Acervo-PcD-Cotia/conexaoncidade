@@ -453,11 +453,15 @@ const App = () => (
                       <Route path="/webstory/:campaignId" element={<WebStoryViewerPage />} />
                       <Route path="/evento/:slug" element={<EventDetail />} />
                       <Route path="/edicao/:slug" element={<EditionViewer />} />
-                      <Route path="/auth" element={<Auth />} />
+                      <Route path="/spah" element={<Auth />} />
                       <Route path="/auth-comunidade" element={<CommunityAuth />} />
                       <Route path="/reset-password" element={<ResetPassword />} />
-                      <Route path="/login" element={<Navigate to="/auth" replace />} />
-                      <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
+                      {/* Redirects de compatibilidade */}
+                      <Route path="/auth" element={<Navigate to="/spah" replace />} />
+                      <Route path="/login" element={<Navigate to="/spah" replace />} />
+                      <Route path="/admin" element={<Navigate to="/spah/painel" replace />} />
+                      <Route path="/admin/*" element={<Navigate to="/spah/painel" replace />} />
+                      <Route path="/dashboard" element={<Navigate to="/spah/painel" replace />} />
                       
                       {/* Public Streaming Pages */}
                       <Route path="/radio" element={
@@ -484,7 +488,7 @@ const App = () => (
                       <Route path="/studio/join/:token" element={<ConexaoStudioGuestEntry />} />
 
                       {/* Admin Routes */}
-                      <Route path="/admin" element={<AdminLayout />}>
+                      <Route path="/spah/painel" element={<AdminLayout />}>
                         <Route index element={<Dashboard />} />
                         <Route path="noticias-ai" element={<NoticiasAI />} />
                         <Route path="news" element={<NewsList />} />
@@ -539,10 +543,10 @@ const App = () => (
                         <Route path="financial/receivables" element={<FinancialReceivables />} />
                         <Route path="financial/invoices" element={<FinancialInvoices />} />
                         {/* Redirects para rotas antigas de treinamento */}
-                        <Route path="training" element={<Navigate to="/admin/academy" replace />} />
-                        <Route path="training/*" element={<Navigate to="/admin/academy" replace />} />
-                        <Route path="universidade" element={<Navigate to="/admin/academy" replace />} />
-                        <Route path="treinamento" element={<Navigate to="/admin/academy" replace />} />
+                        <Route path="training" element={<Navigate to="/spah/painel/academy" replace />} />
+                        <Route path="training/*" element={<Navigate to="/spah/painel/academy" replace />} />
+                        <Route path="universidade" element={<Navigate to="/spah/painel/academy" replace />} />
+                        <Route path="treinamento" element={<Navigate to="/spah/painel/academy" replace />} />
                         <Route path="podcasts" element={<PodcastsList />} />
                         <Route path="anti-fake-news" element={<AntiFakeNewsAdmin />} />
                         

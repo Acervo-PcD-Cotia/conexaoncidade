@@ -145,7 +145,7 @@ export default function ImovelEditor() {
         description: "O imóvel foi cadastrado e está aguardando aprovação.",
       });
 
-      navigate("/admin/imoveis");
+      navigate("/spah/painel/imoveis");
     } catch (error) {
       toast({
         title: "Erro ao salvar",
