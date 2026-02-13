@@ -27,6 +27,11 @@ export function useModuleEnabled(moduleKey: ModuleKey): boolean {
       return true;
     }
 
+    // Menu modules default to true (enabled) unless explicitly disabled
+    if (moduleKey.startsWith('menu_')) {
+      return true;
+    }
+
     // Default to false if not in template
     return false;
   }, [moduleKey, siteConfig, template]);
