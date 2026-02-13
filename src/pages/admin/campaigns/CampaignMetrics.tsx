@@ -61,7 +61,7 @@ export default function CampaignMetrics() {
     return (
       <div className="text-center py-12">
         <p className="text-muted-foreground">Campanha não encontrada</p>
-        <Button variant="link" onClick={() => navigate('/admin/publicidade/campanhas')}>
+        <Button variant="link" onClick={() => navigate('/spah/painel/campaigns/unified')}>
           Voltar para campanhas
         </Button>
       </div>
@@ -134,7 +134,7 @@ export default function CampaignMetrics() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/admin/publicidade/campanhas')}>
+        <Button variant="ghost" size="icon" onClick={() => navigate('/spah/painel/campaigns/unified')}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">

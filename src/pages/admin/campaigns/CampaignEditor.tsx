@@ -35,17 +35,17 @@ export default function CampaignEditor() {
     if (isEditing && id) {
       updateMutation.mutate(
         { id, data },
-        { onSuccess: () => navigate('/admin/campaigns/unified') }
+        { onSuccess: () => navigate('/spah/painel/campaigns/unified') }
       );
     } else {
       createMutation.mutate(data, {
-        onSuccess: () => navigate('/admin/campaigns/unified'),
+        onSuccess: () => navigate('/spah/painel/campaigns/unified'),
       });
     }
   };
 
   const handleCancel = () => {
-    navigate('/admin/campaigns/unified');
+    navigate('/spah/painel/campaigns/unified');
   };
 
   // Memoized initial data — only recalculates when campaign changes

@@ -54,7 +54,7 @@ export default function CampaignsHub() {
       icon: Megaphone,
       color: 'text-purple-500',
       bgColor: 'bg-purple-100 dark:bg-purple-900/30',
-      href: '/admin/campaigns/unified',
+      href: '/spah/painel/campaigns/unified',
       stats: [
         { label: 'Ativas', value: stats?.campaigns360Active || 0 },
         { label: 'Total', value: stats?.campaigns360Total || 0 },
@@ -69,7 +69,7 @@ export default function CampaignsHub() {
       icon: MapPin,
       color: 'text-green-500',
       bgColor: 'bg-green-100 dark:bg-green-900/30',
-      href: '/admin/campaigns/google-maps',
+      href: '/spah/painel/campaigns/google-maps',
       stats: [
         { label: 'Leads', value: stats?.googleMapsLeads || 0 },
       ],
@@ -82,7 +82,7 @@ export default function CampaignsHub() {
       icon: Target,
       color: 'text-blue-500',
       bgColor: 'bg-blue-100 dark:bg-blue-900/30',
-      href: '/admin/banners',
+      href: '/spah/painel/banners',
       stats: [
         { label: 'Ativas', value: stats?.bannerCampaignsActive || 0 },
         { label: 'Total', value: stats?.bannerCampaignsTotal || 0 },
@@ -219,7 +219,7 @@ export default function CampaignsHub() {
               </Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link to="/admin/banners">
+              <Link to="/spah/painel/banners">
                 <Target className="mr-2 h-4 w-4" />
                 Gerenciar Banners
               </Link>
