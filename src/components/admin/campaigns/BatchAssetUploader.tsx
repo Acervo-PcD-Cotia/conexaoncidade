@@ -134,7 +134,7 @@ export function BatchAssetUploader({
       'image/png': ['.png'],
       'image/webp': ['.webp'],
     },
-    maxSize: 2 * 1024 * 1024, // 2MB
+    maxSize: 30 * 1024 * 1024, // 30MB
   });
 
   const removeAsset = (id: string) => {
@@ -267,7 +267,7 @@ export function BatchAssetUploader({
             : 'Arraste imagens ou clique para selecionar'}
         </p>
         <p className="text-xs text-muted-foreground mt-1">
-          JPG, PNG ou WebP • Máximo 2MB por arquivo
+          JPG, PNG ou WebP • Máximo 30MB por arquivo
         </p>
       </div>
 

@@ -172,5 +172,5 @@ export function getSlotsForChannel(channel: SlotChannel): AdSlot[] {
 export const IMAGE_CONFIG = {
   MAX_UPSCALE_PERCENT: 125,
   PROPORTION_TOLERANCE: 0.02, // 2%
-  MAX_FILE_SIZE_MB: 2,
+  MAX_FILE_SIZE_MB: 30,
 };
