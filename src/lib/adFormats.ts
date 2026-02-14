@@ -83,6 +83,37 @@ export const AD_FORMATS: Record<string, AdFormat> = {
     aspectRatio: '29/20',
     preload: false,
   },
+  BANNER_INTRO: {
+    id: 'banner_intro',
+    label: 'Banner Intro',
+    labelPt: 'Banner Intro',
+    desktop: { width: 970, height: 250 },
+    tablet: { width: 728, height: 90 },
+    mobile: { width: 320, height: 100 },
+    aspectRatio: '97/25',
+    preload: false,
+  },
+  DESTAQUE_FLUTUANTE: {
+    id: 'destaque_flutuante',
+    label: 'Destaque Flutuante',
+    labelPt: 'Destaque Flutuante',
+    desktop: { width: 300, height: 600 },
+    tablet: { width: 300, height: 600 },
+    mobile: { width: 300, height: 250 },
+    aspectRatio: '1/2',
+    preload: false,
+    fallbackFormat: 'RETANGULO_MEDIO',
+  },
+  ALERTA_FULL_SAIDA: {
+    id: 'alerta_full_saida',
+    label: 'Alerta Full Saída',
+    labelPt: 'Alerta Full Saída',
+    desktop: { width: 1280, height: 720 },
+    tablet: { width: 1280, height: 720 },
+    mobile: { width: 640, height: 360 },
+    aspectRatio: '16/9',
+    preload: false,
+  },
 };
 
 export type AdFormatKey = keyof typeof AD_FORMATS;
@@ -152,6 +183,9 @@ export const FORMAT_OPTIONS = [
   { value: 'retangulo_medio', label: 'Destaque Inteligente (300×250)', description: 'Formato versátil e performático para conversão. Exibido no meio do conteúdo e sidebar.' },
   { value: 'arranha_ceu', label: 'Painel Vertical (300×600)', description: 'Formato vertical com grande área visual, excelente para campanhas institucionais na barra lateral.' },
   { value: 'popup_inteligente', label: 'Alerta Comercial (580×400)', description: 'Chamada direta com forte atenção do usuário. Controle de frequência e botão de fechar.' },
+  { value: 'banner_intro', label: 'Banner Intro (970×250)', description: 'Banner de entrada na primeira dobra da Home. Exibição programada por campanha.' },
+  { value: 'destaque_flutuante', label: 'Destaque Flutuante (300×600)', description: 'Banner lateral flutuante fixo na tela. Permanece ao rolar a página.' },
+  { value: 'alerta_full_saida', label: 'Alerta Full Saída (1280×720)', description: 'Banner exibido quando o usuário tenta sair do site. Fundo escurecido com CTA.' },
 ] as const;
 
 /**
@@ -171,6 +205,11 @@ export function slotTypeToFormatKey(slotType: string): AdFormatKey {
     '300x250': 'RETANGULO_MEDIO',
     '300x600': 'ARRANHA_CEU',
     '580x400': 'POPUP_INTELIGENTE',
+    // New format mappings
+    'banner_intro': 'BANNER_INTRO',
+    'floating': 'DESTAQUE_FLUTUANTE',
+    'exit_full': 'ALERTA_FULL_SAIDA',
+    '1280x720': 'ALERTA_FULL_SAIDA',
   };
   
   return mapping[slotType] || 'RETANGULO_MEDIO';

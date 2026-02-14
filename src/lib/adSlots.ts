@@ -12,7 +12,7 @@ import { type ChannelType } from '@/types/campaigns-unified';
  * Channels that have visual ad slots
  * These are a subset of all ChannelTypes
  */
-export const SLOT_CHANNELS = ['ads', 'publidoor', 'webstories'] as const;
+export const SLOT_CHANNELS = ['ads', 'publidoor', 'webstories', 'login', 'experience'] as const;
 export type SlotChannel = typeof SLOT_CHANNELS[number];
 
 /**
@@ -22,7 +22,7 @@ export function isSlotChannel(channel: ChannelType | string): channel is SlotCha
   return (SLOT_CHANNELS as readonly string[]).includes(channel);
 }
 
-export type SlotPlacement = 'top' | 'inline' | 'sidebar' | 'modal' | 'hero' | 'fullscreen';
+export type SlotPlacement = 'top' | 'inline' | 'sidebar' | 'modal' | 'hero' | 'fullscreen' | 'login' | 'floating' | 'intro';
 
 export interface AdSlot {
   id: string;
@@ -140,6 +140,70 @@ export const AD_SLOTS: AdSlot[] = [
     aspect: calculateAspect(1080, 1920),
     channel: 'webstories', 
     placement: 'fullscreen' 
+  },
+
+  // Login - Formatos para tela de login
+  { 
+    id: 'login_formato_01', 
+    key: '800x500', 
+    label: 'Login Formato 01', 
+    width: 800, 
+    height: 500, 
+    aspect: calculateAspect(800, 500),
+    channel: 'login', 
+    placement: 'login' 
+  },
+  { 
+    id: 'login_formato_02', 
+    key: '200x500', 
+    label: 'Login Formato 02', 
+    width: 200, 
+    height: 500, 
+    aspect: calculateAspect(200, 500),
+    channel: 'login', 
+    placement: 'login' 
+  },
+  { 
+    id: 'login_formato_03', 
+    key: '400x500', 
+    label: 'Login Formato 03', 
+    width: 400, 
+    height: 500, 
+    aspect: calculateAspect(400, 500),
+    channel: 'login', 
+    placement: 'login' 
+  },
+
+  // Experience - Banners de experiência do site
+  { 
+    id: 'banner_intro', 
+    key: '970x250', 
+    label: 'Banner Intro', 
+    width: 970, 
+    height: 250, 
+    aspect: calculateAspect(970, 250),
+    channel: 'experience', 
+    placement: 'intro' 
+  },
+  { 
+    id: 'destaque_flutuante', 
+    key: '300x600', 
+    label: 'Destaque Flutuante', 
+    width: 300, 
+    height: 600, 
+    aspect: calculateAspect(300, 600),
+    channel: 'experience', 
+    placement: 'floating' 
+  },
+  { 
+    id: 'alerta_full_saida', 
+    key: '1280x720', 
+    label: 'Alerta Full Saída', 
+    width: 1280, 
+    height: 720, 
+    aspect: calculateAspect(1280, 720),
+    channel: 'experience', 
+    placement: 'modal' 
   },
 ];
 

@@ -18,6 +18,8 @@ export const CHANNEL_TYPES = [
   'newsletter',
   'exit_intent',
   'login_panel',
+  'banner_intro',
+  'floating_ad',
 ] as const;
 
 export type ChannelType = typeof CHANNEL_TYPES[number];
@@ -51,7 +53,7 @@ export function toChannelType(value: string | null | undefined): ChannelType | u
 
 // Status and type enums
 export type CampaignStatus = 'draft' | 'active' | 'paused' | 'ended';
-export type AssetType = 'banner' | 'publidoor' | 'story_cover' | 'story_slide' | 'logo';
+export type AssetType = 'banner' | 'publidoor' | 'story_cover' | 'story_slide' | 'logo' | 'banner_intro' | 'floating_ad' | 'exit_full';
 export type EventType = 
   | 'impression' | 'click' | 'cta_click' 
   | 'story_open' | 'story_complete' | 'slide_view'
@@ -117,6 +119,21 @@ export interface LoginPanelChannelConfig {
   cta_url?: string;
 }
 
+export interface BannerIntroChannelConfig {
+  display_dates?: boolean;
+  scheduled_start?: string;
+  scheduled_end?: string;
+  cta_text?: string;
+  cta_url?: string;
+}
+
+export interface FloatingAdChannelConfig {
+  position: 'left' | 'right';
+  frequency_limit: number;
+  cta_text?: string;
+  cta_url?: string;
+}
+
 export type ChannelConfig = 
   | AdsChannelConfig 
   | PublidoorChannelConfig 
@@ -124,7 +141,9 @@ export type ChannelConfig =
   | PushChannelConfig
   | NewsletterChannelConfig
   | ExitIntentChannelConfig
-  | LoginPanelChannelConfig;
+  | LoginPanelChannelConfig
+  | BannerIntroChannelConfig
+  | FloatingAdChannelConfig;
 
 // Campaign Cycle for distribution rounds
 export interface CampaignCycle {
@@ -225,6 +244,8 @@ export interface CampaignFormData {
   newsletterConfig?: Partial<NewsletterChannelConfig>;
   exitIntentConfig?: Partial<ExitIntentChannelConfig>;
   loginPanelConfig?: Partial<LoginPanelChannelConfig>;
+  bannerIntroConfig?: Partial<BannerIntroChannelConfig>;
+  floatingAdConfig?: Partial<FloatingAdChannelConfig>;
   
   // Assets
   assets: Omit<CampaignAsset, 'id' | 'campaign_id' | 'created_at'>[];
@@ -307,6 +328,16 @@ export const OFFICIAL_SLOTS = {
   webstories: [
     { key: '1080x1920', label: 'Story Premium', width: 1080, height: 1920 },
   ],
+  login: [
+    { key: '800x500', label: 'Login Formato 01', width: 800, height: 500 },
+    { key: '200x500', label: 'Login Formato 02', width: 200, height: 500 },
+    { key: '400x500', label: 'Login Formato 03', width: 400, height: 500 },
+  ],
+  experience: [
+    { key: '970x250', label: 'Banner Intro', width: 970, height: 250 },
+    { key: '300x600', label: 'Destaque Flutuante', width: 300, height: 600 },
+    { key: '1280x720', label: 'Alerta Full Saída', width: 1280, height: 720 },
+  ],
 } as const;
 
 export type SlotKey = typeof OFFICIAL_SLOTS[keyof typeof OFFICIAL_SLOTS][number]['key'];
@@ -320,6 +351,8 @@ export const CHANNEL_LABELS: Record<ChannelType, string> = {
   newsletter: 'Newsletter',
   exit_intent: 'Exit-Intent Modal',
   login_panel: 'Painel de Login',
+  banner_intro: 'Banner Intro',
+  floating_ad: 'Destaque Flutuante',
 };
 
 export const CHANNEL_ICONS: Record<ChannelType, string> = {
@@ -330,6 +363,8 @@ export const CHANNEL_ICONS: Record<ChannelType, string> = {
   newsletter: 'Mail',
   exit_intent: 'DoorOpen',
   login_panel: 'LogIn',
+  banner_intro: 'PanelTop',
+  floating_ad: 'PanelRight',
 };
 
 export const STATUS_LABELS: Record<CampaignStatus, string> = {
