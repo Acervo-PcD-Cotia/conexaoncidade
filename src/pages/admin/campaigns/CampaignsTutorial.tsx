@@ -136,11 +136,11 @@ export default function CampaignsTutorial() {
               </div>
               <p>Exibe banners nas posições padrão do site. Selecione os <strong className="text-foreground">formatos desejados</strong>:</p>
               <ul className="list-disc list-inside space-y-0.5 ml-2 text-xs">
-                <li><strong>Super Banner</strong> — 970×250px (topo da home)</li>
-                <li><strong>Home Ad</strong> — 728×90px (entre seções)</li>
-                <li><strong>Retângulo</strong> — 300×250px (lateral)</li>
-                <li><strong>Arranha-céu</strong> — 300×600px (sidebar / login)</li>
-                <li><strong>Pop-up</strong> — 600×400px (modal)</li>
+                <li><strong>Mega Destaque</strong> — 970×250px (topo da home, entre blocos)</li>
+                <li><strong>Destaque Horizontal</strong> — 728×90px (topo de matérias e categorias)</li>
+                <li><strong>Destaque Inteligente</strong> — 300×250px (meio do conteúdo, sidebar)</li>
+                <li><strong>Painel Vertical</strong> — 300×600px (barra lateral, alto impacto)</li>
+                <li><strong>Alerta Comercial</strong> — 580×400px (pop-up controlado)</li>
               </ul>
             </div>
 

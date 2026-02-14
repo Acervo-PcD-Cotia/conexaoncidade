@@ -48,7 +48,7 @@ export function ExitIntentChannelForm({
         <p className="text-xs text-muted-foreground mb-3">Prévia do layout:</p>
         <div className="space-y-2">
           <div className="h-20 bg-primary/10 rounded flex items-center justify-center text-xs text-muted-foreground border-2 border-dashed border-primary/30">
-            HERO ({heroType === 'publidoor' ? 'Publidoor' : 'Banner Grande'})
+            HERO ({heroType === 'publidoor' ? 'Publidoor' : 'Destaque Premium'})
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div className="h-14 bg-secondary/30 rounded flex items-center justify-center text-xs text-muted-foreground border border-dashed">
@@ -75,7 +75,7 @@ export function ExitIntentChannelForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="banner">Banner Grande</SelectItem>
+              <SelectItem value="banner">Destaque Premium</SelectItem>
               <SelectItem value="publidoor">Publidoor</SelectItem>
             </SelectContent>
           </Select>
@@ -125,7 +125,7 @@ export function ExitIntentChannelForm({
             onChange={(url) => onHeroAssetChange(url)}
             onAltChange={(alt) => onHeroAssetChange(heroAssetUrl, alt)}
             format={heroType === 'publidoor' ? 'home-topo' : 'home-topo'}
-            label={`Hero (${heroType === 'publidoor' ? 'Publidoor' : 'Banner Grande'})`}
+            label={`Hero (${heroType === 'publidoor' ? 'Publidoor' : 'Destaque Premium'})`}
           />
         )}
 
@@ -135,7 +135,7 @@ export function ExitIntentChannelForm({
             onChange={(url) => onSecondary1AssetChange(url)}
             onAltChange={(alt) => onSecondary1AssetChange(secondary1AssetUrl, alt)}
             format="retangulo-medio"
-            label="Secundário 1 (Retângulo Médio)"
+            label="Secundário 1 (Destaque Inteligente)"
           />
         )}
 
@@ -145,7 +145,7 @@ export function ExitIntentChannelForm({
             onChange={(url) => onSecondary2AssetChange(url)}
             onAltChange={(alt) => onSecondary2AssetChange(secondary2AssetUrl, alt)}
             format="retangulo-medio"
-            label="Secundário 2 (Retângulo Médio)"
+            label="Secundário 2 (Destaque Inteligente)"
           />
         )}
       </div>

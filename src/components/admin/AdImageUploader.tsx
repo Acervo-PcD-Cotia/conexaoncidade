@@ -11,10 +11,10 @@ import { supabase } from '@/integrations/supabase/client';
 
 // Constantes de dimensões por formato
 const FORMAT_DIMENSIONS = {
-  'home-topo': { width: 970, height: 250, ratio: '21/9', label: 'Super Banner Topo' },
-  'retangulo-medio': { width: 300, height: 250, ratio: '6/5', label: 'Retângulo Médio' },
-  'arranha-ceu': { width: 300, height: 600, ratio: '1/2', label: 'Arranha-céu' },
-  'popup': { width: 580, height: 400, ratio: '29/20', label: 'Pop-up' },
+  'home-topo': { width: 970, height: 250, ratio: '21/9', label: 'Mega Destaque' },
+  'retangulo-medio': { width: 300, height: 250, ratio: '6/5', label: 'Destaque Inteligente' },
+  'arranha-ceu': { width: 300, height: 600, ratio: '1/2', label: 'Painel Vertical' },
+  'popup': { width: 580, height: 400, ratio: '29/20', label: 'Alerta Comercial' },
 } as const;
 
 export type AdFormat = keyof typeof FORMAT_DIMENSIONS;

@@ -50,50 +50,50 @@ export const AD_SLOTS: AdSlot[] = [
   { 
     id: 'leaderboard', 
     key: '728x90', 
-    label: 'Leaderboard', 
+    label: 'Destaque Horizontal', 
     width: 728, 
     height: 90, 
-    aspect: calculateAspect(728, 90), // 8.0889
+    aspect: calculateAspect(728, 90),
     channel: 'ads', 
     placement: 'top' 
   },
   { 
     id: 'super_banner', 
     key: '970x250', 
-    label: 'Super Banner', 
+    label: 'Mega Destaque', 
     width: 970, 
     height: 250, 
-    aspect: calculateAspect(970, 250), // 3.88
+    aspect: calculateAspect(970, 250),
     channel: 'ads', 
     placement: 'top' 
   },
   { 
     id: 'retangulo_medio', 
     key: '300x250', 
-    label: 'Retângulo Médio', 
+    label: 'Destaque Inteligente', 
     width: 300, 
     height: 250, 
-    aspect: calculateAspect(300, 250), // 1.2
+    aspect: calculateAspect(300, 250),
     channel: 'ads', 
     placement: 'inline' 
   },
   { 
     id: 'arranha_ceu', 
     key: '300x600', 
-    label: 'Arranha-céu', 
+    label: 'Painel Vertical', 
     width: 300, 
     height: 600, 
-    aspect: calculateAspect(300, 600), // 0.5
+    aspect: calculateAspect(300, 600),
     channel: 'ads', 
     placement: 'sidebar' 
   },
   { 
     id: 'popup', 
     key: '580x400', 
-    label: 'Pop-up', 
+    label: 'Alerta Comercial', 
     width: 580, 
     height: 400, 
-    aspect: calculateAspect(580, 400), // 1.45
+    aspect: calculateAspect(580, 400),
     channel: 'ads', 
     placement: 'modal' 
   },
@@ -102,30 +102,30 @@ export const AD_SLOTS: AdSlot[] = [
   { 
     id: 'publidoor_banner', 
     key: '970x250', 
-    label: 'Banner Grande', 
+    label: 'Destaque Premium', 
     width: 970, 
     height: 250, 
-    aspect: calculateAspect(970, 250), // 3.88
+    aspect: calculateAspect(970, 250),
     channel: 'publidoor', 
     placement: 'hero' 
   },
   { 
     id: 'publidoor_retangulo', 
     key: '300x250', 
-    label: 'Retângulo', 
+    label: 'Destaque Editorial', 
     width: 300, 
     height: 250, 
-    aspect: calculateAspect(300, 250), // 1.2
+    aspect: calculateAspect(300, 250),
     channel: 'publidoor', 
     placement: 'inline' 
   },
   { 
     id: 'publidoor_vertical', 
     key: '300x600', 
-    label: 'Vertical', 
+    label: 'Painel Vertical', 
     width: 300, 
     height: 600, 
-    aspect: calculateAspect(300, 600), // 0.5
+    aspect: calculateAspect(300, 600),
     channel: 'publidoor', 
     placement: 'sidebar' 
   },
@@ -134,10 +134,10 @@ export const AD_SLOTS: AdSlot[] = [
   { 
     id: 'story_cover', 
     key: '1080x1920', 
-    label: 'Capa Story (9:16)', 
+    label: 'Story Premium', 
     width: 1080, 
     height: 1920, 
-    aspect: calculateAspect(1080, 1920), // 0.5625
+    aspect: calculateAspect(1080, 1920),
     channel: 'webstories', 
     placement: 'fullscreen' 
   },
