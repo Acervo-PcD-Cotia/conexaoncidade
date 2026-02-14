@@ -63,7 +63,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full">
       {/* Main header */}
       <div className="glass border-b shadow-sm">
-        <div className="container flex items-center justify-between py-4">
+        <div className="container flex items-center justify-between py-2">
           {/* Mobile menu */}
           <Sheet>
             <SheetTrigger asChild className="lg:hidden">
@@ -230,7 +230,7 @@ export function Header() {
             <img 
               src={logoFull} 
               alt="Conexão na Cidade" 
-              className="h-[80px] w-auto sm:h-[120px] md:h-[150px] max-w-[450px] object-contain"
+              className="h-[50px] w-auto sm:h-[60px] md:h-[70px] max-w-[300px] object-contain"
             />
           </Link>
 
@@ -333,12 +333,12 @@ export function Header() {
 
         {/* Services Bar - Individual Links */}
         <div className="hidden border-t bg-muted/50 lg:block">
-          <div className="container flex items-center justify-center gap-3 py-2">
+          <div className="container flex items-center justify-center gap-3 py-1">
             {/* 1. Você no Google - blue */}
             {isMenuGoogleEnabled && (
             <Link
               to="/campanha/google-maps"
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-blue-700 dark:text-blue-400 bg-blue-100 dark:bg-blue-950/60 rounded-full hover:bg-blue-200 dark:hover:bg-blue-900/60 transition-colors border border-blue-200 dark:border-blue-800"
+              className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-blue-700 dark:text-blue-400 bg-blue-100 dark:bg-blue-950/60 rounded-full hover:bg-blue-200 dark:hover:bg-blue-900/60 transition-colors border border-blue-200 dark:border-blue-800"
             >
               <MapPin className="h-4 w-4" />
               <VocabText term="google_maps_cta" fallback="Você no Google" />
@@ -348,7 +348,7 @@ export function Header() {
             {isMenuBrasileiraoEnabled && (
             <Link
               to="/esportes/brasileirao"
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/60 rounded-full hover:bg-emerald-200 dark:hover:bg-emerald-900/60 transition-colors border border-emerald-200 dark:border-emerald-800"
+              className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/60 rounded-full hover:bg-emerald-200 dark:hover:bg-emerald-900/60 transition-colors border border-emerald-200 dark:border-emerald-800"
             >
               <Trophy className="h-4 w-4" />
               Brasileirão
@@ -358,7 +358,7 @@ export function Header() {
             {isMenuCensoEnabled && (
             <Link
               to="/censo-pcd"
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-purple-700 dark:text-purple-400 bg-purple-100 dark:bg-purple-950/60 rounded-full hover:bg-purple-200 dark:hover:bg-purple-900/60 transition-colors border border-purple-200 dark:border-purple-800"
+              className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-purple-700 dark:text-purple-400 bg-purple-100 dark:bg-purple-950/60 rounded-full hover:bg-purple-200 dark:hover:bg-purple-900/60 transition-colors border border-purple-200 dark:border-purple-800"
             >
               <Accessibility className="h-4 w-4" />
               <VocabText term="pcd_census" fallback="Censo SP" />
@@ -368,7 +368,7 @@ export function Header() {
             {isMenuConexoesEnabled && (
             <Link
               to="/comunidade"
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-pink-700 dark:text-pink-400 bg-pink-100 dark:bg-pink-950/60 rounded-full hover:bg-pink-200 dark:hover:bg-pink-900/60 transition-colors border border-pink-200 dark:border-pink-800"
+              className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-pink-700 dark:text-pink-400 bg-pink-100 dark:bg-pink-950/60 rounded-full hover:bg-pink-200 dark:hover:bg-pink-900/60 transition-colors border border-pink-200 dark:border-pink-800"
             >
               <Users className="h-4 w-4" />
               <VocabText term="community" fallback="Conexões" />
@@ -378,7 +378,7 @@ export function Header() {
             {isMenuEnemEnabled && (
             <Link
               to="/enem-2026"
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-indigo-700 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-950/60 rounded-full hover:bg-indigo-200 dark:hover:bg-indigo-900/60 transition-colors border border-indigo-200 dark:border-indigo-800"
+              className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-indigo-700 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-950/60 rounded-full hover:bg-indigo-200 dark:hover:bg-indigo-900/60 transition-colors border border-indigo-200 dark:border-indigo-800"
             >
               <GraduationCap className="h-4 w-4" />
               ENEM
@@ -388,7 +388,7 @@ export function Header() {
             {isMenuFakenewsEnabled && (
             <Link
               to="/anti-fake-news"
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-950/60 rounded-full hover:bg-green-200 dark:hover:bg-green-900/60 transition-colors border border-green-200 dark:border-green-800"
+              className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-950/60 rounded-full hover:bg-green-200 dark:hover:bg-green-900/60 transition-colors border border-green-200 dark:border-green-800"
             >
               <ShieldCheck className="h-4 w-4" />
               <VocabText term="fake_news" fallback="Fake News" />
@@ -398,7 +398,7 @@ export function Header() {
             {isMenuEscolarEnabled && (
             <Link
               to="/transporte-escolar"
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 rounded-full hover:bg-amber-200 dark:hover:bg-amber-900/60 transition-colors border border-amber-200 dark:border-amber-800"
+              className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 rounded-full hover:bg-amber-200 dark:hover:bg-amber-900/60 transition-colors border border-amber-200 dark:border-amber-800"
             >
               <Bus className="h-4 w-4" />
               <VocabText term="school_transport" fallback="Escolar" />
@@ -408,7 +408,7 @@ export function Header() {
             {(isRadioEnabled || isTvEnabled) && (
             <Link
               to="/web-radio-tv"
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-950/60 rounded-full hover:bg-red-200 dark:hover:bg-red-900/60 transition-colors border border-red-200 dark:border-red-800 animate-pulse"
+              className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-950/60 rounded-full hover:bg-red-200 dark:hover:bg-red-900/60 transition-colors border border-red-200 dark:border-red-800 animate-pulse"
             >
               <Radio className="h-4 w-4" />
               <Tv className="h-4 w-4 -ml-1" />
@@ -420,7 +420,7 @@ export function Header() {
             <NavigationMenu>
               <NavigationMenuList>
                 <NavigationMenuItem>
-                  <NavigationMenuTrigger className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-teal-700 dark:text-teal-400 bg-teal-100 dark:bg-teal-950/60 rounded-full hover:bg-teal-200 dark:hover:bg-teal-900/60 transition-colors border border-teal-200 dark:border-teal-800">
+                  <NavigationMenuTrigger className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-teal-700 dark:text-teal-400 bg-teal-100 dark:bg-teal-950/60 rounded-full hover:bg-teal-200 dark:hover:bg-teal-900/60 transition-colors border border-teal-200 dark:border-teal-800">
                     <Home className="h-4 w-4" />
                     Imóveis
                   </NavigationMenuTrigger>
@@ -509,7 +509,7 @@ export function Header() {
                 <li key={cat.slug}>
                   <Link
                     to={`/categoria/${cat.slug}`}
-                    className="inline-block px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                    className="inline-block px-4 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                   >
                     {cat.name}
                   </Link>
