@@ -1,64 +1,34 @@
 
-# Plano: Nomes Comerciais, Menu Lateral Funcional e Publidoor 404
+# Plano: Corrigir Banner Cortado e Atualizar Logotipo
 
-## Problemas Identificados
+## 1. Substituir o logotipo do site
 
-### 1. Nomes tecnicos nos slots de anuncios
-A pagina `Ads.tsx` usa nomes tecnicos como "Home Topo", "Home Banner", "Arranha-ceu", "Pop-up" em vez dos nomes comerciais padronizados: "Destaque Horizontal", "Mega Destaque", "Painel Vertical", "Alerta Comercial".
+**O que sera feito:**
+- Copiar a nova imagem do logo (`CONEXÃO_LOGO_03-2.png`) para `src/assets/logo-full.png`, substituindo o logo atual
+- Aumentar o tamanho do logo no header de `h-[50px]/h-[60px]/h-[70px]` para `h-[60px]/h-[75px]/h-[90px]` para maior destaque visual no canto esquerdo
 
-### 2. Links do menu lateral nao filtram campanhas
-Os links "Banner Intro", "Destaque Flutuante", "Exit-Intent" e "Painel de Login" passam `?channel=banner_intro` na URL, porem a pagina `CampaignsUnified.tsx` nao le parametros da URL -- usa apenas estado local. Resultado: o filtro nunca e aplicado.
+**Arquivo: `src/components/layout/Header.tsx`**
+- Linha 233: Atualizar as classes de tamanho do logo
 
-### 3. Publidoor da 404
-O componente `PublidoorDashboard.tsx` usa links com `/admin/publidoor/criar` (rota legada) em vez de `/spah/painel/publidoor/criar` (rota obfuscada correta). O mesmo problema afeta `CommercialReports.tsx`.
+## 2. Corrigir banner cortado no topo
 
----
+**Problema:** O banner (SuperBanner / BannerIntro) na area superior do site esta sendo cortado porque usa `object-cover` com um aspect-ratio fixo que corta a imagem quando ela nao corresponde exatamente a proporcao esperada.
 
-## Alteracoes Propostas
+**Solucao no arquivo `src/components/ads/BannerIntro.tsx`:**
+- Trocar `object-cover` por `object-contain` para garantir que a imagem inteira seja exibida sem corte
+- Ajustar o container para usar `bg-transparent` em vez de `bg-muted` para evitar barras cinzas nas laterais
 
-### A. Corrigir nomes comerciais nos slots (Ads.tsx)
-
-**Arquivo: `src/pages/admin/Ads.tsx`**
-
-Atualizar o array `AD_SLOTS` para usar os nomes comerciais oficiais:
-
-```text
-Antes                          Depois
-Home Topo (728x90)          -> Destaque Horizontal (728x90)
-Home Banner (970x250)       -> Mega Destaque (970x250)
-Super Banner Topo (970x250) -> Mega Destaque Topo (970x250)
-Retangulo Medio (300x250)   -> Destaque Inteligente (300x250)
-Arranha-ceu (300x600)       -> Painel Vertical (300x600)
-Pop-up (580x400)            -> Alerta Comercial (580x400)
-```
-
-### B. Fazer links do sidebar funcionarem (CampaignsUnified.tsx)
-
-**Arquivo: `src/pages/admin/campaigns/CampaignsUnified.tsx`**
-
-- Importar `useSearchParams` do `react-router-dom`
-- Na inicializacao, ler o parametro `channel` da URL
-- Usar esse valor como filtro inicial do `channelFilter`
-- Quando o parametro mudar (navegacao pelo sidebar), atualizar o filtro
-
-### C. Corrigir rotas do Publidoor (2 arquivos)
-
-**Arquivo: `src/pages/admin/publidoor/PublidoorDashboard.tsx`**
-- Trocar todos os `/admin/publidoor/...` por `/spah/painel/publidoor/...`
-
-**Arquivo: `src/pages/admin/CommercialReports.tsx`**
-- Trocar todos os `/admin/publidoor/...` por `/spah/painel/publidoor/...`
+**Tambem verificar `src/components/home/DynamicHomeSection.tsx`:**
+- Confirmar que o SuperBanner e o ad_slot_top nao estao aplicando restricoes de altura que cortam o conteudo
 
 ---
 
 ## Detalhes Tecnicos
 
-### Arquivos a editar (4)
+### Arquivos a editar (2)
 
-1. **`src/pages/admin/Ads.tsx`** -- nomes comerciais no array AD_SLOTS
-2. **`src/pages/admin/campaigns/CampaignsUnified.tsx`** -- ler searchParams da URL para filtro de canal
-3. **`src/pages/admin/publidoor/PublidoorDashboard.tsx`** -- corrigir rotas /admin/ para /spah/painel/
-4. **`src/pages/admin/CommercialReports.tsx`** -- corrigir rotas /admin/ para /spah/painel/
+1. **`src/components/layout/Header.tsx`** -- substituir logo (copiar novo arquivo) e aumentar tamanho (h-[60px] sm:h-[75px] md:h-[90px])
+2. **`src/components/ads/BannerIntro.tsx`** -- trocar `object-cover` por `object-contain` para nao cortar banners
 
-### Nenhum arquivo novo necessario
-### Nenhuma alteracao no banco de dados
+### 1 arquivo a copiar
+- `user-uploads://CONEXÃO_LOGO_03-2.png` -> `src/assets/logo-full.png`
