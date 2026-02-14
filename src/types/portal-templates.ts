@@ -126,7 +126,8 @@ export type HomeSectionType =
   | 'social_embed'
   | 'newsletter_cta'
   | 'donations_cta'
-  | 'members_cta';
+  | 'members_cta'
+  | 'banner_intro';
 
 export interface HomeSectionConfig {
   type: HomeSectionType;

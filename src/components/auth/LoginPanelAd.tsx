@@ -132,8 +132,12 @@ export function LoginPanelAd({ className, compact }: LoginPanelAdProps) {
     );
   }
 
-  // Desktop: show either 1 hero banner or grid of 3
-  const showGrid = campaigns.length >= 3;
+  // Desktop layouts based on campaign count:
+  // 1-2 campaigns = Formato 01 (Hero single rotating)
+  // 3 campaigns = Formato 03 (2-panel grid)
+  // 4+ campaigns = Formato 02 (Grid of up to 4)
+  const showGrid4 = campaigns.length >= 4;
+  const showGrid2 = campaigns.length === 3;
   const currentCampaign = campaigns[activeIndex % campaigns.length];
 
   return (
@@ -143,10 +147,26 @@ export function LoginPanelAd({ className, compact }: LoginPanelAdProps) {
         Conteúdo de Marca
       </p>
 
-      {showGrid ? (
-        /* Grid mode: 3 banners */
-        <div className="grid grid-cols-3 gap-3 flex-1">
-          {campaigns.slice(0, 3).map((campaign) => {
+      {showGrid4 ? (
+        /* Formato 02: Grid de 4 painéis */
+        <div className="grid grid-cols-2 grid-rows-2 gap-3 flex-1">
+          {campaigns.slice(0, 4).map((campaign) => {
+            const asset = campaign.assets[0];
+            return (
+              <BannerCard
+                key={campaign.id}
+                campaign={campaign}
+                asset={asset}
+                onClickTrack={handleClick}
+                aspect="aspect-[4/5]"
+              />
+            );
+          })}
+        </div>
+      ) : showGrid2 ? (
+        /* Formato 03: Grid de 2 painéis */
+        <div className="grid grid-cols-2 gap-3 flex-1">
+          {campaigns.slice(0, 2).map((campaign) => {
             const asset = campaign.assets[0];
             return (
               <BannerCard

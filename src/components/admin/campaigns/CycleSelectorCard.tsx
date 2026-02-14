@@ -29,7 +29,7 @@ interface CycleSelectorCardProps {
   enabledChannels: ChannelType[];
 }
 
-const CHANNEL_LABELS: Record<ChannelType, string> = {
+const CHANNEL_LABELS: Partial<Record<ChannelType, string>> = {
   ads: 'Ads',
   publidoor: 'Publidoor',
   webstories: 'WebStories',
@@ -37,6 +37,8 @@ const CHANNEL_LABELS: Record<ChannelType, string> = {
   newsletter: 'Newsletter',
   exit_intent: 'Exit-Intent',
   login_panel: 'Login Panel',
+  banner_intro: 'Banner Intro',
+  floating_ad: 'Destaque Flutuante',
 };
 
 const STATUS_CONFIG: Record<CycleStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {

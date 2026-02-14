@@ -131,7 +131,7 @@ export function useCreateCampaignUnified() {
 
         const { error: channelsError } = await supabase
           .from('campaign_channels')
-          .insert(channelInserts);
+          .insert(channelInserts as any);
         if (channelsError) throw channelsError;
       }
 
@@ -144,7 +144,7 @@ export function useCreateCampaignUnified() {
 
         const { error: assetsError } = await supabase
           .from('campaign_assets')
-          .insert(assets);
+          .insert(assets as any);
 
         if (assetsError) throw assetsError;
       }
@@ -209,7 +209,7 @@ export function useUpdateCampaignUnified() {
 
           const { error: channelsError } = await supabase
             .from('campaign_channels')
-            .insert(channelInserts);
+            .insert(channelInserts as any);
 
           if (channelsError) throw channelsError;
         }
@@ -272,7 +272,7 @@ export function useToggleCampaignChannel() {
         .from('campaign_channels')
         .update({ enabled })
         .eq('campaign_id', campaignId)
-        .eq('channel_type', channelType);
+        .eq('channel_type', channelType as any);
 
       if (error) throw error;
     },
@@ -307,10 +307,10 @@ export function useAddChannelToCampaign() {
         .from('campaign_channels')
         .insert({
           campaign_id: campaignId,
-          channel_type: channelType, // ChannelType is already correctly typed
+          channel_type: channelType as any,
           enabled: true,
           config: asJson(config),
-        })
+        } as any)
         .select()
         .single();
 
@@ -338,7 +338,7 @@ export function useAddCampaignAsset() {
     mutationFn: async (asset: Omit<CampaignAsset, 'id' | 'created_at'>): Promise<CampaignAsset> => {
       const { data, error } = await supabase
         .from('campaign_assets')
-        .insert(asset)
+        .insert(asset as any)
         .select()
         .single();
 

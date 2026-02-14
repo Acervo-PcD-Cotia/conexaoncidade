@@ -21,7 +21,9 @@ export type ChannelType =
   | 'push' 
   | 'newsletter' 
   | 'exit_intent' 
-  | 'login_panel';
+  | 'login_panel'
+  | 'banner_intro'
+  | 'floating_ad';
 
 export interface TrackEventParams {
   campaignId: string;

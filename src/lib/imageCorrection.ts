@@ -138,6 +138,16 @@ const SLOT_DEFINITIONS = {
   webstories: [
     { key: '1080x1920', label: 'Story Premium', width: 1080, height: 1920 },
   ],
+  login: [
+    { key: '800x500', label: 'Login Formato 01', width: 800, height: 500 },
+    { key: '200x500', label: 'Login Formato 02', width: 200, height: 500 },
+    { key: '400x500', label: 'Login Formato 03', width: 400, height: 500 },
+  ],
+  experience: [
+    { key: '970x250', label: 'Banner Intro', width: 970, height: 250 },
+    { key: '300x600', label: 'Destaque Flutuante', width: 300, height: 600 },
+    { key: '1280x720', label: 'Alerta Full Saída', width: 1280, height: 720 },
+  ],
 } as const;
 
 /**

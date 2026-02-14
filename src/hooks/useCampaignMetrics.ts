@@ -81,7 +81,7 @@ export function useTrackCampaignEvent() {
         .from('campaign_events')
         .insert([{
           campaign_id: campaignId,
-          channel_type: channelType,
+          channel_type: channelType as any,
           event_type: eventType,
           metadata: asJson(metadata),
         }]);

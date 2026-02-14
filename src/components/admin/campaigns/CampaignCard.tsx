@@ -32,7 +32,7 @@ import type {
 } from '@/types/campaigns-unified';
 import { STATUS_LABELS, STATUS_COLORS, CHANNEL_LABELS } from '@/types/campaigns-unified';
 
-const CHANNEL_ICONS: Record<ChannelType, React.ReactNode> = {
+const CHANNEL_ICONS: Partial<Record<ChannelType, React.ReactNode>> = {
   ads: <Layout className="h-4 w-4" />,
   publidoor: <Megaphone className="h-4 w-4" />,
   webstories: <Smartphone className="h-4 w-4" />,
@@ -40,6 +40,8 @@ const CHANNEL_ICONS: Record<ChannelType, React.ReactNode> = {
   newsletter: <Mail className="h-4 w-4" />,
   exit_intent: <DoorOpen className="h-4 w-4" />,
   login_panel: <LogIn className="h-4 w-4" />,
+  banner_intro: <Layout className="h-4 w-4" />,
+  floating_ad: <Layout className="h-4 w-4" />,
 };
 
 interface CampaignCardProps {

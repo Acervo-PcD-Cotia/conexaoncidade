@@ -15,6 +15,9 @@ const FORMAT_DIMENSIONS = {
   'retangulo-medio': { width: 300, height: 250, ratio: '6/5', label: 'Destaque Inteligente' },
   'arranha-ceu': { width: 300, height: 600, ratio: '1/2', label: 'Painel Vertical' },
   'popup': { width: 580, height: 400, ratio: '29/20', label: 'Alerta Comercial' },
+  'banner-intro': { width: 970, height: 250, ratio: '97/25', label: 'Banner Intro' },
+  'flutuante': { width: 300, height: 600, ratio: '1/2', label: 'Destaque Flutuante' },
+  'alerta-saida': { width: 1280, height: 720, ratio: '16/9', label: 'Alerta Full Saída' },
 } as const;
 
 export type AdFormat = keyof typeof FORMAT_DIMENSIONS;
