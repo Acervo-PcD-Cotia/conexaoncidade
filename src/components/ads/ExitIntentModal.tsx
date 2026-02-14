@@ -84,7 +84,7 @@ export function ExitIntentModal({ className }: ExitIntentModalProps) {
   return (
     <div 
       className={cn(
-        "fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4",
+        "fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end justify-center p-4 pb-8 md:items-end md:pb-12",
         className
       )}
       onClick={handleDismiss}
