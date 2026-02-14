@@ -15,9 +15,11 @@ const FALLBACK_HOME_SECTIONS: HomeSectionConfig[] = [
   { type: "super_banner", order: 6, enabled: true },
   { type: "live_broadcast", order: 7, enabled: true, moduleKey: "lives" },
   { type: "agora_na_cidade", order: 8, enabled: true },
-  { type: "latest_news", order: 9, enabled: true },
-  { type: "quick_notes", order: 10, enabled: true },
-  { type: "most_read", order: 11, enabled: true },
+  { type: "ad_slot_mid", order: 9, enabled: true },
+  { type: "latest_news", order: 10, enabled: true },
+  { type: "ad_slot_bottom", order: 11, enabled: true },
+  { type: "quick_notes", order: 12, enabled: true },
+  { type: "most_read", order: 13, enabled: true },
 ];
 
 // Safety timeout to prevent infinite loading (5 seconds)

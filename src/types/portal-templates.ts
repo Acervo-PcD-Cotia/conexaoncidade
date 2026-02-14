@@ -127,7 +127,9 @@ export type HomeSectionType =
   | 'newsletter_cta'
   | 'donations_cta'
   | 'members_cta'
-  | 'banner_intro';
+  | 'banner_intro'
+  | 'ad_slot_mid'
+  | 'ad_slot_bottom';
 
 export interface HomeSectionConfig {
   type: HomeSectionType;

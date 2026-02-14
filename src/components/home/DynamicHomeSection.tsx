@@ -108,6 +108,16 @@ const SECTION_COMPONENTS: Record<HomeSectionType, SectionComponent> = {
   donations_cta: DonationsCTA,
   members_cta: MembersCTA,
   banner_intro: BannerIntroSection,
+  ad_slot_mid: () => (
+    <div className="container py-2">
+      <ResponsiveAdUnit format="RETANGULO_MEDIO" slotId="home_mid" source="ads" />
+    </div>
+  ),
+  ad_slot_bottom: () => (
+    <div className="container py-2">
+      <ResponsiveAdUnit format="LEADERBOARD" slotId="home_bottom" source="ads" />
+    </div>
+  ),
 };
 
 interface DynamicHomeSectionProps {
