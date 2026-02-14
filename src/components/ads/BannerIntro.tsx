@@ -34,7 +34,7 @@ export function BannerIntro({ className }: BannerIntroProps) {
 
   return (
     <div className={cn("container py-2", className)}>
-      <div className="relative w-full overflow-hidden rounded-lg bg-muted" style={{ aspectRatio: '97/25' }}>
+      <div className="relative w-full overflow-hidden rounded-lg" style={{ aspectRatio: '97/25' }}>
         {campaign.cta_url ? (
           <a
             href={campaign.cta_url}
@@ -50,7 +50,7 @@ export function BannerIntro({ className }: BannerIntroProps) {
             <img
               src={asset.file_url}
               alt={asset.alt_text || campaign.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
               loading="lazy"
             />
           </a>
@@ -58,7 +58,7 @@ export function BannerIntro({ className }: BannerIntroProps) {
           <img
             src={asset.file_url}
             alt={asset.alt_text || campaign.name}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
             loading="lazy"
           />
         )}

@@ -230,7 +230,7 @@ export function Header() {
             <img 
               src={logoFull} 
               alt="Conexão na Cidade" 
-              className="h-[50px] w-auto sm:h-[60px] md:h-[70px] max-w-[300px] object-contain"
+              className="h-[60px] w-auto sm:h-[75px] md:h-[90px] max-w-[350px] object-contain"
             />
           </Link>
 
