@@ -26,7 +26,7 @@ export default function PublidoorDashboard() {
           </p>
         </div>
         <Button asChild>
-          <Link to="/admin/publidoor/criar">
+          <Link to="/spah/painel/publidoor/criar">
             <Plus className="mr-2 h-4 w-4" />
             Novo Publidoor
           </Link>
@@ -160,7 +160,7 @@ export default function PublidoorDashboard() {
             <div className="text-center py-8 text-muted-foreground">
               <p>Nenhum Publidoor ativo no momento.</p>
               <Button asChild variant="outline" className="mt-4">
-                <Link to="/admin/publidoor/criar">Criar primeiro Publidoor</Link>
+                <Link to="/spah/painel/publidoor/criar">Criar primeiro Publidoor</Link>
               </Button>
             </div>
           ) : (
@@ -195,7 +195,7 @@ export default function PublidoorDashboard() {
                       {PUBLIDOOR_STATUS_LABELS[item.status]}
                     </Badge>
                     <Button asChild variant="ghost" size="sm">
-                      <Link to={`/admin/publidoor/editar/${item.id}`}>Editar</Link>
+                      <Link to={`/spah/painel/publidoor/editar/${item.id}`}>Editar</Link>
                     </Button>
                   </div>
                 </div>
@@ -203,7 +203,7 @@ export default function PublidoorDashboard() {
               {activeItems.length > 5 && (
                 <div className="text-center pt-2">
                   <Button asChild variant="link">
-                    <Link to="/admin/publidoor/campanhas">
+                    <Link to="/spah/painel/publidoor/campanhas">
                       Ver todos ({activeItems.length})
                     </Link>
                   </Button>
