@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { campaignRoutes } from '@/lib/campaignRoutes';
-import { ArrowLeft, Plus, Pencil, Settings, Eye, BarChart3, Image, Layers, Monitor, Megaphone, Smartphone, BookOpen, CheckCircle2, AlertCircle, ArrowRight, RefreshCw, Calendar, Send, MapPin, FileText, Maximize } from 'lucide-react';
+import { ArrowLeft, Plus, Pencil, Settings, Eye, BarChart3, Image, Layers, Monitor, Megaphone, Smartphone, BookOpen, CheckCircle2, AlertCircle, ArrowRight, RefreshCw, Calendar, Send, MapPin, FileText, Maximize, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -78,6 +78,8 @@ export default function CampaignsTutorial() {
             <ChannelBadge label="Newsletter" icon={Megaphone} />
             <ChannelBadge label="Exit-Intent" icon={Layers} />
             <ChannelBadge label="Login Panel" icon={Monitor} />
+            <ChannelBadge label="Banner Intro" icon={Monitor} />
+            <ChannelBadge label="Destaque Flutuante" icon={Layers} />
           </div>
         </CardContent>
       </Card>
@@ -193,6 +195,30 @@ export default function CampaignsTutorial() {
                 <Layers className="h-4 w-4" /> Exit-Intent, Login Panel, Push, Newsletter
               </div>
               <p>Canais complementares: modal ao sair da página, banner na tela de login, notificações push e envios por e-mail.</p>
+            </div>
+
+            <div className="p-3 rounded-lg bg-muted/50 space-y-2">
+              <div className="flex items-center gap-2 font-medium text-foreground">
+                <Monitor className="h-4 w-4" /> Login (Formatos 10-12)
+              </div>
+              <p>Banners exibidos na tela de login do portal. Três formatos disponíveis:</p>
+              <ul className="list-disc list-inside space-y-0.5 ml-2 text-xs">
+                <li><strong>Login Formato 01</strong> — 800×500px (hero principal da tela de login)</li>
+                <li><strong>Login Formato 02</strong> — 200×500px (banner vertical estreito)</li>
+                <li><strong>Login Formato 03</strong> — 400×500px (banner médio em grid)</li>
+              </ul>
+            </div>
+
+            <div className="p-3 rounded-lg bg-muted/50 space-y-2">
+              <div className="flex items-center gap-2 font-medium text-foreground">
+                <Sparkles className="h-4 w-4" /> Experiência (Formatos 13-15)
+              </div>
+              <p>Banners de experiência do site com alto impacto visual:</p>
+              <ul className="list-disc list-inside space-y-0.5 ml-2 text-xs">
+                <li><strong>Banner Intro</strong> — 970×250px (primeira dobra da Home, pós-carregamento)</li>
+                <li><strong>Destaque Flutuante</strong> — 300×600px (lateral fixo ao scroll)</li>
+                <li><strong>Alerta Full Saída</strong> — 1280×720px (exit-intent fullscreen)</li>
+              </ul>
             </div>
           </div>
 
@@ -376,6 +402,55 @@ export default function CampaignsTutorial() {
           </ul>
         </StepCard>
       </div>
+
+      <Separator />
+
+      {/* ─── REFERENCE TABLE ─── */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-bold">Tabela de Referência — 15 Formatos</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border">
+            <thead>
+              <tr className="bg-muted">
+                <th className="border px-3 py-2 text-left">#</th>
+                <th className="border px-3 py-2 text-left">Bloco</th>
+                <th className="border px-3 py-2 text-left">Nome Comercial</th>
+                <th className="border px-3 py-2 text-left">Dimensão</th>
+                <th className="border px-3 py-2 text-left">Onde Aparece</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                [1, 'Ads', 'Destaque Horizontal', '728×90', 'Topo da Home, matérias'],
+                [2, 'Ads', 'Mega Destaque', '970×250', 'Abaixo do menu, Home'],
+                [3, 'Ads', 'Destaque Inteligente', '300×250', 'Meio de matérias, sidebar'],
+                [4, 'Ads', 'Painel Vertical', '300×600', 'Lateral da Home'],
+                [5, 'Ads', 'Alerta Comercial', '580×400', 'Pop-up controlado'],
+                [6, 'Publidoor', 'Destaque Premium', '970×250', 'Telas urbanas'],
+                [7, 'Publidoor', 'Destaque Editorial', '300×250', 'Telas inline'],
+                [8, 'Publidoor', 'Painel Vertical', '300×600', 'Telas laterais'],
+                [9, 'WebStories', 'Story Premium', '1080×1920', 'Feed mobile'],
+                [10, 'Login', 'Login Formato 01', '800×500', 'Tela de login — hero'],
+                [11, 'Login', 'Login Formato 02', '200×500', 'Tela de login — lateral'],
+                [12, 'Login', 'Login Formato 03', '400×500', 'Tela de login — grid'],
+                [13, 'Experiência', 'Banner Intro', '970×250', 'Primeira dobra da Home'],
+                [14, 'Experiência', 'Destaque Flutuante', '300×600', 'Lateral fixa ao scroll'],
+                [15, 'Experiência', 'Alerta Full Saída', '1280×720', 'Exit-intent fullscreen'],
+              ].map(([id, block, name, size, location]) => (
+                <tr key={String(id)} className="border-b">
+                  <td className="border px-3 py-1.5 font-mono text-xs">{id}</td>
+                  <td className="border px-3 py-1.5"><Badge variant="secondary" className="text-[10px]">{block}</Badge></td>
+                  <td className="border px-3 py-1.5 font-medium">{name}</td>
+                  <td className="border px-3 py-1.5 font-mono text-xs">{size}</td>
+                  <td className="border px-3 py-1.5 text-muted-foreground text-xs">{location}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <Separator />
 
       {/* CTA */}
       <Card className="bg-primary/10 border-primary/30">

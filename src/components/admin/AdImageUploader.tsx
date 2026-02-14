@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 // Constantes de dimensões por formato
 const FORMAT_DIMENSIONS = {
+  'leaderboard': { width: 728, height: 90, ratio: '728/90', label: 'Destaque Horizontal' },
   'home-topo': { width: 970, height: 250, ratio: '21/9', label: 'Mega Destaque' },
   'retangulo-medio': { width: 300, height: 250, ratio: '6/5', label: 'Destaque Inteligente' },
   'arranha-ceu': { width: 300, height: 600, ratio: '1/2', label: 'Painel Vertical' },
@@ -283,6 +284,7 @@ export function AdImageUploader({
 
 // Mapeamento de slots para formatos
 export const SLOT_TO_FORMAT: Record<string, AdFormat> = {
+  leaderboard: 'leaderboard',
   home_top: 'home-topo',
   home_banner: 'home-topo',
   super_banner: 'home-topo',

@@ -222,6 +222,7 @@ import CampaignsUnified from "./pages/admin/campaigns/CampaignsUnified";
 import CampaignEditor from "./pages/admin/campaigns/CampaignEditor";
 import CampaignMetrics from "./pages/admin/campaigns/CampaignMetrics";
 import CampaignsTutorial from "./pages/admin/campaigns/CampaignsTutorial";
+import MediaKit from "./pages/admin/campaigns/MediaKit";
 
 import TransporteEscolarHome from "./pages/transporte-escolar/TransporteEscolarHome";
 import TransporteEscolarEncontrar from "./pages/transporte-escolar/TransporteEscolarEncontrar";
@@ -650,6 +651,7 @@ const App = () => (
                         <Route path="campaigns/edit/:id" element={<CampaignErrorBoundary><CampaignEditor /></CampaignErrorBoundary>} />
                         <Route path="campaigns/metrics/:id" element={<CampaignErrorBoundary><CampaignMetrics /></CampaignErrorBoundary>} />
                         <Route path="campaigns/tutorial" element={<CampaignErrorBoundary><CampaignsTutorial /></CampaignErrorBoundary>} />
+                        <Route path="campaigns/media-kit" element={<CampaignErrorBoundary><MediaKit /></CampaignErrorBoundary>} />
                         
                         {/* Transporte Escolar Admin Routes */}
                         <Route path="transporte-escolar" element={<TransporteEscolarAdmin />} />
