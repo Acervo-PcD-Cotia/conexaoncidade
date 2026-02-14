@@ -57,7 +57,7 @@ export function MarketDataBar() {
 
   return (
     <div className="border-b bg-card">
-      <div className="container flex items-center justify-between py-2 text-xs">
+      <div className="container flex items-center justify-between py-1 text-xs">
         {/* Left: Location + Date */}
         <div className="flex shrink-0 items-center gap-3">
           <span className="flex items-center gap-1 text-muted-foreground">
