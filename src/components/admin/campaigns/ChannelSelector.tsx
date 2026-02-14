@@ -2,7 +2,7 @@ import React from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { ChevronDown, Layout, Megaphone, Smartphone, Bell, Mail, DoorOpen, LogIn } from 'lucide-react';
+import { ChevronDown, Layout, Megaphone, Smartphone, Bell, Mail, DoorOpen, LogIn, PanelTop, PanelRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ChannelType } from '@/types/campaigns-unified';
 import type { ChannelConfigs, ChannelAssets } from './useCampaignFormReducer';
@@ -13,6 +13,8 @@ import { PushChannelForm } from './PushChannelForm';
 import { NewsletterChannelForm } from './NewsletterChannelForm';
 import { ExitIntentChannelForm } from './ExitIntentChannelForm';
 import { LoginPanelChannelForm } from './LoginPanelChannelForm';
+import { BannerIntroChannelForm } from './BannerIntroChannelForm';
+import { FloatingAdChannelForm } from './FloatingAdChannelForm';
 
 export interface ChannelSelectorProps {
   selectedChannels: ChannelType[];
@@ -66,6 +68,20 @@ const CHANNELS: ChannelOption[] = [
     label: 'Painel de Login',
     description: 'Criativo no lado esquerdo da tela de login',
     icon: <LogIn className="h-5 w-5" />,
+    category: 'engagement',
+  },
+  {
+    type: 'banner_intro',
+    label: 'Banner Intro',
+    description: 'Banner de entrada na primeira dobra da Home (970×250)',
+    icon: <PanelTop className="h-5 w-5" />,
+    category: 'display',
+  },
+  {
+    type: 'floating_ad',
+    label: 'Destaque Flutuante',
+    description: 'Banner lateral fixo na tela (300×600)',
+    icon: <PanelRight className="h-5 w-5" />,
     category: 'engagement',
   },
   {
@@ -195,6 +211,24 @@ export const ChannelSelector = React.memo(function ChannelSelector({
             onChange={(config) => onConfigChange('login_panel', config)}
             assetUrl={channelAssets.loginPanel.url}
             onAssetChange={(url, alt) => onAssetChange('loginPanel', url, alt)}
+          />
+        );
+      case 'banner_intro':
+        return (
+          <BannerIntroChannelForm
+            config={channelConfigs.banner_intro as Record<string, unknown>}
+            onChange={(config) => onConfigChange('banner_intro', config)}
+            assetUrl={channelAssets.bannerIntro?.url || ''}
+            onAssetChange={(url, alt) => onAssetChange('bannerIntro', url, alt)}
+          />
+        );
+      case 'floating_ad':
+        return (
+          <FloatingAdChannelForm
+            config={channelConfigs.floating_ad as Record<string, unknown>}
+            onChange={(config) => onConfigChange('floating_ad', config)}
+            assetUrl={channelAssets.floatingAd?.url || ''}
+            onAssetChange={(url, alt) => onAssetChange('floatingAd', url, alt)}
           />
         );
       default:

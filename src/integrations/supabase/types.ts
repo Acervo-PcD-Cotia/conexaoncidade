@@ -15627,6 +15627,9 @@ export type Database = {
         | "story_cover"
         | "story_slide"
         | "logo"
+        | "banner_intro"
+        | "floating_ad"
+        | "exit_full"
       campaign_channel_type:
         | "ads"
         | "publidoor"
@@ -15635,6 +15638,8 @@ export type Database = {
         | "newsletter"
         | "exit_intent"
         | "login_panel"
+        | "banner_intro"
+        | "floating_ad"
       campaign_event_type:
         | "impression"
         | "click"
@@ -15936,6 +15941,9 @@ export const Constants = {
         "story_cover",
         "story_slide",
         "logo",
+        "banner_intro",
+        "floating_ad",
+        "exit_full",
       ],
       campaign_channel_type: [
         "ads",
@@ -15945,6 +15953,8 @@ export const Constants = {
         "newsletter",
         "exit_intent",
         "login_panel",
+        "banner_intro",
+        "floating_ad",
       ],
       campaign_event_type: [
         "impression",

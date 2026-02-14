@@ -9,6 +9,8 @@ import type {
   NewsletterChannelConfig,
   ExitIntentChannelConfig,
   LoginPanelChannelConfig,
+  BannerIntroChannelConfig,
+  FloatingAdChannelConfig,
   CampaignFormData,
 } from '@/types/campaigns-unified';
 
@@ -24,6 +26,8 @@ export interface ChannelConfigs {
   newsletter: Partial<NewsletterChannelConfig>;
   exit_intent: Partial<ExitIntentChannelConfig>;
   login_panel: Partial<LoginPanelChannelConfig>;
+  banner_intro: Partial<BannerIntroChannelConfig>;
+  floating_ad: Partial<FloatingAdChannelConfig>;
 }
 
 export interface ChannelAssets {
@@ -34,6 +38,8 @@ export interface ChannelAssets {
   exitIntentSecondary1: { url: string };
   exitIntentSecondary2: { url: string };
   loginPanel: { url: string };
+  bannerIntro: { url: string };
+  floatingAd: { url: string };
 }
 
 export interface CampaignFormState {
@@ -67,6 +73,8 @@ const DEFAULT_CONFIGS: ChannelConfigs = {
   newsletter: { subject: '', preview_text: '', target_list: '' },
   exit_intent: { hero_type: 'publidoor', cta_text: 'Continuar navegando', priority_type: 'commercial' },
   login_panel: { display_type: 'publidoor' },
+  banner_intro: { cta_text: '', cta_url: '' },
+  floating_ad: { position: 'right', frequency_limit: 1 },
 };
 
 const DEFAULT_ASSETS: ChannelAssets = {
@@ -77,6 +85,8 @@ const DEFAULT_ASSETS: ChannelAssets = {
   exitIntentSecondary1: { url: '' },
   exitIntentSecondary2: { url: '' },
   loginPanel: { url: '' },
+  bannerIntro: { url: '' },
+  floatingAd: { url: '' },
 };
 
 // ============================================
@@ -95,6 +105,8 @@ export function createInitialState(initialData?: Partial<CampaignFormData>): Cam
       newsletter: initialData?.newsletterConfig || DEFAULT_CONFIGS.newsletter,
       exit_intent: initialData?.exitIntentConfig || DEFAULT_CONFIGS.exit_intent,
       login_panel: initialData?.loginPanelConfig || DEFAULT_CONFIGS.login_panel,
+      banner_intro: initialData?.bannerIntroConfig || DEFAULT_CONFIGS.banner_intro,
+      floating_ad: initialData?.floatingAdConfig || DEFAULT_CONFIGS.floating_ad,
     },
     assets: DEFAULT_ASSETS,
     validationErrors: [],
