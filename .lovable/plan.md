@@ -1,91 +1,74 @@
 
-# Plano: Mais Anuncios na Home, Ads nas Noticias, Noticias no Login e Formatos Atualizados
+# Plano: Reposicionar Mega Destaque, Adicionar Novos Espacos e Links no Menu Lateral
 
 ## Problemas Identificados
 
-### 1. Apenas 2 espacos de publicidade na Home
-Atualmente a Home so exibe o `ad_slot_top` (Mega Destaque) e o `super_banner`. Faltam espaços intermediarios entre os blocos de conteudo.
+### 1. Mega Destaque (Super Banner) esta muito alto
+Na imagem, o Super Banner (970x250) aparece logo apos o hero/stories, cobrindo conteudo importante. Precisa descer para uma posicao menos intrusiva.
 
-### 2. Falta publicidade na area de noticias
-O componente `LatestNewsList` exibe 8 cards sem nenhum anuncio intercalado. O `InlineAdSlot` so e usado dentro de artigos individuais (`NewsDetail.tsx`), nao na listagem da Home.
+### 2. Faltam espacos para novos formatos no site publico
+Os formatos **Banner Intro** (970x250), **Destaque Flutuante** (300x600) e **Alerta Full Saida** (1280x720) ja tem componentes criados (`BannerIntro.tsx`, `FloatingAd.tsx`, `ExitIntentModal.tsx`) e formularios de campanha, mas nao estao renderizados no layout publico do site. Apenas o `banner_intro` aparece na Home via `DynamicHomeSection`. O `FloatingAd` e o `ExitIntentModal` precisam ser adicionados ao layout global.
 
-### 3. Falta noticias na area de login
-A pagina de login (`Auth.tsx`) exibe apenas banners publicitarios no painel esquerdo, sem nenhuma noticia ou conteudo editorial para engajar o usuario.
-
-### 4. Formatos faltando no "Ver dimensoes oficiais"
-O `BatchAssetUploader.tsx` so lista slots de `ads`, `publidoor` e `webstories` no `allSlots`. Faltam os blocos `login` e `experience` (formatos 10-15).
+### 3. Novos formatos nao aparecem no menu lateral do admin
+A secao "Publicidade e Monetizacao" do sidebar so tem: Campanhas 360, Midia Kit, Comprovantes, Anuncios, Super Banners, Publidoor, Parceiros. Faltam links diretos para gerenciar **Banner Intro**, **Destaque Flutuante**, **Exit-Intent** e **Login Panel** individualmente.
 
 ---
 
 ## Alteracoes Propostas
 
-### A. Mais espacos publicitarios na Home (Index.tsx)
+### A. Reposicionar Super Banner na Home
 
-Adicionar 2 novos slots de anuncio entre os blocos de conteudo:
+**Arquivo: `src/pages/Index.tsx`**
+- Mover `super_banner` da posicao 6 (apos hero) para posicao 10 (apos latest_news), dando mais espaco para o conteudo editorial aparecer primeiro
 
+Nova ordem:
 ```text
-Ordem atualizada:
 0  market_data
 1  banner_intro
 2  video_block
 3  stories_bar
-4  ad_slot_top          (Mega Destaque existente)
+4  ad_slot_top (Mega Destaque)
 5  hero_headlines
-6  super_banner
-7  live_broadcast
-8  agora_na_cidade
-9  ad_slot_mid          (NOVO - Destaque Inteligente 300x250)
-10 latest_news
-11 ad_slot_bottom        (NOVO - Destaque Horizontal 728x90)
+6  live_broadcast
+7  agora_na_cidade
+8  ad_slot_mid
+9  latest_news
+10 super_banner         (MOVIDO - era posicao 6)
+11 ad_slot_bottom
 12 quick_notes
 13 most_read
 ```
 
-**Arquivo: `src/pages/Index.tsx`**
-- Adicionar `ad_slot_mid` e `ad_slot_bottom` ao `FALLBACK_HOME_SECTIONS`
+### B. Adicionar FloatingAd e ExitIntentModal ao layout global
 
-**Arquivo: `src/types/portal-templates.ts`**
-- Adicionar `'ad_slot_mid' | 'ad_slot_bottom'` ao `HomeSectionType`
+**Arquivo: `src/components/layout/PublicLayout.tsx`** (ou arquivo de layout principal)
+- Importar e renderizar `FloatingAd` no layout publico (ja tem logica interna de exibicao 1x por sessao)
+- Importar e renderizar `ExitIntentModal` no layout publico (ja tem logica de deteccao de saida)
+- Esses componentes so aparecem quando ha campanhas ativas configuradas para esses canais
 
-**Arquivo: `src/components/home/DynamicHomeSection.tsx`**
-- Adicionar mapeamento para `ad_slot_mid` (formato Destaque Inteligente 300x250)
-- Adicionar mapeamento para `ad_slot_bottom` (formato Destaque Horizontal 728x90)
+### C. Adicionar links no menu lateral do admin
 
-### B. Publicidade intercalada na area de noticias
+**Arquivo: `src/components/admin/AdminSidebar.tsx`**
+- Adicionar 4 novos itens na secao `monetizationItems`:
+  - "Banner Intro" -> link para filtro de campanhas com canal banner_intro
+  - "Destaque Flutuante" -> link para filtro de campanhas com canal floating_ad
+  - "Exit-Intent" -> link para filtro de campanhas com canal exit_intent
+  - "Painel de Login" -> link para filtro de campanhas com canal login_panel
 
-**Arquivo: `src/components/home/LatestNewsList.tsx`**
-- Inserir um `InlineAdSlot` (300x250) entre a primeira e segunda fileira de cards (apos o 4o card)
-- Usa o componente `InlineAdSlot` ja existente, centralizado entre as linhas de noticias
-
-### C. Noticias recentes no painel de login
-
-**Arquivo: `src/pages/Auth.tsx`**
-- Adicionar uma secao de "Ultimas Noticias" abaixo do painel publicitario no desktop
-- Exibir 3-4 manchetes compactas com link para as noticias
-- No mobile, exibir abaixo do banner compacto
-- Usar o hook `useNews` ja existente para buscar as ultimas noticias
-
-### D. Formatos completos no "Ver dimensoes oficiais"
-
-**Arquivo: `src/components/admin/campaigns/BatchAssetUploader.tsx`**
-- Expandir o array `allSlots` para incluir os blocos `login` e `experience` do `OFFICIAL_SLOTS`
-- Os 15 formatos aparecerao na tabela de referencia com seus nomes comerciais corretos
+Os links apontarao para a pagina de Campanhas 360 com parametro de filtro por canal, permitindo que o usuario veja e gerencie apenas campanhas daquele formato especifico.
 
 ---
 
 ## Detalhes Tecnicos
 
-### Arquivos a editar (6)
+### Arquivos a editar (3)
 
-1. **`src/pages/Index.tsx`** -- adicionar `ad_slot_mid` e `ad_slot_bottom` ao fallback
-2. **`src/types/portal-templates.ts`** -- novos tipos de secao
-3. **`src/components/home/DynamicHomeSection.tsx`** -- mapeamento dos novos slots
-4. **`src/components/home/LatestNewsList.tsx`** -- InlineAdSlot entre cards
-5. **`src/pages/Auth.tsx`** -- noticias no login
-6. **`src/components/admin/campaigns/BatchAssetUploader.tsx`** -- allSlots completo com 15 formatos
+1. **`src/pages/Index.tsx`** -- mover super_banner para order 10
+2. **`src/components/admin/AdminSidebar.tsx`** -- 4 novos itens em monetizationItems
+3. **Layout publico (App.tsx ou PublicLayout)** -- renderizar FloatingAd + ExitIntentModal globalmente
 
 ### Nenhum arquivo novo necessario
-Todos os componentes ja existem (`InlineAdSlot`, `ResponsiveAdUnit`, `useNews`).
+Os componentes FloatingAd, ExitIntentModal e BannerIntro ja existem e funcionam com campanhas 360.
 
 ### Nenhuma alteracao no banco de dados
 Reutiliza componentes e hooks existentes.
