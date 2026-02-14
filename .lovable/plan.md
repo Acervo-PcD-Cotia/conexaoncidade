@@ -1,223 +1,121 @@
 
 
-# Plano: Padronizacao Total dos Formatos Publicitarios (01 a 15)
+# Plano: Nomes Comerciais, Midia Kit e Tooltips nos Formatos Publicitarios
 
-## Resumo
+## 1. Problemas Identificados
 
-Os formatos 01 a 09 ja estao implementados e com nomes comerciais atualizados. Este plano foca em adicionar os formatos 10 a 15 (Login, Banner Intro, Destaque Flutuante, Alerta Full Saida) e organizar todos os 15 formatos no painel administrativo.
+### Nomes comerciais inconsistentes
+- `AdsChannelForm.tsx`: Falta o formato **"Destaque Horizontal" (728x90)** no `SLOT_OPTIONS`. Tambem usa nomes tecnicos internos (`home_top`, `home_banner`, `super_banner`) sem consolidacao.
+- `CampaignsTutorial.tsx`: Nao menciona os formatos 10-15 (Login, Banner Intro, Destaque Flutuante, Alerta Full Saida). Apenas cita "Exit-Intent, Login Panel, Push, Newsletter" genericamente sem detalhar.
+- `CycleSelectorCard.tsx`: Usa `CHANNEL_LABELS` local incompleto (falta `banner_intro` e `floating_ad`).
 
-## Status Atual
+### Midia Kit inexistente
+- Nao existe nenhum componente de Midia Kit para download. Precisa ser criado do zero com os 15 formatos organizados para anunciantes.
 
-| # | Formato | Status |
-|---|---------|--------|
-| 01-05 | Ads (Destaque Horizontal, Mega Destaque, etc.) | Implementado |
-| 06-08 | Publidoor (Destaque Premium, Editorial, Vertical) | Implementado |
-| 09 | Story Premium (WebStories) | Implementado |
-| 10-12 | Login Formatos 01/02/03 | Parcial (existe `login_panel` mas sem variantes) |
-| 13 | Banner Intro | Novo |
-| 14 | Destaque Flutuante | Novo |
-| 15 | Alerta Full Saida | Parcial (Exit-Intent existe, falta dimensao 1280x720) |
+### Tooltips com preview inexistentes
+- Os selects de slot no `AdsChannelForm` nao tem tooltips visuais. Apenas mostram `label (size)` como texto simples.
 
 ---
 
-## Parte A -- Novos Slots e Canais
+## 2. Alteracoes Propostas
 
-### A1. Expandir `src/lib/adSlots.ts`
-Adicionar novos slots ao array `AD_SLOTS`:
-- Expandir `SlotPlacement` para incluir `'login' | 'floating' | 'intro'`
-- Expandir `SLOT_CHANNELS` para incluir `'login' | 'experience'`
-- Adicionar 6 novos slots:
+### A. Corrigir nomes comerciais nos formularios
 
+**Arquivo: `src/components/admin/campaigns/AdsChannelForm.tsx`**
+- Adicionar "Destaque Horizontal" (728x90) ao `SLOT_OPTIONS` com value `leaderboard`
+- Adicionar mapeamento no `SLOT_TO_FORMAT`
+- Adicionar formato `'leaderboard'` ao `FORMAT_DIMENSIONS` no `AdImageUploader.tsx`
+- Consolidar nomes: remover duplicatas (`home_top`, `home_banner`, `super_banner` viram opcoes mais claras)
+
+SLOT_OPTIONS atualizado:
 ```text
-login_formato_01  | 800x500   | login      | login
-login_formato_02  | 200x500   | login      | login  (4 paineis verticais)
-login_formato_03  | 400x500   | login      | login  (2 paineis)
-banner_intro      | 970x250   | experience | intro
-destaque_flutuante| 300x600   | experience | floating
-alerta_full_saida | 1280x720  | experience | modal
+leaderboard     | Destaque Horizontal        | 728x90
+super_banner    | Mega Destaque              | 970x250
+rectangle       | Destaque Inteligente       | 300x250
+skyscraper      | Painel Vertical            | 300x600
+popup           | Alerta Comercial           | 580x400
 ```
 
-### A2. Expandir `src/lib/adFormats.ts`
-Adicionar novos formatos ao `AD_FORMATS` e `FORMAT_OPTIONS`:
-- `BANNER_INTRO`: 970x250 (reutiliza dimensao do Mega Destaque mas com contexto diferente)
-- `DESTAQUE_FLUTUANTE`: 300x600 (lateral flutuante)
-- `ALERTA_FULL_SAIDA`: 1280x720 (exit intent fullscreen)
-- `LOGIN_01/02/03`: Formatos especificos para o painel de login
+**Arquivo: `src/components/admin/AdImageUploader.tsx`**
+- Adicionar formato `'leaderboard'` com dimensoes 728x90
 
-### A3. Atualizar `src/types/campaigns-unified.ts`
-- Adicionar `'banner_intro' | 'floating_ad'` ao `CHANNEL_TYPES`
-- Criar interfaces `BannerIntroChannelConfig` e `FloatingAdChannelConfig`
-- Atualizar `OFFICIAL_SLOTS` com as categorias Login e Experiencia
-- Atualizar `CHANNEL_LABELS` e `CHANNEL_ICONS`
+**Arquivo: `src/components/admin/campaigns/CycleSelectorCard.tsx`**
+- Adicionar `banner_intro` e `floating_ad` ao `CHANNEL_LABELS` local
 
-### A4. Atualizar `src/lib/imageCorrection.ts`
-- Adicionar as novas categorias `login` e `experience` ao `SLOT_DEFINITIONS`
+### B. Atualizar Tutorial com todos os 15 formatos
 
----
+**Arquivo: `src/pages/admin/campaigns/CampaignsTutorial.tsx`**
+- Adicionar secao "Bloco 04 -- Login & Experiencia Inicial" detalhando formatos 10-12
+- Adicionar secao "Bloco 05 -- Banners de Experiencia" detalhando formatos 13-15
+- Adicionar tabela de referencia rapida com todos os 15 formatos organizados por bloco
+- Atualizar os badges de canais no overview para incluir Banner Intro e Destaque Flutuante
 
-## Parte B -- Novos Componentes de Exibicao
+### C. Criar pagina de Midia Kit para download
 
-### B1. `src/components/ads/BannerIntro.tsx` (Novo)
-- Banner de entrada na primeira dobra da Home
-- Exibido entre o Super Banner e o conteudo principal
-- Busca campanhas 360 com canal `banner_intro` ativo
-- Tracking de impressoes e cliques via `trackCampaignEvent`
-- Suporte a exibicao programada (por datas)
+**Novo arquivo: `src/pages/admin/campaigns/MediaKit.tsx`**
+- Pagina acessivel pelo painel administrativo
+- Exibe todos os 15 formatos organizados por bloco (Ads, Publidoor, WebStories, Login, Experiencia)
+- Cada formato mostra: nome comercial, dimensao, descricao, onde aparece no site
+- Botao para gerar PDF do Midia Kit usando jsPDF (ja instalado)
+- Badge colorido por categoria
+- Preview visual proporcional de cada formato (retangulo colorido com as proporcoes corretas)
 
-### B2. `src/components/ads/FloatingAd.tsx` (Novo)
-- Banner lateral flutuante (300x600) fixo na tela
-- Posicao: canto inferior direito
-- Botao de fechar visivel
-- Controle de frequencia via `sessionStorage` (1x por sessao)
-- Animacao de entrada suave com framer-motion
-- Busca campanhas 360 com canal `floating_ad` ativo
+**Arquivo: `src/App.tsx`**
+- Adicionar rota `/spah/painel/campaigns/media-kit`
 
-### B3. Atualizar `src/components/ads/ExitIntentModal.tsx`
-- Formalizar dimensao 1280x720 para o formato "Alerta Full Saida"
-- Adicionar fundo escurecido (ja existe `bg-black/60`)
-- Garantir botao "Continuar navegando" (ja existe)
-- Nome comercial: "Alerta Full Saida"
+**Arquivo: `src/components/admin/AdminSidebar.tsx`**
+- Adicionar link "Midia Kit" na secao de monetizacao
 
-### B4. Expandir Login Panel (formatos visuais)
-- Atualizar `src/components/auth/LoginPanelAd.tsx` para suportar 3 layouts:
-  - Formato 01: Banner unico grande (layout atual hero)
-  - Formato 02: Grid de 4 paineis verticais lado a lado (layout atual grid)
-  - Formato 03: 2 paineis lado a lado (novo)
-- O formato e selecionado automaticamente com base no numero de campanhas ativas
+### D. Adicionar tooltips com preview visual nos selects de slot
 
----
+**Arquivo: `src/components/admin/campaigns/AdsChannelForm.tsx`**
+- Substituir `SelectItem` simples por versao com tooltip
+- Cada opcao mostra ao passar o mouse:
+  - Preview visual proporcional (retangulo colorido com dimensoes)
+  - Nome comercial em negrito
+  - Dimensao tecnica
+  - Descricao curta ("O que e")
+  - Localizacao no site ("Onde aparece")
+- Usar componentes `Tooltip`/`TooltipContent` do Radix ja instalado
+- Adicionar um mini-preview inline no proprio item do select (retangulo proporcional pequeno ao lado do texto)
 
-## Parte C -- Formularios Administrativos
-
-### C1. `src/components/admin/campaigns/BannerIntroChannelForm.tsx` (Novo)
-- Formulario para configurar o Banner Intro
-- Campos: imagem, datas de exibicao, CTA
-
-### C2. `src/components/admin/campaigns/FloatingAdChannelForm.tsx` (Novo)
-- Formulario para configurar o Destaque Flutuante
-- Campos: imagem, posicao (esquerda/direita), controle de frequencia
-
-### C3. Atualizar `src/components/admin/campaigns/ChannelSelector.tsx`
-- Adicionar os 2 novos canais (Banner Intro, Destaque Flutuante) a lista de canais
-- Renderizar os novos formularios no switch/case
-
-### C4. Atualizar `src/components/admin/AdImageUploader.tsx`
-- Adicionar novos formatos ao `FORMAT_DIMENSIONS`:
-  - `'banner-intro'`: 970x250
-  - `'flutuante'`: 300x600
-  - `'alerta-saida'`: 1280x720
-
-### C5. Atualizar `src/components/admin/campaigns/CampaignForm.tsx`
-- Adicionar logica para novos canais no submit de assets
-
-### C6. Atualizar `src/components/admin/campaigns/useCampaignFormReducer.ts`
-- Adicionar configs iniciais para `banner_intro` e `floating_ad`
+**Novo arquivo: `src/components/admin/campaigns/SlotPreviewTooltip.tsx`**
+- Componente reutilizavel que renderiza o tooltip com preview
+- Recebe: nome, dimensao, descricao, localizacao, cor do badge
+- Renderiza retangulo proporcional (max 120px largura) + info textual
 
 ---
 
-## Parte D -- Integracao no Site
+## 3. Dados dos tooltips por formato
 
-### D1. Atualizar `src/components/home/DynamicHomeSection.tsx`
-- Adicionar novo tipo de secao `banner_intro` ao mapeamento
-- Lazy load do componente `BannerIntro`
-
-### D2. Atualizar `src/pages/Index.tsx`
-- Adicionar `banner_intro` ao `FALLBACK_HOME_SECTIONS` (apos super_banner)
-
-### D3. Atualizar `src/App.tsx`
-- Adicionar `FloatingAd` ao layout principal (ao lado do `ExitIntentModal`)
-
-### D4. Atualizar `src/types/portal-templates.ts`
-- Adicionar `'banner_intro'` ao tipo `HomeSectionType`
+| Formato | O que e | Onde aparece |
+|---------|---------|--------------|
+| Destaque Horizontal | Faixa horizontal de visibilidade continua | Topo da Home, matérias, categorias |
+| Mega Destaque | Banner de grande impacto visual | Abaixo do menu, inicio da Home |
+| Destaque Inteligente | Formato focado em conversão | Meio de matérias, sidebar |
+| Painel Vertical | Formato vertical de alta exposição | Lateral da Home e matérias |
+| Alerta Comercial | Banner modal de impacto imediato | Pop-up controlado por tempo/scroll |
+| Banner Intro | Banner de entrada pos-carregamento | Primeira dobra da Home |
+| Destaque Flutuante | Banner lateral fixo na tela | Lateral direita/esquerda, fixo ao scroll |
+| Alerta Full Saida | Banner de exit-intent fullscreen | Ao tentar sair do site |
 
 ---
 
-## Parte E -- Tutorial e Documentacao
+## 4. Arquivos a criar (2)
+1. `src/pages/admin/campaigns/MediaKit.tsx`
+2. `src/components/admin/campaigns/SlotPreviewTooltip.tsx`
 
-### E1. Atualizar `src/pages/admin/campaigns/CampaignsTutorial.tsx`
-- Adicionar secao "Bloco 04 -- Login & Experiencia Inicial" com formatos 10-12
-- Adicionar secao "Bloco 05 -- Banners de Experiencia" com formatos 13-15
-- Adicionar tabela de referencia completa com todos os 15 formatos organizados por categoria
+## 5. Arquivos a editar (6)
+1. `src/components/admin/campaigns/AdsChannelForm.tsx` -- adicionar Destaque Horizontal + tooltips
+2. `src/components/admin/AdImageUploader.tsx` -- formato leaderboard
+3. `src/components/admin/campaigns/CycleSelectorCard.tsx` -- labels completos
+4. `src/pages/admin/campaigns/CampaignsTutorial.tsx` -- blocos 04-05 + tabela referencia
+5. `src/App.tsx` -- rota media-kit
+6. `src/components/admin/AdminSidebar.tsx` -- link Midia Kit
 
----
-
-## Parte F -- Hooks e Logica de Dados
-
-### F1. `src/hooks/useBannerIntro.ts` (Novo)
-- Hook para buscar campanhas com canal `banner_intro` ativo
-- Filtragem por datas e status
-
-### F2. `src/hooks/useFloatingAd.ts` (Novo)
-- Hook para buscar campanhas com canal `floating_ad` ativo
-- Controle de frequencia
-
-### F3. Atualizar `src/hooks/useCampaignsUnified.ts`
-- Adicionar logica de submit para os novos canais
-
----
-
-## Organizacao Visual no Painel
-
-Todos os 15 formatos organizados em 5 blocos:
-
-```text
-Publicidade & Monetizacao
-  |-- Ads (01-05)
-  |    01 Destaque Horizontal    728x90
-  |    02 Mega Destaque          970x250
-  |    03 Destaque Inteligente   300x250
-  |    04 Painel Vertical        300x600
-  |    05 Alerta Comercial       580x400
-  |
-  |-- Publidoor (06-08)
-  |    06 Destaque Premium       970x250
-  |    07 Destaque Editorial     300x250
-  |    08 Painel Vertical        300x600
-  |
-  |-- WebStories (09)
-  |    09 Story Premium          1080x1920
-  |
-  |-- Login (10-12)
-  |    10 Login Formato 01       Banner unico
-  |    11 Login Formato 02       Grid 4 paineis
-  |    12 Login Formato 03       Grid 2 paineis
-  |
-  |-- Experiencia (13-15)
-       13 Banner Intro           970x250
-       14 Destaque Flutuante     300x600
-       15 Alerta Full Saida      1280x720
-```
-
-## Arquivos a Criar (5)
-1. `src/components/ads/BannerIntro.tsx`
-2. `src/components/ads/FloatingAd.tsx`
-3. `src/hooks/useBannerIntro.ts`
-4. `src/hooks/useFloatingAd.ts`
-5. `src/components/admin/campaigns/BannerIntroChannelForm.tsx`
-6. `src/components/admin/campaigns/FloatingAdChannelForm.tsx`
-
-## Arquivos a Editar (14)
-1. `src/lib/adSlots.ts` -- novos slots
-2. `src/lib/adFormats.ts` -- novos formatos
-3. `src/types/campaigns-unified.ts` -- novos canais e configs
-4. `src/lib/imageCorrection.ts` -- novas categorias
-5. `src/components/admin/AdImageUploader.tsx` -- novos formatos
-6. `src/components/admin/campaigns/ChannelSelector.tsx` -- novos canais
-7. `src/components/admin/campaigns/CampaignForm.tsx` -- submit novos canais
-8. `src/components/admin/campaigns/useCampaignFormReducer.ts` -- configs iniciais
-9. `src/components/ads/ExitIntentModal.tsx` -- formalizar 1280x720
-10. `src/components/auth/LoginPanelAd.tsx` -- 3 layouts
-11. `src/components/home/DynamicHomeSection.tsx` -- banner_intro
-12. `src/pages/Index.tsx` -- fallback sections
-13. `src/App.tsx` -- FloatingAd
-14. `src/types/portal-templates.ts` -- HomeSectionType
-15. `src/pages/admin/campaigns/CampaignsTutorial.tsx` -- documentacao
-16. `src/hooks/useCampaignsUnified.ts` -- submit logic
-
-## O Que NAO Sera Alterado
-- Logica de atribuicao automatica por dimensao existente
-- Estrutura de banco de dados (novos canais usam a mesma tabela `campaign_channels`)
-- Metricas e tracking (reutiliza `trackCampaignEvent`)
-- Arquivos auto-gerados (types.ts, client.ts, config.toml)
-- Formatos 01-09 ja implementados
+## 6. O que NAO sera alterado
+- Logica de campanhas existente
+- Banco de dados
+- Formatos ja implementados (01-15)
+- Componentes de exibicao publica
 
