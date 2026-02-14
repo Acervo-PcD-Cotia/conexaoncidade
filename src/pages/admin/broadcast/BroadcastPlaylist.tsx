@@ -454,7 +454,7 @@ export default function BroadcastPlaylist() {
         <Radio className="h-16 w-16 text-muted-foreground" />
         <h2 className="text-xl font-semibold">Nenhum canal de rádio encontrado</h2>
         <p className="text-muted-foreground">Crie um canal do tipo "radio" para configurar a playlist.</p>
-        <Button onClick={() => window.location.href = "/admin/broadcast/channels"}>
+        <Button onClick={() => window.location.href = "/spah/painel/broadcast/channels"}>
           Criar Canal
         </Button>
       </div>

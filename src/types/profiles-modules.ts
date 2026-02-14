@@ -192,22 +192,22 @@ export const PROFILE_DEFAULT_MODULES: Record<UserProfile, SystemModule[]> = {
 
 export const ROUTE_MODULE_MAP: Record<string, SystemModule> = {
   // Broadcast
-  '/admin/broadcast': 'WEBRADIO_TV',
-  '/admin/streaming': 'WEBRADIO_TV',
-  '/admin/conexao-studio': 'STUDIO_LIVE',
-  '/admin/illumina-studio': 'STUDIO_LIVE',
+  '/spah/painel/broadcast': 'WEBRADIO_TV',
+  '/spah/painel/streaming': 'WEBRADIO_TV',
+  '/spah/painel/conexao-studio': 'STUDIO_LIVE',
+  '/spah/painel/illumina-studio': 'STUDIO_LIVE',
   
   // Community
   '/vip': 'VIP_COMMUNITY',
   '/geracao-cotia': 'GERACAO_COTIA',
   
   // Commerce
-  '/admin/classifieds': 'CLASSIFIEDS',
-  '/admin/jobs': 'JOBS',
-  '/admin/donations': 'DONATIONS',
+  '/spah/painel/classifieds': 'CLASSIFIEDS',
+  '/spah/painel/jobs': 'JOBS',
+  '/spah/painel/donations': 'DONATIONS',
   
   // AutoPost
-  '/admin/autopost': 'AUTOPOST',
+  '/spah/painel/autopost': 'AUTOPOST',
 };
 
 // ============================================
@@ -216,14 +216,14 @@ export const ROUTE_MODULE_MAP: Record<string, SystemModule> = {
 
 export const MENU_MODULE_MAP: Record<string, SystemModule> = {
   // URLs que requerem módulos específicos
-  '/admin/broadcast': 'WEBRADIO_TV',
-  '/admin/streaming/radio': 'WEBRADIO_TV',
-  '/admin/streaming/tv': 'WEBRADIO_TV',
-  '/admin/conexao-studio': 'STUDIO_LIVE',
-  '/admin/illumina-studio': 'STUDIO_LIVE',
-  '/admin/autopost': 'AUTOPOST',
-  '/admin/classifieds': 'CLASSIFIEDS',
-  '/admin/jobs': 'JOBS',
+  '/spah/painel/broadcast': 'WEBRADIO_TV',
+  '/spah/painel/streaming/radio': 'WEBRADIO_TV',
+  '/spah/painel/streaming/tv': 'WEBRADIO_TV',
+  '/spah/painel/conexao-studio': 'STUDIO_LIVE',
+  '/spah/painel/illumina-studio': 'STUDIO_LIVE',
+  '/spah/painel/autopost': 'AUTOPOST',
+  '/spah/painel/classifieds': 'CLASSIFIEDS',
+  '/spah/painel/jobs': 'JOBS',
 };
 
 // ============================================
@@ -242,32 +242,32 @@ export interface QuickActionCard {
 
 export const PROFILE_QUICK_ACTIONS: Record<UserProfile, QuickActionCard[]> = {
   JORNALISTA: [
-    { id: 'create-news', title: 'Criar Notícia', description: 'Publique uma nova matéria', icon: 'PenLine', href: '/admin/news/new', color: 'blue' },
-    { id: 'autopost-regional', title: 'Auto Post Regional', description: 'Notícias da Grande Cotia', icon: 'MapPin', href: '/admin/autopost-regional', color: 'amber', requiredModule: 'AUTOPOST' },
-    { id: 'schedule', title: 'Agendar Publicação', description: 'Programe posts para o futuro', icon: 'Calendar', href: '/admin/news?status=draft', color: 'green' },
-    { id: 'seo', title: 'Revisar SEO', description: 'Otimize seu conteúdo', icon: 'Search', href: '/admin/seo', color: 'purple', requiredModule: 'SEO_TOOLS' },
+    { id: 'create-news', title: 'Criar Notícia', description: 'Publique uma nova matéria', icon: 'PenLine', href: '/spah/painel/news/new', color: 'blue' },
+    { id: 'autopost-regional', title: 'Auto Post Regional', description: 'Notícias da Grande Cotia', icon: 'MapPin', href: '/spah/painel/autopost-regional', color: 'amber', requiredModule: 'AUTOPOST' },
+    { id: 'schedule', title: 'Agendar Publicação', description: 'Programe posts para o futuro', icon: 'Calendar', href: '/spah/painel/news?status=draft', color: 'green' },
+    { id: 'seo', title: 'Revisar SEO', description: 'Otimize seu conteúdo', icon: 'Search', href: '/spah/painel/seo', color: 'purple', requiredModule: 'SEO_TOOLS' },
   ],
   INFLUENCER: [
-    { id: 'quick-post', title: 'Post Rápido', description: 'Crie conteúdo em segundos', icon: 'Zap', href: '/admin/news/new', color: 'purple' },
-    { id: 'studio', title: 'Estúdio ao Vivo', description: 'Inicie uma live', icon: 'Video', href: '/admin/conexao-studio', color: 'pink', requiredModule: 'STUDIO_LIVE' },
-    { id: 'clips', title: 'Meus Clipes', description: 'Gerencie seus vídeos', icon: 'Film', href: '/admin/media', color: 'blue' },
-    { id: 'links', title: 'Links & CTA', description: 'Configure suas chamadas', icon: 'Link', href: '/admin/bio', color: 'green' },
+    { id: 'quick-post', title: 'Post Rápido', description: 'Crie conteúdo em segundos', icon: 'Zap', href: '/spah/painel/news/new', color: 'purple' },
+    { id: 'studio', title: 'Estúdio ao Vivo', description: 'Inicie uma live', icon: 'Video', href: '/spah/painel/conexao-studio', color: 'pink', requiredModule: 'STUDIO_LIVE' },
+    { id: 'clips', title: 'Meus Clipes', description: 'Gerencie seus vídeos', icon: 'Film', href: '/spah/painel/media', color: 'blue' },
+    { id: 'links', title: 'Links & CTA', description: 'Configure suas chamadas', icon: 'Link', href: '/spah/painel/bio', color: 'green' },
   ],
   IGREJA: [
-    { id: 'devotional', title: 'Devocional', description: 'Publique reflexões diárias', icon: 'BookOpen', href: '/admin/news/new', color: 'amber' },
-    { id: 'radio', title: 'Web Rádio', description: 'Transmissões ao vivo', icon: 'Radio', href: '/admin/broadcast', color: 'red', requiredModule: 'WEBRADIO_TV' },
+    { id: 'devotional', title: 'Devocional', description: 'Publique reflexões diárias', icon: 'BookOpen', href: '/spah/painel/news/new', color: 'amber' },
+    { id: 'radio', title: 'Web Rádio', description: 'Transmissões ao vivo', icon: 'Radio', href: '/spah/painel/broadcast', color: 'red', requiredModule: 'WEBRADIO_TV' },
     { id: 'community', title: 'Comunidade', description: 'Engaje seus membros', icon: 'Users', href: '/vip', color: 'blue', requiredModule: 'VIP_COMMUNITY' },
-    { id: 'donations', title: 'Doações', description: 'Gerencie contribuições', icon: 'Heart', href: '/admin/donations', color: 'rose', requiredModule: 'DONATIONS' },
+    { id: 'donations', title: 'Doações', description: 'Gerencie contribuições', icon: 'Heart', href: '/spah/painel/donations', color: 'rose', requiredModule: 'DONATIONS' },
   ],
   RADIO_TV: [
-    { id: 'go-live', title: 'Iniciar Transmissão', description: 'Entre ao vivo agora', icon: 'Broadcast', href: '/admin/broadcast', color: 'red', requiredModule: 'WEBRADIO_TV' },
-    { id: 'schedule', title: 'Programação', description: 'Configure a grade', icon: 'Calendar', href: '/admin/broadcast/schedule', color: 'blue' },
-    { id: 'player', title: 'Player no Site', description: 'Configurar player', icon: 'Play', href: '/admin/streaming', color: 'green' },
-    { id: 'studio', title: 'Estúdio Multi', description: 'Lives com convidados', icon: 'Users', href: '/admin/conexao-studio', color: 'purple', requiredModule: 'STUDIO_LIVE' },
+    { id: 'go-live', title: 'Iniciar Transmissão', description: 'Entre ao vivo agora', icon: 'Broadcast', href: '/spah/painel/broadcast', color: 'red', requiredModule: 'WEBRADIO_TV' },
+    { id: 'schedule', title: 'Programação', description: 'Configure a grade', icon: 'Calendar', href: '/spah/painel/broadcast/schedule', color: 'blue' },
+    { id: 'player', title: 'Player no Site', description: 'Configurar player', icon: 'Play', href: '/spah/painel/streaming', color: 'green' },
+    { id: 'studio', title: 'Estúdio Multi', description: 'Lives com convidados', icon: 'Users', href: '/spah/painel/conexao-studio', color: 'purple', requiredModule: 'STUDIO_LIVE' },
   ],
   EDUCADOR: [
-    { id: 'create-lesson', title: 'Nova Aula', description: 'Crie conteúdo educacional', icon: 'BookOpen', href: '/admin/news/new', color: 'green' },
-    { id: 'studio', title: 'Aula ao Vivo', description: 'Transmita para alunos', icon: 'Video', href: '/admin/conexao-studio', color: 'blue', requiredModule: 'STUDIO_LIVE' },
+    { id: 'create-lesson', title: 'Nova Aula', description: 'Crie conteúdo educacional', icon: 'BookOpen', href: '/spah/painel/news/new', color: 'green' },
+    { id: 'studio', title: 'Aula ao Vivo', description: 'Transmita para alunos', icon: 'Video', href: '/spah/painel/conexao-studio', color: 'blue', requiredModule: 'STUDIO_LIVE' },
     { id: 'community', title: 'Fórum de Dúvidas', description: 'Interaja com alunos', icon: 'MessageCircle', href: '/vip/comunidade', color: 'purple', requiredModule: 'VIP_COMMUNITY' },
     { id: 'tracks', title: 'Trilhas', description: 'Organize o aprendizado', icon: 'Map', href: '/vip/trilhas', color: 'amber', requiredModule: 'VIP_COMMUNITY' },
   ],

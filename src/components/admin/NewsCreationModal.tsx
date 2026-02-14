@@ -32,7 +32,7 @@ export function NewsCreationModal({ open, onOpenChange }: NewsCreationModalProps
   const handleManualChoice = () => {
     setOrigin('manual');
     onOpenChange(false);
-    navigate('/admin/news/new?origin=manual');
+    navigate('/spah/painel/news/new?origin=manual');
     resetState();
   };
 
@@ -113,7 +113,7 @@ export function NewsCreationModal({ open, onOpenChange }: NewsCreationModalProps
 
       setOrigin('ai');
       onOpenChange(false);
-      navigate('/admin/news/new?origin=ai');
+      navigate('/spah/painel/news/new?origin=ai');
       resetState();
       toast.success('Notícia gerada com sucesso! Revise e complete os campos.');
     } catch (error) {

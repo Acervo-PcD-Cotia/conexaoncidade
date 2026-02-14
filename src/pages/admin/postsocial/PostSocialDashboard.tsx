@@ -56,11 +56,11 @@ export default function PostSocialDashboard() {
             <RefreshCw className="h-4 w-4 mr-2" />
             Atualizar
           </Button>
-          <Button variant="outline" size="sm" onClick={() => navigate('/admin/postsocial/settings')}>
+          <Button variant="outline" size="sm" onClick={() => navigate('/spah/painel/postsocial/settings')}>
             <Settings className="h-4 w-4 mr-2" />
             Configurar Redes
           </Button>
-          <Button onClick={() => navigate('/admin/postsocial/new')}>
+          <Button onClick={() => navigate('/spah/painel/postsocial/new')}>
             <Plus className="h-4 w-4 mr-2" />
             Criar Post
           </Button>
@@ -168,7 +168,7 @@ function TargetListView({ targets, isLoading }: { targets: SocialPostTarget[]; i
     return (
       <div className="p-8 text-center">
         <p className="text-muted-foreground mb-4">Nenhum post encontrado</p>
-        <Button onClick={() => navigate('/admin/postsocial/new')}>
+        <Button onClick={() => navigate('/spah/painel/postsocial/new')}>
           <Plus className="h-4 w-4 mr-2" />
           Criar Primeiro Post
         </Button>

@@ -320,7 +320,7 @@ export default function CensoPcdDashboard() {
           <CardTitle className="text-lg">Ações Rápidas</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-3">
-          <Link to="/admin/censo-pcd/respostas">
+          <Link to="/spah/painel/censo-pcd/respostas">
             <Button variant="outline">
               <Users className="mr-2 h-4 w-4" />
               Ver Todas as Respostas

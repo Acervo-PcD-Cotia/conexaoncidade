@@ -59,15 +59,15 @@ function EventCard({ event, onDelete }: { event: Event; onDelete: (id: string) =
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => navigate(`/admin/events/${event.id}/edit`)}>
+              <DropdownMenuItem onClick={() => navigate(`/spah/painel/events/${event.id}/edit`)}>
                 <Edit className="h-4 w-4 mr-2" />
                 Editar
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate(`/admin/events/${event.id}/tickets`)}>
+              <DropdownMenuItem onClick={() => navigate(`/spah/painel/events/${event.id}/tickets`)}>
                 <Ticket className="h-4 w-4 mr-2" />
                 Ingressos
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate(`/admin/events/${event.id}/attendees`)}>
+              <DropdownMenuItem onClick={() => navigate(`/spah/painel/events/${event.id}/attendees`)}>
                 <Users className="h-4 w-4 mr-2" />
                 Participantes
               </DropdownMenuItem>
@@ -145,7 +145,7 @@ export default function EventsList() {
           <p className="text-muted-foreground">Gerencie seus eventos e ingressos</p>
         </div>
         <Button asChild>
-          <Link to="/admin/events/new">
+          <Link to="/spah/painel/events/new">
             <Plus className="h-4 w-4 mr-2" />
             Novo Evento
           </Link>
@@ -214,7 +214,7 @@ export default function EventsList() {
                 Crie seu primeiro evento para começar
               </p>
               <Button asChild>
-                <Link to="/admin/events/new">
+                <Link to="/spah/painel/events/new">
                   <Plus className="h-4 w-4 mr-2" />
                   Criar Evento
                 </Link>

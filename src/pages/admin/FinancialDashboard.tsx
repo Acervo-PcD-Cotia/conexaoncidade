@@ -104,7 +104,7 @@ export default function FinancialDashboard() {
           </CardHeader>
           <CardContent>
             <Button asChild variant="outline" className="w-full">
-              <Link to="/admin/financial/profiles">
+              <Link to="/spah/painel/financial/profiles">
                 Gerenciar
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Link>
@@ -124,7 +124,7 @@ export default function FinancialDashboard() {
           </CardHeader>
           <CardContent>
             <Button asChild variant="outline" className="w-full">
-              <Link to="/admin/financial/receivables">
+              <Link to="/spah/painel/financial/receivables">
                 Ver Todos
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Link>
@@ -144,7 +144,7 @@ export default function FinancialDashboard() {
           </CardHeader>
           <CardContent>
             <Button asChild variant="outline" className="w-full">
-              <Link to="/admin/financial/invoices">
+              <Link to="/spah/painel/financial/invoices">
                 Gerenciar
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Link>
@@ -161,7 +161,7 @@ export default function FinancialDashboard() {
             <CardDescription>Últimas movimentações financeiras</CardDescription>
           </div>
           <Button asChild variant="ghost" size="sm">
-            <Link to="/admin/financial/receivables">
+            <Link to="/spah/painel/financial/receivables">
               Ver todos
               <ArrowRight className="h-4 w-4 ml-2" />
             </Link>

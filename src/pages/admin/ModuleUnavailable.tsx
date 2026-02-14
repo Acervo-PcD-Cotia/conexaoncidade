@@ -66,7 +66,7 @@ export function ModuleUnavailable({ moduleKey }: ModuleUnavailableProps) {
 
           <div className="space-y-3">
             <Button asChild className="w-full">
-              <Link to="/admin/settings/modules">
+              <Link to="/spah/painel/settings/modules">
                 <Settings className="mr-2 h-4 w-4" />
                 Gerenciar Módulos
               </Link>

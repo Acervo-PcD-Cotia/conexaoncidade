@@ -105,7 +105,7 @@ export function DashboardAccessibilityPanel() {
 
         {/* Settings Link */}
         <Button variant="ghost" size="sm" className="w-full gap-2 text-muted-foreground" asChild>
-          <Link to="/admin/settings/accessibility">
+          <Link to="/spah/painel/settings/accessibility">
             <Settings className="h-4 w-4" />
             Configurações de Acessibilidade
           </Link>
