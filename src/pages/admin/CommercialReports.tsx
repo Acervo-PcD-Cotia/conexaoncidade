@@ -92,10 +92,10 @@ export default function CommercialReports() {
           action={
             <div className="flex gap-3">
               <Button variant="outline" asChild>
-                <Link to="/admin/publidoor">Criar Publidoor</Link>
+                <Link to="/spah/painel/publidoor">Criar Publidoor</Link>
               </Button>
               <Button asChild>
-                <Link to="/admin/ads">Criar Anúncio</Link>
+                <Link to="/spah/painel/ads">Criar Anúncio</Link>
               </Button>
             </div>
           }
@@ -128,7 +128,7 @@ export default function CommercialReports() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" asChild>
-            <Link to="/admin/publidoor/metricas">
+            <Link to="/spah/painel/publidoor/metricas">
               <BarChart3 className="mr-2 h-4 w-4" />
               Publidoor Detalhado
             </Link>
@@ -237,7 +237,7 @@ export default function CommercialReports() {
               </div>
             </div>
             <Button className="w-full" variant="outline" asChild>
-              <Link to="/admin/publidoor">Gerenciar Publidoor</Link>
+              <Link to="/spah/painel/publidoor">Gerenciar Publidoor</Link>
             </Button>
           </CardContent>
         </Card>
@@ -278,7 +278,7 @@ export default function CommercialReports() {
               </div>
             </div>
             <Button className="w-full" variant="outline" asChild>
-              <Link to="/admin/ads">Gerenciar Anúncios</Link>
+              <Link to="/spah/painel/ads">Gerenciar Anúncios</Link>
             </Button>
           </CardContent>
         </Card>

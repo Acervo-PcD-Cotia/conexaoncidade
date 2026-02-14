@@ -35,12 +35,12 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const AD_SLOTS = [
-  { value: "home_top", label: "Home Topo", size: "728x90" },
-  { value: "home_banner", label: "Home Banner", size: "970x250" },
-  { value: "super_banner", label: "Super Banner Topo", size: "970x250" },
-  { value: "rectangle", label: "Retângulo Médio", size: "300x250" },
-  { value: "skyscraper", label: "Arranha-céu", size: "300x600" },
-  { value: "popup", label: "Pop-up", size: "580x400" },
+  { value: "home_top", label: "Destaque Horizontal", size: "728x90" },
+  { value: "home_banner", label: "Mega Destaque", size: "970x250" },
+  { value: "super_banner", label: "Mega Destaque Topo", size: "970x250" },
+  { value: "rectangle", label: "Destaque Inteligente", size: "300x250" },
+  { value: "skyscraper", label: "Painel Vertical", size: "300x600" },
+  { value: "popup", label: "Alerta Comercial", size: "580x400" },
 ];
 
 interface AdForm {

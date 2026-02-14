@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { campaignRoutes } from '@/lib/campaignRoutes';
 import { Plus, Search, Filter, LayoutGrid, List, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -26,10 +26,18 @@ import type { CampaignStatus, ChannelType } from '@/types/campaigns-unified';
 
 export default function CampaignsUnified() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<CampaignStatus | 'all'>('all');
   const [channelFilter, setChannelFilter] = useState<ChannelType | 'all'>('all');
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const urlChannel = searchParams.get('channel');
+    if (urlChannel) {
+      setChannelFilter(urlChannel as ChannelType | 'all');
+    }
+  }, [searchParams]);
 
   const { data: campaigns, isLoading } = useCampaignsUnified({
     search: search || undefined,
