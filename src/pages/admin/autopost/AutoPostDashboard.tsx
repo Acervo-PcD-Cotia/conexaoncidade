@@ -72,13 +72,13 @@ export default function AutoPostDashboard() {
         
         <div className="flex gap-2">
           <Button variant="outline" asChild>
-            <Link to="/admin/autopost/queue">
+            <Link to="/spah/painel/autopost/queue">
               <ListChecks className="h-4 w-4 mr-2" />
               Abrir Fila
             </Link>
           </Button>
           <Button asChild>
-            <Link to="/admin/autopost/sources/new">
+            <Link to="/spah/painel/autopost/sources/new">
               <Plus className="h-4 w-4 mr-2" />
               Adicionar Fonte
             </Link>
@@ -115,7 +115,7 @@ export default function AutoPostDashboard() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg">Execuções Recentes</CardTitle>
             <Button variant="ghost" size="sm" asChild>
-              <Link to="/admin/autopost/logs">
+              <Link to="/spah/painel/autopost/logs">
                 Ver todas
                 <ArrowRight className="h-4 w-4 ml-1" />
               </Link>
@@ -181,7 +181,7 @@ export default function AutoPostDashboard() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg">Fila Editorial</CardTitle>
             <Button variant="ghost" size="sm" asChild>
-              <Link to="/admin/autopost/queue">
+              <Link to="/spah/painel/autopost/queue">
                 Ver fila completa
                 <ArrowRight className="h-4 w-4 ml-1" />
               </Link>
@@ -234,25 +234,25 @@ export default function AutoPostDashboard() {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
-              <Link to="/admin/autopost/sources/new">
+              <Link to="/spah/painel/autopost/sources/new">
                 <Plus className="h-5 w-5" />
                 <span>Nova Fonte</span>
               </Link>
             </Button>
             <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
-              <Link to="/admin/autopost/queue">
+              <Link to="/spah/painel/autopost/queue">
                 <ListChecks className="h-5 w-5" />
                 <span>Revisar Fila</span>
               </Link>
             </Button>
             <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
-              <Link to="/admin/autopost/rules">
+              <Link to="/spah/painel/autopost/rules">
                 <Zap className="h-5 w-5" />
                 <span>Configurar Regras</span>
               </Link>
             </Button>
             <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
-              <Link to="/admin/autopost/reports">
+              <Link to="/spah/painel/autopost/reports">
                 <TrendingUp className="h-5 w-5" />
                 <span>Ver Relatórios</span>
               </Link>

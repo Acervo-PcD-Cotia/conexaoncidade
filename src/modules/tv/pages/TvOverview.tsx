@@ -75,7 +75,7 @@ export default function TvOverview() {
           </CardHeader>
           <CardContent>
             <Button variant="outline" className="w-full" asChild>
-              <Link to="/admin/tv/live">Ver Credenciais</Link>
+              <Link to="/spah/painel/tv/live">Ver Credenciais</Link>
             </Button>
           </CardContent>
         </Card>
@@ -87,7 +87,7 @@ export default function TvOverview() {
           </CardHeader>
           <CardContent>
             <Button variant="outline" className="w-full" asChild>
-              <Link to="/admin/tv/schedule">Configurar</Link>
+              <Link to="/spah/painel/tv/schedule">Configurar</Link>
             </Button>
           </CardContent>
         </Card>
@@ -99,7 +99,7 @@ export default function TvOverview() {
           </CardHeader>
           <CardContent>
             <Button variant="outline" className="w-full" asChild>
-              <Link to="/admin/tv/vod">Acessar</Link>
+              <Link to="/spah/painel/tv/vod">Acessar</Link>
             </Button>
           </CardContent>
         </Card>
@@ -114,7 +114,7 @@ export default function TvOverview() {
               <CardDescription>Resumo de audiência</CardDescription>
             </div>
             <Button variant="ghost" size="sm" asChild>
-              <Link to="/admin/tv/stats">Ver mais</Link>
+              <Link to="/spah/painel/tv/stats">Ver mais</Link>
             </Button>
           </CardHeader>
           <CardContent>

@@ -111,7 +111,7 @@ export default function LinksReports() {
             </SelectContent>
           </Select>
           <Button variant="outline" asChild>
-            <Link to="/admin/links">
+            <Link to="/spah/painel/links">
               <Link2 className="mr-2 h-4 w-4" />
               Voltar para Links
             </Link>

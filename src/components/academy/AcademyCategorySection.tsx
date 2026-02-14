@@ -70,7 +70,7 @@ export function AcademyCategorySection({ category, courses, progressMap }: Acade
           return (
             <div
               key={course.id}
-              onClick={() => navigate(`/admin/academy/curso/${course.slug}`)}
+              onClick={() => navigate(`/spah/painel/academy/curso/${course.slug}`)}
               className="group cursor-pointer rounded-lg border bg-card hover:shadow-md transition-all duration-200 overflow-hidden"
             >
               {/* Cover */}

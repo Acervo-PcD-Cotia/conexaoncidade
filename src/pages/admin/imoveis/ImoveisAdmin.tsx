@@ -76,7 +76,7 @@ export default function ImoveisAdmin() {
         </div>
         <div className="flex gap-2">
           <Button asChild>
-            <Link to="/admin/imoveis/novo">
+            <Link to="/spah/painel/imoveis/novo">
               <Plus className="mr-2 h-4 w-4" />
               Novo Imóvel
             </Link>
@@ -131,19 +131,19 @@ export default function ImoveisAdmin() {
       {/* Quick Links */}
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" size="sm" asChild>
-          <Link to="/admin/imoveis/anunciantes">
+          <Link to="/spah/painel/imoveis/anunciantes">
             <Building2 className="mr-2 h-4 w-4" />
             Anunciantes
           </Link>
         </Button>
         <Button variant="outline" size="sm" asChild>
-          <Link to="/admin/imoveis/leads">
+          <Link to="/spah/painel/imoveis/leads">
             <Users className="mr-2 h-4 w-4" />
             Leads
           </Link>
         </Button>
         <Button variant="outline" size="sm" asChild>
-          <Link to="/admin/imoveis/bairros">
+          <Link to="/spah/painel/imoveis/bairros">
             Guia de Bairros
           </Link>
         </Button>
@@ -238,7 +238,7 @@ export default function ImoveisAdmin() {
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
-                              <Link to={`/admin/imoveis/${imovel.id}/editar`}>
+                              <Link to={`/spah/painel/imoveis/${imovel.id}/editar`}>
                                 <Edit className="mr-2 h-4 w-4" />
                                 Editar
                               </Link>

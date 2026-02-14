@@ -56,7 +56,7 @@ export function RecentArticlesPanel() {
           <h3 className="text-sm font-semibold">Artigos Recentes</h3>
         </div>
         <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" asChild>
-          <Link to="/admin/news">
+          <Link to="/spah/painel/news">
             Ver todas
             <ChevronRight className="h-3 w-3" />
           </Link>
@@ -80,7 +80,7 @@ export function RecentArticlesPanel() {
             {articles?.map((article) => (
               <Link
                 key={article.id}
-                to={`/admin/news/${article.id}/edit`}
+                to={`/spah/painel/news/${article.id}/edit`}
                 className="flex items-start gap-3 py-3 px-2 -mx-2 rounded-md hover:bg-muted/50 transition-colors group border-b border-border/50 last:border-0"
               >
                 {/* Status Bullet */}

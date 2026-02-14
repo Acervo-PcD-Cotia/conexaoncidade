@@ -67,7 +67,7 @@ export default function AcademyLesson() {
       <div className="container py-8 text-center">
         <h1 className="text-2xl font-bold mb-4">Aula não encontrada</h1>
         <Button asChild>
-          <Link to="/admin/academy">Voltar para Academy</Link>
+          <Link to="/spah/painel/academy">Voltar para Academy</Link>
         </Button>
       </div>
     );
@@ -82,7 +82,7 @@ export default function AcademyLesson() {
         <div className="container py-3">
           <div className="flex items-center justify-between">
             <Button variant="ghost" size="sm" asChild>
-              <Link to={lesson.course ? `/admin/academy/curso/${lesson.course.slug}` : "/admin/academy"}>
+              <Link to={lesson.course ? `/spah/painel/academy/curso/${lesson.course.slug}` : "/spah/painel/academy"}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Voltar ao curso
               </Link>

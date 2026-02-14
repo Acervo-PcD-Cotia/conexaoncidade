@@ -118,7 +118,7 @@ export function RadioTabContent() {
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-3">
         <Button asChild>
-          <Link to="/admin/streaming/radio">
+          <Link to="/spah/painel/streaming/radio">
             <Sliders className="h-4 w-4 mr-2" />
             Configurar Rádio
           </Link>
@@ -175,7 +175,7 @@ export function RadioTabContent() {
           </CardHeader>
           <CardContent className="pt-0">
             <Button variant="outline" className="w-full" asChild>
-              <Link to="/admin/streaming/radio">Ver Configuração</Link>
+              <Link to="/spah/painel/streaming/radio">Ver Configuração</Link>
             </Button>
           </CardContent>
         </Card>
@@ -208,7 +208,7 @@ export function RadioTabContent() {
           </CardHeader>
           <CardContent className="pt-0">
             <Button variant="outline" className="w-full" asChild>
-              <Link to="/admin/streaming/radio">Acessar</Link>
+              <Link to="/spah/painel/streaming/radio">Acessar</Link>
             </Button>
           </CardContent>
         </Card>

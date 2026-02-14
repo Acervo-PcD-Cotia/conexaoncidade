@@ -136,7 +136,7 @@ export default function AcademyAdminLessons() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
-            <Link to="/admin/academy/admin/cursos">
+            <Link to="/spah/painel/academy/admin/cursos">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
