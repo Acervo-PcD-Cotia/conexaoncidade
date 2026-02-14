@@ -1,121 +1,91 @@
 
+# Plano: Mais Anuncios na Home, Ads nas Noticias, Noticias no Login e Formatos Atualizados
 
-# Plano: Nomes Comerciais, Midia Kit e Tooltips nos Formatos Publicitarios
+## Problemas Identificados
 
-## 1. Problemas Identificados
+### 1. Apenas 2 espacos de publicidade na Home
+Atualmente a Home so exibe o `ad_slot_top` (Mega Destaque) e o `super_banner`. Faltam espaços intermediarios entre os blocos de conteudo.
 
-### Nomes comerciais inconsistentes
-- `AdsChannelForm.tsx`: Falta o formato **"Destaque Horizontal" (728x90)** no `SLOT_OPTIONS`. Tambem usa nomes tecnicos internos (`home_top`, `home_banner`, `super_banner`) sem consolidacao.
-- `CampaignsTutorial.tsx`: Nao menciona os formatos 10-15 (Login, Banner Intro, Destaque Flutuante, Alerta Full Saida). Apenas cita "Exit-Intent, Login Panel, Push, Newsletter" genericamente sem detalhar.
-- `CycleSelectorCard.tsx`: Usa `CHANNEL_LABELS` local incompleto (falta `banner_intro` e `floating_ad`).
+### 2. Falta publicidade na area de noticias
+O componente `LatestNewsList` exibe 8 cards sem nenhum anuncio intercalado. O `InlineAdSlot` so e usado dentro de artigos individuais (`NewsDetail.tsx`), nao na listagem da Home.
 
-### Midia Kit inexistente
-- Nao existe nenhum componente de Midia Kit para download. Precisa ser criado do zero com os 15 formatos organizados para anunciantes.
+### 3. Falta noticias na area de login
+A pagina de login (`Auth.tsx`) exibe apenas banners publicitarios no painel esquerdo, sem nenhuma noticia ou conteudo editorial para engajar o usuario.
 
-### Tooltips com preview inexistentes
-- Os selects de slot no `AdsChannelForm` nao tem tooltips visuais. Apenas mostram `label (size)` como texto simples.
+### 4. Formatos faltando no "Ver dimensoes oficiais"
+O `BatchAssetUploader.tsx` so lista slots de `ads`, `publidoor` e `webstories` no `allSlots`. Faltam os blocos `login` e `experience` (formatos 10-15).
 
 ---
 
-## 2. Alteracoes Propostas
+## Alteracoes Propostas
 
-### A. Corrigir nomes comerciais nos formularios
+### A. Mais espacos publicitarios na Home (Index.tsx)
 
-**Arquivo: `src/components/admin/campaigns/AdsChannelForm.tsx`**
-- Adicionar "Destaque Horizontal" (728x90) ao `SLOT_OPTIONS` com value `leaderboard`
-- Adicionar mapeamento no `SLOT_TO_FORMAT`
-- Adicionar formato `'leaderboard'` ao `FORMAT_DIMENSIONS` no `AdImageUploader.tsx`
-- Consolidar nomes: remover duplicatas (`home_top`, `home_banner`, `super_banner` viram opcoes mais claras)
+Adicionar 2 novos slots de anuncio entre os blocos de conteudo:
 
-SLOT_OPTIONS atualizado:
 ```text
-leaderboard     | Destaque Horizontal        | 728x90
-super_banner    | Mega Destaque              | 970x250
-rectangle       | Destaque Inteligente       | 300x250
-skyscraper      | Painel Vertical            | 300x600
-popup           | Alerta Comercial           | 580x400
+Ordem atualizada:
+0  market_data
+1  banner_intro
+2  video_block
+3  stories_bar
+4  ad_slot_top          (Mega Destaque existente)
+5  hero_headlines
+6  super_banner
+7  live_broadcast
+8  agora_na_cidade
+9  ad_slot_mid          (NOVO - Destaque Inteligente 300x250)
+10 latest_news
+11 ad_slot_bottom        (NOVO - Destaque Horizontal 728x90)
+12 quick_notes
+13 most_read
 ```
 
-**Arquivo: `src/components/admin/AdImageUploader.tsx`**
-- Adicionar formato `'leaderboard'` com dimensoes 728x90
+**Arquivo: `src/pages/Index.tsx`**
+- Adicionar `ad_slot_mid` e `ad_slot_bottom` ao `FALLBACK_HOME_SECTIONS`
 
-**Arquivo: `src/components/admin/campaigns/CycleSelectorCard.tsx`**
-- Adicionar `banner_intro` e `floating_ad` ao `CHANNEL_LABELS` local
+**Arquivo: `src/types/portal-templates.ts`**
+- Adicionar `'ad_slot_mid' | 'ad_slot_bottom'` ao `HomeSectionType`
 
-### B. Atualizar Tutorial com todos os 15 formatos
+**Arquivo: `src/components/home/DynamicHomeSection.tsx`**
+- Adicionar mapeamento para `ad_slot_mid` (formato Destaque Inteligente 300x250)
+- Adicionar mapeamento para `ad_slot_bottom` (formato Destaque Horizontal 728x90)
 
-**Arquivo: `src/pages/admin/campaigns/CampaignsTutorial.tsx`**
-- Adicionar secao "Bloco 04 -- Login & Experiencia Inicial" detalhando formatos 10-12
-- Adicionar secao "Bloco 05 -- Banners de Experiencia" detalhando formatos 13-15
-- Adicionar tabela de referencia rapida com todos os 15 formatos organizados por bloco
-- Atualizar os badges de canais no overview para incluir Banner Intro e Destaque Flutuante
+### B. Publicidade intercalada na area de noticias
 
-### C. Criar pagina de Midia Kit para download
+**Arquivo: `src/components/home/LatestNewsList.tsx`**
+- Inserir um `InlineAdSlot` (300x250) entre a primeira e segunda fileira de cards (apos o 4o card)
+- Usa o componente `InlineAdSlot` ja existente, centralizado entre as linhas de noticias
 
-**Novo arquivo: `src/pages/admin/campaigns/MediaKit.tsx`**
-- Pagina acessivel pelo painel administrativo
-- Exibe todos os 15 formatos organizados por bloco (Ads, Publidoor, WebStories, Login, Experiencia)
-- Cada formato mostra: nome comercial, dimensao, descricao, onde aparece no site
-- Botao para gerar PDF do Midia Kit usando jsPDF (ja instalado)
-- Badge colorido por categoria
-- Preview visual proporcional de cada formato (retangulo colorido com as proporcoes corretas)
+### C. Noticias recentes no painel de login
 
-**Arquivo: `src/App.tsx`**
-- Adicionar rota `/spah/painel/campaigns/media-kit`
+**Arquivo: `src/pages/Auth.tsx`**
+- Adicionar uma secao de "Ultimas Noticias" abaixo do painel publicitario no desktop
+- Exibir 3-4 manchetes compactas com link para as noticias
+- No mobile, exibir abaixo do banner compacto
+- Usar o hook `useNews` ja existente para buscar as ultimas noticias
 
-**Arquivo: `src/components/admin/AdminSidebar.tsx`**
-- Adicionar link "Midia Kit" na secao de monetizacao
+### D. Formatos completos no "Ver dimensoes oficiais"
 
-### D. Adicionar tooltips com preview visual nos selects de slot
-
-**Arquivo: `src/components/admin/campaigns/AdsChannelForm.tsx`**
-- Substituir `SelectItem` simples por versao com tooltip
-- Cada opcao mostra ao passar o mouse:
-  - Preview visual proporcional (retangulo colorido com dimensoes)
-  - Nome comercial em negrito
-  - Dimensao tecnica
-  - Descricao curta ("O que e")
-  - Localizacao no site ("Onde aparece")
-- Usar componentes `Tooltip`/`TooltipContent` do Radix ja instalado
-- Adicionar um mini-preview inline no proprio item do select (retangulo proporcional pequeno ao lado do texto)
-
-**Novo arquivo: `src/components/admin/campaigns/SlotPreviewTooltip.tsx`**
-- Componente reutilizavel que renderiza o tooltip com preview
-- Recebe: nome, dimensao, descricao, localizacao, cor do badge
-- Renderiza retangulo proporcional (max 120px largura) + info textual
+**Arquivo: `src/components/admin/campaigns/BatchAssetUploader.tsx`**
+- Expandir o array `allSlots` para incluir os blocos `login` e `experience` do `OFFICIAL_SLOTS`
+- Os 15 formatos aparecerao na tabela de referencia com seus nomes comerciais corretos
 
 ---
 
-## 3. Dados dos tooltips por formato
+## Detalhes Tecnicos
 
-| Formato | O que e | Onde aparece |
-|---------|---------|--------------|
-| Destaque Horizontal | Faixa horizontal de visibilidade continua | Topo da Home, matérias, categorias |
-| Mega Destaque | Banner de grande impacto visual | Abaixo do menu, inicio da Home |
-| Destaque Inteligente | Formato focado em conversão | Meio de matérias, sidebar |
-| Painel Vertical | Formato vertical de alta exposição | Lateral da Home e matérias |
-| Alerta Comercial | Banner modal de impacto imediato | Pop-up controlado por tempo/scroll |
-| Banner Intro | Banner de entrada pos-carregamento | Primeira dobra da Home |
-| Destaque Flutuante | Banner lateral fixo na tela | Lateral direita/esquerda, fixo ao scroll |
-| Alerta Full Saida | Banner de exit-intent fullscreen | Ao tentar sair do site |
+### Arquivos a editar (6)
 
----
+1. **`src/pages/Index.tsx`** -- adicionar `ad_slot_mid` e `ad_slot_bottom` ao fallback
+2. **`src/types/portal-templates.ts`** -- novos tipos de secao
+3. **`src/components/home/DynamicHomeSection.tsx`** -- mapeamento dos novos slots
+4. **`src/components/home/LatestNewsList.tsx`** -- InlineAdSlot entre cards
+5. **`src/pages/Auth.tsx`** -- noticias no login
+6. **`src/components/admin/campaigns/BatchAssetUploader.tsx`** -- allSlots completo com 15 formatos
 
-## 4. Arquivos a criar (2)
-1. `src/pages/admin/campaigns/MediaKit.tsx`
-2. `src/components/admin/campaigns/SlotPreviewTooltip.tsx`
+### Nenhum arquivo novo necessario
+Todos os componentes ja existem (`InlineAdSlot`, `ResponsiveAdUnit`, `useNews`).
 
-## 5. Arquivos a editar (6)
-1. `src/components/admin/campaigns/AdsChannelForm.tsx` -- adicionar Destaque Horizontal + tooltips
-2. `src/components/admin/AdImageUploader.tsx` -- formato leaderboard
-3. `src/components/admin/campaigns/CycleSelectorCard.tsx` -- labels completos
-4. `src/pages/admin/campaigns/CampaignsTutorial.tsx` -- blocos 04-05 + tabela referencia
-5. `src/App.tsx` -- rota media-kit
-6. `src/components/admin/AdminSidebar.tsx` -- link Midia Kit
-
-## 6. O que NAO sera alterado
-- Logica de campanhas existente
-- Banco de dados
-- Formatos ja implementados (01-15)
-- Componentes de exibicao publica
-
+### Nenhuma alteracao no banco de dados
+Reutiliza componentes e hooks existentes.
