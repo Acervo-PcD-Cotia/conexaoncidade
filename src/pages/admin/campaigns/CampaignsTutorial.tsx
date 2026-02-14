@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { campaignRoutes } from '@/lib/campaignRoutes';
-import { ArrowLeft, Plus, Pencil, Settings, Eye, BarChart3, Image, Layers, Monitor, Megaphone, Smartphone, BookOpen, CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Plus, Pencil, Settings, Eye, BarChart3, Image, Layers, Monitor, Megaphone, Smartphone, BookOpen, CheckCircle2, AlertCircle, ArrowRight, RefreshCw, Calendar, Send, MapPin, FileText, Maximize } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -149,6 +149,36 @@ export default function CampaignsTutorial() {
                 <Megaphone className="h-4 w-4" /> Publidoor
               </div>
               <p>Distribui para telas digitais urbanas (vitrines). Selecione os <strong className="text-foreground">templates</strong> e <strong className="text-foreground">locais</strong> (locations) de exibição.</p>
+              <p className="font-medium text-foreground pt-1">Campos do Publidoor:</p>
+              <ul className="list-disc list-inside space-y-0.5 ml-2 text-xs">
+                <li><strong>Frase Principal</strong> — Título de destaque exibido na tela</li>
+                <li><strong>Frase Secundária</strong> — Complemento ou subtítulo</li>
+                <li><strong>Descrição</strong> — Texto descritivo do anúncio</li>
+                <li><strong>Imagem da Exibição</strong> — Criativo visual (300×250px recomendado)</li>
+              </ul>
+              <p className="font-medium text-foreground pt-2">Tipos de Exibição:</p>
+              <div className="space-y-2 pt-1">
+                <div className="flex gap-2 items-start text-xs">
+                  <Badge variant="outline" className="shrink-0 gap-1"><BookOpen className="h-3 w-3" />Narrativo</Badge>
+                  <span>História envolvente sobre a marca. Usa frases sequenciais para contar uma narrativa emocional. Ideal para branding institucional.</span>
+                </div>
+                <div className="flex gap-2 items-start text-xs">
+                  <Badge variant="outline" className="shrink-0 gap-1"><Settings className="h-3 w-3" />Contextual</Badge>
+                  <span>Conteúdo relacionado ao contexto do local (ex: farmácia exibe saúde, padaria exibe café da manhã).</span>
+                </div>
+                <div className="flex gap-2 items-start text-xs">
+                  <Badge variant="outline" className="shrink-0 gap-1"><MapPin className="h-3 w-3" />Geográfico</Badge>
+                  <span>Baseado na localização física da tela. Exibe conteúdo relevante para o bairro ou região.</span>
+                </div>
+                <div className="flex gap-2 items-start text-xs">
+                  <Badge variant="outline" className="shrink-0 gap-1"><FileText className="h-3 w-3" />Editorial</Badge>
+                  <span>Estilo jornalístico. Simula matéria ou notícia patrocinada, com tom informativo.</span>
+                </div>
+                <div className="flex gap-2 items-start text-xs">
+                  <Badge variant="outline" className="shrink-0 gap-1"><Maximize className="h-3 w-3" />Impacto Total</Badge>
+                  <span>Formato premium fullwidth. Ocupa toda a tela com máximo impacto visual. Ideal para lançamentos.</span>
+                </div>
+              </div>
             </div>
 
             <div className="p-3 rounded-lg bg-muted/50 space-y-2">
@@ -224,7 +254,78 @@ export default function CampaignsTutorial() {
         </StepCard>
 
         <StepCard step={4} title="Gerenciar Ciclos" icon={Layers}>
-          <p>Ao editar, o card <strong className="text-foreground">"Ciclos da Campanha"</strong> aparece acima do formulário. Ciclos permitem agrupar períodos de veiculação (ex: Semana 1, Semana 2) para controle granular de quando cada criativo é exibido.</p>
+          <p>Ao editar, o card <strong className="text-foreground">"Ciclos da Campanha"</strong> aparece acima do formulário. Veja a seção abaixo para detalhes completos.</p>
+        </StepCard>
+      </div>
+
+      <Separator />
+
+      {/* ─── SECTION 2B: DISTRIBUTION CYCLES ─── */}
+      <div className="space-y-2">
+        <h2 className="text-xl font-bold flex items-center gap-2">
+          <RefreshCw className="h-5 w-5 text-primary" />
+          Parte 2B — Ciclos de Distribuição
+        </h2>
+        <p className="text-sm text-muted-foreground">Gerencie rodadas de exibição/envio dentro de uma campanha.</p>
+      </div>
+
+      <Card className="bg-primary/5 border-primary/20">
+        <CardContent className="pt-6 space-y-3">
+          <h3 className="font-semibold text-foreground">O que são Ciclos?</h3>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            <strong className="text-foreground">Ciclos</strong> são rodadas de exibição/envio dentro de uma campanha. Eles permitem dividir o período total em fases distintas — como "Semana 1", "Fase de Lançamento" ou "Reforço Final" — cada uma com seus próprios criativos e canais ativos.
+          </p>
+          <TipBox>
+            <strong>Exemplo prático:</strong> Uma campanha de 30 dias pode ser dividida em 3 ciclos de 10 dias, cada um com criativos diferentes para manter a comunicação fresca e relevante.
+          </TipBox>
+        </CardContent>
+      </Card>
+
+      <div className="space-y-4">
+        <StepCard step={1} title="Criar um novo ciclo" icon={Plus}>
+          <p>Na tela de edição da campanha, localize a seção <strong className="text-foreground">"Ciclos da Campanha"</strong> e clique em <strong className="text-foreground">"+ Novo Ciclo"</strong>.</p>
+          <p>Preencha os campos:</p>
+          <ul className="list-disc list-inside space-y-1 ml-2">
+            <li><strong className="text-foreground">Nome do Ciclo</strong> — Ex: "Fase 1 - Lançamento"</li>
+            <li><strong className="text-foreground">Data de Início</strong> — Quando o ciclo começa a veicular</li>
+            <li><strong className="text-foreground">Data de Fim</strong> — Quando o ciclo encerra</li>
+            <li><strong className="text-foreground">Canais ativos</strong> — Quais canais serão acionados neste ciclo específico</li>
+          </ul>
+        </StepCard>
+
+        <StepCard step={2} title="Status dos ciclos" icon={Calendar}>
+          <p>Cada ciclo possui um status independente:</p>
+          <div className="flex flex-wrap gap-2 pt-1">
+            <Badge variant="outline" className="border-muted-foreground/30">Agendado</Badge>
+            <Badge variant="secondary">Ativo</Badge>
+            <Badge className="bg-green-600 text-white">Concluído</Badge>
+            <Badge variant="destructive">Cancelado</Badge>
+          </div>
+          <ul className="list-disc list-inside space-y-1 ml-2 pt-2">
+            <li><strong className="text-foreground">Agendado</strong> — Ciclo criado mas ainda não iniciou (aguardando data)</li>
+            <li><strong className="text-foreground">Ativo</strong> — Ciclo em execução, exibindo/enviando criativos</li>
+            <li><strong className="text-foreground">Concluído</strong> — Ciclo finalizado após atingir a data de fim</li>
+            <li><strong className="text-foreground">Cancelado</strong> — Ciclo interrompido manualmente pelo administrador</li>
+          </ul>
+        </StepCard>
+
+        <StepCard step={3} title="Confirmação obrigatória (Push/Newsletter)" icon={Send}>
+          <p>Ciclos que incluem os canais <strong className="text-foreground">Push</strong> ou <strong className="text-foreground">Newsletter</strong> exigem <strong className="text-foreground">confirmação manual</strong> antes de serem ativados.</p>
+          <TipBox variant="warning">
+            Isso é uma medida de segurança para evitar envios acidentais de notificações ou e-mails em massa. O administrador precisa revisar e confirmar explicitamente antes que o envio seja disparado.
+          </TipBox>
+        </StepCard>
+
+        <StepCard step={4} title="Caso de uso prático" icon={CheckCircle2}>
+          <div className="p-3 rounded-lg bg-muted/50 space-y-2 text-xs">
+            <p className="font-medium text-foreground">Campanha "Institucional Março" — 30 dias, 3 ciclos:</p>
+            <ul className="list-disc list-inside space-y-1 ml-2">
+              <li><strong>Ciclo 1 (dias 1-10):</strong> "Lançamento" — Ads + Publidoor + WebStories</li>
+              <li><strong>Ciclo 2 (dias 11-20):</strong> "Engajamento" — Push + Newsletter + Ads</li>
+              <li><strong>Ciclo 3 (dias 21-30):</strong> "Reforço Final" — Todos os canais com criativos atualizados</li>
+            </ul>
+            <p className="pt-1 text-muted-foreground">Cada ciclo pode ter seus próprios criativos e canais, permitindo uma estratégia de comunicação progressiva.</p>
+          </div>
         </StepCard>
       </div>
 

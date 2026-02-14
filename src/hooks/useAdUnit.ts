@@ -153,22 +153,43 @@ async function fetchCampaign360Ad(slotId: string, now: string): Promise<AdData |
 
     if (error || !campaigns) return null;
 
+    // Pass 1: exact slot_type match
     for (const campaign of campaigns) {
-      // Check if campaign has an 'ads' channel enabled with matching slot
       const adsChannel = campaign.channels?.find(
         (ch: any) => ch.channel_type === 'ads' && ch.enabled
       );
-      
       if (!adsChannel) continue;
 
-      // Check if the channel config matches the requested slot
       const channelConfig = adsChannel.config as Record<string, any> | null;
       const configSlot = channelConfig?.slot_type;
-      
-      // If slot_type matches or no specific slot (show anywhere)
+
+      // Only exact match or no slot specified
       if (configSlot && configSlot !== slotId) continue;
 
-      // Find an asset for the 'ads' channel
+      const asset = campaign.assets?.find(
+        (a: any) => a.channel_type === 'ads'
+      );
+
+      if (asset?.file_url) {
+        return {
+          id: asset.id,
+          image_url: asset.file_url,
+          alt_text: asset.alt_text || campaign.name,
+          link_url: campaign.cta_url || undefined,
+          link_target: '_blank',
+          name: campaign.name,
+          campaignId: campaign.id,
+        };
+      }
+    }
+
+    // Pass 2: fallback — any active 360 campaign with ads channel (fill empty slots)
+    for (const campaign of campaigns) {
+      const adsChannel = campaign.channels?.find(
+        (ch: any) => ch.channel_type === 'ads' && ch.enabled
+      );
+      if (!adsChannel) continue;
+
       const asset = campaign.assets?.find(
         (a: any) => a.channel_type === 'ads'
       );
