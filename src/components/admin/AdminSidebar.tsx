@@ -144,6 +144,10 @@ const monetizationItems: MenuItem[] = [
   { title: "Comprovantes", url: "/spah/painel/comprovantes", icon: FileText },
   { title: "Anúncios", url: "/spah/painel/ads", icon: Megaphone },
   { title: "Super Banners", url: "/spah/painel/banners", icon: Image },
+  { title: "Banner Intro", url: "/spah/painel/campaigns/unified?channel=banner_intro", icon: PanelTop },
+  { title: "Destaque Flutuante", url: "/spah/painel/campaigns/unified?channel=floating_ad", icon: PanelTop },
+  { title: "Exit-Intent", url: "/spah/painel/campaigns/unified?channel=exit_intent", icon: PanelTop },
+  { title: "Painel de Login", url: "/spah/painel/campaigns/unified?channel=login_panel", icon: PanelTop },
   { title: "Publidoor", url: "/spah/painel/publidoor", icon: Building2, badge: "Premium", badgeColor: "bg-money" },
   { title: "Parceiros", url: "/spah/painel/partners", icon: Handshake },
 ];

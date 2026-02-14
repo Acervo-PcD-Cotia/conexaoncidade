@@ -8,6 +8,10 @@ import { useKeyboardNavigation } from "@/hooks/useKeyboardNavigation";
 import MiniPlayer from "@/components/broadcast/MiniPlayer";
 import { useMiniPlayer } from "@/contexts/MiniPlayerContext";
 import { GlobalRadioProvider } from "@/contexts/GlobalRadioContext";
+import { FloatingAd } from "@/components/ads/FloatingAd";
+import { lazy, Suspense } from "react";
+
+const ExitIntentModal = lazy(() => import("@/components/ads/ExitIntentModal").then(m => ({ default: m.ExitIntentModal })));
 
 
 export function PublicLayout() {
@@ -56,6 +60,14 @@ export function PublicLayout() {
           onExpand={hideMiniPlayer}
         />
       )}
+
+      {/* Global floating ad (1x per session, campaign-driven) */}
+      <FloatingAd />
+
+      {/* Exit-intent modal (campaign-driven) */}
+      <Suspense fallback={null}>
+        <ExitIntentModal />
+      </Suspense>
     </div>
     </GlobalRadioProvider>
   );
