@@ -140,6 +140,7 @@ const distributionItems: MenuItem[] = [
 // 3️⃣ PUBLICIDADE & MONETIZAÇÃO - Receita
 const monetizationItems: MenuItem[] = [
   { title: "Campanhas 360", url: "/spah/painel/campaigns/unified", icon: Megaphone, badge: "Novo", badgeColor: "bg-primary" },
+  { title: "Mídia Kit", url: "/spah/painel/campaigns/media-kit", icon: FileText },
   { title: "Comprovantes", url: "/spah/painel/comprovantes", icon: FileText },
   { title: "Anúncios", url: "/spah/painel/ads", icon: Megaphone },
   { title: "Super Banners", url: "/spah/painel/banners", icon: Image },
