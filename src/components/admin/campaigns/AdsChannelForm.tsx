@@ -12,13 +12,13 @@ interface AdsChannelFormProps {
 }
 
 const SLOT_OPTIONS = [
-  { value: 'home_top', label: 'Home Topo', size: '970x250' },
-  { value: 'home_banner', label: 'Banner Home', size: '970x250' },
-  { value: 'super_banner', label: 'Super Banner', size: '970x250' },
-  { value: 'rectangle', label: 'Retângulo Médio', size: '300x250' },
-  { value: 'rectangle_sidebar', label: 'Retângulo Sidebar', size: '300x250' },
-  { value: 'skyscraper', label: 'Arranha-céu', size: '300x600' },
-  { value: 'popup', label: 'Pop-up', size: '580x400' },
+  { value: 'home_top', label: 'Mega Destaque — Topo', size: '970x250' },
+  { value: 'home_banner', label: 'Mega Destaque — Home', size: '970x250' },
+  { value: 'super_banner', label: 'Mega Destaque', size: '970x250' },
+  { value: 'rectangle', label: 'Destaque Inteligente', size: '300x250' },
+  { value: 'rectangle_sidebar', label: 'Destaque Inteligente — Sidebar', size: '300x250' },
+  { value: 'skyscraper', label: 'Painel Vertical', size: '300x600' },
+  { value: 'popup', label: 'Alerta Comercial', size: '580x400' },
 ];
 
 const SLOT_TO_FORMAT: Record<string, AdFormat> = {

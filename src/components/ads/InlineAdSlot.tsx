@@ -16,7 +16,7 @@ interface InlineAdSlotProps {
  * InlineAdSlot - For editorial insertion between paragraphs
  * 
  * Displays campaign creatives within article content.
- * Uses 300x250 (Retângulo Médio) format.
+ * Uses 300x250 (Destaque Inteligente) format.
  * Labeled with "Conteúdo de Marca" badge.
  */
 export function InlineAdSlot({ position = 1, category, className }: InlineAdSlotProps) {

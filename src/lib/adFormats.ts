@@ -34,8 +34,8 @@ function hasFallback(format: AdFormat): format is AdFormatWithFallback {
 export const AD_FORMATS: Record<string, AdFormat> = {
   SUPER_BANNER_TOPO: {
     id: 'super_banner_topo',
-    label: 'Super Banner Top',
-    labelPt: 'Super Banner Topo',
+    label: 'Mega Destaque',
+    labelPt: 'Mega Destaque',
     desktop: { width: 970, height: 250 },
     tablet: { width: 728, height: 90 },
     mobile: { width: 320, height: 100 },
@@ -44,8 +44,8 @@ export const AD_FORMATS: Record<string, AdFormat> = {
   },
   ANUNCIO_HOME: {
     id: 'anuncio_home',
-    label: 'Home Ad',
-    labelPt: 'Anúncio Home',
+    label: 'Destaque Horizontal',
+    labelPt: 'Destaque Horizontal',
     desktop: { width: 970, height: 250 },
     tablet: { width: 728, height: 90 },
     mobile: { width: 320, height: 100 },
@@ -54,8 +54,8 @@ export const AD_FORMATS: Record<string, AdFormat> = {
   },
   RETANGULO_MEDIO: {
     id: 'retangulo_medio',
-    label: 'Medium Rectangle',
-    labelPt: 'Retângulo Médio',
+    label: 'Destaque Inteligente',
+    labelPt: 'Destaque Inteligente',
     desktop: { width: 300, height: 250 },
     tablet: { width: 300, height: 250 },
     mobile: { width: 300, height: 250 },
@@ -64,8 +64,8 @@ export const AD_FORMATS: Record<string, AdFormat> = {
   },
   ARRANHA_CEU: {
     id: 'arranha_ceu',
-    label: 'Skyscraper',
-    labelPt: 'Arranha-céu',
+    label: 'Painel Vertical',
+    labelPt: 'Painel Vertical',
     desktop: { width: 300, height: 600 },
     tablet: { width: 300, height: 600 },
     mobile: { width: 300, height: 250 },
@@ -75,8 +75,8 @@ export const AD_FORMATS: Record<string, AdFormat> = {
   },
   POPUP_INTELIGENTE: {
     id: 'popup_inteligente',
-    label: 'Smart Popup',
-    labelPt: 'Pop-up Inteligente',
+    label: 'Alerta Comercial',
+    labelPt: 'Alerta Comercial',
     desktop: { width: 580, height: 400 },
     tablet: { width: 580, height: 400 },
     mobile: { width: 320, height: 480 },
@@ -147,11 +147,11 @@ export function getEffectiveFormat(formatKey: AdFormatKey, device: DeviceType): 
  * Format type options for admin dropdowns
  */
 export const FORMAT_OPTIONS = [
-  { value: 'super_banner_topo', label: 'Topo (Super Banner)', description: 'Principal, topo do site' },
-  { value: 'anuncio_home', label: 'Home (Destaque)', description: 'Área de destaque na home' },
-  { value: 'retangulo_medio', label: 'Conteúdo (Retângulo)', description: 'Meio de matérias, sidebar' },
-  { value: 'arranha_ceu', label: 'Impacto (Arranha-céu)', description: 'Laterais, alta visibilidade' },
-  { value: 'popup_inteligente', label: 'Pop-up', description: 'Máx. 1x por sessão' },
+  { value: 'super_banner_topo', label: 'Mega Destaque (970×250)', description: 'Grande impacto visual para branding e lançamentos. Exibido abaixo do menu e entre blocos da home.' },
+  { value: 'anuncio_home', label: 'Destaque Horizontal (728×90)', description: 'Faixa horizontal no topo das páginas, ideal para visibilidade constante em matérias e categorias.' },
+  { value: 'retangulo_medio', label: 'Destaque Inteligente (300×250)', description: 'Formato versátil e performático para conversão. Exibido no meio do conteúdo e sidebar.' },
+  { value: 'arranha_ceu', label: 'Painel Vertical (300×600)', description: 'Formato vertical com grande área visual, excelente para campanhas institucionais na barra lateral.' },
+  { value: 'popup_inteligente', label: 'Alerta Comercial (580×400)', description: 'Chamada direta com forte atenção do usuário. Controle de frequência e botão de fechar.' },
 ] as const;
 
 /**

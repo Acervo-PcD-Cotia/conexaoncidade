@@ -124,19 +124,19 @@ export function getImageDimensionsFromUrl(url: string): Promise<ImageDimensions>
  */
 const SLOT_DEFINITIONS = {
   ads: [
-    { key: '728x90', label: 'Leaderboard', width: 728, height: 90 },
-    { key: '970x250', label: 'Super Banner', width: 970, height: 250 },
-    { key: '300x250', label: 'Retângulo Médio', width: 300, height: 250 },
-    { key: '300x600', label: 'Arranha-céu', width: 300, height: 600 },
-    { key: '580x400', label: 'Pop-up', width: 580, height: 400 },
+    { key: '728x90', label: 'Destaque Horizontal', width: 728, height: 90 },
+    { key: '970x250', label: 'Mega Destaque', width: 970, height: 250 },
+    { key: '300x250', label: 'Destaque Inteligente', width: 300, height: 250 },
+    { key: '300x600', label: 'Painel Vertical', width: 300, height: 600 },
+    { key: '580x400', label: 'Alerta Comercial', width: 580, height: 400 },
   ],
   publidoor: [
-    { key: '970x250', label: 'Banner Grande', width: 970, height: 250 },
-    { key: '300x250', label: 'Retângulo', width: 300, height: 250 },
-    { key: '300x600', label: 'Vertical', width: 300, height: 600 },
+    { key: '970x250', label: 'Destaque Premium', width: 970, height: 250 },
+    { key: '300x250', label: 'Destaque Editorial', width: 300, height: 250 },
+    { key: '300x600', label: 'Painel Vertical', width: 300, height: 600 },
   ],
   webstories: [
-    { key: '1080x1920', label: 'Capa Story', width: 1080, height: 1920 },
+    { key: '1080x1920', label: 'Story Premium', width: 1080, height: 1920 },
   ],
 } as const;
 
