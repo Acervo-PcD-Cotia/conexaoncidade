@@ -245,6 +245,8 @@ export function BatchAssetUploader({
     ...OFFICIAL_SLOTS.ads.map(s => ({ ...s, channel: 'ads' as const })),
     ...OFFICIAL_SLOTS.publidoor.map(s => ({ ...s, channel: 'publidoor' as const })),
     ...OFFICIAL_SLOTS.webstories.map(s => ({ ...s, channel: 'webstories' as const })),
+    ...(OFFICIAL_SLOTS.login ? OFFICIAL_SLOTS.login.map(s => ({ ...s, channel: 'login' as const })) : []),
+    ...(OFFICIAL_SLOTS.experience ? OFFICIAL_SLOTS.experience.map(s => ({ ...s, channel: 'experience' as const })) : []),
   ];
 
   return (

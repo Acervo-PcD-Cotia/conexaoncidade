@@ -7,9 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
-import { Loader2, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Mail, Lock, Eye, EyeOff, Clock } from 'lucide-react';
 import conexaoLogo from "@/assets/conexao-logo-login.png";
 import { LoginPanelAd } from '@/components/auth/LoginPanelAd';
+import { useNews } from '@/hooks/useNews';
 
 const ADMIN_ROLES = ['super_admin', 'admin', 'editor', 'editor_chief', 'reporter', 'columnist', 'moderator', 'commercial', 'financial'];
 
@@ -42,6 +43,7 @@ export default function Auth() {
   
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  const { data: latestNews } = useNews(4);
 
   useEffect(() => {
     if (user) {
@@ -132,9 +134,30 @@ export default function Auth() {
         </div>
         
         {/* Painel de banners */}
-        <div className="flex-1 w-full max-w-[720px] px-8 pb-8">
+        <div className="flex-1 w-full max-w-[720px] px-8 pb-4">
           <LoginPanelAd className="w-full h-full" />
         </div>
+
+        {/* Últimas notícias no login */}
+        {latestNews && latestNews.length > 0 && (
+          <div className="w-full max-w-[720px] px-8 pb-8">
+            <h3 className="text-sm font-semibold text-foreground/70 mb-2">Últimas Notícias</h3>
+            <div className="space-y-1.5">
+              {latestNews.slice(0, 4).map((item) => (
+                <a
+                  key={item.id}
+                  href={`/noticia/${item.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-sm text-foreground/80 hover:text-primary transition-colors group"
+                >
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                  <span className="line-clamp-1 flex-1 group-hover:underline">{item.title}</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Mobile header */}
@@ -151,6 +174,25 @@ export default function Auth() {
         <div className="mt-4 w-full max-w-sm">
           <LoginPanelAd className="w-full" compact />
         </div>
+        {/* Mobile: últimas notícias */}
+        {latestNews && latestNews.length > 0 && (
+          <div className="mt-3 w-full max-w-sm">
+            <div className="space-y-1">
+              {latestNews.slice(0, 3).map((item) => (
+                <a
+                  key={item.id}
+                  href={`/noticia/${item.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-xs text-foreground/80 hover:text-primary transition-colors"
+                >
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                  <span className="line-clamp-1 flex-1">{item.title}</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Coluna Direita — Card de Login */}

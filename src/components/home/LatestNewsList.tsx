@@ -4,6 +4,7 @@ import { Clock, RefreshCw, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNews } from "@/hooks/useNews";
 import { NewsCardVisual } from "./NewsCardVisual";
+import { InlineAdSlot } from "@/components/ads/InlineAdSlot";
 
 function formatTimeAgo(date: string) {
   const now = new Date();
@@ -89,9 +90,9 @@ export function LatestNewsList() {
         </Button>
       </div>
 
-      {/* Visual cards grid */}
+      {/* Visual cards grid - first row */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {featuredNews.map((item, index) => (
+        {featuredNews.slice(0, 4).map((item, index) => (
           <NewsCardVisual 
             key={item.id} 
             news={item} 
@@ -100,6 +101,25 @@ export function LatestNewsList() {
           />
         ))}
       </div>
+
+      {/* Inline ad between rows */}
+      <div className="my-4 flex justify-center">
+        <InlineAdSlot position={1} className="max-w-[300px]" />
+      </div>
+
+      {/* Visual cards grid - second row */}
+      {featuredNews.length > 4 && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {featuredNews.slice(4).map((item) => (
+            <NewsCardVisual 
+              key={item.id} 
+              news={item} 
+              priority={false}
+              showActions={false}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Compact list for additional news */}
       {compactNews.length > 0 && (
