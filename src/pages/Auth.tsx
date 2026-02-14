@@ -118,40 +118,40 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col lg:grid lg:grid-cols-[1.2fr_0.8fr]">
+    <div className="min-h-screen flex flex-col lg:grid lg:grid-cols-[1.2fr_0.8fr] lg:h-screen lg:overflow-hidden">
       {/* Coluna Esquerda — Painel de Propaganda */}
-      <div className="relative hidden lg:flex lg:flex-col items-center bg-[hsl(30,60%,95%)]">
+      <div className="relative hidden lg:flex lg:flex-col items-center bg-[hsl(30,60%,95%)] h-full overflow-hidden">
         {/* Logo centralizado no topo */}
-        <div className="flex justify-center pt-10 pb-6 px-8">
+        <div className="flex justify-center pt-6 pb-3 px-8 shrink-0">
           <img 
             src={conexaoLogo} 
             alt="Conexão na Cidade" 
-            width={280}
-            height={100}
+            width={180}
+            height={64}
             loading="eager"
-            className="max-w-[260px] h-auto object-contain"
+            className="max-w-[180px] h-auto object-contain"
           />
         </div>
         
         {/* Painel de banners */}
-        <div className="flex-1 w-full max-w-[720px] px-8 pb-4">
+        <div className="flex-1 w-full max-w-[720px] px-8 pb-3 min-h-0 max-h-[50vh] shrink">
           <LoginPanelAd className="w-full h-full" />
         </div>
 
         {/* Últimas notícias no login */}
         {latestNews && latestNews.length > 0 && (
-          <div className="w-full max-w-[720px] px-8 pb-8">
-            <h3 className="text-sm font-semibold text-foreground/70 mb-2">Últimas Notícias</h3>
-            <div className="space-y-1.5">
-              {latestNews.slice(0, 4).map((item) => (
+          <div className="w-full max-w-[720px] px-8 pb-4 shrink-0">
+            <h3 className="text-xs font-semibold text-foreground/70 mb-1.5">Últimas Notícias</h3>
+            <div className="space-y-1">
+              {latestNews.slice(0, 3).map((item) => (
                 <a
                   key={item.id}
                   href={`/noticia/${item.slug}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-sm text-foreground/80 hover:text-primary transition-colors group"
+                  className="flex items-center gap-2 text-xs text-foreground/80 hover:text-primary transition-colors group"
                 >
-                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                  <span className="h-1 w-1 shrink-0 rounded-full bg-primary" />
                   <span className="line-clamp-1 flex-1 group-hover:underline">{item.title}</span>
                 </a>
               ))}
@@ -196,7 +196,7 @@ export default function Auth() {
       </div>
 
       {/* Coluna Direita — Card de Login */}
-      <div className="flex-1 flex items-center justify-center p-6 lg:p-12 bg-muted/30">
+      <div className="flex-1 flex items-center justify-center p-6 lg:p-12 bg-muted/30 lg:overflow-auto">
         <div className="w-full max-w-md bg-background border border-border/50 shadow-lg rounded-xl p-8">
           <form onSubmit={handleLogin} className="space-y-6">
             {/* Campo Email */}

@@ -152,6 +152,8 @@ export function CampaignForm({
       newsletterConfig: channelConfigs.newsletter,
       exitIntentConfig: channelConfigs.exit_intent,
       loginPanelConfig: channelConfigs.login_panel,
+      bannerIntroConfig: channelConfigs.banner_intro,
+      floatingAdConfig: channelConfigs.floating_ad,
       assets: formAssets,
     });
   });
@@ -352,6 +354,14 @@ export function CampaignForm({
                   setAsset('publidoor', asset.file_url);
                 } else if (channel === 'webstories') {
                   setAsset('webstories', asset.file_url);
+                } else if (channel === 'banner_intro') {
+                  setAsset('bannerIntro', asset.file_url);
+                } else if (channel === 'floating_ad') {
+                  setAsset('floatingAd', asset.file_url);
+                } else if (channel === 'exit_intent') {
+                  setAsset('exitIntentHero', asset.file_url);
+                } else if (channel === 'login_panel') {
+                  setAsset('loginPanel', asset.file_url);
                 }
               });
             }}
