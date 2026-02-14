@@ -84,13 +84,13 @@ export function ExitIntentModal({ className }: ExitIntentModalProps) {
   return (
     <div 
       className={cn(
-        "fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end justify-center p-4 pb-8 md:items-end md:pb-12",
+        "fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end justify-center p-4 pb-6 md:pb-8",
         className
       )}
       onClick={handleDismiss}
     >
       <div 
-        className="relative bg-background rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-300"
+        className="relative bg-background rounded-xl shadow-2xl max-w-3xl w-full max-h-[70vh] overflow-auto animate-in slide-in-from-bottom-8 fade-in duration-300"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}
