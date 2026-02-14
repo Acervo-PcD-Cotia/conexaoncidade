@@ -1,34 +1,64 @@
 
-# Plano: Login sem Rolagem e Novos Canais no Upload de Criativos
+# Plano: Nomes Comerciais, Menu Lateral Funcional e Publidoor 404
 
-## 1. Organizar Login sem Barra de Rolagem
+## Problemas Identificados
 
-**Problema:** O painel esquerdo (logo + banner + noticias) ultrapassa a altura da tela, forcando rolagem.
+### 1. Nomes tecnicos nos slots de anuncios
+A pagina `Ads.tsx` usa nomes tecnicos como "Home Topo", "Home Banner", "Arranha-ceu", "Pop-up" em vez dos nomes comerciais padronizados: "Destaque Horizontal", "Mega Destaque", "Painel Vertical", "Alerta Comercial".
 
-**Solucao no arquivo `src/pages/Auth.tsx`:**
-- Usar `h-screen overflow-hidden` no container principal (desktop)
-- Reduzir o logo de 280px para 180px e diminuir padding (pt-6 pb-3)
-- Limitar a area do banner publicitario com `max-h-[50vh]` e `flex-shrink`
-- Tornar as noticias mais compactas (max 3 itens, texto menor)
-- Usar `flex-col` com `overflow-hidden` para que tudo caiba em 100vh sem scroll
-- No lado direito, centralizar o card de login verticalmente com `overflow-auto` caso necessario
+### 2. Links do menu lateral nao filtram campanhas
+Os links "Banner Intro", "Destaque Flutuante", "Exit-Intent" e "Painel de Login" passam `?channel=banner_intro` na URL, porem a pagina `CampaignsUnified.tsx` nao le parametros da URL -- usa apenas estado local. Resultado: o filtro nunca e aplicado.
 
-## 2. Conectar Novos Canais no Upload de Criativos
+### 3. Publidoor da 404
+O componente `PublidoorDashboard.tsx` usa links com `/admin/publidoor/criar` (rota legada) em vez de `/spah/painel/publidoor/criar` (rota obfuscada correta). O mesmo problema afeta `CommercialReports.tsx`.
 
-**Problema:** No `CampaignForm.tsx`, o `onAssetsUploaded` so trata `ads`, `publidoor` e `webstories`. Os novos canais (`banner_intro`, `floating_ad`, `exit_intent`, `login_panel`) sao ignorados quando imagens sao enviadas pelo BatchAssetUploader.
+---
 
-**Solucao no arquivo `src/components/admin/campaigns/CampaignForm.tsx`:**
-- Expandir o callback `onAssetsUploaded` para incluir os novos canais:
-  - `banner_intro` -> `setAsset('bannerIntro', url)`
-  - `floating_ad` -> `setAsset('floatingAd', url)`  
-  - `exit_intent` -> `setAsset('exitIntentHero', url)`
-  - `login_panel` -> `setAsset('loginPanel', url)`
+## Alteracoes Propostas
+
+### A. Corrigir nomes comerciais nos slots (Ads.tsx)
+
+**Arquivo: `src/pages/admin/Ads.tsx`**
+
+Atualizar o array `AD_SLOTS` para usar os nomes comerciais oficiais:
+
+```text
+Antes                          Depois
+Home Topo (728x90)          -> Destaque Horizontal (728x90)
+Home Banner (970x250)       -> Mega Destaque (970x250)
+Super Banner Topo (970x250) -> Mega Destaque Topo (970x250)
+Retangulo Medio (300x250)   -> Destaque Inteligente (300x250)
+Arranha-ceu (300x600)       -> Painel Vertical (300x600)
+Pop-up (580x400)            -> Alerta Comercial (580x400)
+```
+
+### B. Fazer links do sidebar funcionarem (CampaignsUnified.tsx)
+
+**Arquivo: `src/pages/admin/campaigns/CampaignsUnified.tsx`**
+
+- Importar `useSearchParams` do `react-router-dom`
+- Na inicializacao, ler o parametro `channel` da URL
+- Usar esse valor como filtro inicial do `channelFilter`
+- Quando o parametro mudar (navegacao pelo sidebar), atualizar o filtro
+
+### C. Corrigir rotas do Publidoor (2 arquivos)
+
+**Arquivo: `src/pages/admin/publidoor/PublidoorDashboard.tsx`**
+- Trocar todos os `/admin/publidoor/...` por `/spah/painel/publidoor/...`
+
+**Arquivo: `src/pages/admin/CommercialReports.tsx`**
+- Trocar todos os `/admin/publidoor/...` por `/spah/painel/publidoor/...`
 
 ---
 
 ## Detalhes Tecnicos
 
-### Arquivos a editar (2)
+### Arquivos a editar (4)
 
-1. **`src/pages/Auth.tsx`** -- layout compacto sem scroll, elementos redimensionados para caber em 100vh
-2. **`src/components/admin/campaigns/CampaignForm.tsx`** -- expandir onAssetsUploaded com mapeamento dos 4 novos canais
+1. **`src/pages/admin/Ads.tsx`** -- nomes comerciais no array AD_SLOTS
+2. **`src/pages/admin/campaigns/CampaignsUnified.tsx`** -- ler searchParams da URL para filtro de canal
+3. **`src/pages/admin/publidoor/PublidoorDashboard.tsx`** -- corrigir rotas /admin/ para /spah/painel/
+4. **`src/pages/admin/CommercialReports.tsx`** -- corrigir rotas /admin/ para /spah/painel/
+
+### Nenhum arquivo novo necessario
+### Nenhuma alteracao no banco de dados
