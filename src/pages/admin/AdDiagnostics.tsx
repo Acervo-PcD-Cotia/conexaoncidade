@@ -62,19 +62,36 @@ interface PageConfig {
   expectedSlots: string[];
 }
 
-const PAGE_CONFIGS: PageConfig[] = [
+const STATIC_PAGE_CONFIGS: PageConfig[] = [
   {
     label: 'Home Pública',
     path: '/',
     expectedSlots: [
       'leaderboard', 'super_banner', 'retangulo_medio', 'arranha_ceu',
-      'popup', 'banner_intro', 'destaque_flutuante', 'alerta_full_saida',
+      'banner_intro', 'destaque_flutuante', 'alerta_full_saida',
+      // popup is conditional (timer), but wrapper should exist
+      'popup',
     ],
   },
   {
     label: 'Login',
     path: '/spah',
     expectedSlots: ['login_formato_01', 'login_formato_02', 'login_formato_03'],
+  },
+  {
+    label: 'Matéria (padrão)',
+    path: '/noticia/cotia-realiza-jornada-da-reforma-tributaria-para-empreendedores',
+    expectedSlots: [
+      'leaderboard', 'retangulo_medio', 'arranha_ceu',
+      'destaque_flutuante', 'alerta_full_saida',
+    ],
+  },
+  {
+    label: 'WebStories (Feed)',
+    path: '/stories',
+    expectedSlots: [
+      'story_cover',
+    ],
   },
 ];
 
@@ -228,8 +245,11 @@ async function scanIframe(iframe: HTMLIFrameElement, expectedSlots: string[], pa
 
 function getExpectedPageKey(path: string): string {
   if (path === '/') return 'home';
-  if (path.includes('/spah')) return 'login';
-  if (path.includes('/noticia')) return 'article';
+  if (path.startsWith('/spah')) return 'login';
+  if (path.startsWith('/noticia/')) return 'article';
+  if (path.startsWith('/esportes/') && path.includes('/noticia/')) return 'article';
+  if (path === '/stories') return 'webstories_feed';
+  if (path.startsWith('/stories/')) return 'webstories_viewer';
   return 'global';
 }
 
@@ -254,6 +274,60 @@ export default function AdDiagnostics() {
   const [selectedPages, setSelectedPages] = useState<string[]>(['/']);
   const [iframeStatus, setIframeStatus] = useState<Record<string, 'loading' | 'ready' | 'error'>>({});
   const iframeRefs = useRef<Record<string, HTMLIFrameElement | null>>({});
+
+  // Dynamic PAGE_CONFIGS: fetch real article slug + campaign ID for stories viewer
+  const { data: dynamicConfigs } = useQuery({
+    queryKey: ['ad-diagnostics-dynamic-pages'],
+    queryFn: async () => {
+      const configs: PageConfig[] = [...STATIC_PAGE_CONFIGS];
+
+      // Get a real article slug
+      const { data: newsRow } = await supabase
+        .from('news')
+        .select('slug')
+        .eq('status', 'published')
+        .order('published_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (newsRow?.slug) {
+        // Update matéria path with real slug
+        const materia = configs.find(c => c.label === 'Matéria (padrão)');
+        if (materia) materia.path = `/noticia/${newsRow.slug}`;
+
+        // Also add esportes variant
+        configs.push({
+          label: 'Matéria (Esportes)',
+          path: `/esportes/brasileirao/noticia/${newsRow.slug}`,
+          expectedSlots: ['leaderboard', 'retangulo_medio', 'arranha_ceu', 'destaque_flutuante', 'alerta_full_saida'],
+        });
+      }
+
+      // Get a real campaign ID for webstories viewer
+      const { data: storyCampaign } = await supabase
+        .from('campaigns_unified')
+        .select('id, channels:campaign_channels!inner(channel_type, enabled)')
+        .eq('status', 'active')
+        .limit(10);
+
+      const wsId = storyCampaign?.find((c: any) =>
+        c.channels?.some((ch: any) => ch.channel_type === 'webstories' && ch.enabled)
+      )?.id || storyCampaign?.[0]?.id;
+
+      if (wsId) {
+        configs.push({
+          label: 'WebStories (Viewer)',
+          path: `/stories/${wsId}`,
+          expectedSlots: ['story_cover'],
+        });
+      }
+
+      return configs;
+    },
+    staleTime: 60_000,
+  });
+
+  const PAGE_CONFIGS = dynamicConfigs || STATIC_PAGE_CONFIGS;
 
   // DB data
   const { data: dbData, refetch: refetchDb } = useQuery({

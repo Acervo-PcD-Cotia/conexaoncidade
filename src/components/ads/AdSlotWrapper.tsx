@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
-export type AdPage = 'home' | 'article' | 'login' | 'webstories' | 'global';
+export type AdPage = 'home' | 'article' | 'login' | 'webstories_feed' | 'webstories_viewer' | 'global';
 
 interface AdSlotWrapperProps {
   slotId: string;
