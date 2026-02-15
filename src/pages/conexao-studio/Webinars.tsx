@@ -105,7 +105,7 @@ export default function Webinars() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
-                  <Link to={`/admin/conexao-studio/webinars/${webinar.id}/edit`}>
+                  <Link to={`/spah/painel/conexao-studio/webinars/${webinar.id}/edit`}>
                     <Pencil className="h-4 w-4 mr-2" />
                     Editar
                   </Link>
@@ -169,7 +169,7 @@ export default function Webinars() {
             <div className="flex items-center gap-2 pt-2">
               {!isPastEvent && (
                 <Button asChild className="flex-1" size="sm">
-                  <Link to={`/admin/conexao-studio/webinars/${webinar.id}/studio`}>
+                  <Link to={`/spah/painel/conexao-studio/webinars/${webinar.id}/studio`}>
                     <Play className="h-4 w-4 mr-1" />
                     Iniciar
                   </Link>
@@ -177,7 +177,7 @@ export default function Webinars() {
               )}
               {isPastEvent && webinar.recording_url && (
                 <Button asChild className="flex-1" size="sm" variant="outline">
-                  <Link to={`/admin/conexao-studio/webinars/${webinar.id}`}>
+                  <Link to={`/spah/painel/conexao-studio/webinars/${webinar.id}`}>
                     <Video className="h-4 w-4 mr-1" />
                     Ver Gravação
                   </Link>
@@ -211,7 +211,7 @@ export default function Webinars() {
           </p>
         </div>
         <Button asChild className="gap-2">
-          <Link to="/admin/conexao-studio/webinars/new">
+          <Link to="/spah/painel/conexao-studio/webinars/new">
             <Plus className="h-4 w-4" />
             Novo Webinário
           </Link>
@@ -279,7 +279,7 @@ export default function Webinars() {
                   Crie seu primeiro webinário para alcançar sua audiência.
                 </p>
                 <Button asChild className="gap-2">
-                  <Link to="/admin/conexao-studio/webinars/new">
+                  <Link to="/spah/painel/conexao-studio/webinars/new">
                     <Plus className="h-4 w-4" />
                     Criar Webinário
                   </Link>

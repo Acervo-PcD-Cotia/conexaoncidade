@@ -79,7 +79,7 @@ export default function RadioOverview() {
           </CardHeader>
           <CardContent>
             <Button variant="outline" className="w-full" asChild>
-              <Link to="/admin/radio/status">Ver Status</Link>
+              <Link to="/spah/painel/radio/status">Ver Status</Link>
             </Button>
           </CardContent>
         </Card>
@@ -91,7 +91,7 @@ export default function RadioOverview() {
           </CardHeader>
           <CardContent>
             <Button variant="outline" className="w-full" asChild>
-              <Link to="/admin/radio/autodj">Configurar</Link>
+              <Link to="/spah/painel/radio/autodj">Configurar</Link>
             </Button>
           </CardContent>
         </Card>
@@ -103,7 +103,7 @@ export default function RadioOverview() {
           </CardHeader>
           <CardContent>
             <Button variant="outline" className="w-full" asChild>
-              <Link to="/admin/radio/library">Acessar</Link>
+              <Link to="/spah/painel/radio/library">Acessar</Link>
             </Button>
           </CardContent>
         </Card>
@@ -118,7 +118,7 @@ export default function RadioOverview() {
               <CardDescription>Resumo de audiência</CardDescription>
             </div>
             <Button variant="ghost" size="sm" asChild>
-              <Link to="/admin/radio/stats">Ver mais</Link>
+              <Link to="/spah/painel/radio/stats">Ver mais</Link>
             </Button>
           </CardHeader>
           <CardContent>

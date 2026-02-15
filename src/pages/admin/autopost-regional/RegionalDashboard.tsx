@@ -125,7 +125,7 @@ export default function RegionalDashboard() {
             Executar Ingestão
           </Button>
           <Button asChild>
-            <Link to="/admin/autopost-regional/fontes">
+            <Link to="/spah/painel/autopost-regional/fontes">
               <Settings className="h-4 w-4 mr-2" />
               Gerenciar Fontes
             </Link>
@@ -156,7 +156,7 @@ export default function RegionalDashboard() {
 
       {/* Quick Links */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Link to="/admin/autopost-regional/fontes" className="block">
+        <Link to="/spah/painel/autopost-regional/fontes" className="block">
           <Card className="cursor-pointer hover:border-primary/50 transition-colors h-full">
             <CardContent className="pt-6 flex items-center gap-4">
               <div className="p-3 rounded-full bg-primary/10">
@@ -169,7 +169,7 @@ export default function RegionalDashboard() {
             </CardContent>
           </Card>
         </Link>
-        <Link to="/admin/autopost-regional/fila" className="block">
+        <Link to="/spah/painel/autopost-regional/fila" className="block">
           <Card className="cursor-pointer hover:border-primary/50 transition-colors h-full">
             <CardContent className="pt-6 flex items-center gap-4">
               <div className="p-3 rounded-full bg-amber-500/10">
@@ -182,7 +182,7 @@ export default function RegionalDashboard() {
             </CardContent>
           </Card>
         </Link>
-        <Link to="/admin/autopost-regional/logs" className="block">
+        <Link to="/spah/painel/autopost-regional/logs" className="block">
           <Card className="cursor-pointer hover:border-primary/50 transition-colors h-full">
             <CardContent className="pt-6 flex items-center gap-4">
               <div className="p-3 rounded-full bg-blue-500/10">
@@ -195,7 +195,7 @@ export default function RegionalDashboard() {
             </CardContent>
           </Card>
         </Link>
-        <Link to="/admin/autopost" className="block">
+        <Link to="/spah/painel/autopost" className="block">
           <Card className="cursor-pointer hover:border-primary/50 transition-colors h-full">
             <CardContent className="pt-6 flex items-center gap-4">
               <div className="p-3 rounded-full bg-purple-500/10">

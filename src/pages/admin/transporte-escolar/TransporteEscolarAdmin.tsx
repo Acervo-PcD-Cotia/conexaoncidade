@@ -26,14 +26,14 @@ export default function TransporteEscolarAdmin() {
     {
       title: "Escolas",
       description: "Gerenciar catálogo de escolas",
-      href: "/admin/transporte-escolar/escolas",
+      href: "/spah/painel/transporte-escolar/escolas",
       icon: School,
       stats: `${activeSchools} ativas`,
     },
     {
       title: "Transportadores",
       description: "Aprovar e gerenciar transportadores",
-      href: "/admin/transporte-escolar/transportadores",
+      href: "/spah/painel/transporte-escolar/transportadores",
       icon: Users,
       stats: pendingTransporters > 0 ? `${pendingTransporters} pendentes` : `${activeTransporters} ativos`,
       alert: pendingTransporters > 0,
@@ -41,7 +41,7 @@ export default function TransporteEscolarAdmin() {
     {
       title: "Leads",
       description: "Solicitações de pais",
-      href: "/admin/transporte-escolar/leads",
+      href: "/spah/painel/transporte-escolar/leads",
       icon: MessageSquare,
       stats: newLeads > 0 ? `${newLeads} novos` : "Nenhum novo",
       alert: newLeads > 0,
@@ -49,7 +49,7 @@ export default function TransporteEscolarAdmin() {
     {
       title: "Denúncias",
       description: "Gerenciar denúncias",
-      href: "/admin/transporte-escolar/denuncias",
+      href: "/spah/painel/transporte-escolar/denuncias",
       icon: AlertTriangle,
       stats: pendingReports > 0 ? `${pendingReports} pendentes` : "Nenhuma pendente",
       alert: pendingReports > 0,
@@ -80,7 +80,7 @@ export default function TransporteEscolarAdmin() {
             <AlertTitle>Nenhuma escola cadastrada</AlertTitle>
             <AlertDescription className="flex items-center justify-between">
               <span>Importe o catálogo de escolas antes de começar a receber cadastros de transportadores.</span>
-              <Link to="/admin/transporte-escolar/escolas">
+              <Link to="/spah/painel/transporte-escolar/escolas">
                 <Button size="sm" variant="outline" className="gap-2 ml-4">
                   <Upload className="h-4 w-4" />
                   Importar Escolas

@@ -28,7 +28,7 @@ const mainModule = {
   color: "indigo",
   weeks: 10,
   status: "available" as const,
-  href: "/admin/academy/enem/redacao-nota-1000",
+  href: "/spah/painel/academy/enem/redacao-nota-1000",
 };
 
 const upcomingModules = [

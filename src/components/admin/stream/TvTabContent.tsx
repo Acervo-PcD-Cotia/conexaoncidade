@@ -117,7 +117,7 @@ export function TvTabContent() {
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-3">
         <Button asChild>
-          <Link to="/admin/streaming/tv">
+          <Link to="/spah/painel/streaming/tv">
             <Sliders className="h-4 w-4 mr-2" />
             Configurar TV
           </Link>
@@ -145,7 +145,7 @@ export function TvTabContent() {
           </CardHeader>
           <CardContent className="pt-0">
             <Button variant="outline" className="w-full" asChild>
-              <Link to="/admin/streaming/tv">Ver Configuração</Link>
+              <Link to="/spah/painel/streaming/tv">Ver Configuração</Link>
             </Button>
           </CardContent>
         </Card>
@@ -178,7 +178,7 @@ export function TvTabContent() {
           </CardHeader>
           <CardContent className="pt-0">
             <Button variant="outline" className="w-full" asChild>
-              <Link to="/admin/streaming/tv">Acessar</Link>
+              <Link to="/spah/painel/streaming/tv">Acessar</Link>
             </Button>
           </CardContent>
         </Card>

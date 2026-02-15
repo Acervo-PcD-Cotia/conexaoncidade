@@ -206,7 +206,7 @@ export default function AcademyAdminCourses() {
 
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" asChild>
-                  <Link to={`/admin/academy/admin/cursos/${course.id}/aulas`}>
+                  <Link to={`/spah/painel/academy/admin/cursos/${course.id}/aulas`}>
                     Aulas
                   </Link>
                 </Button>

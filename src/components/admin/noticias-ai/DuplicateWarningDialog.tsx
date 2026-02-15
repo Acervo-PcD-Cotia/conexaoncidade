@@ -102,7 +102,7 @@ export function DuplicateWarningDialog({
               className="flex-1"
               asChild
             >
-              <Link to={`/admin/news/${duplicate.existingId}/edit`} target="_blank">
+              <Link to={`/spah/painel/news/${duplicate.existingId}/edit`} target="_blank">
                 <FileText className="mr-1 h-4 w-4" />
                 Ver existente
                 <ExternalLink className="ml-1 h-3 w-3" />

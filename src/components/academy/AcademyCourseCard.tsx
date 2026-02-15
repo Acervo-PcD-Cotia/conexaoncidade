@@ -16,7 +16,7 @@ export function AcademyCourseCard({ course, progress = 0, className }: AcademyCo
 
   return (
     <Link
-      to={`/admin/academy/curso/${course.slug}`}
+      to={`/spah/painel/academy/curso/${course.slug}`}
       className={cn(
         "group relative block rounded-lg overflow-hidden transition-all duration-300",
         "bg-zinc-900 hover:bg-zinc-800 hover:scale-105 hover:shadow-xl hover:shadow-primary/10",

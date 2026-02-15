@@ -134,7 +134,7 @@ export default function StoriesList() {
           <p className="text-muted-foreground">Gerencie as stories do portal</p>
         </div>
         <Button asChild>
-          <Link to="/admin/stories/new">
+          <Link to="/spah/painel/stories/new">
             <Plus className="mr-2 h-4 w-4" />
             Nova Story
           </Link>
@@ -265,7 +265,7 @@ export default function StoriesList() {
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuItem asChild>
-                          <Link to={`/admin/stories/${story.id}/edit`}>
+                          <Link to={`/spah/painel/stories/${story.id}/edit`}>
                             <Edit className="mr-2 h-4 w-4" />
                             Editar
                           </Link>

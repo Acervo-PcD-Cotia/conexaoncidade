@@ -86,7 +86,7 @@ export default function EsportesDashboard() {
             {syncMutation.isPending ? 'Sincronizando...' : 'Sincronizar'}
           </Button>
           <Button asChild variant="outline">
-            <Link to="/admin/esportes/configurar">
+            <Link to="/spah/painel/esportes/configurar">
               <Settings className="h-4 w-4 mr-2" />
               Configurar Módulo
             </Link>
@@ -144,7 +144,7 @@ export default function EsportesDashboard() {
                 <p className="text-sm text-muted-foreground">20 times • Temporada 2025</p>
               </div>
               <Button asChild size="sm">
-                <Link to="/admin/esportes/brasileirao?serie=a">
+                <Link to="/spah/painel/esportes/brasileirao?serie=a">
                   Ver <ArrowRight className="h-4 w-4 ml-1" />
                 </Link>
               </Button>
@@ -155,7 +155,7 @@ export default function EsportesDashboard() {
                 <p className="text-sm text-muted-foreground">20 times • Temporada 2025</p>
               </div>
               <Button asChild size="sm" variant="outline">
-                <Link to="/admin/esportes/brasileirao?serie=b">
+                <Link to="/spah/painel/esportes/brasileirao?serie=b">
                   Ver <ArrowRight className="h-4 w-4 ml-1" />
                 </Link>
               </Button>
@@ -198,7 +198,7 @@ export default function EsportesDashboard() {
                 </p>
                 {teamsCount === 0 && (
                   <Button asChild className="mt-4">
-                    <Link to="/admin/esportes/configurar">
+                    <Link to="/spah/painel/esportes/configurar">
                       Configurar Agora
                     </Link>
                   </Button>
@@ -237,25 +237,25 @@ export default function EsportesDashboard() {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <Button asChild variant="outline" className="h-auto py-4 flex-col gap-2">
-              <Link to="/admin/esportes/brasileirao/sync">
+              <Link to="/spah/painel/esportes/brasileirao/sync">
                 <RefreshCw className="h-5 w-5" />
                 <span className="text-xs">Sync & Logs</span>
               </Link>
             </Button>
             <Button asChild variant="outline" className="h-auto py-4 flex-col gap-2">
-              <Link to="/admin/esportes/brasileirao/transmissoes">
+              <Link to="/spah/painel/esportes/brasileirao/transmissoes">
                 <Calendar className="h-5 w-5" />
                 <span className="text-xs">Transmissões</span>
               </Link>
             </Button>
             <Button asChild variant="outline" className="h-auto py-4 flex-col gap-2">
-              <Link to="/admin/esportes/brasileirao/noticias">
+              <Link to="/spah/painel/esportes/brasileirao/noticias">
                 <Award className="h-5 w-5" />
                 <span className="text-xs">Notícias IA</span>
               </Link>
             </Button>
             <Button asChild variant="outline" className="h-auto py-4 flex-col gap-2">
-              <Link to="/admin/esportes/configurar">
+              <Link to="/spah/painel/esportes/configurar">
                 <Settings className="h-5 w-5" />
                 <span className="text-xs">Configurar</span>
               </Link>

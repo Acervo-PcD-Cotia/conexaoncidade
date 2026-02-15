@@ -85,7 +85,7 @@ export default function AutoPostSources() {
           </p>
         </div>
         <Button asChild>
-          <Link to="/admin/autopost/sources/new">
+          <Link to="/spah/painel/autopost/sources/new">
             <Plus className="h-4 w-4 mr-2" />
             Nova Fonte
           </Link>
@@ -243,7 +243,7 @@ export default function AutoPostSources() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem asChild>
-                            <Link to={`/admin/autopost/sources/${source.id}`}>
+                            <Link to={`/spah/painel/autopost/sources/${source.id}`}>
                               <Pencil className="h-4 w-4 mr-2" />
                               Editar
                             </Link>

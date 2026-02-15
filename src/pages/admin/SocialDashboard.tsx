@@ -32,7 +32,7 @@ export default function SocialDashboard() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" asChild>
-            <NavLink to="/admin/social/settings">
+            <NavLink to="/spah/painel/social/settings">
               Configurações
             </NavLink>
           </Button>
@@ -137,7 +137,7 @@ export default function SocialDashboard() {
             </CardDescription>
           </div>
           <Button variant="ghost" size="sm" asChild>
-            <NavLink to="/admin/social/queue" className="flex items-center gap-1">
+            <NavLink to="/spah/painel/social/queue" className="flex items-center gap-1">
               Ver todos <ArrowRight className="h-4 w-4" />
             </NavLink>
           </Button>

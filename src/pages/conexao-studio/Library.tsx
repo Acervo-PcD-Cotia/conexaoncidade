@@ -184,7 +184,7 @@ export default function Library() {
                   {/* Overlay on hover */}
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                     <Button size="sm" variant="secondary" asChild>
-                      <Link to={`/admin/conexao-studio/library/${recording.id}`}>
+                      <Link to={`/spah/painel/conexao-studio/library/${recording.id}`}>
                         <Play className="h-4 w-4 mr-1" />
                         Assistir
                       </Link>
@@ -222,7 +222,7 @@ export default function Library() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link to={`/admin/conexao-studio/library/${recording.id}/clip`}>
+                          <Link to={`/spah/painel/conexao-studio/library/${recording.id}/clip`}>
                             <Scissors className="h-4 w-4 mr-2" />
                             Criar Clipe
                           </Link>
@@ -299,7 +299,7 @@ export default function Library() {
 
                   <div className="flex items-center gap-2">
                     <Button size="sm" variant="outline" asChild>
-                      <Link to={`/admin/conexao-studio/library/${recording.id}`}>
+                      <Link to={`/spah/painel/conexao-studio/library/${recording.id}`}>
                         <Play className="h-4 w-4 mr-1" />
                         Assistir
                       </Link>
@@ -312,7 +312,7 @@ export default function Library() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link to={`/admin/conexao-studio/library/${recording.id}/clip`}>
+                          <Link to={`/spah/painel/conexao-studio/library/${recording.id}/clip`}>
                             <Scissors className="h-4 w-4 mr-2" />
                             Criar Clipe
                           </Link>
@@ -342,7 +342,7 @@ export default function Library() {
               Suas gravações aparecerão aqui após você iniciar uma transmissão ou gravação no estúdio.
             </p>
             <Button asChild className="gap-2">
-              <Link to="/admin/conexao-studio/studios">
+              <Link to="/spah/painel/conexao-studio/studios">
                 <Video className="h-4 w-4" />
                 Ir para Estúdios
               </Link>
