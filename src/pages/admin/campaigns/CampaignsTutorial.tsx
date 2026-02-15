@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AD_SLOTS } from '@/lib/adSlots';
 import { campaignRoutes } from '@/lib/campaignRoutes';
 import {
   ArrowLeft, Plus, Pencil, Settings, Eye, BarChart3, Image, Layers, Monitor,
@@ -235,31 +236,22 @@ export default function CampaignsTutorial() {
                   </tr>
                 </thead>
                 <tbody>
-                  {[
-                    [1, 'Ads', 'Destaque Horizontal', '728×90', 'Topo Home / Matérias'],
-                    [2, 'Ads', 'Mega Destaque', '970×250', 'Abaixo do menu'],
-                    [3, 'Ads', 'Destaque Inteligente', '300×250', 'Meio matéria / Sidebar'],
-                    [4, 'Ads', 'Painel Vertical', '300×600', 'Lateral Home'],
-                    [5, 'Ads', 'Alerta Comercial', '580×400', 'Pop-up controlado'],
-                    [6, 'Publidoor', 'Destaque Premium', '970×250', 'Telas urbanas'],
-                    [7, 'Publidoor', 'Destaque Editorial', '300×250', 'Inline'],
-                    [8, 'Publidoor', 'Painel Vertical', '300×600', 'Laterais'],
-                    [9, 'WebStories', 'Story Premium', '1080×1920', 'Feed mobile'],
-                    [10, 'Login', 'Login 01', '800×500', 'Hero login'],
-                    [11, 'Login', 'Login 02', '200×500', 'Lateral login'],
-                    [12, 'Login', 'Login 03', '400×500', 'Grid login'],
-                    [13, 'Experiência', 'Banner Intro', '970×250', 'Primeira dobra Home'],
-                    [14, 'Experiência', 'Destaque Flutuante', '300×600', 'Fixo scroll'],
-                    [15, 'Experiência', 'Alerta Full Saída', '1280×720', 'Exit intent'],
-                  ].map(([id, block, name, size, location]) => (
-                    <tr key={String(id)} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
-                      <td className="px-3 py-2 font-mono text-xs text-muted-foreground">{id}</td>
-                      <td className="px-3 py-2"><Badge variant="secondary" className="text-[10px]">{block}</Badge></td>
-                      <td className="px-3 py-2 font-medium text-foreground">{name}</td>
-                      <td className="px-3 py-2 font-mono text-xs">{size}</td>
-                      <td className="px-3 py-2 text-muted-foreground text-xs">{location}</td>
-                    </tr>
-                  ))}
+                  {AD_SLOTS.map((slot) => {
+                    const blockName = slot.channel === 'ads' ? 'Ads' 
+                      : slot.channel === 'publidoor' ? 'Publidoor'
+                      : slot.channel === 'webstories' ? 'WebStories'
+                      : slot.channel === 'login' ? 'Login'
+                      : 'Experiência';
+                    return (
+                      <tr key={slot.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                        <td className="px-3 py-2 font-mono text-xs text-muted-foreground">{slot.seq}</td>
+                        <td className="px-3 py-2"><Badge variant="secondary" className="text-[10px]">{blockName}</Badge></td>
+                        <td className="px-3 py-2 font-medium text-foreground">{slot.label}</td>
+                        <td className="px-3 py-2 font-mono text-xs">{slot.width}×{slot.height}</td>
+                        <td className="px-3 py-2 text-muted-foreground text-xs">{slot.location}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
