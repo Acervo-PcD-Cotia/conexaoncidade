@@ -62,6 +62,8 @@ export function ExitIntentModal({ className }: ExitIntentModalProps) {
       expectedWidth={1280}
       expectedHeight={720}
       page="global"
+      reserveSpace={false}
+      conditional
       className={!isVisible || isLoading || campaigns.length === 0 ? 'hidden' : ''}
     >
       <div 

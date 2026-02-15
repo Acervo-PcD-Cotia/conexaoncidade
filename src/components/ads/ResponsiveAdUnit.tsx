@@ -33,18 +33,20 @@ export function ResponsiveAdUnit({
   const dimensions = formatConfig[device as DeviceType];
 
   // Map format to slot metadata
-  const slotMap: Record<string, { channel: string; placement: string; w: number; h: number }> = {
+  const slotMap: Record<string, { channel: string; placement: string; w: number; h: number; reserve?: boolean; cond?: boolean }> = {
     SUPER_BANNER_TOPO: { channel: 'ads', placement: 'top', w: 970, h: 250 },
     ANUNCIO_HOME: { channel: 'ads', placement: 'top', w: 728, h: 90 },
     RETANGULO_MEDIO: { channel: 'ads', placement: 'inline', w: 300, h: 250 },
     ARRANHA_CEU: { channel: 'ads', placement: 'sidebar', w: 300, h: 600 },
-    POPUP_INTELIGENTE: { channel: 'ads', placement: 'modal', w: 580, h: 400 },
+    POPUP_INTELIGENTE: { channel: 'ads', placement: 'modal', w: 580, h: 400, reserve: false, cond: true },
     BANNER_INTRO: { channel: 'experience', placement: 'intro', w: 970, h: 250 },
-    DESTAQUE_FLUTUANTE: { channel: 'experience', placement: 'floating', w: 300, h: 600 },
-    ALERTA_FULL_SAIDA: { channel: 'experience', placement: 'modal', w: 1280, h: 720 },
+    DESTAQUE_FLUTUANTE: { channel: 'experience', placement: 'floating', w: 300, h: 600, reserve: false, cond: true },
+    ALERTA_FULL_SAIDA: { channel: 'experience', placement: 'modal', w: 1280, h: 720, reserve: false, cond: true },
   };
 
-  const meta = slotMap[format as string] || { channel: source, placement: 'inline', w: dimensions.width, h: dimensions.height };
+  const meta = slotMap[format as string] || { channel: source, placement: 'inline', w: dimensions.width, h: dimensions.height, reserve: true, cond: false };
+  const shouldReserve = meta.reserve !== false;
+  const isConditional = meta.cond === true;
 
   if (isLoading) {
     return (
@@ -55,6 +57,8 @@ export function ResponsiveAdUnit({
         expectedWidth={meta.w}
         expectedHeight={meta.h}
         page={page}
+        reserveSpace={shouldReserve}
+        conditional={isConditional}
         className={cn('flex flex-col items-center justify-center', className)}
       >
         <Skeleton 
@@ -77,6 +81,8 @@ export function ResponsiveAdUnit({
         expectedWidth={meta.w}
         expectedHeight={meta.h}
         page={page}
+        reserveSpace={shouldReserve}
+        conditional={isConditional}
         className={className}
       />
     );
@@ -90,6 +96,8 @@ export function ResponsiveAdUnit({
       expectedWidth={meta.w}
       expectedHeight={meta.h}
       page={page}
+      reserveSpace={shouldReserve}
+      conditional={isConditional}
       className={cn('flex flex-col items-center justify-center', className)}
     >
       <span className="mb-1 text-[10px] uppercase tracking-wider text-muted-foreground/60">
