@@ -18,8 +18,9 @@ interface SlotDiagnostic {
   slot: AdSlot;
   page: string;
   pageUrl: string;
+  isOptional: boolean;
   render: {
-    status: 'rendered' | 'invisible' | 'not_found';
+    status: 'rendered' | 'invisible' | 'not_found' | 'optional_missing';
     domElement: boolean;
     visible: boolean;
   };
@@ -59,72 +60,93 @@ interface SlotDiagnostic {
 interface PageConfig {
   label: string;
   path: string;
-  expectedSlots: string[];
+  expectedSlots: string[];     // MUST exist — if missing → not_found (bug)
+  optionalSlots?: string[];    // MAY exist — if missing → optional_missing (no penalty)
 }
 
 const STATIC_PAGE_CONFIGS: PageConfig[] = [
   {
-    label: 'Home Pública',
+    label: 'Home',
     path: '/',
     expectedSlots: [
-      'leaderboard', 'super_banner', 'retangulo_medio', 'arranha_ceu',
-      'banner_intro', 'destaque_flutuante', 'alerta_full_saida',
-      // popup is conditional (timer), but wrapper should exist
-      'popup',
+      'leaderboard', 'super_banner', 'arranha_ceu',
+    ],
+    optionalSlots: [
+      'retangulo_medio', 'banner_intro', 'destaque_flutuante',
+      'popup', 'alerta_full_saida',
     ],
   },
   {
     label: 'Login',
     path: '/spah',
-    expectedSlots: ['login_formato_01', 'login_formato_02', 'login_formato_03'],
+    expectedSlots: [],
+    optionalSlots: ['login_formato_01', 'login_formato_02', 'login_formato_03'],
   },
   {
     label: 'Matéria (padrão)',
-    path: '/noticia/cotia-realiza-jornada-da-reforma-tributaria-para-empreendedores',
-    expectedSlots: [
-      'leaderboard', 'retangulo_medio', 'arranha_ceu',
-      'destaque_flutuante', 'alerta_full_saida',
+    path: '/noticia/__AUTO__',
+    expectedSlots: ['retangulo_medio'],
+    optionalSlots: [
+      'leaderboard', 'arranha_ceu', 'destaque_flutuante', 'alerta_full_saida',
+    ],
+  },
+  {
+    label: 'Matéria (Esportes)',
+    path: '/esportes/brasileirao/noticia/__AUTO__',
+    expectedSlots: ['retangulo_medio'],
+    optionalSlots: [
+      'leaderboard', 'arranha_ceu', 'destaque_flutuante', 'alerta_full_saida',
     ],
   },
   {
     label: 'WebStories (Feed)',
     path: '/stories',
-    expectedSlots: [
-      'story_cover',
-    ],
+    expectedSlots: [],
+    optionalSlots: ['story_cover'],
+  },
+  {
+    label: 'WebStories (Viewer)',
+    path: '/stories/__AUTO__',
+    expectedSlots: [],
+    optionalSlots: ['story_cover'],
   },
 ];
 
 // ── Score ───────────────────────────────────────────────
 function calculateScore(diagnostics: SlotDiagnostic[]): number {
-  if (!diagnostics.length) return 0;
+  // Only score required (non-optional) slots
+  const required = diagnostics.filter(d => !d.isOptional);
+  if (!required.length) return 100;
   let total = 0;
-  for (const d of diagnostics) {
+  for (const d of required) {
     let s = 0;
-    // 60% rendering
     if (d.render.status === 'rendered') s += 60;
     else if (d.render.status === 'invisible') s += 30;
-    // 25% DB
     if (d.db.hasActiveAd) s += 7;
     if (d.db.hasValidDate) s += 5;
     if (d.db.hasCreative) s += 5;
     if (d.db.hasImageUrl) s += 4;
     if (d.db.imageReachable) s += 4;
-    // 15% position
     if (d.position.correctPage) s += 8;
     if (d.position.correctPlacement) s += 7;
     total += s;
   }
-  return Math.round(total / diagnostics.length);
+  let base = Math.round(total / required.length);
+  // Bonus for optional slots that rendered (+2 each, cap +10)
+  const optionalRendered = diagnostics.filter(d => d.isOptional && d.render.status === 'rendered').length;
+  base = Math.min(100, base + Math.min(optionalRendered * 2, 10));
+  return base;
 }
 
 function statusBadge(status: string) {
   if (status === 'rendered') return <Badge className="bg-green-500/15 text-green-700 border-green-500/30">✅ Renderizado</Badge>;
   if (status === 'invisible') return <Badge className="bg-yellow-500/15 text-yellow-700 border-yellow-500/30">⚠️ Invisível</Badge>;
+  if (status === 'optional_missing') return <Badge className="bg-muted text-muted-foreground border-muted">— Opcional</Badge>;
   return <Badge className="bg-red-500/15 text-red-700 border-red-500/30">❌ Não encontrado</Badge>;
 }
 
 function determineCause(d: SlotDiagnostic): string {
+  if (d.render.status === 'optional_missing') return 'Slot opcional — não inserido nesta página';
   if (d.render.status === 'not_found' && !d.db.hasActiveAd) return 'Ponto de inserção ausente + sem anúncio ativo no banco';
   if (d.render.status === 'not_found' && d.db.hasActiveAd) return 'Ponto de inserção ausente (componente/layout não renderiza o slot)';
   if (d.render.status !== 'not_found' && !d.db.hasActiveAd) return 'Sem anúncio/campanha ativa no banco para este slot/canal';
@@ -275,11 +297,12 @@ export default function AdDiagnostics() {
   const [iframeStatus, setIframeStatus] = useState<Record<string, 'loading' | 'ready' | 'error'>>({});
   const iframeRefs = useRef<Record<string, HTMLIFrameElement | null>>({});
 
-  // Dynamic PAGE_CONFIGS: fetch real article slug + campaign ID for stories viewer
+  // Dynamic PAGE_CONFIGS: resolve __AUTO__ paths from DB
   const { data: dynamicConfigs } = useQuery({
     queryKey: ['ad-diagnostics-dynamic-pages'],
     queryFn: async () => {
-      const configs: PageConfig[] = [...STATIC_PAGE_CONFIGS];
+      const configs: PageConfig[] = STATIC_PAGE_CONFIGS.map(c => ({ ...c, optionalSlots: [...(c.optionalSlots || [])] }));
+      const now = new Date().toISOString();
 
       // Get a real article slug
       const { data: newsRow } = await supabase
@@ -291,35 +314,40 @@ export default function AdDiagnostics() {
         .single();
 
       if (newsRow?.slug) {
-        // Update matéria path with real slug
-        const materia = configs.find(c => c.label === 'Matéria (padrão)');
-        if (materia) materia.path = `/noticia/${newsRow.slug}`;
-
-        // Also add esportes variant
-        configs.push({
-          label: 'Matéria (Esportes)',
-          path: `/esportes/brasileirao/noticia/${newsRow.slug}`,
-          expectedSlots: ['leaderboard', 'retangulo_medio', 'arranha_ceu', 'destaque_flutuante', 'alerta_full_saida'],
+        configs.forEach(c => {
+          if (c.path.includes('__AUTO__') && c.path.includes('/noticia/')) {
+            c.path = c.path.replace('__AUTO__', newsRow.slug);
+          }
         });
+      } else {
+        // Remove article pages if no published news
+        const toRemove = configs.filter(c => c.path.includes('/noticia/__AUTO__'));
+        toRemove.forEach(c => { const idx = configs.indexOf(c); if (idx >= 0) configs.splice(idx, 1); });
       }
 
       // Get a real campaign ID for webstories viewer
-      const { data: storyCampaign } = await supabase
+      const { data: storyCampaigns } = await supabase
         .from('campaigns_unified')
-        .select('id, channels:campaign_channels!inner(channel_type, enabled)')
+        .select(`id, assets:campaign_assets(format_key, width, height)`)
         .eq('status', 'active')
-        .limit(10);
+        .lte('starts_at', now)
+        .or(`ends_at.is.null,ends_at.gte.${now}`)
+        .limit(50);
 
-      const wsId = storyCampaign?.find((c: any) =>
-        c.channels?.some((ch: any) => ch.channel_type === 'webstories' && ch.enabled)
-      )?.id || storyCampaign?.[0]?.id;
+      const wsMatch = storyCampaigns?.find((c: any) =>
+        c.assets?.some((a: any) => a.format_key === '1080x1920' || (a.width === 1080 && a.height === 1920))
+      );
+      const wsId = wsMatch?.id || storyCampaigns?.[0]?.id;
 
-      if (wsId) {
-        configs.push({
-          label: 'WebStories (Viewer)',
-          path: `/stories/${wsId}`,
-          expectedSlots: ['story_cover'],
-        });
+      const viewerConfig = configs.find(c => c.path === '/stories/__AUTO__');
+      if (viewerConfig) {
+        if (wsId) {
+          viewerConfig.path = `/stories/${wsId}`;
+        } else {
+          // Remove viewer page if no campaign found
+          const idx = configs.indexOf(viewerConfig);
+          if (idx >= 0) configs.splice(idx, 1);
+        }
       }
 
       return configs;
@@ -403,77 +431,84 @@ export default function AdDiagnostics() {
     const allResults: SlotDiagnostic[] = [];
     const now = new Date().toISOString();
 
+    // Helper to build a diagnostic entry
+    const buildDiag = async (slot: AdSlot, scanData: Partial<SlotDiagnostic> | undefined, page: PageConfig, isOptional: boolean): Promise<SlotDiagnostic> => {
+      const matchingAd = dbData?.ads?.find((a: any) => a.slot_type === slot.id);
+      const matchingCampaign = dbData?.campaigns?.find((c: any) =>
+        c.channels?.some((ch: any) => ch.channel_type === slot.channel && ch.enabled) &&
+        c.assets?.some((a: any) => (a.channel_type === slot.channel || a.format_key === slot.key) && a.file_url)
+      );
+      const imageUrl = matchingAd?.image_url || matchingCampaign?.assets?.find((a: any) => a.file_url)?.file_url || null;
+      let imageReachable: boolean | null = null;
+      if (imageUrl) imageReachable = await checkImageReachable(imageUrl);
+
+      const hasValidDate = matchingAd
+        ? (!matchingAd.starts_at || matchingAd.starts_at <= now) && (!matchingAd.ends_at || matchingAd.ends_at >= now)
+        : !!matchingCampaign;
+
+      // For optional slots not found in DOM → optional_missing (no penalty)
+      const renderStatus = scanData?.render
+        ? scanData.render
+        : isOptional
+          ? { status: 'optional_missing' as const, domElement: false, visible: false }
+          : { status: 'not_found' as const, domElement: false, visible: false };
+
+      const diag: SlotDiagnostic = {
+        slot,
+        isOptional,
+        page: scanData?.page || page.label,
+        pageUrl: scanData?.pageUrl || page.path,
+        render: renderStatus,
+        dimension: scanData?.dimension || {
+          expected: { w: slot.width, h: slot.height },
+          actual: null, divergenceW: null, divergenceH: null, divergenceArea: null,
+        },
+        position: scanData?.position || {
+          correctPage: false, correctPlacement: false,
+          detectedPage: null, detectedPlacement: null,
+          notes: `Esperado: ${slot.placement} em ${page.label}`,
+        },
+        technical: scanData?.technical || {
+          cssHidden: false, zIndexIssue: false, overflowHidden: false, consoleError: null,
+        },
+        db: {
+          hasActiveAd: !!matchingAd || !!matchingCampaign,
+          hasValidDate,
+          hasCreative: !!(matchingAd?.image_url || matchingCampaign?.assets?.length),
+          hasImageUrl: !!imageUrl,
+          imageReachable,
+          adName: matchingAd?.name || null,
+          campaignName: matchingCampaign?.name || null,
+        },
+        cause: '',
+      };
+      diag.cause = determineCause(diag);
+      return diag;
+    };
+
     for (const page of pages) {
       const iframe = iframeRefs.current[page.path];
       if (!iframe) continue;
 
-      const scanResults = await scanIframe(iframe, page.expectedSlots, page.label, page.path);
+      const allSlotIds = [...page.expectedSlots, ...(page.optionalSlots || [])];
+      const scanResults = await scanIframe(iframe, allSlotIds, page.label, page.path);
 
+      // Process expected slots (must exist)
       for (const slotId of page.expectedSlots) {
         const slot = AD_SLOTS.find(s => s.id === slotId);
         if (!slot) continue;
+        allResults.push(await buildDiag(slot, scanResults.get(slotId), page, false));
+      }
 
-        const scanData = scanResults.get(slotId);
-
-        // DB checks
-        const matchingAd = dbData?.ads?.find((a: any) => a.slot_type === slot.id);
-        const matchingCampaign = dbData?.campaigns?.find((c: any) =>
-          c.channels?.some((ch: any) => ch.channel_type === slot.channel && ch.enabled) &&
-          c.assets?.some((a: any) => (a.channel_type === slot.channel || a.format_key === slot.key) && a.file_url)
-        );
-
-        const imageUrl = matchingAd?.image_url || matchingCampaign?.assets?.find((a: any) => a.file_url)?.file_url || null;
-        let imageReachable: boolean | null = null;
-        if (imageUrl) {
-          imageReachable = await checkImageReachable(imageUrl);
-        }
-
-        const hasValidDate = matchingAd
-          ? (!matchingAd.starts_at || matchingAd.starts_at <= now) && (!matchingAd.ends_at || matchingAd.ends_at >= now)
-          : !!matchingCampaign;
-
-        const diag: SlotDiagnostic = {
-          slot,
-          page: scanData?.page || page.label,
-          pageUrl: scanData?.pageUrl || page.path,
-          render: scanData?.render || { status: 'not_found', domElement: false, visible: false },
-          dimension: scanData?.dimension || {
-            expected: { w: slot.width, h: slot.height },
-            actual: null,
-            divergenceW: null,
-            divergenceH: null,
-            divergenceArea: null,
-          },
-          position: scanData?.position || {
-            correctPage: false,
-            correctPlacement: false,
-            detectedPage: null,
-            detectedPlacement: null,
-            notes: `Esperado: ${slot.placement}`,
-          },
-          technical: scanData?.technical || {
-            cssHidden: false,
-            zIndexIssue: false,
-            overflowHidden: false,
-            consoleError: null,
-          },
-          db: {
-            hasActiveAd: !!matchingAd || !!matchingCampaign,
-            hasValidDate,
-            hasCreative: !!(matchingAd?.image_url || matchingCampaign?.assets?.length),
-            hasImageUrl: !!imageUrl,
-            imageReachable,
-            adName: matchingAd?.name || null,
-            campaignName: matchingCampaign?.name || null,
-          },
-          cause: '',
-        };
-        diag.cause = determineCause(diag);
-        allResults.push(diag);
+      // Process optional slots (only if found in DOM, or mark as optional_missing)
+      for (const slotId of (page.optionalSlots || [])) {
+        const slot = AD_SLOTS.find(s => s.id === slotId);
+        if (!slot) continue;
+        allResults.push(await buildDiag(slot, scanResults.get(slotId), page, true));
       }
     }
 
-    // Also check Publidoor/WebStories/Experience that aren't page-specific
+    // Global slots not covered by any page
     const globalSlots = AD_SLOTS.filter(s =>
       !allResults.some(r => r.slot.id === s.id)
     );
@@ -488,11 +523,12 @@ export default function AdDiagnostics() {
 
       const diag: SlotDiagnostic = {
         slot,
-        page: 'N/A (não auditado via iframe)',
+        isOptional: true,
+        page: 'N/A (não auditado)',
         pageUrl: '',
-        render: { status: 'not_found', domElement: false, visible: false },
+        render: { status: 'optional_missing', domElement: false, visible: false },
         dimension: { expected: { w: slot.width, h: slot.height }, actual: null, divergenceW: null, divergenceH: null, divergenceArea: null },
-        position: { correctPage: false, correctPlacement: false, detectedPage: null, detectedPlacement: null, notes: `Slot de canal ${slot.channel} — verificação manual` },
+        position: { correctPage: false, correctPlacement: false, detectedPage: null, detectedPlacement: null, notes: `Canal ${slot.channel} — verificação manual` },
         technical: { cssHidden: false, zIndexIssue: false, overflowHidden: false, consoleError: null },
         db: {
           hasActiveAd: !!matchingAd || !!matchingCampaign,
@@ -578,6 +614,7 @@ export default function AdDiagnostics() {
   const rendered = diagnostics.filter(d => d.render.status === 'rendered').length;
   const invisible = diagnostics.filter(d => d.render.status === 'invisible').length;
   const broken = diagnostics.filter(d => d.render.status === 'not_found').length;
+  const optionalMissing = diagnostics.filter(d => d.render.status === 'optional_missing').length;
 
   return (
     <div className="space-y-6 p-4 md:p-6">
