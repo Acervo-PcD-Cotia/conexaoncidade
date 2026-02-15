@@ -10,6 +10,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { getCategoryTheme, getArticleThemeStyle } from "@/lib/categoryTheme";
 import { ArticleHeader, ArticleDivider } from "@/components/article";
+import { InlineAdSlot } from "@/components/ads/InlineAdSlot";
 
 const NEWS_TYPE_LABELS: Record<string, string> = {
   'round_recap': 'Resumo da Rodada',
@@ -123,6 +124,13 @@ export default function GeneratedNewsDetail() {
               />
             </CardContent>
           </Card>
+
+          {/* Inline Ad After Content - 300x250 Editorial Slot */}
+          <InlineAdSlot 
+            position={4} 
+            className="my-8"
+            page="article"
+          />
 
           {/* Related Links */}
           <div className="mt-8 flex flex-wrap gap-4">

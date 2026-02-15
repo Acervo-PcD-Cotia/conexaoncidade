@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { trackCampaignEvent } from '@/lib/trackCampaignEvent';
+import { AdSlotWrapper } from './AdSlotWrapper';
 
 interface WebStoriesViewerProps {
   storyId?: string;
@@ -220,130 +221,152 @@ export function WebStoriesViewer({ storyId, campaignId, onClose, className }: We
   };
 
   if (isLoading || !campaign) {
-    return null;
+    return (
+      <AdSlotWrapper
+        slotId="story_cover"
+        channel="webstories"
+        placement="fullscreen"
+        expectedWidth={1080}
+        expectedHeight={1920}
+        page="webstories_viewer"
+        reserveSpace={false}
+        conditional
+      />
+    );
   }
 
   const isLastSlide = currentSlide === campaign.slides.length - 1;
   const currentSlideData = campaign.slides[currentSlide];
 
   return (
-    <div 
-      className={cn(
-        "fixed inset-0 z-50 bg-black flex items-center justify-center",
-        className
-      )}
+    <AdSlotWrapper
+      slotId="story_cover"
+      channel="webstories"
+      placement="fullscreen"
+      expectedWidth={1080}
+      expectedHeight={1920}
+      page="webstories_viewer"
+      reserveSpace={false}
+      conditional
     >
-      {/* Story container - 9:16 aspect ratio */}
-      <div className="relative w-full h-full max-w-[430px] max-h-[932px] md:max-h-[90vh] bg-black overflow-hidden">
-        {/* Progress bars */}
-        <div className="absolute top-0 left-0 right-0 z-20 flex gap-1 p-2">
-          {campaign.slides.map((_, index) => (
-            <div 
-              key={index}
-              className="h-0.5 flex-1 bg-white/30 rounded-full overflow-hidden"
-            >
-              <div 
-                className="h-full bg-white transition-all duration-50 ease-linear"
-                style={{ 
-                  width: index < currentSlide ? '100%' : 
-                         index === currentSlide ? `${progress}%` : '0%' 
-                }}
-              />
-            </div>
-          ))}
-        </div>
-
-        {/* Header */}
-        <div className="absolute top-6 left-0 right-0 z-20 flex items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 bg-black/50 text-white text-xs rounded font-medium">
-              Patrocinado
-            </span>
-            {campaign.advertiser && (
-              <span className="text-white/80 text-sm">{campaign.advertiser}</span>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-white hover:bg-white/20"
-              onClick={() => setIsPaused(p => !p)}
-            >
-              {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-white hover:bg-white/20"
-              onClick={handleClose}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Slide image */}
-        <img
-          src={currentSlideData?.file_url}
-          alt={currentSlideData?.alt_text || campaign.name}
-          className="w-full h-full object-cover"
-        />
-
-        {/* Navigation areas */}
-        <div 
-          className="absolute left-0 top-0 bottom-0 w-1/3 cursor-pointer"
-          onClick={handlePrevious}
-        />
-        <div 
-          className="absolute right-0 top-0 bottom-0 w-1/3 cursor-pointer"
-          onClick={handleNext}
-        />
-
-        {/* Navigation buttons (visible on hover) */}
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 opacity-0 hover:opacity-100 transition-opacity">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10 bg-black/30 text-white hover:bg-black/50 rounded-full"
-            onClick={handlePrevious}
-            disabled={currentSlide === 0}
-          >
-            <ChevronLeft className="h-6 w-6" />
-          </Button>
-        </div>
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 hover:opacity-100 transition-opacity">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10 bg-black/30 text-white hover:bg-black/50 rounded-full"
-            onClick={handleNext}
-            disabled={isLastSlide}
-          >
-            <ChevronRight className="h-6 w-6" />
-          </Button>
-        </div>
-
-        {/* CTA on last slide */}
-        {isLastSlide && campaign.cta_url && (
-          <div className="absolute bottom-8 left-4 right-4 z-20">
-            <Button
-              onClick={handleCTAClick}
-              className="w-full h-12 text-lg font-semibold"
-            >
-              {campaign.cta_text || 'Saiba mais'}
-            </Button>
-          </div>
+      <div 
+        className={cn(
+          "fixed inset-0 z-50 bg-black flex items-center justify-center",
+          className
         )}
+      >
+        {/* Story container - 9:16 aspect ratio */}
+        <div className="relative w-full h-full max-w-[430px] max-h-[932px] md:max-h-[90vh] bg-black overflow-hidden">
+          {/* Progress bars */}
+          <div className="absolute top-0 left-0 right-0 z-20 flex gap-1 p-2">
+            {campaign.slides.map((_, index) => (
+              <div 
+                key={index}
+                className="h-0.5 flex-1 bg-white/30 rounded-full overflow-hidden"
+              >
+                <div 
+                  className="h-full bg-white transition-all duration-50 ease-linear"
+                  style={{ 
+                    width: index < currentSlide ? '100%' : 
+                           index === currentSlide ? `${progress}%` : '0%' 
+                  }}
+                />
+              </div>
+            ))}
+          </div>
 
-        {/* Slide counter */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
-          <span className="text-white/60 text-sm">
-            {currentSlide + 1} / {campaign.slides.length}
-          </span>
+          {/* Header */}
+          <div className="absolute top-6 left-0 right-0 z-20 flex items-center justify-between px-4">
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 bg-black/50 text-white text-xs rounded font-medium">
+                Patrocinado
+              </span>
+              {campaign.advertiser && (
+                <span className="text-white/80 text-sm">{campaign.advertiser}</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-white hover:bg-white/20"
+                onClick={() => setIsPaused(p => !p)}
+              >
+                {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-white hover:bg-white/20"
+                onClick={handleClose}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Slide image */}
+          <img
+            src={currentSlideData?.file_url}
+            alt={currentSlideData?.alt_text || campaign.name}
+            className="w-full h-full object-cover"
+          />
+
+          {/* Navigation areas */}
+          <div 
+            className="absolute left-0 top-0 bottom-0 w-1/3 cursor-pointer"
+            onClick={handlePrevious}
+          />
+          <div 
+            className="absolute right-0 top-0 bottom-0 w-1/3 cursor-pointer"
+            onClick={handleNext}
+          />
+
+          {/* Navigation buttons (visible on hover) */}
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 opacity-0 hover:opacity-100 transition-opacity">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 bg-black/30 text-white hover:bg-black/50 rounded-full"
+              onClick={handlePrevious}
+              disabled={currentSlide === 0}
+            >
+              <ChevronLeft className="h-6 w-6" />
+            </Button>
+          </div>
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 hover:opacity-100 transition-opacity">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 bg-black/30 text-white hover:bg-black/50 rounded-full"
+              onClick={handleNext}
+              disabled={isLastSlide}
+            >
+              <ChevronRight className="h-6 w-6" />
+            </Button>
+          </div>
+
+          {/* CTA on last slide */}
+          {isLastSlide && campaign.cta_url && (
+            <div className="absolute bottom-8 left-4 right-4 z-20">
+              <Button
+                onClick={handleCTAClick}
+                className="w-full h-12 text-lg font-semibold"
+              >
+                {campaign.cta_text || 'Saiba mais'}
+              </Button>
+            </div>
+          )}
+
+          {/* Slide counter */}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
+            <span className="text-white/60 text-sm">
+              {currentSlide + 1} / {campaign.slides.length}
+            </span>
+          </div>
         </div>
       </div>
-    </div>
+    </AdSlotWrapper>
   );
 }
 
