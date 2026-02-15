@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils';
 import { trackCampaignEvent } from '@/lib/trackCampaignEvent';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AdSlotWrapper } from '@/components/ads/AdSlotWrapper';
+import { AdLabel } from '@/components/ads/AdLabel';
+import { useAdDebugLevel } from '@/hooks/useAdDebugLevel';
 
 interface LoginPanelAdProps {
   className?: string;
@@ -24,6 +26,7 @@ const ROTATE_INTERVAL = 8000;
 
 export function LoginPanelAd({ className, compact }: LoginPanelAdProps) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const adDebugLevel = useAdDebugLevel();
 
   const { data: campaigns, isLoading } = useQuery({
     queryKey: ['login-panel-campaigns'],
@@ -108,7 +111,7 @@ export function LoginPanelAd({ className, compact }: LoginPanelAdProps) {
 
   return (
     <AdSlotWrapper slotId={loginSlotId} channel="login" placement="login" expectedWidth={expectedW} expectedHeight={500} page="login" className={cn("flex flex-col gap-4 h-full", className)}>
-      <p className="text-[11px] font-medium text-foreground/30 uppercase tracking-widest text-center">Conteúdo de Marca</p>
+      <AdLabel level={adDebugLevel} adType="LOGIN PANEL" variant="LOGIN" position="LOGIN" area="LOGIN" className="text-center" />
 
       {showGrid4 ? (
         <div className="grid grid-cols-2 grid-rows-2 gap-3 flex-1">

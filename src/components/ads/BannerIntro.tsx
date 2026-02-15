@@ -3,6 +3,8 @@ import { useBannerIntro } from '@/hooks/useBannerIntro';
 import { trackCampaignEvent } from '@/lib/trackCampaignEvent';
 import { cn } from '@/lib/utils';
 import { AdSlotWrapper } from './AdSlotWrapper';
+import { AdLabel } from './AdLabel';
+import { useAdDebugLevel } from '@/hooks/useAdDebugLevel';
 
 interface BannerIntroProps {
   className?: string;
@@ -14,6 +16,7 @@ interface BannerIntroProps {
  */
 export function BannerIntro({ className }: BannerIntroProps) {
   const { data: campaigns, isLoading } = useBannerIntro();
+  const adDebugLevel = useAdDebugLevel();
 
   useEffect(() => {
     if (campaigns && campaigns.length > 0) {
@@ -70,9 +73,16 @@ export function BannerIntro({ className }: BannerIntroProps) {
             />
           )}
           <div className="absolute top-1 right-1">
-            <span className="px-1.5 py-0.5 bg-black/40 text-white text-[10px] rounded">
-              Publicidade
-            </span>
+            <AdLabel
+              level={adDebugLevel}
+              adType="BANNER INTRO"
+              adId={campaign.id}
+              variant="EXPERIENCE"
+              position="INTRO"
+              area="HOME"
+              campaignId={campaign.id}
+              overlay
+            />
           </div>
         </div>
       )}

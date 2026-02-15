@@ -3,6 +3,8 @@ import { AD_FORMATS, getEffectiveFormat, type AdFormatKey, type DeviceType } fro
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AdSlotWrapper, type AdPage } from './AdSlotWrapper';
+import { AdLabel } from './AdLabel';
+import { useAdDebugLevel } from '@/hooks/useAdDebugLevel';
 
 interface ResponsiveAdUnitProps {
   format: AdFormatKey;
@@ -47,6 +49,7 @@ export function ResponsiveAdUnit({
   const meta = slotMap[format as string] || { channel: source, placement: 'inline', w: dimensions.width, h: dimensions.height, reserve: true, cond: false };
   const shouldReserve = meta.reserve !== false;
   const isConditional = meta.cond === true;
+  const adDebugLevel = useAdDebugLevel();
 
   if (isLoading) {
     return (
@@ -100,9 +103,16 @@ export function ResponsiveAdUnit({
       conditional={isConditional}
       className={cn('flex flex-col items-center justify-center', className)}
     >
-      <span className="mb-1 text-[10px] uppercase tracking-wider text-muted-foreground/60">
-        Publicidade
-      </span>
+      <AdLabel
+        level={adDebugLevel}
+        adType={formatConfig.label || format}
+        adId={ad.id}
+        variant={meta.channel.toUpperCase()}
+        position={meta.placement.toUpperCase()}
+        area={page.toUpperCase()}
+        campaignId={ad.campaignId}
+        className="mb-1"
+      />
       
       <a
         href={ad.link_url || '#'}

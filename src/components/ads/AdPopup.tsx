@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { AD_FORMATS, type DeviceType } from '@/lib/adFormats';
 import { useDeviceType } from '@/hooks/useDeviceType';
+import { AdLabel } from './AdLabel';
+import { useAdDebugLevel } from '@/hooks/useAdDebugLevel';
 
 interface AdPopupProps {
   imageUrl: string;
@@ -45,6 +47,7 @@ export function AdPopup({
   const [isVisible, setIsVisible] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
   const device = useDeviceType();
+  const adDebugLevel = useAdDebugLevel();
   const touchStartY = useRef<number | null>(null);
   const hasTrackedImpression = useRef(false);
 
@@ -169,9 +172,13 @@ export function AdPopup({
 
         {/* Ad label */}
         <div className="absolute left-4 top-4 z-10">
-          <span className="rounded bg-black/50 px-2 py-0.5 text-[10px] uppercase tracking-wider text-white/80 backdrop-blur-sm">
-            Publicidade
-          </span>
+          <AdLabel
+            level={adDebugLevel}
+            adType="ALERTA COMERCIAL"
+            variant="ADS"
+            position="MODAL"
+            overlay
+          />
         </div>
 
         {/* Swipe hint on mobile */}

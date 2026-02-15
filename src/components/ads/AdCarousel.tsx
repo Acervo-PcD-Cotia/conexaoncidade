@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { AD_FORMATS, type DeviceType } from '@/lib/adFormats';
 import { useDeviceType } from '@/hooks/useDeviceType';
+import { AdLabel } from './AdLabel';
+import { useAdDebugLevel } from '@/hooks/useAdDebugLevel';
 
 interface AdCarouselItem {
   id: string;
@@ -45,6 +47,7 @@ export function AdCarousel({
   const [isPaused, setIsPaused] = useState(false);
   const trackedImpressions = useRef<Set<string>>(new Set());
   const device = useDeviceType();
+  const adDebugLevel = useAdDebugLevel();
 
   const formatConfig = AD_FORMATS[format];
   const dimensions = formatConfig[device as DeviceType];
@@ -111,9 +114,13 @@ export function AdCarousel({
     >
       {/* Ad label */}
       <div className="absolute left-2 top-2 z-10">
-        <span className="rounded bg-black/50 px-2 py-0.5 text-[10px] uppercase tracking-wider text-white/80 backdrop-blur-sm">
-          Publicidade
-        </span>
+        <AdLabel
+          level={adDebugLevel}
+          adType={formatConfig.label || format}
+          adId={items[currentIndex]?.id}
+          variant="ADS"
+          overlay
+        />
       </div>
 
       {/* Carousel container */}
