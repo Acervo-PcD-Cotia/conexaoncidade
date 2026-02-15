@@ -52,6 +52,7 @@ import NewsAnalytics from "./pages/admin/NewsAnalytics";
 import WeeklyReport from "./pages/admin/WeeklyReport";
 import CommercialReports from "./pages/admin/CommercialReports";
 import AuditLogs from "./pages/admin/AuditLogs";
+import AdDiagnostics from "./pages/admin/AdDiagnostics";
 import SsoMonitor from "./pages/admin/SsoMonitor";
 import Settings from "./pages/admin/Settings";
 import NoticiasAI from "./pages/admin/NoticiasAI";
@@ -652,6 +653,7 @@ const App = () => (
                         <Route path="campaigns/metrics/:id" element={<CampaignErrorBoundary><CampaignMetrics /></CampaignErrorBoundary>} />
                         <Route path="campaigns/tutorial" element={<CampaignErrorBoundary><CampaignsTutorial /></CampaignErrorBoundary>} />
                         <Route path="campaigns/media-kit" element={<CampaignErrorBoundary><MediaKit /></CampaignErrorBoundary>} />
+                        <Route path="diagnostico-anuncios" element={<AdDiagnostics />} />
                         
                         {/* Transporte Escolar Admin Routes */}
                         <Route path="transporte-escolar" element={<TransporteEscolarAdmin />} />
