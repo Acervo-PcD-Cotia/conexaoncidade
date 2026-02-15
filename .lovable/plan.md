@@ -1,81 +1,85 @@
 
-# Plano: Ajuste do Login e Correcao Massiva de Links Quebrados
 
-## Problema 1: Layout do Login (Logo + Espaco Publicitario)
+# Plano: Correcao Massiva de Links Restantes (/admin/ -> /spah/painel/)
 
-Na tela de login (`/spah`), o logo esta no topo e o espaco publicitario fica abaixo com um grande vazio entre eles. O usuario quer que ambos fiquem centralizados verticalmente na coluna esquerda, sem precisar rolar.
+## Resumo
 
-**Solucao no arquivo `src/pages/Auth.tsx`:**
-- Mudar o layout da coluna esquerda para `justify-center` (centralizar verticalmente o bloco logo+banner)
-- Remover o `max-h-[50vh]` do banner que limita desnecessariamente o espaco publicitario
-- Agrupar logo e banner em um bloco coeso com espacamento controlado
-- Manter as noticias no rodape da coluna, usando `mt-auto` para empurra-las para baixo
+Ainda existem **~42 arquivos** com caminhos legados `/admin/` que precisam ser migrados para `/spah/painel/`. Isso afeta links de navegacao (`to=`, `href:`), chamadas `navigate()`, e templates de URL dinamicos.
 
-## Problema 2: Links de Navegacao Quebrados (783 ocorrencias em 61 arquivos)
+## Arquivos a Corrigir
 
-A maioria dos links internos nas paginas administrativas ainda usa o caminho legado `/admin/` em vez do caminho correto `/spah/painel/`. Isso causa erros 404 ao clicar em qualquer link de navegacao dentro das paginas.
+### Grupo 1: Paginas Admin com `to="/admin/..."` (links estaticos)
 
-**Causa raiz:** A sidebar (`AdminSidebar.tsx`) ja usa os caminhos corretos, mas os links internos dos componentes de cada pagina nunca foram migrados.
+1. `src/pages/admin/autopost/AutoPostSources.tsx` -- links para /admin/autopost/sources/new
+2. `src/pages/admin/autopost-regional/RegionalDashboard.tsx` -- links para fontes, fila, logs
+3. `src/pages/admin/broadcast/BroadcastList.tsx` -- link /admin/broadcast/new
+4. `src/pages/admin/broadcast/BroadcastDashboard.tsx` -- links para list, channels, programs, new
+5. `src/pages/admin/community/CommunityAdmin.tsx` -- links para members, moderation
+6. `src/pages/admin/esportes/EsportesDashboard.tsx` -- links para configurar, brasileirao, sync, transmissoes, noticias
+7. `src/pages/admin/SocialDashboard.tsx` -- links para settings, queue
+8. `src/pages/admin/StoriesList.tsx` -- links para new, edit
+9. `src/pages/admin/PodcastsList.tsx` -- links para news/edit
+10. `src/pages/admin/transporte-escolar/TransporteEscolarAdmin.tsx` -- links para escolas, transportadores, leads, denuncias
+11. `src/pages/admin/academy/AcademyAdminCourses.tsx` -- links para cursos/aulas
+12. `src/pages/admin/academy/EnemSubmissions.tsx` -- links para enem, redacao
 
-**Solucao:** Substituicao global de `"/admin/` por `"/spah/painel/` e `'/admin/` por `'/spah/painel/` em todos os 61 arquivos afetados.
+### Grupo 2: Paginas Conexao Studio com `to="/admin/..."` (links estaticos)
+
+13. `src/pages/conexao-studio/StudioList.tsx` -- links para studios/new, edit, session
+14. `src/pages/conexao-studio/StudioCreate.tsx` -- links para studios (voltar, cancelar)
+15. `src/pages/conexao-studio/Webinars.tsx` -- links para webinars/new, edit, studio
+16. `src/pages/conexao-studio/Library.tsx` -- link para studios
+17. `src/pages/conexao-studio/Dashboard.tsx` -- ja corrigido parcialmente, verificar restantes
+
+### Grupo 3: Paginas com `to={`/admin/...`}` (links dinamicos com template literals)
+
+18. `src/components/admin/stream/StudioTabContent.tsx` -- links dinamicos para studio session
+19. `src/components/admin/noticias-ai/DuplicateWarningDialog.tsx` -- link para news/edit
+20. `src/components/academy/AcademyModuleAccordion.tsx` -- link para aula
+21. `src/components/academy/AcademyCourseCard.tsx` -- link para curso
+22. `src/components/academy/AcademyHero.tsx` -- link para aula
+23. `src/components/academy/AcademyLessonNav.tsx` -- links para aula anterior/proxima
+24. `src/pages/admin/broadcast/BroadcastList.tsx` -- links dinamicos para studio, edit
+25. `src/pages/admin/broadcast/BroadcastDashboard.tsx` -- link dinamico para studio
+
+### Grupo 4: Paginas com `navigate('/admin/...')` (navegacao programatica)
+
+26. `src/pages/admin/NoticiasAI.tsx` -- navigate para /admin/news
+27. `src/pages/admin/autopost-regional/RegionalSourceEdit.tsx` -- navigate para fontes
+28. `src/pages/admin/community/PhoneImportAssisted.tsx` -- navigate para phone-catalog
+29. `src/pages/admin/postsocial/PostSocialComposer.tsx` -- navigate para postsocial
+30. `src/pages/conexao-studio/StudioSession.tsx` -- navigate para studios
+
+### Grupo 5: Componentes com `href: "/admin/..."` (objetos de configuracao)
+
+31. `src/pages/public/Enem2026Landing.tsx` -- href para academy/enem
+32. `src/components/admin/dashboard/UserManagementPanel.tsx` -- hrefs para users
+33. `src/components/admin/dashboard/DashboardProductionCard.tsx` -- hrefs para news
+34. `src/components/admin/stream/TvTabContent.tsx` -- links para streaming/tv
+
+### Grupo 6: Modulos e paginas de radio
+
+35. `src/modules/radio/pages/RadioOverview.tsx` -- links para radio/status, autodj, library, stats
+36. `src/modules/content-fix/pages/ContentFixDashboard.tsx` -- navigate para content-fix/images, dates
 
 ---
 
 ## Detalhes Tecnicos
 
-### Arquivos a editar
-
-**1 arquivo - Layout do Login:**
-- `src/pages/Auth.tsx` -- centralizar verticalmente logo + banner, remover restricao de altura
-
-**61 arquivos - Correcao de rotas (substituicao `/admin/` para `/spah/painel/`):**
-
-Componentes de paginas admin:
-- `src/pages/admin/NoticiasAI.tsx`
-- `src/pages/admin/LinksQRGenerator.tsx`
-- `src/pages/admin/EventsList.tsx`
-- `src/pages/admin/FinancialDashboard.tsx`
-- `src/pages/admin/ModuleUnavailable.tsx`
-- `src/pages/admin/Dashboard.tsx`
-- `src/pages/admin/Settings.tsx`
-- `src/pages/admin/autopost/AutoPostDashboard.tsx`
-- `src/pages/admin/autopost-regional/RegionalQueue.tsx`
-- `src/pages/admin/autopost-regional/RegionalSourceEdit.tsx`
-- `src/pages/admin/academy/AcademyCourse.tsx`
-- `src/pages/admin/academy/AcademyLesson.tsx`
-- `src/pages/admin/academy/EnemModule.tsx`
-- `src/pages/admin/broadcast/BroadcastPlaylist.tsx`
-- `src/pages/admin/community/CommunityAdmin.tsx`
-- `src/pages/admin/esportes/EsportesConfig.tsx`
-- `src/pages/admin/esportes/EsportesEstatisticas.tsx`
-- `src/pages/admin/imoveis/ImoveisAdmin.tsx`
-- `src/pages/admin/postsocial/PostSocialDashboard.tsx`
-- `src/pages/admin/transporte-escolar/TransporteEscolarAdmin.tsx`
-- E todos os demais arquivos que contenham `"/admin/` ou `'/admin/`
-
-Componentes reutilizaveis:
-- `src/components/admin/dashboard/RecentArticlesPanel.tsx`
-- `src/components/admin/dashboard/DashboardAccessibilityPanel.tsx`
-- `src/components/admin/stream/RadioTabContent.tsx`
-- `src/components/academy/AcademyCategorySection.tsx`
-- `src/components/guards/ModuleRouteGuard.tsx`
-
-Paginas de produtos:
-- `src/pages/conexao-studio/Dashboard.tsx`
-- `src/modules/radio/pages/RadioOverview.tsx`
-
-Paginas publicas com links admin:
-- `src/pages/public/Enem2026Landing.tsx`
-
-### Criterios de substituicao
+### Criterio de substituicao (identico a fase 1)
 
 ```text
-Antes:  "/admin/...
-Depois: "/spah/painel/...
-
-Antes:  '/admin/...
-Depois: '/spah/painel/...
+"/admin/   ->  "/spah/painel/
+'/admin/   ->  '/spah/painel/
+`/admin/   ->  `/spah/painel/
 ```
 
+### Cuidados
+- Nao alterar caminhos de importacao (ex: `from "@/components/admin/..."` deve permanecer)
+- Nao alterar nomes de pastas ou arquivos
+- Apenas substituir caminhos de navegacao (to=, href:, navigate())
+
+### Total: ~36 arquivos a editar
+### Nenhum arquivo novo
 ### Nenhuma alteracao no banco de dados
-### Nenhum arquivo novo necessario
+
