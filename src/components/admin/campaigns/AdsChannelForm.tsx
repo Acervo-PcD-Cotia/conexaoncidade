@@ -5,6 +5,7 @@ import { AdImageUploader } from '@/components/admin/AdImageUploader';
 import { SlotPreviewTooltip } from '@/components/admin/campaigns/SlotPreviewTooltip';
 import type { AdsChannelConfig } from '@/types/campaigns-unified';
 import type { AdFormat } from '@/components/admin/AdImageUploader';
+import { getSlotsForChannel, type AdSlot } from '@/lib/adSlots';
 
 interface AdsChannelFormProps {
   config?: Partial<AdsChannelConfig>;
@@ -13,19 +14,13 @@ interface AdsChannelFormProps {
   onAssetChange: (url: string, alt?: string) => void;
 }
 
-const SLOT_OPTIONS = [
-  { value: 'leaderboard', label: 'Destaque Horizontal', size: '728x90' },
-  { value: 'super_banner', label: 'Mega Destaque', size: '970x250' },
-  { value: 'rectangle', label: 'Destaque Inteligente', size: '300x250' },
-  { value: 'skyscraper', label: 'Painel Vertical', size: '300x600' },
-  { value: 'popup', label: 'Alerta Comercial', size: '580x400' },
-];
+const ADS_SLOTS = getSlotsForChannel('ads');
 
 const SLOT_TO_FORMAT: Record<string, AdFormat> = {
   leaderboard: 'leaderboard',
   super_banner: 'home-topo',
-  rectangle: 'retangulo-medio',
-  skyscraper: 'arranha-ceu',
+  retangulo_medio: 'retangulo-medio',
+  arranha_ceu: 'arranha-ceu',
   popup: 'popup',
 };
 
@@ -35,7 +30,7 @@ export function AdsChannelForm({
   assetUrl,
   onAssetChange,
 }: AdsChannelFormProps) {
-  const selectedSlot = SLOT_OPTIONS.find(s => s.value === config?.slot_type);
+  const selectedSlot = ADS_SLOTS.find(s => s.id === config?.slot_type);
   const format = SLOT_TO_FORMAT[config?.slot_type || 'leaderboard'] || 'leaderboard';
 
   return (
@@ -45,11 +40,11 @@ export function AdsChannelForm({
         <Select
           value={config?.slot_type || 'leaderboard'}
           onValueChange={(value) => {
-            const slot = SLOT_OPTIONS.find(s => s.value === value);
+            const slot = ADS_SLOTS.find(s => s.id === value);
             onChange({
               ...config,
               slot_type: value,
-              size: slot?.size || '728x90',
+              size: slot?.key || '728x90',
             });
           }}
         >
@@ -58,20 +53,20 @@ export function AdsChannelForm({
           </SelectTrigger>
           <SelectContent>
             <TooltipProvider delayDuration={200}>
-              {SLOT_OPTIONS.map(slot => (
-                <SlotPreviewTooltip key={slot.value} slotKey={slot.value}>
-                  <SelectItem value={slot.value}>
+              {ADS_SLOTS.map(slot => (
+                <SlotPreviewTooltip key={slot.id} slotKey={slot.id}>
+                  <SelectItem value={slot.id}>
                     <span className="flex items-center gap-2">
                       <span
                         className="inline-block border border-primary/30 bg-primary/10 rounded-sm"
                         style={{
-                          width: Math.round(slot.value === 'skyscraper' ? 10 : (parseInt(slot.size) / parseInt(slot.size)) * 24),
-                          height: Math.round(slot.value === 'skyscraper' ? 20 : slot.value === 'leaderboard' ? 4 : 8),
+                          width: Math.round(slot.placement === 'sidebar' ? 10 : 24),
+                          height: Math.round(slot.placement === 'sidebar' ? 20 : slot.placement === 'top' && slot.height <= 90 ? 4 : 8),
                           minWidth: 16,
                           minHeight: 4,
                         }}
                       />
-                      {slot.label} ({slot.size})
+                      {slot.label} ({slot.key})
                     </span>
                   </SelectItem>
                 </SlotPreviewTooltip>
@@ -81,7 +76,7 @@ export function AdsChannelForm({
         </Select>
         {selectedSlot && (
           <p className="text-xs text-muted-foreground">
-            Tamanho: {selectedSlot.size}
+            Tamanho: {selectedSlot.key}
           </p>
         )}
       </div>

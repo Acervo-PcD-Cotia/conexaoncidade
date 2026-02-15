@@ -14,7 +14,7 @@
  * - Derived marked: is_derived = true
  */
 
-import { type SlotChannel } from './adSlots';
+import { type SlotChannel, getSlotDefinitionsByChannel } from './adSlots';
 
 export interface ImageDimensions {
   width: number;
@@ -120,35 +120,9 @@ export function getImageDimensionsFromUrl(url: string): Promise<ImageDimensions>
 }
 
 /**
- * Official slot definitions
+ * Official slot definitions — derived from central adSlots.ts
  */
-const SLOT_DEFINITIONS = {
-  ads: [
-    { key: '728x90', label: 'Destaque Horizontal', width: 728, height: 90 },
-    { key: '970x250', label: 'Mega Destaque', width: 970, height: 250 },
-    { key: '300x250', label: 'Destaque Inteligente', width: 300, height: 250 },
-    { key: '300x600', label: 'Painel Vertical', width: 300, height: 600 },
-    { key: '580x400', label: 'Alerta Comercial', width: 580, height: 400 },
-  ],
-  publidoor: [
-    { key: '970x250', label: 'Destaque Premium', width: 970, height: 250 },
-    { key: '300x250', label: 'Destaque Editorial', width: 300, height: 250 },
-    { key: '300x600', label: 'Painel Vertical', width: 300, height: 600 },
-  ],
-  webstories: [
-    { key: '1080x1920', label: 'Story Premium', width: 1080, height: 1920 },
-  ],
-  login: [
-    { key: '800x500', label: 'Login Formato 01', width: 800, height: 500 },
-    { key: '200x500', label: 'Login Formato 02', width: 200, height: 500 },
-    { key: '400x500', label: 'Login Formato 03', width: 400, height: 500 },
-  ],
-  experience: [
-    { key: '970x250', label: 'Banner Intro', width: 970, height: 250 },
-    { key: '300x600', label: 'Destaque Flutuante', width: 300, height: 600 },
-    { key: '1280x720', label: 'Alerta Full Saída', width: 1280, height: 720 },
-  ],
-} as const;
+const SLOT_DEFINITIONS = getSlotDefinitionsByChannel();
 
 /**
  * Find matching slots for an image
