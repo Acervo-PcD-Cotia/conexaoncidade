@@ -58,6 +58,8 @@ export function FloatingAd({ className }: FloatingAdProps) {
       expectedWidth={300}
       expectedHeight={600}
       page="global"
+      reserveSpace={false}
+      conditional
       className={shouldHide ? 'hidden' : ''}
     >
       <AnimatePresence>
