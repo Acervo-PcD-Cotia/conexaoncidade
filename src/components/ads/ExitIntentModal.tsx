@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils';
 import { useExitIntentCampaigns } from '@/hooks/useExitIntent';
 import { trackCampaignEvent } from '@/lib/trackCampaignEvent';
 import { AdSlotWrapper } from './AdSlotWrapper';
+import { AdLabel } from './AdLabel';
+import { useAdDebugLevel } from '@/hooks/useAdDebugLevel';
 
 const SESSION_KEY = 'exit_intent_shown';
 
@@ -19,6 +21,7 @@ export function ExitIntentModal({ className }: ExitIntentModalProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [hasTriggered, setHasTriggered] = useState(false);
   const { campaigns, isLoading, recordEvent } = useExitIntentCampaigns();
+  const adDebugLevel = useAdDebugLevel();
 
   useEffect(() => {
     if (sessionStorage.getItem(SESSION_KEY)) {
@@ -112,9 +115,16 @@ export function ExitIntentModal({ className }: ExitIntentModalProps) {
                   </div>
                 )}
                 <div className="absolute top-2 left-2">
-                  <span className="px-2 py-0.5 bg-black/50 text-white text-xs rounded">
-                    Conteúdo de Marca
-                  </span>
+                  <AdLabel
+                    level={adDebugLevel}
+                    adType="ALERTA FULL SAÍDA"
+                    adId={heroCampaign.id}
+                    variant="EXPERIENCE"
+                    position="MODAL"
+                    area="GLOBAL"
+                    campaignId={heroCampaign.id}
+                    overlay
+                  />
                 </div>
               </div>
             )}

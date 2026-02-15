@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Settings as SettingsIcon, Shield, Bell, Database, Wrench, AlertTriangle } from "lucide-react";
+import { Settings as SettingsIcon, Shield, Bell, Database, Wrench, AlertTriangle, Eye } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMaintenanceMode, useAdminNotificationPreferences } from "@/hooks/useMaintenanceMode";
 import { useSiteSecuritySettings, useUpdateSecuritySetting } from "@/hooks/useSiteSecuritySettings";
+import { useAdDebugLevelSetting, useUpdateAdDebugLevel } from "@/hooks/useAdDebugLevelSetting";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -33,6 +34,8 @@ export default function Settings() {
 
   const { data: securitySettings, isLoading: securityLoading } = useSiteSecuritySettings();
   const updateSecurity = useUpdateSecuritySetting();
+  const { data: adDebugLevel, isLoading: adDebugLoading } = useAdDebugLevelSetting();
+  const updateAdDebug = useUpdateAdDebugLevel();
 
   const [localMessage, setLocalMessage] = useState(message);
   const [localEstimatedEnd, setLocalEstimatedEnd] = useState(estimatedEnd || '');
@@ -282,6 +285,45 @@ export default function Settings() {
                   </p>
                 </div>
               </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Ad Debug Level Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Eye className="h-5 w-5" />
+              Detalhes Técnicos de Anúncios
+            </CardTitle>
+            <CardDescription>
+              Controle o nível de informações exibido sobre anúncios no site
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {adDebugLoading ? (
+              <Skeleton className="h-10 w-full" />
+            ) : (
+              <div className="space-y-2">
+                <Label>Nível de exibição</Label>
+                <Select
+                  value={adDebugLevel || "public"}
+                  onValueChange={(value) => updateAdDebug.mutate(value as "public" | "admin" | "superadmin")}
+                  disabled={updateAdDebug.isPending}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="public">Somente público (padrão)</SelectItem>
+                    <SelectItem value="admin">Admin — tipo + ID</SelectItem>
+                    <SelectItem value="superadmin">Super Admin — auditoria total</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Admin: mostra tipo e ID. Super Admin: mostra canal, posição, área e campanha.
+                </p>
+              </div>
             )}
           </CardContent>
         </Card>

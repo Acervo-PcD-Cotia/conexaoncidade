@@ -7,6 +7,8 @@ import { useDeviceType } from "@/hooks/useDeviceType";
 import { AD_FORMATS, type DeviceType } from "@/lib/adFormats";
 import { trackCampaignEvent } from "@/lib/trackCampaignEvent";
 import { AdSlotWrapper } from "@/components/ads/AdSlotWrapper";
+import { AdLabel } from "@/components/ads/AdLabel";
+import { useAdDebugLevel } from "@/hooks/useAdDebugLevel";
 
 interface BannerItem {
   id: string;
@@ -25,6 +27,7 @@ export function SuperBanner() {
   const [isPaused, setIsPaused] = useState(false);
   const trackedImpressions = useRef<Set<string>>(new Set());
   const device = useDeviceType();
+  const adDebugLevel = useAdDebugLevel();
   
   const formatConfig = AD_FORMATS.SUPER_BANNER_TOPO;
 
@@ -249,6 +252,19 @@ export function SuperBanner() {
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
+        {/* Ad label */}
+        <div className="absolute left-2 top-2 z-10">
+          <AdLabel
+            level={adDebugLevel}
+            adType="MEGA DESTAQUE"
+            adId={banners[currentIndex]?.id}
+            variant="ADS"
+            position="TOPO"
+            area="HOME"
+            campaignId={banners[currentIndex]?.campaignId}
+            overlay
+          />
+        </div>
         <div
           className="flex transition-transform duration-700 ease-out"
           style={{ transform: `translateX(-${currentIndex * 100}%)` }}

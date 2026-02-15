@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { trackCampaignEvent } from '@/lib/trackCampaignEvent';
 import { AdSlotWrapper, type AdPage } from './AdSlotWrapper';
+import { AdLabel } from './AdLabel';
+import { useAdDebugLevel } from '@/hooks/useAdDebugLevel';
 
 interface InlineAdSlotProps {
   position?: number;
@@ -17,6 +19,7 @@ interface InlineAdSlotProps {
  * Uses 300x250 (Destaque Inteligente) format.
  */
 export function InlineAdSlot({ position = 1, category, className, page = 'article' }: InlineAdSlotProps) {
+  const adDebugLevel = useAdDebugLevel();
   const { data: campaign, isLoading } = useQuery({
     queryKey: ['inline-ad-campaign', position, category],
     queryFn: async () => {
@@ -78,9 +81,15 @@ export function InlineAdSlot({ position = 1, category, className, page = 'articl
       {!isLoading && campaign && (
         <div className="relative inline-block">
           <div className="absolute -top-3 left-0 z-10">
-            <span className="px-2 py-0.5 bg-muted text-muted-foreground text-xs rounded">
-              Conteúdo de Marca
-            </span>
+            <AdLabel
+              level={adDebugLevel}
+              adType="DESTAQUE INTELIGENTE"
+              adId={campaign.id}
+              variant="ADS"
+              position="INLINE"
+              area={page.toUpperCase()}
+              campaignId={campaign.id}
+            />
           </div>
           <div className="w-[300px] h-[250px] bg-muted rounded overflow-hidden">
             {campaign.cta_url ? (

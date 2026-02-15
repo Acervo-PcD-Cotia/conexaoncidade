@@ -6,6 +6,8 @@ import { trackCampaignEvent } from '@/lib/trackCampaignEvent';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { AdSlotWrapper } from './AdSlotWrapper';
+import { AdLabel } from './AdLabel';
+import { useAdDebugLevel } from '@/hooks/useAdDebugLevel';
 
 const SESSION_KEY = 'floating_ad_dismissed';
 
@@ -21,6 +23,7 @@ export function FloatingAd({ className }: FloatingAdProps) {
   const [dismissed, setDismissed] = useState(false);
   const [visible, setVisible] = useState(false);
   const { data: campaigns, isLoading } = useFloatingAd();
+  const adDebugLevel = useAdDebugLevel();
 
   useEffect(() => {
     if (sessionStorage.getItem(SESSION_KEY)) {
@@ -111,9 +114,16 @@ export function FloatingAd({ className }: FloatingAdProps) {
             )}
 
             <div className="absolute bottom-1 left-1">
-              <span className="px-1.5 py-0.5 bg-black/40 text-white text-[10px] rounded">
-                Publicidade
-              </span>
+              <AdLabel
+                level={adDebugLevel}
+                adType="DESTAQUE FLUTUANTE"
+                adId={campaign.id}
+                variant="EXPERIENCE"
+                position="FLOATING"
+                area="GLOBAL"
+                campaignId={campaign.id}
+                overlay
+              />
             </div>
           </motion.div>
         )}
