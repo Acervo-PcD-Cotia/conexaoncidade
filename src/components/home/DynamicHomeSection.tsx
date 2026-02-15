@@ -3,6 +3,7 @@ import type { HomeSectionConfig, HomeSectionType } from "@/types/portal-template
 import { Skeleton } from "@/components/ui/skeleton";
 import { ResponsiveAdUnit } from "@/components/ads/ResponsiveAdUnit";
 
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SectionComponent = React.ComponentType<any>;
 
@@ -89,10 +90,18 @@ const SECTION_COMPONENTS: Record<HomeSectionType, SectionComponent> = {
   stories_bar: TopWebStoriesBar,
   ad_slot_top: () => (
     <div className="container py-2">
-      <ResponsiveAdUnit format="SUPER_BANNER_TOPO" slotId="home_top" source="ads" />
+      <ResponsiveAdUnit format="SUPER_BANNER_TOPO" slotId="super_banner" source="ads" page="home" />
     </div>
   ),
-  hero_headlines: HeroSection,
+  hero_headlines: () => (
+    <>
+      <HeroSection />
+      {/* Sidebar ad slot rendered inline for DOM proof */}
+      <div className="container py-2 flex justify-center lg:justify-end">
+        <ResponsiveAdUnit format="ARRANHA_CEU" slotId="arranha_ceu" source="ads" page="home" />
+      </div>
+    </>
+  ),
   live_broadcast: LiveBroadcastWidget,
   agora_na_cidade: AgoraNaCidade,
   latest_news: LatestNewsList,
@@ -110,12 +119,12 @@ const SECTION_COMPONENTS: Record<HomeSectionType, SectionComponent> = {
   banner_intro: BannerIntroSection,
   ad_slot_mid: () => (
     <div className="container py-2">
-      <ResponsiveAdUnit format="RETANGULO_MEDIO" slotId="home_mid" source="ads" />
+      <ResponsiveAdUnit format="RETANGULO_MEDIO" slotId="retangulo_medio" source="ads" page="home" />
     </div>
   ),
   ad_slot_bottom: () => (
     <div className="container py-2">
-      <ResponsiveAdUnit format="LEADERBOARD" slotId="home_bottom" source="ads" />
+      <ResponsiveAdUnit format="ANUNCIO_HOME" slotId="leaderboard" source="ads" page="home" />
     </div>
   ),
 };

@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useDeviceType } from "@/hooks/useDeviceType";
 import { AD_FORMATS, type DeviceType } from "@/lib/adFormats";
 import { trackCampaignEvent } from "@/lib/trackCampaignEvent";
+import { AdSlotWrapper } from "@/components/ads/AdSlotWrapper";
 
 interface BannerItem {
   id: string;
@@ -221,89 +222,109 @@ export function SuperBanner() {
     }
   };
 
-  if (banners.length === 0) return null;
+  if (banners.length === 0) {
+    return (
+      <AdSlotWrapper
+        slotId="super_banner"
+        channel="ads"
+        placement="top"
+        expectedWidth={970}
+        expectedHeight={250}
+        page="home"
+      />
+    );
+  }
 
   return (
-    <div
-      className="relative w-full overflow-hidden bg-black"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
+    <AdSlotWrapper
+      slotId="super_banner"
+      channel="ads"
+      placement="top"
+      expectedWidth={970}
+      expectedHeight={250}
+      page="home"
     >
       <div
-        className="flex transition-transform duration-700 ease-out"
-        style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+        className="relative w-full overflow-hidden bg-black"
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
       >
-        {banners.map((banner) => (
-          <a
-            key={banner.id}
-            href={banner.link_url || "#"}
-            target={banner.link_target || "_blank"}
-            rel="noopener noreferrer"
-            className="relative w-full shrink-0"
-            onClick={(e) => handleBannerClick(e, banner)}
-          >
-            <div 
-              className="relative w-full overflow-hidden bg-muted"
-              style={{ 
-                aspectRatio: formatConfig.aspectRatio,
-                maxHeight: device === 'mobile' ? '100px' : device === 'tablet' ? '90px' : '250px',
-              }}
+        <div
+          className="flex transition-transform duration-700 ease-out"
+          style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+        >
+          {banners.map((banner) => (
+            <a
+              key={banner.id}
+              href={banner.link_url || "#"}
+              target={banner.link_target || "_blank"}
+              rel="noopener noreferrer"
+              className="relative w-full shrink-0"
+              onClick={(e) => handleBannerClick(e, banner)}
             >
-              <img
-                src={banner.image_url}
-                alt={banner.alt_text || banner.title || "Banner promocional"}
-                className="h-full w-full object-cover object-center"
-                loading="eager"
-                decoding="async"
-              />
-            </div>
-          </a>
-        ))}
-      </div>
-
-      {banners.length > 1 && (
-        <>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute left-2 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full bg-black/40 text-white backdrop-blur-sm hover:bg-black/60 hover:text-white md:left-4 md:h-12 md:w-12"
-            onClick={(e) => { e.preventDefault(); goToPrev(); }}
-          >
-            <ChevronLeft className="h-6 w-6 md:h-8 md:w-8" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-2 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full bg-black/40 text-white backdrop-blur-sm hover:bg-black/60 hover:text-white md:right-4 md:h-12 md:w-12"
-            onClick={(e) => { e.preventDefault(); goToNext(); }}
-          >
-            <ChevronRight className="h-6 w-6 md:h-8 md:w-8" />
-          </Button>
-        </>
-      )}
-
-      {banners.length > 1 && (
-        <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2 md:bottom-4 md:gap-3">
-          {banners.map((_, index) => (
-            <button
-              key={index}
-              onClick={(e) => { e.preventDefault(); goToSlide(index); }}
-              className={`h-2.5 w-2.5 rounded-full transition-all duration-300 md:h-3 md:w-3 ${
-                index === currentIndex
-                  ? "w-6 scale-110 bg-white md:w-8"
-                  : "bg-white/50 hover:bg-white/75"
-              }`}
-              aria-label={`Ir para slide ${index + 1}`}
-            />
+              <div 
+                className="relative w-full overflow-hidden bg-muted"
+                style={{ 
+                  aspectRatio: formatConfig.aspectRatio,
+                  maxHeight: device === 'mobile' ? '100px' : device === 'tablet' ? '90px' : '250px',
+                }}
+              >
+                <img
+                  src={banner.image_url}
+                  alt={banner.alt_text || banner.title || "Banner promocional"}
+                  className="h-full w-full object-cover object-center"
+                  loading="eager"
+                  decoding="async"
+                />
+              </div>
+            </a>
           ))}
         </div>
-      )}
 
-      {banners.length > 1 && (
-        <div className="absolute right-2 top-2 rounded-full bg-black/50 px-2 py-1 text-xs font-medium text-white backdrop-blur-sm md:right-4 md:top-4 md:px-3 md:text-sm">
-          {currentIndex + 1} / {banners.length}
-        </div>
-      )}
-    </div>
+        {banners.length > 1 && (
+          <>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute left-2 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full bg-black/40 text-white backdrop-blur-sm hover:bg-black/60 hover:text-white md:left-4 md:h-12 md:w-12"
+              onClick={(e) => { e.preventDefault(); goToPrev(); }}
+            >
+              <ChevronLeft className="h-6 w-6 md:h-8 md:w-8" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-2 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full bg-black/40 text-white backdrop-blur-sm hover:bg-black/60 hover:text-white md:right-4 md:h-12 md:w-12"
+              onClick={(e) => { e.preventDefault(); goToNext(); }}
+            >
+              <ChevronRight className="h-6 w-6 md:h-8 md:w-8" />
+            </Button>
+          </>
+        )}
+
+        {banners.length > 1 && (
+          <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2 md:bottom-4 md:gap-3">
+            {banners.map((_, index) => (
+              <button
+                key={index}
+                onClick={(e) => { e.preventDefault(); goToSlide(index); }}
+                className={`h-2.5 w-2.5 rounded-full transition-all duration-300 md:h-3 md:w-3 ${
+                  index === currentIndex
+                    ? "w-6 scale-110 bg-white md:w-8"
+                    : "bg-white/50 hover:bg-white/75"
+                }`}
+                aria-label={`Ir para slide ${index + 1}`}
+              />
+            ))}
+          </div>
+        )}
+
+        {banners.length > 1 && (
+          <div className="absolute right-2 top-2 rounded-full bg-black/50 px-2 py-1 text-xs font-medium text-white backdrop-blur-sm md:right-4 md:top-4 md:px-3 md:text-sm">
+            {currentIndex + 1} / {banners.length}
+          </div>
+        )}
+      </div>
+    </AdSlotWrapper>
   );
 }
