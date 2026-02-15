@@ -43,7 +43,7 @@ export default function EnemModule() {
       <div className="container py-8 text-center">
         <h1 className="text-2xl font-bold mb-4">Módulo não encontrado</h1>
         <Button asChild>
-          <Link to="/admin/academy/enem">Voltar para ENEM 2026</Link>
+          <Link to="/spah/painel/academy/enem">Voltar para ENEM 2026</Link>
         </Button>
       </div>
     );
@@ -73,7 +73,7 @@ export default function EnemModule() {
       {/* Header */}
       <div className="space-y-4">
         <Button variant="ghost" size="sm" asChild>
-          <Link to="/admin/academy/enem">
+          <Link to="/spah/painel/academy/enem">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
           </Link>
@@ -140,7 +140,7 @@ export default function EnemModule() {
 
                     {!isLocked && (
                       <Button asChild variant={isCompleted ? "outline" : "default"}>
-                        <Link to={`/admin/academy/enem/${slug}/semana/${week.week_number}`}>
+                        <Link to={`/spah/painel/academy/enem/${slug}/semana/${week.week_number}`}>
                           {isCompleted ? "Revisar" : "Começar"}
                           <ChevronRight className="h-4 w-4 ml-1" />
                         </Link>

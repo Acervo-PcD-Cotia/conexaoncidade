@@ -560,7 +560,7 @@ export default function NoticiasAI() {
                   </div>
                 </div>
                 <Button 
-                  onClick={() => navigate('/admin/news')}
+                  onClick={() => navigate('/spah/painel/news')}
                   variant="outline" 
                   size="sm"
                   className="border-violet-300 text-violet-600 hover:bg-violet-50 dark:border-violet-700 dark:hover:bg-violet-900/20"

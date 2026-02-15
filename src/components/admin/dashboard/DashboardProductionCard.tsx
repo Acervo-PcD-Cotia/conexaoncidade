@@ -50,21 +50,21 @@ export function DashboardProductionCard() {
       value: productionStats?.review || 0,
       icon: Clock,
       iconColor: "text-primary",
-      href: "/admin/news?status=review",
+      href: "/spah/painel/news?status=review",
     },
     {
       label: "Agendadas",
       value: productionStats?.scheduled || 0,
       icon: Calendar,
       iconColor: "text-brand",
-      href: "/admin/news?status=scheduled",
+      href: "/spah/painel/news?status=scheduled",
     },
     {
       label: "Publicadas Hoje",
       value: productionStats?.publishedToday || 0,
       icon: Send,
       iconColor: "text-money",
-      href: "/admin/news?status=published",
+      href: "/spah/painel/news?status=published",
     },
   ];
 

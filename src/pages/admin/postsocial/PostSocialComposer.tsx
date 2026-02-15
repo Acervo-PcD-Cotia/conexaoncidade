@@ -151,7 +151,7 @@ export default function PostSocialComposer() {
       targets,
     });
     
-    navigate('/admin/postsocial');
+    navigate('/spah/painel/postsocial');
   };
   
   const getFinalCaption = (account?: SocialAccount): string => {
@@ -179,7 +179,7 @@ export default function PostSocialComposer() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/admin/postsocial')}>
+        <Button variant="ghost" size="icon" onClick={() => navigate('/spah/painel/postsocial')}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>

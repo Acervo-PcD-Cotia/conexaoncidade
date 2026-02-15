@@ -25,7 +25,7 @@ export default function AcademyCourse() {
       <div className="container py-8 text-center">
         <h1 className="text-2xl font-bold mb-4">Curso não encontrado</h1>
         <Button asChild>
-          <Link to="/admin/academy">Voltar para Academy</Link>
+          <Link to="/spah/painel/academy">Voltar para Academy</Link>
         </Button>
       </div>
     );
@@ -49,7 +49,7 @@ export default function AcademyCourse() {
       {/* Back Button */}
       <div className="container py-4">
         <Button variant="ghost" size="sm" asChild>
-          <Link to="/admin/academy">
+          <Link to="/spah/painel/academy">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
           </Link>

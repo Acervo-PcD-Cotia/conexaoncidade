@@ -125,7 +125,7 @@ export function AcademyModuleAccordion({ lessons, lessonProgressMap }: AcademyMo
                   return (
                     <Link
                       key={lesson.id}
-                      to={`/admin/academy/aula/${lesson.id}`}
+                      to={`/spah/painel/academy/aula/${lesson.id}`}
                       className="flex items-center gap-4 p-4 hover:bg-accent/50 transition-colors group"
                     >
                       {/* Status indicator */}

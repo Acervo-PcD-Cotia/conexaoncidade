@@ -91,7 +91,7 @@ export function AcademyHero({ course, lessons = [], progress, firstUnwatchedLess
           {/* CTA */}
           {targetLesson && (
             <Button asChild size="lg" className="gap-2">
-              <Link to={`/admin/academy/aula/${targetLesson.id}`}>
+              <Link to={`/spah/painel/academy/aula/${targetLesson.id}`}>
                 <Play className="h-5 w-5 fill-current" />
                 {progress && progress.completed > 0 ? "Continuar" : "Começar"}
               </Link>

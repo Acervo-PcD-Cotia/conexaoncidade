@@ -419,7 +419,7 @@ export default function BroadcastVideoPlaylist() {
         <Tv className="h-16 w-16 text-muted-foreground" />
         <h2 className="text-xl font-semibold">Nenhum canal de TV encontrado</h2>
         <p className="text-muted-foreground">Crie um canal do tipo "tv" para configurar a grade de vídeos.</p>
-        <Button onClick={() => window.location.href = "/admin/broadcast/channels"}>
+        <Button onClick={() => window.location.href = "/spah/painel/broadcast/channels"}>
           Criar Canal
         </Button>
       </div>

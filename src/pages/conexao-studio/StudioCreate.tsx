@@ -124,7 +124,7 @@ export default function StudioCreate() {
     <div className="space-y-6 max-w-2xl">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
-          <Link to="/admin/conexao-studio/studios">
+          <Link to="/spah/painel/conexao-studio/studios">
             <ArrowLeft className="h-5 w-5" />
           </Link>
         </Button>
@@ -263,7 +263,7 @@ export default function StudioCreate() {
 
         <div className="flex items-center justify-end gap-4 mt-6">
           <Button type="button" variant="outline" asChild>
-            <Link to="/admin/conexao-studio/studios">Cancelar</Link>
+            <Link to="/spah/painel/conexao-studio/studios">Cancelar</Link>
           </Button>
           <Button type="submit" disabled={createStudio.isPending} className="gap-2">
             {createStudio.isPending ? (

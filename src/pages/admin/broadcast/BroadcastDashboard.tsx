@@ -31,7 +31,7 @@ export default function BroadcastDashboard() {
             </Link>
           </Button>
           <Button asChild>
-            <Link to="/admin/broadcast/new">
+            <Link to="/spah/painel/broadcast/new">
               <Plus className="w-4 h-4 mr-2" />
               Nova Transmissão
             </Link>
@@ -41,7 +41,7 @@ export default function BroadcastDashboard() {
 
       {/* Quick Actions */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Link to="/admin/broadcast/list">
+        <Link to="/spah/painel/broadcast/list">
           <Card className="hover:border-primary/50 transition-colors cursor-pointer">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Transmissões</CardTitle>
@@ -53,7 +53,7 @@ export default function BroadcastDashboard() {
           </Card>
         </Link>
 
-        <Link to="/admin/broadcast/channels">
+        <Link to="/spah/painel/broadcast/channels">
           <Card className="hover:border-primary/50 transition-colors cursor-pointer">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Canais</CardTitle>
@@ -65,7 +65,7 @@ export default function BroadcastDashboard() {
           </Card>
         </Link>
 
-        <Link to="/admin/broadcast/programs">
+        <Link to="/spah/painel/broadcast/programs">
           <Card className="hover:border-primary/50 transition-colors cursor-pointer">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Programas</CardTitle>
@@ -158,7 +158,7 @@ export default function BroadcastDashboard() {
                     <div className="flex items-center gap-2">
                       <Badge variant="destructive">LIVE</Badge>
                       <Button size="sm" variant="outline" asChild>
-                        <Link to={`/admin/broadcast/studio/${broadcast.id}`}>
+                        <Link to={`/spah/painel/broadcast/studio/${broadcast.id}`}>
                           <Settings2 className="w-3 h-3 mr-1" />
                           Estúdio
                         </Link>

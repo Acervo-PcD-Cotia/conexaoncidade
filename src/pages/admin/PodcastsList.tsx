@@ -146,7 +146,7 @@ export default function PodcastsList() {
                       </TableCell>
                       <TableCell>
                         <NavLink
-                          to={`/admin/news/${podcast.id}/edit`}
+                          to={`/spah/painel/news/${podcast.id}/edit`}
                           className="hover:underline font-medium"
                         >
                           {podcast.title.length > 60

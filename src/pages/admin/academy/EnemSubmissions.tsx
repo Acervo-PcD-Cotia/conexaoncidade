@@ -58,7 +58,7 @@ export default function EnemSubmissions() {
       {/* Header */}
       <div className="space-y-4">
         <Button variant="ghost" size="sm" asChild>
-          <Link to={`/admin/academy/enem/${slug}`}>
+          <Link to={`/spah/painel/academy/enem/${slug}`}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar para o Módulo
           </Link>
@@ -192,7 +192,7 @@ export default function EnemSubmissions() {
 
                       {submission.correction_status === "completed" && (
                         <Button asChild variant="outline" size="sm">
-                          <Link to={`/admin/academy/enem/${slug}/redacao/${submission.id}`}>
+                          <Link to={`/spah/painel/academy/enem/${slug}/redacao/${submission.id}`}>
                             Ver Feedback
                             <ChevronRight className="h-4 w-4 ml-1" />
                           </Link>
@@ -236,7 +236,7 @@ export default function EnemSubmissions() {
               Complete as semanas do curso e envie suas redações para correção.
             </p>
             <Button asChild>
-              <Link to={`/admin/academy/enem/${slug}`}>Ir para o Curso</Link>
+              <Link to={`/spah/painel/academy/enem/${slug}`}>Ir para o Curso</Link>
             </Button>
           </CardContent>
         </Card>

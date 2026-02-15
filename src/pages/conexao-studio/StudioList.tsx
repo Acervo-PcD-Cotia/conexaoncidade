@@ -79,7 +79,7 @@ export default function StudioList() {
           </p>
         </div>
         <Button asChild className="gap-2">
-          <Link to="/admin/conexao-studio/studios/new">
+          <Link to="/spah/painel/conexao-studio/studios/new">
             <Plus className="h-4 w-4" />
             Novo Estúdio
           </Link>
@@ -143,7 +143,7 @@ export default function StudioList() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link to={`/admin/conexao-studio/studios/${studio.id}/edit`}>
+                          <Link to={`/spah/painel/conexao-studio/studios/${studio.id}/edit`}>
                             <Pencil className="h-4 w-4 mr-2" />
                             Editar
                           </Link>
@@ -191,7 +191,7 @@ export default function StudioList() {
 
                     <div className="flex items-center gap-2 pt-2">
                       <Button asChild className="flex-1" size="sm">
-                        <Link to={`/admin/conexao-studio/studio/${studio.slug}/session`}>
+                        <Link to={`/spah/painel/conexao-studio/studio/${studio.slug}/session`}>
                           Entrar no Estúdio
                         </Link>
                       </Button>
@@ -220,7 +220,7 @@ export default function StudioList() {
               múltiplas plataformas simultaneamente.
             </p>
             <Button asChild className="gap-2">
-              <Link to="/admin/conexao-studio/studios/new">
+              <Link to="/spah/painel/conexao-studio/studios/new">
                 <Plus className="h-4 w-4" />
                 Criar Estúdio
               </Link>

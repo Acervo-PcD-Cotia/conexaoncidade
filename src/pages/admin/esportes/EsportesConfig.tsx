@@ -99,7 +99,7 @@ export default function EsportesConfig() {
     <div className="p-6 space-y-6">
       <header className="flex items-center gap-4">
         <Button asChild variant="ghost" size="icon">
-          <Link to="/admin/esportes">
+          <Link to="/spah/painel/esportes">
             <ArrowLeft className="h-5 w-5" />
           </Link>
         </Button>

@@ -135,8 +135,8 @@ export default function ContentFixDashboard() {
                       size="sm"
                       onClick={() => navigate(
                         news.issueType === "image" 
-                          ? "/admin/content-fix/images" 
-                          : "/admin/content-fix/dates"
+                          ? "/spah/painel/content-fix/images" 
+                          : "/spah/painel/content-fix/dates"
                       )}
                     >
                       Corrigir

@@ -193,7 +193,7 @@ export function StudioTabContent() {
                     </div>
                   </div>
                   <Button size="sm" variant="outline" asChild>
-                    <Link to={`/admin/conexao-studio/studios/${session.studio?.slug}/session`}>
+                    <Link to={`/spah/painel/conexao-studio/studios/${session.studio?.slug}/session`}>
                       Entrar
                     </Link>
                   </Button>
@@ -240,7 +240,7 @@ export function StudioTabContent() {
                     </div>
                   </div>
                   <Button size="sm" variant="outline" asChild>
-                    <Link to={`/admin/conexao-studio/studios/${studio.slug}/session`}>
+                    <Link to={`/spah/painel/conexao-studio/studios/${studio.slug}/session`}>
                       Entrar
                     </Link>
                   </Button>

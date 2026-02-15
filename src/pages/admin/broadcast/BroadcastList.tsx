@@ -104,7 +104,7 @@ export default function BroadcastList() {
           <p className="text-muted-foreground">Gerencie todas as transmissões</p>
         </div>
         <Button asChild>
-          <Link to="/admin/broadcast/new">
+          <Link to="/spah/painel/broadcast/new">
             <Plus className="w-4 h-4 mr-2" />
             Nova Transmissão
           </Link>
@@ -211,13 +211,13 @@ export default function BroadcastList() {
                           )}
                           {broadcast.status !== "ended" && (
                             <Button variant="ghost" size="icon" asChild>
-                              <Link to={`/admin/broadcast/studio/${broadcast.id}`}>
+                              <Link to={`/spah/painel/broadcast/studio/${broadcast.id}`}>
                                 <Play className="w-4 h-4" />
                               </Link>
                             </Button>
                           )}
                           <Button variant="ghost" size="icon" asChild>
-                            <Link to={`/admin/broadcast/${broadcast.id}/edit`}>
+                            <Link to={`/spah/painel/broadcast/${broadcast.id}/edit`}>
                               <Edit className="w-4 h-4" />
                             </Link>
                           </Button>

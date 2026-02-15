@@ -277,7 +277,7 @@ export default function StudioSession() {
     }
     
     await disconnect();
-    navigate('/admin/conexao-studio/studios');
+    navigate('/spah/painel/conexao-studio/studios');
   };
 
   const handleMoveToStage = (participantId: string) => {

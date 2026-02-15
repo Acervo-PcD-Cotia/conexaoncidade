@@ -160,13 +160,13 @@ export default function CommunityAdmin() {
           <p className="text-muted-foreground">Gerencie e monitore sua comunidade de leitores</p>
         </div>
         <div className="flex gap-2">
-          <NavLink to="/admin/community/members">
+          <NavLink to="/spah/painel/community/members">
             <Button variant="outline">
               <Users className="h-4 w-4 mr-2" />
               Membros
             </Button>
           </NavLink>
-          <NavLink to="/admin/community/moderation">
+          <NavLink to="/spah/painel/community/moderation">
             <Button variant={stats?.reportsToReview ? "destructive" : "outline"}>
               <AlertTriangle className="h-4 w-4 mr-2" />
               Moderação
@@ -246,7 +246,7 @@ export default function CommunityAdmin() {
             ) : (
               <>
                 <div className="text-2xl font-bold">{stats?.reportsToReview}</div>
-                <NavLink to="/admin/community/moderation">
+                <NavLink to="/spah/painel/community/moderation">
                   <Button variant="link" className="h-auto p-0 text-xs">
                     Revisar agora →
                   </Button>

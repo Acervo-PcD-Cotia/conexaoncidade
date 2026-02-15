@@ -125,42 +125,42 @@ export default function ConexaoStudioDashboard() {
       title: "Criar Estúdio",
       description: "Novo estúdio com link permanente",
       icon: Plus,
-      href: "/admin/conexao-studio/studios/new",
+      href: "/spah/painel/conexao-studio/studios/new",
       color: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
     },
     {
       title: "Entrar em Estúdio",
       description: "Acessar estúdio existente",
       icon: DoorOpen,
-      href: "/admin/conexao-studio/studios",
+      href: "/spah/painel/conexao-studio/studios",
       color: "bg-green-500/10 text-green-600 dark:text-green-400",
     },
     {
       title: "Criar Webinário",
       description: "Evento ao vivo ou sob demanda",
       icon: Presentation,
-      href: "/admin/conexao-studio/webinars/new",
+      href: "/spah/painel/conexao-studio/webinars/new",
       color: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
     },
     {
       title: "Gerenciar Destinos",
       description: "YouTube, Facebook, RTMP...",
       icon: Share2,
-      href: "/admin/conexao-studio/destinations",
+      href: "/spah/painel/conexao-studio/destinations",
       color: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
     },
     {
       title: "Painel de Branding",
       description: "Logos, overlays, letreiros",
       icon: Palette,
-      href: "/admin/conexao-studio/branding",
+      href: "/spah/painel/conexao-studio/branding",
       color: "bg-pink-500/10 text-pink-600 dark:text-pink-400",
     },
     {
       title: "Gerenciar Equipe",
       description: "Membros e permissões",
       icon: Users,
-      href: "/admin/conexao-studio/team",
+      href: "/spah/painel/conexao-studio/team",
       color: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400",
     },
   ];
@@ -184,13 +184,13 @@ export default function ConexaoStudioDashboard() {
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
             <Button asChild size="lg" className="gap-2">
-              <Link to="/admin/conexao-studio/studios/new">
+              <Link to="/spah/painel/conexao-studio/studios/new">
                 <Plus className="h-5 w-5" />
                 Novo Estúdio
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="gap-2">
-              <Link to="/admin/conexao-studio/library">
+              <Link to="/spah/painel/conexao-studio/library">
                 <FolderOpen className="h-5 w-5" />
                 Biblioteca
               </Link>
@@ -241,7 +241,7 @@ export default function ConexaoStudioDashboard() {
                 <CardDescription>Suas gravações mais recentes</CardDescription>
               </div>
               <Button variant="ghost" size="sm" asChild>
-                <Link to="/admin/conexao-studio/library">Ver todas</Link>
+                <Link to="/spah/painel/conexao-studio/library">Ver todas</Link>
               </Button>
             </CardHeader>
             <CardContent>
@@ -250,7 +250,7 @@ export default function ConexaoStudioDashboard() {
                   {recentRecordings.map((recording) => (
                     <Link 
                       key={recording.id} 
-                      to={`/admin/conexao-studio/library/${recording.id}`}
+                      to={`/spah/painel/conexao-studio/library/${recording.id}`}
                       className="group"
                     >
                       <div className="aspect-video rounded-lg bg-muted relative overflow-hidden">
@@ -336,7 +336,7 @@ export default function ConexaoStudioDashboard() {
                   {upcomingWebinars.map((webinar: any) => (
                     <Link 
                       key={webinar.id} 
-                      to={`/admin/conexao-studio/webinars/${webinar.id}`}
+                      to={`/spah/painel/conexao-studio/webinars/${webinar.id}`}
                       className="block p-3 rounded-lg border hover:bg-muted/50 transition-colors"
                     >
                       <p className="font-medium text-sm truncate">{webinar.title}</p>

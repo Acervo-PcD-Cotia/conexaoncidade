@@ -108,7 +108,7 @@ export default function RegionalSourceEdit() {
         ...formData,
         selectors: formData.type === 'listing' ? selectors : null,
       });
-      navigate('/admin/autopost-regional/fontes');
+      navigate('/spah/painel/autopost-regional/fontes');
     } catch (error) {
       // Error is handled by the hook
     }
@@ -141,7 +141,7 @@ export default function RegionalSourceEdit() {
       <div className="text-center py-12">
         <p className="text-muted-foreground">Fonte não encontrada</p>
         <Button asChild className="mt-4">
-          <Link to="/admin/autopost-regional/fontes">Voltar</Link>
+          <Link to="/spah/painel/autopost-regional/fontes">Voltar</Link>
         </Button>
       </div>
     );
@@ -152,7 +152,7 @@ export default function RegionalSourceEdit() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
-          <Link to="/admin/autopost-regional/fontes">
+          <Link to="/spah/painel/autopost-regional/fontes">
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
@@ -441,7 +441,7 @@ export default function RegionalSourceEdit() {
       {/* Save Button */}
       <div className="flex justify-end gap-4">
         <Button variant="outline" asChild>
-          <Link to="/admin/autopost-regional/fontes">Cancelar</Link>
+          <Link to="/spah/painel/autopost-regional/fontes">Cancelar</Link>
         </Button>
         <Button onClick={handleSave} disabled={updateSource.isPending}>
           {updateSource.isPending ? (
