@@ -2,29 +2,25 @@ import { useAdUnit } from '@/hooks/useAdUnit';
 import { AD_FORMATS, getEffectiveFormat, type AdFormatKey, type DeviceType } from '@/lib/adFormats';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AdSlotWrapper, type AdPage } from './AdSlotWrapper';
 
 interface ResponsiveAdUnitProps {
   format: AdFormatKey;
   slotId: string;
   source?: 'publidoor' | 'ads';
   className?: string;
+  page?: AdPage;
 }
 
 /**
  * Unified responsive ad component that serves both legacy ads and Publidoor items.
- * 
- * Features:
- * - Automatic device detection (mobile/tablet/desktop)
- * - Native CSS aspect-ratio for CLS prevention
- * - Lazy loading (except for preload formats like top banners)
- * - Safe area centered image positioning
- * - Automatic impression and click tracking
  */
 export function ResponsiveAdUnit({
   format,
   slotId,
   source = 'ads',
   className,
+  page = 'home',
 }: ResponsiveAdUnitProps) {
   const { ad, isLoading, device, handleClick } = useAdUnit({
     format,
@@ -32,16 +28,35 @@ export function ResponsiveAdUnit({
     source,
   });
 
-  // Get effective format (with fallback for mobile if applicable)
   const effectiveFormat = getEffectiveFormat(format, device);
   const formatConfig = AD_FORMATS[effectiveFormat];
-
-  // Get dimensions for current device
   const dimensions = formatConfig[device as DeviceType];
+
+  // Map format to slot metadata
+  const slotMap: Record<string, { channel: string; placement: string; w: number; h: number }> = {
+    SUPER_BANNER_TOPO: { channel: 'ads', placement: 'top', w: 970, h: 250 },
+    ANUNCIO_HOME: { channel: 'ads', placement: 'top', w: 728, h: 90 },
+    RETANGULO_MEDIO: { channel: 'ads', placement: 'inline', w: 300, h: 250 },
+    ARRANHA_CEU: { channel: 'ads', placement: 'sidebar', w: 300, h: 600 },
+    POPUP_INTELIGENTE: { channel: 'ads', placement: 'modal', w: 580, h: 400 },
+    BANNER_INTRO: { channel: 'experience', placement: 'intro', w: 970, h: 250 },
+    DESTAQUE_FLUTUANTE: { channel: 'experience', placement: 'floating', w: 300, h: 600 },
+    ALERTA_FULL_SAIDA: { channel: 'experience', placement: 'modal', w: 1280, h: 720 },
+  };
+
+  const meta = slotMap[format as string] || { channel: source, placement: 'inline', w: dimensions.width, h: dimensions.height };
 
   if (isLoading) {
     return (
-      <div className={cn('flex flex-col items-center justify-center', className)}>
+      <AdSlotWrapper
+        slotId={slotId}
+        channel={meta.channel}
+        placement={meta.placement}
+        expectedWidth={meta.w}
+        expectedHeight={meta.h}
+        page={page}
+        className={cn('flex flex-col items-center justify-center', className)}
+      >
         <Skeleton 
           className="w-full"
           style={{ 
@@ -49,15 +64,34 @@ export function ResponsiveAdUnit({
             aspectRatio: formatConfig.aspectRatio,
           }}
         />
-      </div>
+      </AdSlotWrapper>
     );
   }
 
-  if (!ad) return null;
+  if (!ad) {
+    return (
+      <AdSlotWrapper
+        slotId={slotId}
+        channel={meta.channel}
+        placement={meta.placement}
+        expectedWidth={meta.w}
+        expectedHeight={meta.h}
+        page={page}
+        className={className}
+      />
+    );
+  }
 
   return (
-    <div className={cn('flex flex-col items-center justify-center', className)}>
-      {/* Ad label for transparency */}
+    <AdSlotWrapper
+      slotId={slotId}
+      channel={meta.channel}
+      placement={meta.placement}
+      expectedWidth={meta.w}
+      expectedHeight={meta.h}
+      page={page}
+      className={cn('flex flex-col items-center justify-center', className)}
+    >
       <span className="mb-1 text-[10px] uppercase tracking-wider text-muted-foreground/60">
         Publicidade
       </span>
@@ -86,6 +120,6 @@ export function ResponsiveAdUnit({
           />
         </div>
       </a>
-    </div>
+    </AdSlotWrapper>
   );
 }
