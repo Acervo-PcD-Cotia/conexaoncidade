@@ -20,7 +20,8 @@ import { CampaignCard } from '@/components/admin/campaigns/CampaignCard';
 import { 
   useCampaignsUnified, 
   useDeleteCampaignUnified, 
-  useUpdateCampaignUnified 
+  useUpdateCampaignUnified,
+  useDuplicateCampaignUnified,
 } from '@/hooks/useCampaignsUnified';
 import type { CampaignStatus, ChannelType } from '@/types/campaigns-unified';
 
@@ -47,6 +48,7 @@ export default function CampaignsUnified() {
 
   const deleteMutation = useDeleteCampaignUnified();
   const updateMutation = useUpdateCampaignUnified();
+  const duplicateMutation = useDuplicateCampaignUnified();
 
   const handleEdit = (id: string) => {
     navigate(campaignRoutes.edit(id));
@@ -66,6 +68,10 @@ export default function CampaignsUnified() {
 
   const handleViewMetrics = (id: string) => {
     navigate(campaignRoutes.metrics(id));
+  };
+
+  const handleDuplicate = (id: string) => {
+    duplicateMutation.mutate(id);
   };
 
   return (
@@ -117,15 +123,21 @@ export default function CampaignsUnified() {
         </Select>
 
         <Select value={channelFilter} onValueChange={(v) => setChannelFilter(v as ChannelType | 'all')}>
-          <SelectTrigger className="w-full sm:w-[160px]">
+          <SelectTrigger className="w-full sm:w-[180px]">
             <LayoutGrid className="h-4 w-4 mr-2" />
             <SelectValue placeholder="Canal" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="ads">Ads</SelectItem>
+            <SelectItem value="all">Todos os Canais</SelectItem>
+            <SelectItem value="ads">Ads (Banners)</SelectItem>
             <SelectItem value="publidoor">Publidoor</SelectItem>
             <SelectItem value="webstories">WebStories</SelectItem>
+            <SelectItem value="exit_intent">Exit-Intent</SelectItem>
+            <SelectItem value="login_panel">Painel de Login</SelectItem>
+            <SelectItem value="banner_intro">Banner Intro</SelectItem>
+            <SelectItem value="floating_ad">Destaque Flutuante</SelectItem>
+            <SelectItem value="push">Push</SelectItem>
+            <SelectItem value="newsletter">Newsletter</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -161,6 +173,7 @@ export default function CampaignsUnified() {
               campaign={campaign}
               onEdit={handleEdit}
               onDelete={setDeleteId}
+              onDuplicate={handleDuplicate}
               onToggleStatus={handleToggleStatus}
               onViewMetrics={handleViewMetrics}
             />
