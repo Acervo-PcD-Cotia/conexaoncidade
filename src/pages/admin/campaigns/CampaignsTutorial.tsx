@@ -248,6 +248,32 @@ export default function CampaignsTutorial() {
 
           <Separator />
 
+          {/* Cycles Summary in Visão tab */}
+          {showTab('ciclos distribuição rodada agendamento cap frequência') && (
+            <Card className="bg-muted/30 border-border">
+              <CardContent className="pt-6 space-y-3">
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <RefreshCw className="h-4 w-4 text-primary" />
+                  Ciclos de Distribuição (Resumo)
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  <strong className="text-foreground">Ciclos</strong> controlam <em>quando</em>, <em>onde</em> e <em>com que frequência</em> os criativos são exibidos.
+                  Sem ciclos, a campanha <strong className="text-foreground">não agenda exibição</strong>.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="outline">Período</Badge>
+                  <Badge variant="outline">Formatos 1–15</Badge>
+                  <Badge variant="outline">Frequência/Cap</Badge>
+                  <Badge variant="outline">Observações</Badge>
+                </div>
+                <TipBox variant="warning">
+                  Crie pelo menos <strong>1 ciclo</strong> para que a campanha veicule.
+                  Push e Newsletter exigem confirmação manual por ciclo.
+                </TipBox>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Reference table */}
           {showTab('formatos comerciais dimensões tamanhos 728 970 300 580 1080 800 1280') && (
             <div className="space-y-3">

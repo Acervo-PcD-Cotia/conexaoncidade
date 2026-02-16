@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,13 +8,14 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { AlertTriangle, Hash, MapPin } from 'lucide-react';
 import { ChannelSelector } from './ChannelSelector';
 import { BatchAssetUploader } from './BatchAssetUploader';
 import { QuickGuideCard } from './QuickGuideCard';
 import { FormatReferenceDialog } from './FormatReferenceDialog';
 import { useCampaignFormReducer } from './useCampaignFormReducer';
-import { AD_SLOTS } from '@/lib/adSlots';
+import { AD_SLOTS, getSlotBlocks } from '@/lib/adSlots';
 import type { 
   CampaignFormData, 
   CampaignStatus,
@@ -25,6 +27,7 @@ interface CampaignFormProps {
   onSubmit: (data: CampaignFormData) => void;
   onCancel: () => void;
   isLoading?: boolean;
+  cyclesCount?: number;
 }
 
 export function CampaignForm({
@@ -32,8 +35,10 @@ export function CampaignForm({
   onSubmit,
   onCancel,
   isLoading,
+  cyclesCount = 0,
 }: CampaignFormProps) {
   const isNewCampaign = !initialData?.name;
+  const [showFormats, setShowFormats] = useState(isNewCampaign);
 
   const { register, handleSubmit, watch, formState: { errors } } = useForm<CampaignFormData>({
     defaultValues: {
@@ -74,7 +79,7 @@ export function CampaignForm({
     { id: 'channels', label: 'Pelo menos 1 canal selecionado', completed: selectedChannels.length > 0 },
     { id: 'assets', label: 'Criativos vinculados', completed: Object.values(assets).some((a: any) => a?.url) },
     { id: 'cta', label: 'CTA com HTTPS válido', completed: !watchCtaUrl?.trim() || watchCtaUrl?.trim().startsWith('https://') },
-    { id: 'cycle', label: 'Ciclo criado (se status ≠ pausada)', completed: status === 'paused' || status === 'draft' },
+    { id: 'cycle', label: 'Ciclo criado (se campanha ativa)', completed: status === 'paused' || status === 'draft' || cyclesCount > 0 },
   ];
 
   // Validate channels before submit
@@ -359,7 +364,49 @@ export function CampaignForm({
         </CardContent>
       </Card>
 
-      {/* Block 2: Channels */}
+      {/* Block 2: Numbered Format Reference (1-15) */}
+      <Card>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Hash className="h-5 w-5 text-primary" />
+                15 Formatos Comerciais — Guia de Seleção Rápida
+              </CardTitle>
+              <CardDescription>Formatos numerados 1–15 com dimensões e localização</CardDescription>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => setShowFormats(!showFormats)}>
+              {showFormats ? 'Ocultar' : 'Exibir'}
+            </Button>
+          </div>
+        </CardHeader>
+        {showFormats && (
+          <CardContent>
+            {getSlotBlocks().map((block) => (
+              <div key={block.channel} className="mb-4">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-2">
+                  <Badge variant="secondary" className="text-[10px]">{block.title}</Badge>
+                </h4>
+                <div className="space-y-1.5">
+                  {block.slots.map((slot) => (
+                    <div key={slot.id} className="flex items-center gap-3 p-2 rounded-lg border hover:bg-muted/50 transition-colors text-sm">
+                      <span className="font-mono text-xs text-muted-foreground w-6 text-right">#{slot.seq}</span>
+                      <span className="font-medium flex-1">{slot.label}</span>
+                      <span className="font-mono text-xs text-muted-foreground">{slot.width}×{slot.height}</span>
+                      <span className="text-xs text-muted-foreground flex items-center gap-1 hidden sm:flex">
+                        <MapPin className="h-3 w-3" />
+                        {slot.location}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        )}
+      </Card>
+
+      {/* Block 3: Channels */}
       <Card>
         <CardHeader>
           <CardTitle>Canais de Exibição</CardTitle>
