@@ -248,7 +248,7 @@ export function SuperBanner() {
       page="home"
     >
       <div
-        className="relative w-full overflow-hidden bg-black"
+        className="relative w-full max-w-[970px] mx-auto overflow-visible"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
@@ -265,36 +265,30 @@ export function SuperBanner() {
             overlay
           />
         </div>
-        <div
-          className="flex transition-transform duration-700 ease-out"
-          style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-        >
-          {banners.map((banner) => (
-            <a
-              key={banner.id}
-              href={banner.link_url || "#"}
-              target={banner.link_target || "_blank"}
-              rel="noopener noreferrer"
-              className="relative w-full shrink-0"
-              onClick={(e) => handleBannerClick(e, banner)}
-            >
-              <div 
-                className="relative w-full overflow-hidden bg-muted"
-                style={{ 
-                  aspectRatio: formatConfig.aspectRatio,
-                  maxHeight: device === 'mobile' ? '100px' : device === 'tablet' ? '90px' : '250px',
-                }}
+        <div className="overflow-hidden">
+          <div
+            className="flex transition-transform duration-700 ease-out"
+            style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+          >
+            {banners.map((banner) => (
+              <a
+                key={banner.id}
+                href={banner.link_url || "#"}
+                target={banner.link_target || "_blank"}
+                rel="noopener noreferrer"
+                className="relative w-full shrink-0"
+                onClick={(e) => handleBannerClick(e, banner)}
               >
                 <img
                   src={banner.image_url}
                   alt={banner.alt_text || banner.title || "Banner promocional"}
-                  className="h-full w-full object-cover object-center"
+                  className="w-full h-auto block"
                   loading="eager"
                   decoding="async"
                 />
-              </div>
-            </a>
-          ))}
+              </a>
+            ))}
+          </div>
         </div>
 
         {banners.length > 1 && (
