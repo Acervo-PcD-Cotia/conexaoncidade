@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useCallback } from "react";
+import { useMemo, useEffect, useCallback, useState } from "react";
 import { useSiteTemplateConfig } from "./useSiteTemplateConfig";
 import { usePortalTemplate } from "./usePortalTemplates";
 import { useTenantContext } from "@/contexts/TenantContext";
@@ -17,6 +17,7 @@ import {
 // Cache version for localStorage - bump this when config structure changes
 const CACHE_VERSION = "v1";
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const LOADING_TIMEOUT_MS = 3000; // 3 seconds max loading
 
 interface CachedConfig {
   version: string;
@@ -53,14 +54,39 @@ const DEFAULT_HOME_SECTIONS: HomeSectionConfig[] = [
   { type: "most_read", order: 10, enabled: true },
 ];
 
+/**
+ * Detect if the current route is a public-facing page (not admin panel).
+ * Public pages should never block rendering waiting for tenant config.
+ */
+function isPublicRoute(): boolean {
+  const path = window.location.pathname;
+  return !path.startsWith('/spah');
+}
+
 export function useSiteConfig() {
   const { currentTenantId, isLoading: tenantLoading } = useTenantContext();
   const { data: siteConfig, isLoading: configLoading } = useSiteTemplateConfig();
   const { data: template, isLoading: templateLoading } = usePortalTemplate(siteConfig?.template_id);
 
-  // Use defaults when: tenant resolved to null OR still loading but no cached tenant
-  // This ensures public site renders immediately even for logged-in users
-  const shouldUseDefaults = !currentTenantId && (!tenantLoading || !localStorage.getItem('cached_tenant_id'));
+  // Timeout escape hatch: after 3s of loading, force defaults
+  const [timedOut, setTimedOut] = useState(false);
+  useEffect(() => {
+    if (!tenantLoading && !configLoading && !templateLoading) {
+      setTimedOut(false);
+      return;
+    }
+    const timer = setTimeout(() => setTimedOut(true), LOADING_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [tenantLoading, configLoading, templateLoading]);
+
+  // Use defaults when:
+  // 1. Public route and tenant hasn't resolved yet (never block public site)
+  // 2. Tenant resolved to null
+  // 3. Loading timed out
+  const isPublic = isPublicRoute();
+  const rawLoading = tenantLoading || configLoading || templateLoading;
+  const shouldUseDefaults = timedOut || (!currentTenantId && !tenantLoading) || (isPublic && rawLoading && !currentTenantId);
+  
   const cacheKey = `site_config_${CACHE_VERSION}_${currentTenantId}`;
 
   // Build merged theme
@@ -211,6 +237,9 @@ export function useSiteConfig() {
       .sort((a, b) => a.order - b.order);
   }, [homeSections, isModuleEnabled]);
 
+  // For public routes: NEVER block render. For admin: allow loading but cap at timeout.
+  const effectiveLoading = shouldUseDefaults ? false : (isPublic ? false : rawLoading && !timedOut);
+
   return {
     config,
     theme,
@@ -225,7 +254,6 @@ export function useSiteConfig() {
     templateName: config.templateName,
     isModuleEnabled,
     t,
-    // Not loading if using defaults; also cap loading to 3s max to prevent blank pages
-    isLoading: shouldUseDefaults ? false : (tenantLoading || configLoading || templateLoading),
+    isLoading: effectiveLoading,
   };
 }
