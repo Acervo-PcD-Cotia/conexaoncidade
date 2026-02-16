@@ -10,7 +10,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
 import { ChannelSelector } from './ChannelSelector';
 import { BatchAssetUploader } from './BatchAssetUploader';
+import { QuickGuideCard } from './QuickGuideCard';
+import { FormatReferenceDialog } from './FormatReferenceDialog';
 import { useCampaignFormReducer } from './useCampaignFormReducer';
+import { AD_SLOTS } from '@/lib/adSlots';
 import type { 
   CampaignFormData, 
   CampaignStatus,
@@ -30,7 +33,9 @@ export function CampaignForm({
   onCancel,
   isLoading,
 }: CampaignFormProps) {
-  const { register, handleSubmit, formState: { errors } } = useForm<CampaignFormData>({
+  const isNewCampaign = !initialData?.name;
+
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<CampaignFormData>({
     defaultValues: {
       name: initialData?.name || '',
       advertiser: initialData?.advertiser || '',
@@ -54,6 +59,23 @@ export function CampaignForm({
   } = useCampaignFormReducer(initialData);
 
   const { status, selectedChannels, channelConfigs, assets, validationErrors } = state;
+
+  // Watch form values for checklist
+  const watchName = watch('name');
+  const watchAdvertiser = watch('advertiser');
+  const watchStartsAt = watch('starts_at');
+  const watchEndsAt = watch('ends_at');
+  const watchCtaUrl = watch('cta_url');
+
+  // Build checklist items
+  const checkItems = [
+    { id: 'name', label: 'Nome e anunciante preenchidos', completed: !!(watchName?.trim() && watchAdvertiser?.trim()) },
+    { id: 'period', label: 'Período definido', completed: !!(watchStartsAt && watchEndsAt) },
+    { id: 'channels', label: 'Pelo menos 1 canal selecionado', completed: selectedChannels.length > 0 },
+    { id: 'assets', label: 'Criativos vinculados', completed: Object.values(assets).some((a: any) => a?.url) },
+    { id: 'cta', label: 'CTA com HTTPS válido', completed: !watchCtaUrl?.trim() || watchCtaUrl?.trim().startsWith('https://') },
+    { id: 'cycle', label: 'Ciclo criado (se status ≠ pausada)', completed: status === 'paused' || status === 'draft' },
+  ];
 
   // Validate channels before submit
   const validateChannels = (): string[] => {
@@ -174,6 +196,9 @@ export function CampaignForm({
 
   return (
     <div className="space-y-6">
+      {/* Quick Guide */}
+      <QuickGuideCard isNewCampaign={isNewCampaign} checkItems={checkItems} />
+
       {/* Validation Errors */}
       {validationErrors.length > 0 && (
         <Alert variant="destructive">
@@ -191,8 +216,13 @@ export function CampaignForm({
       {/* Block 1: Common Data */}
       <Card>
         <CardHeader>
-          <CardTitle>Dados da Campanha</CardTitle>
-          <CardDescription>Informações básicas da campanha publicitária</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Dados da Campanha</CardTitle>
+              <CardDescription>Informações básicas da campanha publicitária</CardDescription>
+            </div>
+            <FormatReferenceDialog />
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -359,6 +389,7 @@ export function CampaignForm({
         </CardHeader>
         <CardContent className="space-y-4">
           <BatchAssetUploader
+            existingAssets={assets as unknown as Record<string, { url?: string; alt?: string }>}
             onAssetsUploaded={(uploadedAssets) => {
               uploadedAssets.forEach(asset => {
                 const channel = asset.channel_type;
@@ -381,19 +412,23 @@ export function CampaignForm({
             }}
           />
 
-          {/* Active Assets Summary */}
+          {/* Active Assets Summary - ordered by AD_SLOTS seq */}
           {(() => {
-            const activeAssets = [
-              assets.ads.url && { label: 'Ads (Banner)', url: assets.ads.url },
-              assets.publidoor.url && { label: 'Publidoor', url: assets.publidoor.url },
-              assets.webstories.url && { label: 'WebStories', url: assets.webstories.url },
-              assets.exitIntentHero.url && { label: 'Exit-Intent (Hero)', url: assets.exitIntentHero.url },
-              assets.exitIntentSecondary1.url && { label: 'Exit-Intent (Sec. 1)', url: assets.exitIntentSecondary1.url },
-              assets.exitIntentSecondary2.url && { label: 'Exit-Intent (Sec. 2)', url: assets.exitIntentSecondary2.url },
-              assets.loginPanel.url && { label: 'Painel Login', url: assets.loginPanel.url },
-              assets.bannerIntro.url && { label: 'Banner Intro', url: assets.bannerIntro.url },
-              assets.floatingAd.url && { label: 'Destaque Flutuante', url: assets.floatingAd.url },
-            ].filter(Boolean) as { label: string; url: string }[];
+            const assetEntries = [
+              { label: 'Ads (Banner)', url: assets.ads.url, seq: 1 },
+              { label: 'Publidoor', url: assets.publidoor.url, seq: 6 },
+              { label: 'WebStories', url: assets.webstories.url, seq: 9 },
+              { label: 'Painel Login', url: assets.loginPanel.url, seq: 10 },
+              { label: 'Banner Intro', url: assets.bannerIntro.url, seq: 13 },
+              { label: 'Destaque Flutuante', url: assets.floatingAd.url, seq: 14 },
+              { label: 'Exit-Intent (Hero)', url: assets.exitIntentHero.url, seq: 15 },
+              { label: 'Exit-Intent (Sec. 1)', url: assets.exitIntentSecondary1.url, seq: 15 },
+              { label: 'Exit-Intent (Sec. 2)', url: assets.exitIntentSecondary2.url, seq: 15 },
+            ];
+
+            const activeAssets = assetEntries
+              .filter(a => a.url)
+              .sort((a, b) => a.seq - b.seq);
 
             if (activeAssets.length === 0) return null;
 
