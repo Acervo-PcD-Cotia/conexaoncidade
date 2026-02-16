@@ -46,10 +46,27 @@ export default function Auth() {
   const { data: latestNews } = useNews(4);
 
   useEffect(() => {
-    if (user) {
-      window.location.href = "https://conexaoncidade.lovable.app/spah";
-    }
-  }, [user]);
+    if (!user) return;
+    
+    // User is authenticated — fetch role and redirect to appropriate panel
+    const redirectToPanel = async () => {
+      try {
+        const { data } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .single();
+        
+        const role = data?.role as string;
+        const route = ROLE_ROUTES[role] || '/spah/painel';
+        navigate(route, { replace: true });
+      } catch {
+        navigate('/spah/painel', { replace: true });
+      }
+    };
+    
+    redirectToPanel();
+  }, [user, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
