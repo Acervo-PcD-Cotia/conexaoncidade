@@ -61,8 +61,8 @@ export const AD_SLOTS: AdSlot[] = [
     location: 'Topo da Home, matérias, categorias',
   },
   { 
-    id: 'super_banner', key: '970x250', label: 'Mega Destaque', 
-    width: 970, height: 250, aspect: calculateAspect(970, 250),
+    id: 'super_banner', key: '4042x1042', label: 'Mega Destaque', 
+    width: 4042, height: 1042, aspect: calculateAspect(4042, 1042),
     channel: 'ads', placement: 'top', seq: 2,
     description: 'Banner de grande impacto visual',
     location: 'Abaixo do menu, início da Home',
