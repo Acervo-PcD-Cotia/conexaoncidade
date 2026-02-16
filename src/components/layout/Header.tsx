@@ -306,7 +306,10 @@ export function Header() {
                       <DropdownMenuSeparator />
                     </>
                   )}
-                  <DropdownMenuItem onClick={() => signOut()}>
+                  <DropdownMenuItem onClick={async () => {
+                    await signOut();
+                    window.location.href = "https://conexaoncidade.lovable.app/spah";
+                  }}>
                     <LogOut className="h-4 w-4 mr-2" />
                     <VocabText term="logout" fallback="Sair" />
                   </DropdownMenuItem>

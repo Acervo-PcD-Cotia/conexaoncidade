@@ -35,7 +35,7 @@ export function useRequireRole(allowedRoles: AppRole[]) {
           
           if (countdown <= 0) {
             if (redirectTimerRef.current) clearInterval(redirectTimerRef.current);
-            navigate("/spah");
+            window.location.href = "https://conexaoncidade.lovable.app/spah";
           }
         }, 1000);
         
@@ -63,7 +63,7 @@ export function useRequireRole(allowedRoles: AppRole[]) {
             
             if (countdown <= 0) {
               if (redirectTimerRef.current) clearInterval(redirectTimerRef.current);
-              navigate("/");
+              window.location.href = "https://conexaoncidade.lovable.app/spah";
             }
           }, 1000);
           
@@ -91,7 +91,7 @@ export function useRequireRole(allowedRoles: AppRole[]) {
             
             if (countdown <= 0) {
               if (redirectTimerRef.current) clearInterval(redirectTimerRef.current);
-              navigate("/");
+              window.location.href = "https://conexaoncidade.lovable.app/spah";
             }
           }, 1000);
         }
@@ -109,7 +109,7 @@ export function useRequireRole(allowedRoles: AppRole[]) {
           
           if (countdown <= 0) {
             if (redirectTimerRef.current) clearInterval(redirectTimerRef.current);
-            navigate("/");
+            window.location.href = "https://conexaoncidade.lovable.app/spah";
           }
         }, 1000);
       }

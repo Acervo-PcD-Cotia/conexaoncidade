@@ -47,21 +47,9 @@ export default function Auth() {
 
   useEffect(() => {
     if (user) {
-      supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .single()
-        .then(({ data }) => {
-          if (data && ADMIN_ROLES.includes(data.role)) {
-            const route = ROLE_ROUTES[data.role] || '/spah/painel';
-            navigate(route);
-          } else {
-            navigate('/');
-          }
-        });
+      window.location.href = "https://conexaoncidade.lovable.app/spah";
     }
-  }, [user, navigate]);
+  }, [user]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
