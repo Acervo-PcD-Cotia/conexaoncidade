@@ -56,7 +56,7 @@ export function MarketDataBar() {
   const weatherData = weather || { temp: 24, description: "Parcialmente nublado", city: "Cotia" };
 
   return (
-    <div className="border-b bg-card">
+    <div className="border-b bg-card mb-3 md:mb-3">
       <div className="container flex items-center justify-between py-1 text-xs">
         {/* Left: Location + Date */}
         <div className="flex shrink-0 items-center gap-3">
