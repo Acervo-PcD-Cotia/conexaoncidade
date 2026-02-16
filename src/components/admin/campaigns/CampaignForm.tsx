@@ -92,7 +92,7 @@ export function CampaignForm({
     { id: 'channels', label: 'Pelo menos 1 canal selecionado', completed: selectedChannels.length > 0 },
     { id: 'assets', label: 'Criativos vinculados', completed: Object.values(assets).some((a: any) => a?.url) },
     { id: 'cta', label: 'CTA com HTTPS válido', completed: !watchCtaUrl?.trim() || watchCtaUrl?.trim().startsWith('https://') },
-    { id: 'cycle', label: 'Ciclo criado (se campanha ativa)', completed: status === 'paused' || status === 'draft' || cyclesCount > 0 },
+    { id: 'cycle', label: 'Ciclo de distribuição (opcional)', completed: true },
   ];
 
   // Activate channel from format guide
@@ -111,11 +111,6 @@ export function CampaignForm({
   // Validate channels before submit
   const validateChannels = (): string[] => {
     const errs: string[] = [];
-
-    // Block activation without cycles
-    if (status === 'active' && cyclesCount === 0) {
-      errs.push('Sem ciclos a campanha não agenda exibição. Crie pelo menos 1 ciclo antes de ativar.');
-    }
 
     if (selectedChannels.includes('push')) {
       if (!channelConfigs.push.title?.trim()) errs.push('Push: Título é obrigatório');
@@ -323,11 +318,6 @@ export function CampaignForm({
                   </div>
                 ))}
               </RadioGroup>
-              {status === 'active' && cyclesCount === 0 && (
-                <p className="text-xs text-destructive font-medium mt-1">
-                  ⚠ Sem ciclos a campanha não agenda exibição. Crie pelo menos 1 ciclo.
-                </p>
-              )}
             </div>
 
             <div className="space-y-2">
