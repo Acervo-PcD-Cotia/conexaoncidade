@@ -12860,6 +12860,60 @@ export type Database = {
           },
         ]
       }
+      push_logs: {
+        Row: {
+          body: string
+          created_at: string | null
+          error: string | null
+          id: string
+          notification_id: string | null
+          sent_at: string | null
+          status: string | null
+          subscription_id: string | null
+          title: string
+          url: string | null
+        }
+        Insert: {
+          body: string
+          created_at?: string | null
+          error?: string | null
+          id?: string
+          notification_id?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subscription_id?: string | null
+          title: string
+          url?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string | null
+          error?: string | null
+          id?: string
+          notification_id?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subscription_id?: string | null
+          title?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_logs_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "push_notifications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "push_logs_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "push_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       push_notifications: {
         Row: {
           body: string
@@ -12932,33 +12986,42 @@ export type Database = {
       push_subscriptions: {
         Row: {
           auth: string
+          categories: string[] | null
+          city: string | null
           created_at: string | null
           endpoint: string
           id: string
           is_active: boolean | null
           p256dh: string
+          status: string | null
           updated_at: string | null
           user_agent: string | null
           user_id: string | null
         }
         Insert: {
           auth: string
+          categories?: string[] | null
+          city?: string | null
           created_at?: string | null
           endpoint: string
           id?: string
           is_active?: boolean | null
           p256dh: string
+          status?: string | null
           updated_at?: string | null
           user_agent?: string | null
           user_id?: string | null
         }
         Update: {
           auth?: string
+          categories?: string[] | null
+          city?: string | null
           created_at?: string | null
           endpoint?: string
           id?: string
           is_active?: boolean | null
           p256dh?: string
+          status?: string | null
           updated_at?: string | null
           user_agent?: string | null
           user_id?: string | null
