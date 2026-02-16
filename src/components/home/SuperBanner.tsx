@@ -231,8 +231,8 @@ export function SuperBanner() {
         slotId="super_banner"
         channel="ads"
         placement="top"
-        expectedWidth={4042}
-        expectedHeight={1042}
+        expectedWidth={970}
+        expectedHeight={250}
         page="home"
       />
     );
@@ -243,12 +243,12 @@ export function SuperBanner() {
       slotId="super_banner"
       channel="ads"
       placement="top"
-      expectedWidth={4042}
-      expectedHeight={1042}
+      expectedWidth={970}
+      expectedHeight={250}
       page="home"
     >
       <div
-        className="relative w-full mx-auto overflow-visible"
+        className="relative w-full max-w-[970px] mx-auto overflow-visible"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
