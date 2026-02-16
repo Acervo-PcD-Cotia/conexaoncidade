@@ -79,6 +79,7 @@ import LinksQRGenerator from "./pages/admin/LinksQRGenerator";
 import LinksBioBuilder from "./pages/admin/LinksBioBuilder";
 import LinksReports from "./pages/admin/LinksReports";
 import CampaignsHub from "./pages/admin/CampaignsHub";
+import PushNotificationsAdmin from "./pages/admin/PushNotificationsAdmin";
 
 // Campaign Proofs Module
 import CampaignProofsList from "./pages/admin/comprovantes/CampaignProofsList";
@@ -536,6 +537,7 @@ const App = () => (
                         <Route path="settings/menus" element={<MenuToggleSettings />} />
                         <Route path="settings/appearance" element={<AppearanceSettings />} />
                         <Route path="solutions" element={<Solutions />} />
+                        <Route path="notificacoes" element={<PushNotificationsAdmin />} />
                         <Route path="events" element={<EventsList />} />
                         <Route path="editions" element={<EditionsList />} />
                         <Route path="editions/new" element={<EditionEditor />} />

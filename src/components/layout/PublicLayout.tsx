@@ -3,7 +3,7 @@ import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { TopAudioPlayer } from "./TopAudioPlayer";
 import { AccessibilityPanel } from "@/components/accessibility/AccessibilityPanel";
-import { PushPermissionBanner } from "@/components/PushPermissionBanner";
+import { PushSubscribePrompt } from "@/components/PushSubscribePrompt";
 import { useKeyboardNavigation } from "@/hooks/useKeyboardNavigation";
 import MiniPlayer from "@/components/broadcast/MiniPlayer";
 import { useMiniPlayer } from "@/contexts/MiniPlayerContext";
@@ -49,8 +49,8 @@ export function PublicLayout() {
       {/* Accessibility tools (VLibras is now loaded globally via index.html) */}
       <AccessibilityPanel />
       
-      {/* Push notification permission banner */}
-      <PushPermissionBanner />
+      {/* Push notification subscribe prompt */}
+      <PushSubscribePrompt />
       
       {/* Persistent Mini Player for live broadcasts */}
       {shouldShowMiniPlayer && broadcast && (
