@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { campaignRoutes } from '@/lib/campaignRoutes';
-import { Plus, Search, Filter, LayoutGrid, List, BookOpen } from 'lucide-react';
+import { Plus, Search, Filter, LayoutGrid, List, BookOpen, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -24,9 +24,35 @@ import {
   useDuplicateCampaignUnified,
   useCreateCampaignUnified,
 } from '@/hooks/useCampaignsUnified';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import type { CampaignStatus, ChannelType } from '@/types/campaigns-unified';
 
 const DEMO_CAMPAIGN_NAME = 'MODELO — Campanha Unificada (Exemplo)';
+
+const DEMO_CAMPAIGN_DATA = {
+  name: DEMO_CAMPAIGN_NAME,
+  advertiser: 'Anunciante Demo (Exemplo)',
+  description: 'Campanha de exemplo criada automaticamente. Use como referência ou duplique para começar.',
+  status: 'paused' as CampaignStatus,
+  starts_at: '',
+  ends_at: '',
+  priority: 100,
+  cta_text: 'Saiba Mais',
+  cta_url: 'https://exemplo.com',
+  frequency_cap_per_day: 0,
+  enabledChannels: ['ads', 'publidoor', 'webstories', 'push', 'newsletter', 'exit_intent', 'login_panel', 'banner_intro', 'floating_ad'] as ChannelType[],
+  adsConfig: { slot_type: 'home_top', size: '970x250', sort_order: 0, link_target: '_blank' },
+  publidoorConfig: { type: 'narrativo' as const, phrase_1: 'Texto de exemplo para Publidoor' },
+  webstoriesConfig: { story_type: 'external' as const, story_url: 'https://exemplo.com/story' },
+  pushConfig: { title: 'Título Push Exemplo', body: 'Mensagem push de exemplo', action_url: 'https://exemplo.com', target_audience: 'all' as const },
+  newsletterConfig: { subject: 'Newsletter Exemplo', preview_text: 'Preview de exemplo', target_list: '' },
+  exitIntentConfig: { hero_type: 'publidoor' as const, cta_text: 'Continuar navegando', priority_type: 'commercial' as const },
+  loginPanelConfig: { display_type: 'publidoor' as const },
+  bannerIntroConfig: { cta_text: 'Ver Oferta', cta_url: 'https://exemplo.com' },
+  floatingAdConfig: { position: 'right' as const, frequency_limit: 1 },
+  assets: [],
+};
 
 export default function CampaignsUnified() {
   const navigate = useNavigate();
@@ -36,6 +62,7 @@ export default function CampaignsUnified() {
   const [channelFilter, setChannelFilter] = useState<ChannelType | 'all'>('all');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const demoCreatedRef = useRef(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     const urlChannel = searchParams.get('channel');
@@ -43,6 +70,21 @@ export default function CampaignsUnified() {
       setChannelFilter(urlChannel as ChannelType | 'all');
     }
   }, [searchParams]);
+
+  // Fetch user role for super_admin button
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        supabase.from('user_roles').select('role').eq('user_id', data.user.id).single()
+          .then(({ data: roleData }) => {
+            setUserRole(roleData?.role || null);
+          });
+      }
+    });
+  }, []);
+
+  // Fetch ALL campaigns (no filters) to check for MODELO
+  const { data: allCampaigns, isLoading: allLoading } = useCampaignsUnified({});
 
   const { data: campaigns, isLoading } = useCampaignsUnified({
     search: search || undefined,
@@ -55,39 +97,30 @@ export default function CampaignsUnified() {
   const duplicateMutation = useDuplicateCampaignUnified();
   const createMutation = useCreateCampaignUnified();
 
-  // Auto-create demo campaign if none exists
+  // Auto-create demo campaign if NONE with "MODELO" exists — regardless of other campaigns
   useEffect(() => {
-    if (isLoading || demoCreatedRef.current || createMutation.isPending) return;
-    if (!campaigns) return;
+    if (allLoading || demoCreatedRef.current || createMutation.isPending) return;
+    if (!allCampaigns) return;
 
-    const hasDemo = campaigns.some(c => c.name.includes('MODELO'));
+    const hasDemo = allCampaigns.some(c => c.name === DEMO_CAMPAIGN_NAME);
     if (!hasDemo) {
       demoCreatedRef.current = true;
-      createMutation.mutate({
-        name: DEMO_CAMPAIGN_NAME,
-        advertiser: 'Anunciante Demo (Exemplo)',
-        description: 'Campanha de exemplo criada automaticamente. Use como referência ou duplique para começar.',
-        status: 'paused',
-        starts_at: '',
-        ends_at: '',
-        priority: 100,
-        cta_text: 'Saiba Mais',
-        cta_url: 'https://exemplo.com',
-        frequency_cap_per_day: 0,
-        enabledChannels: ['ads', 'publidoor', 'webstories', 'push', 'newsletter', 'exit_intent', 'login_panel', 'banner_intro', 'floating_ad'],
-        adsConfig: { slot_type: 'home_top', size: '970x250', sort_order: 0, link_target: '_blank' },
-        publidoorConfig: { type: 'narrativo', phrase_1: 'Texto de exemplo para Publidoor' },
-        webstoriesConfig: { story_type: 'external', story_url: 'https://exemplo.com/story' },
-        pushConfig: { title: 'Título Push Exemplo', body: 'Mensagem push de exemplo', action_url: 'https://exemplo.com', target_audience: 'all' },
-        newsletterConfig: { subject: 'Newsletter Exemplo', preview_text: 'Preview de exemplo', target_list: '' },
-        exitIntentConfig: { hero_type: 'publidoor', cta_text: 'Continuar navegando', priority_type: 'commercial' },
-        loginPanelConfig: { display_type: 'publidoor' },
-        bannerIntroConfig: { cta_text: 'Ver Oferta', cta_url: 'https://exemplo.com' },
-        floatingAdConfig: { position: 'right', frequency_limit: 1 },
-        assets: [],
+      createMutation.mutate(DEMO_CAMPAIGN_DATA, {
+        onSuccess: () => toast.success('Campanha modelo criada automaticamente'),
       });
     }
-  }, [campaigns, isLoading, createMutation.isPending]);
+  }, [allCampaigns, allLoading, createMutation.isPending]);
+
+  const handleCreateDemo = () => {
+    createMutation.mutate({
+      ...DEMO_CAMPAIGN_DATA,
+      name: demoCreatedRef.current || allCampaigns?.some(c => c.name === DEMO_CAMPAIGN_NAME)
+        ? `${DEMO_CAMPAIGN_NAME} (Reset)`
+        : DEMO_CAMPAIGN_NAME,
+    }, {
+      onSuccess: () => toast.success('Campanha modelo criada/recriada com sucesso'),
+    });
+  };
 
   const handleEdit = (id: string) => {
     navigate(campaignRoutes.edit(id));
@@ -123,7 +156,13 @@ export default function CampaignsUnified() {
             Gerencie campanhas que rodam em Ads, Publidoor e WebStories
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          {userRole === 'super_admin' && (
+            <Button variant="outline" size="sm" onClick={handleCreateDemo} disabled={createMutation.isPending}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Criar/Recriar Modelo
+            </Button>
+          )}
           <Button variant="outline" onClick={() => navigate(campaignRoutes.tutorial())}>
             <BookOpen className="h-4 w-4 mr-2" />
             Tutorial

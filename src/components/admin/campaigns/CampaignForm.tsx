@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,18 +9,29 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, Hash, MapPin } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { AlertTriangle, Hash, MapPin, ChevronDown, ChevronRight, Zap, ArrowDown } from 'lucide-react';
 import { ChannelSelector } from './ChannelSelector';
 import { BatchAssetUploader } from './BatchAssetUploader';
 import { QuickGuideCard } from './QuickGuideCard';
 import { FormatReferenceDialog } from './FormatReferenceDialog';
 import { useCampaignFormReducer } from './useCampaignFormReducer';
-import { AD_SLOTS, getSlotBlocks } from '@/lib/adSlots';
+import { AD_SLOTS, getSlotBlocks, type SlotChannel } from '@/lib/adSlots';
+import { toast } from 'sonner';
 import type { 
   CampaignFormData, 
   CampaignStatus,
-  CampaignAsset,
+  ChannelType,
 } from '@/types/campaigns-unified';
+
+/** Map SlotChannel → ChannelType for activating channels from the format guide */
+const SLOT_TO_CHANNEL: Record<SlotChannel, ChannelType> = {
+  ads: 'ads',
+  publidoor: 'publidoor',
+  webstories: 'webstories',
+  login: 'login_panel',
+  experience: 'floating_ad', // maps to experience-related channels
+};
 
 interface CampaignFormProps {
   initialData?: Partial<CampaignFormData>;
@@ -39,6 +50,8 @@ export function CampaignForm({
 }: CampaignFormProps) {
   const isNewCampaign = !initialData?.name;
   const [showFormats, setShowFormats] = useState(isNewCampaign);
+  const [formatFilter, setFormatFilter] = useState<SlotChannel | 'all'>('all');
+  const channelsRef = useRef<HTMLDivElement>(null);
 
   const { register, handleSubmit, watch, formState: { errors } } = useForm<CampaignFormData>({
     defaultValues: {
@@ -82,9 +95,27 @@ export function CampaignForm({
     { id: 'cycle', label: 'Ciclo criado (se campanha ativa)', completed: status === 'paused' || status === 'draft' || cyclesCount > 0 },
   ];
 
+  // Activate channel from format guide
+  const handleActivateChannel = (channel: SlotChannel) => {
+    const channelType = SLOT_TO_CHANNEL[channel];
+    if (channelType && !selectedChannels.includes(channelType)) {
+      toggleChannel(channelType);
+      toast.success(`Canal "${channel}" ativado`);
+    }
+    // Scroll to channels block
+    setTimeout(() => {
+      channelsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
+
   // Validate channels before submit
   const validateChannels = (): string[] => {
     const errs: string[] = [];
+
+    // Block activation without cycles
+    if (status === 'active' && cyclesCount === 0) {
+      errs.push('Sem ciclos a campanha não agenda exibição. Crie pelo menos 1 ciclo antes de ativar.');
+    }
 
     if (selectedChannels.includes('push')) {
       if (!channelConfigs.push.title?.trim()) errs.push('Push: Título é obrigatório');
@@ -199,6 +230,8 @@ export function CampaignForm({
     });
   });
 
+  const filteredBlocks = getSlotBlocks().filter(b => formatFilter === 'all' || b.channel === formatFilter);
+
   return (
     <div className="space-y-6">
       {/* Quick Guide */}
@@ -290,6 +323,11 @@ export function CampaignForm({
                   </div>
                 ))}
               </RadioGroup>
+              {status === 'active' && cyclesCount === 0 && (
+                <p className="text-xs text-destructive font-medium mt-1">
+                  ⚠ Sem ciclos a campanha não agenda exibição. Crie pelo menos 1 ciclo.
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -364,50 +402,94 @@ export function CampaignForm({
         </CardContent>
       </Card>
 
-      {/* Block 2: Numbered Format Reference (1-15) */}
+      {/* Block 2: Numbered Format Reference (1-15) with Activate + Scroll */}
       <Card>
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Hash className="h-5 w-5 text-primary" />
-                15 Formatos Comerciais — Guia de Seleção Rápida
-              </CardTitle>
-              <CardDescription>Formatos numerados 1–15 com dimensões e localização</CardDescription>
-            </div>
-            <Button variant="ghost" size="sm" onClick={() => setShowFormats(!showFormats)}>
-              {showFormats ? 'Ocultar' : 'Exibir'}
-            </Button>
-          </div>
-        </CardHeader>
-        {showFormats && (
-          <CardContent>
-            {getSlotBlocks().map((block) => (
-              <div key={block.channel} className="mb-4">
-                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-2">
-                  <Badge variant="secondary" className="text-[10px]">{block.title}</Badge>
-                </h4>
-                <div className="space-y-1.5">
-                  {block.slots.map((slot) => (
-                    <div key={slot.id} className="flex items-center gap-3 p-2 rounded-lg border hover:bg-muted/50 transition-colors text-sm">
-                      <span className="font-mono text-xs text-muted-foreground w-6 text-right">#{slot.seq}</span>
-                      <span className="font-medium flex-1">{slot.label}</span>
-                      <span className="font-mono text-xs text-muted-foreground">{slot.width}×{slot.height}</span>
-                      <span className="text-xs text-muted-foreground flex items-center gap-1 hidden sm:flex">
-                        <MapPin className="h-3 w-3" />
-                        {slot.location}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+        <Collapsible open={showFormats} onOpenChange={setShowFormats}>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Hash className="h-5 w-5 text-primary" />
+                  15 Formatos Comerciais — Guia de Seleção Rápida
+                </CardTitle>
+                <CardDescription>Ative canais e navegue direto para cada bloco</CardDescription>
               </div>
-            ))}
-          </CardContent>
-        )}
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-1">
+                  {showFormats ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  {showFormats ? 'Ocultar' : 'Exibir'}
+                </Button>
+              </CollapsibleTrigger>
+            </div>
+          </CardHeader>
+          <CollapsibleContent>
+            <CardContent className="space-y-3">
+              {/* Channel filter */}
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { value: 'all' as const, label: 'Todos' },
+                  { value: 'ads' as const, label: 'Ads' },
+                  { value: 'publidoor' as const, label: 'Publidoor' },
+                  { value: 'webstories' as const, label: 'WebStories' },
+                  { value: 'login' as const, label: 'Login' },
+                  { value: 'experience' as const, label: 'Experiência' },
+                ].map(f => (
+                  <Badge
+                    key={f.value}
+                    variant={formatFilter === f.value ? 'default' : 'outline'}
+                    className="cursor-pointer text-xs"
+                    onClick={() => setFormatFilter(f.value)}
+                  >
+                    {f.label}
+                  </Badge>
+                ))}
+              </div>
+
+              {filteredBlocks.map((block) => (
+                <div key={block.channel} className="mb-3">
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${block.color}`} />
+                    {block.title}
+                  </h4>
+                  <div className="space-y-1">
+                    {block.slots.map((slot) => (
+                      <div key={slot.id} className="flex items-center gap-2 p-2 rounded-lg border hover:bg-muted/50 transition-colors text-sm">
+                        <span className="font-mono text-xs font-bold text-primary w-7 text-right">#{slot.seq}</span>
+                        <span className="font-medium flex-1 truncate">{slot.label}</span>
+                        <span className="font-mono text-xs text-muted-foreground">{slot.width}×{slot.height}</span>
+                        <span className="text-xs text-muted-foreground items-center gap-1 hidden md:flex max-w-[180px] truncate">
+                          <MapPin className="h-3 w-3 shrink-0" />
+                          {slot.location}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-6 text-[10px] px-2 shrink-0"
+                          onClick={() => handleActivateChannel(slot.channel)}
+                        >
+                          <Zap className="h-3 w-3 mr-1" />
+                          Ativar
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 text-[10px] px-2 shrink-0"
+                          onClick={() => channelsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                        >
+                          <ArrowDown className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </CollapsibleContent>
+        </Collapsible>
       </Card>
 
       {/* Block 3: Channels */}
-      <Card>
+      <Card ref={channelsRef}>
         <CardHeader>
           <CardTitle>Canais de Exibição</CardTitle>
           <CardDescription>
@@ -426,7 +508,7 @@ export function CampaignForm({
         </CardContent>
       </Card>
 
-      {/* Block 3: Batch Asset Upload */}
+      {/* Block 4: Batch Asset Upload */}
       <Card>
         <CardHeader>
           <CardTitle>Upload de Criativos</CardTitle>
@@ -462,13 +544,13 @@ export function CampaignForm({
           {/* Active Assets Summary - ordered by AD_SLOTS seq */}
           {(() => {
             const assetEntries = [
-              { label: 'Ads (Banner)', url: assets.ads.url, seq: 1 },
-              { label: 'Publidoor', url: assets.publidoor.url, seq: 6 },
-              { label: 'WebStories', url: assets.webstories.url, seq: 9 },
-              { label: 'Painel Login', url: assets.loginPanel.url, seq: 10 },
-              { label: 'Banner Intro', url: assets.bannerIntro.url, seq: 13 },
-              { label: 'Destaque Flutuante', url: assets.floatingAd.url, seq: 14 },
-              { label: 'Exit-Intent (Hero)', url: assets.exitIntentHero.url, seq: 15 },
+              { label: '#1 — Destaque Horizontal (728×90)', url: assets.ads.url, seq: 1 },
+              { label: '#6 — Destaque Premium (970×250)', url: assets.publidoor.url, seq: 6 },
+              { label: '#9 — Story Premium (1080×1920)', url: assets.webstories.url, seq: 9 },
+              { label: '#10 — Login 01 (800×500)', url: assets.loginPanel.url, seq: 10 },
+              { label: '#13 — Banner Intro (970×250)', url: assets.bannerIntro.url, seq: 13 },
+              { label: '#14 — Destaque Flutuante (300×600)', url: assets.floatingAd.url, seq: 14 },
+              { label: '#15 — Alerta Full Saída (1280×720)', url: assets.exitIntentHero.url, seq: 15 },
               { label: 'Exit-Intent (Sec. 1)', url: assets.exitIntentSecondary1.url, seq: 15 },
               { label: 'Exit-Intent (Sec. 2)', url: assets.exitIntentSecondary2.url, seq: 15 },
             ];
@@ -495,8 +577,8 @@ export function CampaignForm({
                         />
                       </div>
                       <p className="text-xs font-medium truncate">{asset.label}</p>
-                      <span className="inline-flex items-center gap-1 text-[10px] text-green-700 dark:text-green-400">
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                      <span className="inline-flex items-center gap-1 text-[10px] text-primary">
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary" />
                         Vinculado
                       </span>
                     </div>
