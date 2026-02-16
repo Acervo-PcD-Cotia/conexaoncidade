@@ -100,7 +100,7 @@ export default function ResetPassword() {
 
       // Sign out and redirect to login
       await supabase.auth.signOut();
-      navigate("/auth-comunidade");
+      window.location.href = "https://conexaoncidade.lovable.app/spah";
     } catch (error) {
       toast({
         variant: "destructive",
@@ -150,7 +150,7 @@ export default function ResetPassword() {
             <p className="text-muted-foreground text-sm mb-6">
               O link de recuperação de senha expirou ou é inválido. Solicite um novo link.
             </p>
-            <Button onClick={() => navigate("/auth-comunidade")} className="w-full">
+            <Button onClick={() => window.location.href = "https://conexaoncidade.lovable.app/spah"} className="w-full">
               Voltar ao login
             </Button>
           </div>
@@ -247,7 +247,7 @@ export default function ResetPassword() {
 
         <div className="text-center mt-6">
           <button
-            onClick={() => navigate("/auth-comunidade")}
+            onClick={() => window.location.href = "https://conexaoncidade.lovable.app/spah"}
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             ← Voltar ao login

@@ -24,7 +24,7 @@ export function AdminHeader() {
 
   const handleSignOut = async () => {
     await signOut();
-    navigate("/spah");
+    window.location.href = "https://conexaoncidade.lovable.app/spah";
   };
 
 

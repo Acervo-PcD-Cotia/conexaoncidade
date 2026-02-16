@@ -88,7 +88,7 @@ export default function CommunityAuth() {
       
       // If user already has access, redirect immediately
       if (hasAccess) {
-        navigate("/comunidade");
+        window.location.href = "https://conexaoncidade.lovable.app/spah";
         return;
       }
       
@@ -114,7 +114,7 @@ export default function CommunityAuth() {
       }
       
       // ALWAYS redirect to community (CommunityHub handles unlock screen if needed)
-      navigate("/comunidade");
+      window.location.href = "https://conexaoncidade.lovable.app/spah";
     };
     
     if (user && !communityLoading) {
@@ -614,7 +614,7 @@ export default function CommunityAuth() {
         {/* Back link */}
         <div className="text-center mt-6">
           <button
-            onClick={() => navigate("/")}
+            onClick={() => window.location.href = "https://conexaoncidade.lovable.app/spah"}
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             ← Voltar ao portal

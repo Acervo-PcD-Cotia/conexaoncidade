@@ -24,7 +24,7 @@ export function PartnerHeader({ advertiser, onMenuToggle }: PartnerHeaderProps) 
 
   const handleSignOut = async () => {
     await signOut();
-    navigate('/partner/login');
+    window.location.href = "https://conexaoncidade.lovable.app/spah";
   };
 
   const initials = advertiser?.company_name

@@ -63,7 +63,7 @@ export function DeleteAccountDialog({ userEmail }: DeleteAccountDialogProps) {
       });
 
       await signOut();
-      navigate("/");
+      window.location.href = "https://conexaoncidade.lovable.app/spah";
     } catch (error) {
       console.error("Error deleting account:", error);
       toast({
