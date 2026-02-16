@@ -162,6 +162,7 @@ export default function CampaignEditor() {
         onSubmit={handleSubmit}
         onCancel={handleCancel}
         isLoading={createMutation.isPending || updateMutation.isPending}
+        cyclesCount={campaign?.cycles?.length || 0}
       />
     </div>
   );

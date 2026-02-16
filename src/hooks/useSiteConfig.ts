@@ -58,8 +58,9 @@ export function useSiteConfig() {
   const { data: siteConfig, isLoading: configLoading } = useSiteTemplateConfig();
   const { data: template, isLoading: templateLoading } = usePortalTemplate(siteConfig?.template_id);
 
-  // If no tenant context yet (public visitor), use defaults immediately
-  const shouldUseDefaults = !tenantLoading && !currentTenantId;
+  // Use defaults when: tenant resolved to null OR still loading but no cached tenant
+  // This ensures public site renders immediately even for logged-in users
+  const shouldUseDefaults = !currentTenantId && (!tenantLoading || !localStorage.getItem('cached_tenant_id'));
   const cacheKey = `site_config_${CACHE_VERSION}_${currentTenantId}`;
 
   // Build merged theme
@@ -224,7 +225,7 @@ export function useSiteConfig() {
     templateName: config.templateName,
     isModuleEnabled,
     t,
-    // Not loading if we're using defaults (no tenant)
+    // Not loading if using defaults; also cap loading to 3s max to prevent blank pages
     isLoading: shouldUseDefaults ? false : (tenantLoading || configLoading || templateLoading),
   };
 }

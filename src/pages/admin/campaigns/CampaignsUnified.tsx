@@ -61,7 +61,7 @@ export default function CampaignsUnified() {
     if (!campaigns) return;
 
     const hasDemo = campaigns.some(c => c.name.includes('MODELO'));
-    if (!hasDemo && campaigns.length === 0) {
+    if (!hasDemo) {
       demoCreatedRef.current = true;
       createMutation.mutate({
         name: DEMO_CAMPAIGN_NAME,
