@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AD_SLOTS } from '@/lib/adSlots';
 import { campaignRoutes } from '@/lib/campaignRoutes';
@@ -8,9 +8,10 @@ import {
   RefreshCw, Calendar, Send, MapPin, FileText, Maximize, Sparkles,
   Target, Zap, DollarSign, ShieldCheck, ChevronDown, ChevronRight,
   Bell, Mail, Trophy, Medal, Award, Lightbulb, TrendingUp, Users,
-  MousePointerClick, Rocket, Check, Circle
+  MousePointerClick, Rocket, Check, Circle, Search, Upload
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -130,11 +131,18 @@ function PackageCard({ tier, icon: Icon, color, items, recommended }: {
   );
 }
 
+/* ── Search helper ── */
+function matchesSearch(text: string, query: string): boolean {
+  if (!query.trim()) return true;
+  return text.toLowerCase().includes(query.toLowerCase());
+}
+
 /* ── Main Component ── */
 
 export default function CampaignsTutorial() {
   const navigate = useNavigate();
   const [checklist, setChecklist] = useState<Record<string, boolean>>({});
+  const [searchQuery, setSearchQuery] = useState('');
 
   const checklistItems = [
     { id: 'name', label: 'Nome da campanha definido' },
@@ -154,10 +162,14 @@ export default function CampaignsTutorial() {
     setChecklist(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
+  // Filter content visibility based on search
+  const sq = searchQuery.toLowerCase();
+  const showTab = (keywords: string) => !sq || keywords.toLowerCase().includes(sq);
+
   return (
     <div className="container mx-auto py-6 max-w-5xl space-y-8">
       {/* ── Sticky Top Bar ── */}
-      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border pb-4 -mx-4 px-4 pt-2">
+      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border pb-4 -mx-4 px-4 pt-2 space-y-3">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => navigate(campaignRoutes.unified())}>
@@ -178,6 +190,17 @@ export default function CampaignsTutorial() {
             Criar Minha Campanha Agora
           </Button>
         </div>
+
+        {/* Search */}
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar no tutorial: ciclos, formatos, upload, push…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 h-9 text-sm"
+          />
+        </div>
       </div>
 
       {/* ── Tabs ── */}
@@ -194,68 +217,74 @@ export default function CampaignsTutorial() {
 
         {/* ═══════ TAB 1: VISÃO ESTRATÉGICA ═══════ */}
         <TabsContent value="estrategia" className="space-y-6">
-          <Card className="bg-primary/5 border-primary/20">
-            <CardContent className="pt-6 space-y-4">
-              <h2 className="text-lg font-bold flex items-center gap-2">
-                <Target className="h-5 w-5 text-primary" />
-                O que é uma Campanha Unificada?
-              </h2>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Uma <strong className="text-foreground">Campanha Unificada</strong> permite ativar múltiplos canais
-                (Banner, Publieditorial, Web Story, Push, Destaque) dentro de uma única estrutura centralizada,
-                com controle de datas, prioridade, ciclos de distribuição e métricas integradas.
-              </p>
-            </CardContent>
-          </Card>
+          {showTab('campanha unificada visão estratégica canais') && (
+            <Card className="bg-primary/5 border-primary/20">
+              <CardContent className="pt-6 space-y-4">
+                <h2 className="text-lg font-bold flex items-center gap-2">
+                  <Target className="h-5 w-5 text-primary" />
+                  O que é uma Campanha Unificada?
+                </h2>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Uma <strong className="text-foreground">Campanha Unificada</strong> permite ativar múltiplos canais
+                  (Banner, Publieditorial, Web Story, Push, Destaque) dentro de uma única estrutura centralizada,
+                  com controle de datas, prioridade, ciclos de distribuição e métricas integradas.
+                </p>
+              </CardContent>
+            </Card>
+          )}
 
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Canais Disponíveis</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-              <ChannelTooltipCard icon={Monitor} label="Banner (Ads)" description="Exibe banners nas posições do site: topo, sidebar, meio de conteúdo e pop-ups controlados." color="border-blue-500/30 bg-blue-500/5 text-blue-600 dark:text-blue-400" />
-              <ChannelTooltipCard icon={Megaphone} label="Publidoor" description="Distribui conteúdo para telas digitais urbanas com 5 formatos: Narrativo, Contextual, Geográfico, Editorial e Impacto Total." color="border-purple-500/30 bg-purple-500/5 text-purple-600 dark:text-purple-400" />
-              <ChannelTooltipCard icon={Smartphone} label="WebStory" description="Cria stories verticais interativos para mobile com CTA personalizado e cor do botão configurável." color="border-pink-500/30 bg-pink-500/5 text-pink-600 dark:text-pink-400" />
-              <ChannelTooltipCard icon={Bell} label="Push" description="Envia notificações push diretas ao dispositivo do usuário. Ideal para urgência e promoções relâmpago." color="border-orange-500/30 bg-orange-500/5 text-orange-600 dark:text-orange-400" />
-              <ChannelTooltipCard icon={Mail} label="Newsletter" description="Envia e-mails segmentados com o criativo da campanha para a base de assinantes." color="border-green-500/30 bg-green-500/5 text-green-600 dark:text-green-400" />
+          {showTab('canais disponíveis banner ads publidoor webstory push newsletter') && (
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Canais Disponíveis</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                <ChannelTooltipCard icon={Monitor} label="Banner (Ads)" description="Exibe banners nas posições do site: topo, sidebar, meio de conteúdo e pop-ups controlados." color="border-blue-500/30 bg-blue-500/5 text-blue-600 dark:text-blue-400" />
+                <ChannelTooltipCard icon={Megaphone} label="Publidoor" description="Distribui conteúdo para telas digitais urbanas com 5 formatos: Narrativo, Contextual, Geográfico, Editorial e Impacto Total." color="border-purple-500/30 bg-purple-500/5 text-purple-600 dark:text-purple-400" />
+                <ChannelTooltipCard icon={Smartphone} label="WebStory" description="Cria stories verticais interativos para mobile com CTA personalizado e cor do botão configurável." color="border-pink-500/30 bg-pink-500/5 text-pink-600 dark:text-pink-400" />
+                <ChannelTooltipCard icon={Bell} label="Push" description="Envia notificações push diretas ao dispositivo do usuário. Ideal para urgência e promoções relâmpago." color="border-orange-500/30 bg-orange-500/5 text-orange-600 dark:text-orange-400" />
+                <ChannelTooltipCard icon={Mail} label="Newsletter" description="Envia e-mails segmentados com o criativo da campanha para a base de assinantes." color="border-green-500/30 bg-green-500/5 text-green-600 dark:text-green-400" />
+              </div>
             </div>
-          </div>
+          )}
 
           <Separator />
 
           {/* Reference table */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">15 Formatos Comerciais</h3>
-            <div className="overflow-x-auto rounded-xl border">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-muted/60">
-                    <th className="border-b px-3 py-2.5 text-left text-xs font-semibold">#</th>
-                    <th className="border-b px-3 py-2.5 text-left text-xs font-semibold">Bloco</th>
-                    <th className="border-b px-3 py-2.5 text-left text-xs font-semibold">Nome Comercial</th>
-                    <th className="border-b px-3 py-2.5 text-left text-xs font-semibold">Dimensão</th>
-                    <th className="border-b px-3 py-2.5 text-left text-xs font-semibold">Onde Aparece</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {AD_SLOTS.map((slot) => {
-                    const blockName = slot.channel === 'ads' ? 'Ads' 
-                      : slot.channel === 'publidoor' ? 'Publidoor'
-                      : slot.channel === 'webstories' ? 'WebStories'
-                      : slot.channel === 'login' ? 'Login'
-                      : 'Experiência';
-                    return (
-                      <tr key={slot.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
-                        <td className="px-3 py-2 font-mono text-xs text-muted-foreground">{slot.seq}</td>
-                        <td className="px-3 py-2"><Badge variant="secondary" className="text-[10px]">{blockName}</Badge></td>
-                        <td className="px-3 py-2 font-medium text-foreground">{slot.label}</td>
-                        <td className="px-3 py-2 font-mono text-xs">{slot.width}×{slot.height}</td>
-                        <td className="px-3 py-2 text-muted-foreground text-xs">{slot.location}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+          {showTab('formatos comerciais dimensões tamanhos 728 970 300 580 1080 800 1280') && (
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">15 Formatos Comerciais</h3>
+              <div className="overflow-x-auto rounded-xl border">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-muted/60">
+                      <th className="border-b px-3 py-2.5 text-left text-xs font-semibold">#</th>
+                      <th className="border-b px-3 py-2.5 text-left text-xs font-semibold">Bloco</th>
+                      <th className="border-b px-3 py-2.5 text-left text-xs font-semibold">Nome Comercial</th>
+                      <th className="border-b px-3 py-2.5 text-left text-xs font-semibold">Dimensão</th>
+                      <th className="border-b px-3 py-2.5 text-left text-xs font-semibold">Onde Aparece</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {AD_SLOTS.map((slot) => {
+                      const blockName = slot.channel === 'ads' ? 'Ads' 
+                        : slot.channel === 'publidoor' ? 'Publidoor'
+                        : slot.channel === 'webstories' ? 'WebStories'
+                        : slot.channel === 'login' ? 'Login'
+                        : 'Experiência';
+                      return (
+                        <tr key={slot.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                          <td className="px-3 py-2 font-mono text-xs text-muted-foreground">{slot.seq}</td>
+                          <td className="px-3 py-2"><Badge variant="secondary" className="text-[10px]">{blockName}</Badge></td>
+                          <td className="px-3 py-2 font-medium text-foreground">{slot.label}</td>
+                          <td className="px-3 py-2 font-mono text-xs">{slot.width}×{slot.height}</td>
+                          <td className="px-3 py-2 text-muted-foreground text-xs">{slot.location}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+          )}
         </TabsContent>
 
         {/* ═══════ TAB 2: PASSO A PASSO ═══════ */}
@@ -279,90 +308,178 @@ export default function CampaignsTutorial() {
           </div>
 
           <div className="space-y-3 mt-4">
-            <StepAccordion step={1} title="Dados Básicos" icon={Pencil} totalSteps={5}
-              explanation={<>
-                <p>Preencha os campos essenciais: <strong className="text-foreground">Nome</strong>, <strong className="text-foreground">Anunciante</strong>, <strong className="text-foreground">Datas</strong>, <strong className="text-foreground">Prioridade</strong> (1-100) e <strong className="text-foreground">Status</strong>.</p>
-                <p className="mt-2">A prioridade define a ordem de exibição quando há concorrência entre campanhas ativas.</p>
-              </>}
-              example={<>
-                <p className="text-muted-foreground">Nome: <strong className="text-foreground">"Institucional Março 2026"</strong></p>
-                <p className="text-muted-foreground">Anunciante: <strong className="text-foreground">Restaurante Sabor da Serra</strong></p>
-                <p className="text-muted-foreground">Período: <strong className="text-foreground">01/03 a 31/03</strong> • Prioridade: <strong className="text-foreground">80</strong></p>
-              </>}
-              tip="Crie como Rascunho e só ative quando os criativos estiverem aprovados pelo cliente."
-              commonError="Esquecer de definir a data de fim — campanha roda indefinidamente e consome impressões."
-            />
+            {showTab('dados básicos nome anunciante datas prioridade status') && (
+              <StepAccordion step={1} title="Dados Básicos" icon={Pencil} totalSteps={5}
+                explanation={<>
+                  <p>Preencha os campos essenciais: <strong className="text-foreground">Nome</strong>, <strong className="text-foreground">Anunciante</strong>, <strong className="text-foreground">Datas</strong>, <strong className="text-foreground">Prioridade</strong> (1-100) e <strong className="text-foreground">Status</strong>.</p>
+                  <p className="mt-2">A prioridade define a ordem de exibição quando há concorrência entre campanhas ativas.</p>
+                </>}
+                example={<>
+                  <p className="text-muted-foreground">Nome: <strong className="text-foreground">"Institucional Março 2026"</strong></p>
+                  <p className="text-muted-foreground">Anunciante: <strong className="text-foreground">Restaurante Sabor da Serra</strong></p>
+                  <p className="text-muted-foreground">Período: <strong className="text-foreground">01/03 a 31/03</strong> • Prioridade: <strong className="text-foreground">80</strong></p>
+                </>}
+                tip="Crie como Rascunho e só ative quando os criativos estiverem aprovados pelo cliente."
+                commonError="Esquecer de definir a data de fim — campanha roda indefinidamente e consome impressões."
+              />
+            )}
 
-            <StepAccordion step={2} title="CTA (Call-to-Action)" icon={MousePointerClick} totalSteps={5}
-              explanation={<>
-                <p>Configure a ação do clique: <strong className="text-foreground">texto do botão</strong>, <strong className="text-foreground">URL de destino</strong> e <strong className="text-foreground">limite de frequência</strong> (máx. exibições/dia/usuário).</p>
-              </>}
-              example={<>
-                <p className="text-muted-foreground">Texto: <strong className="text-foreground">"Faça sua reserva"</strong></p>
-                <p className="text-muted-foreground">URL: <strong className="text-foreground">https://sabor-da-serra.com/reservas</strong></p>
-                <p className="text-muted-foreground">Frequência: <strong className="text-foreground">3x por dia</strong></p>
-              </>}
-              tip="CTAs com verbos de ação convertem 2x mais que textos genéricos como 'Clique aqui'."
-              commonError="Não testar o link de destino — o cliente perde cliques com URLs quebradas."
-            />
+            {showTab('cta call to action url link frequência') && (
+              <StepAccordion step={2} title="CTA (Call-to-Action)" icon={MousePointerClick} totalSteps={5}
+                explanation={<>
+                  <p>Configure a ação do clique: <strong className="text-foreground">texto do botão</strong>, <strong className="text-foreground">URL de destino</strong> e <strong className="text-foreground">limite de frequência</strong> (máx. exibições/dia/usuário).</p>
+                </>}
+                example={<>
+                  <p className="text-muted-foreground">Texto: <strong className="text-foreground">"Faça sua reserva"</strong></p>
+                  <p className="text-muted-foreground">URL: <strong className="text-foreground">https://sabor-da-serra.com/reservas</strong></p>
+                  <p className="text-muted-foreground">Frequência: <strong className="text-foreground">3x por dia</strong></p>
+                </>}
+                tip="CTAs com verbos de ação convertem 2x mais que textos genéricos como 'Clique aqui'."
+                commonError="Não testar o link de destino — o cliente perde cliques com URLs quebradas."
+              />
+            )}
 
-            <StepAccordion step={3} title="Canais de Distribuição" icon={Layers} totalSteps={5}
-              explanation={<>
-                <p>Marque os canais desejados. Cada um possui configurações específicas:</p>
-                <ul className="list-disc list-inside space-y-1 ml-2 mt-2">
-                  <li><strong className="text-foreground">Ads:</strong> Selecione formatos (728×90, 970×250, 300×250, etc.)</li>
-                  <li><strong className="text-foreground">Publidoor:</strong> Escolha tipo de exibição e locais</li>
-                  <li><strong className="text-foreground">WebStory:</strong> Configure título, CTA e cor</li>
-                  <li><strong className="text-foreground">Push/Newsletter:</strong> Exigem confirmação manual por ciclo</li>
-                </ul>
-              </>}
-              tip="Combine Banner (impacto visual) com Publieditorial (credibilidade) para máxima conversão."
-              commonError="Ativar Push e Newsletter sem estratégia clara — isso gera cancelamentos de assinatura."
-            />
+            {showTab('canais distribuição ads publidoor webstory push newsletter') && (
+              <StepAccordion step={3} title="Canais de Distribuição" icon={Layers} totalSteps={5}
+                explanation={<>
+                  <p>Marque os canais desejados. Cada um possui configurações específicas:</p>
+                  <ul className="list-disc list-inside space-y-1 ml-2 mt-2">
+                    <li><strong className="text-foreground">Ads:</strong> Selecione formatos (728×90, 970×250, 300×250, etc.)</li>
+                    <li><strong className="text-foreground">Publidoor:</strong> Escolha tipo de exibição e locais</li>
+                    <li><strong className="text-foreground">WebStory:</strong> Configure título, CTA e cor</li>
+                    <li><strong className="text-foreground">Push/Newsletter:</strong> Exigem confirmação manual por ciclo</li>
+                  </ul>
+                </>}
+                tip="Combine Banner (impacto visual) com Publieditorial (credibilidade) para máxima conversão."
+                commonError="Ativar Push e Newsletter sem estratégia clara — isso gera cancelamentos de assinatura."
+              />
+            )}
 
-            <StepAccordion step={4} title="Upload de Criativos" icon={Image} totalSteps={5}
-              explanation={<>
-                <p>Envie imagens para cada formato selecionado (JPG, PNG ou WebP — até 30MB). O texto alternativo é gerado automaticamente.</p>
-              </>}
-              example={<>
-                <p className="text-muted-foreground">Formato: <strong className="text-foreground">Mega Destaque (970×250)</strong></p>
-                <p className="text-muted-foreground">Arquivo: <strong className="text-foreground">banner-marco-restaurante.jpg</strong></p>
-              </>}
-              tip="Prepare os criativos em todas as dimensões antes de iniciar o cadastro — agiliza o processo."
-              commonError="Enviar imagem com dimensão errada — o banner fica distorcido ou cortado."
-            />
+            {showTab('upload criativos imagens banner dimensão formato') && (
+              <StepAccordion step={4} title="Upload de Criativos" icon={Image} totalSteps={5}
+                explanation={<>
+                  <p>Envie imagens para cada formato selecionado (JPG, PNG ou WebP — até 30MB). O texto alternativo é gerado automaticamente.</p>
+                </>}
+                example={<>
+                  <p className="text-muted-foreground">Formato: <strong className="text-foreground">Mega Destaque (970×250)</strong></p>
+                  <p className="text-muted-foreground">Arquivo: <strong className="text-foreground">banner-marco-restaurante.jpg</strong></p>
+                </>}
+                tip="Prepare os criativos em todas as dimensões antes de iniciar o cadastro — agiliza o processo."
+                commonError="Enviar imagem com dimensão errada — o banner fica distorcido ou cortado."
+              />
+            )}
 
-            <StepAccordion step={5} title="Revisão e Publicação" icon={CheckCircle2} totalSteps={5}
-              explanation={<>
-                <p>Revise todos os dados, canais e criativos. Clique em <strong className="text-foreground">"Criar Campanha"</strong>. Se o status for <strong className="text-foreground">Ativa</strong> e as datas forem válidas, a veiculação inicia automaticamente.</p>
-              </>}
-              tip="Use o dashboard de Métricas na primeira semana para ajustar a campanha em tempo real."
-            />
+            {showTab('revisão publicação criar campanha ativa veiculação') && (
+              <StepAccordion step={5} title="Revisão e Publicação" icon={CheckCircle2} totalSteps={5}
+                explanation={<>
+                  <p>Revise todos os dados, canais e criativos. Clique em <strong className="text-foreground">"Criar Campanha"</strong>. Se o status for <strong className="text-foreground">Ativa</strong> e as datas forem válidas, a veiculação inicia automaticamente.</p>
+                </>}
+                tip="Use o dashboard de Métricas na primeira semana para ajustar a campanha em tempo real."
+              />
+            )}
           </div>
 
           <Separator className="my-4" />
 
-          {/* Cycles mini-section */}
-          <Card className="bg-muted/30 border-border">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <RefreshCw className="h-4 w-4 text-primary" />
-                Ciclos de Distribuição
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground space-y-3">
-              <p>Divida a campanha em fases (ex: "Lançamento", "Engajamento", "Reforço") com criativos e canais diferentes em cada ciclo.</p>
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="outline">Agendado</Badge>
-                <Badge variant="secondary">Ativo</Badge>
-                <Badge className="bg-green-600/90 text-white hover:bg-green-600">Concluído</Badge>
-                <Badge variant="destructive">Cancelado</Badge>
-              </div>
-              <TipBox variant="warning">
-                Ciclos com <strong>Push</strong> ou <strong>Newsletter</strong> exigem confirmação manual antes do envio.
-              </TipBox>
-            </CardContent>
-          </Card>
+          {/* Upload de Criativos - New Section */}
+          {showTab('upload criativos batch lote auto-atribuição dimensão duplicação') && (
+            <Card className="bg-muted/30 border-border">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Upload className="h-4 w-4 text-primary" />
+                  Upload de Criativos (Batch)
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm text-muted-foreground space-y-4">
+                <div className="space-y-2">
+                  <p className="font-semibold text-foreground text-xs uppercase tracking-wide">Quando usar</p>
+                  <p>Use o "Upload de Criativos" quando você já tem todos os banners prontos e quer <strong className="text-foreground">auto-atribuir por dimensão</strong>. Arraste múltiplas imagens de uma vez.</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="font-semibold text-foreground text-xs uppercase tracking-wide">Quando NÃO usar</p>
+                  <p>Se você vai subir um criativo específico dentro do bloco do formato (ex: dentro de "Ads"), suba diretamente ali.</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="font-semibold text-foreground text-xs uppercase tracking-wide">Passo a passo</p>
+                  <ol className="list-decimal list-inside space-y-1 ml-2">
+                    <li>Arraste múltiplas imagens para a área de upload</li>
+                    <li>O sistema detecta dimensões e atribui ao formato correspondente</li>
+                    <li>Revise a lista e ajuste atribuições se necessário</li>
+                    <li>Clique "Enviar todos"</li>
+                    <li>Confirme vínculos no "Resumo de Criativos"</li>
+                  </ol>
+                </div>
+                <TipBox variant="warning">
+                  <strong>Atenção:</strong> Se já existir criativo para o mesmo formato, o sistema perguntará se deseja <strong>substituir</strong> ou <strong>manter ambos</strong>.
+                </TipBox>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Cycles - Expanded Section */}
+          {showTab('ciclos distribuição ciclo agendamento rodada fase período frequência cap') && (
+            <Card className="bg-muted/30 border-border">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <RefreshCw className="h-4 w-4 text-primary" />
+                  Ciclos de Distribuição
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm text-muted-foreground space-y-4">
+                <div className="space-y-2">
+                  <p className="font-semibold text-foreground text-xs uppercase tracking-wide">O que são</p>
+                  <p>Um <strong className="text-foreground">Ciclo de Distribuição</strong> é uma janela/rodada controlada dentro da campanha que determina <strong className="text-foreground">quando</strong>, <strong className="text-foreground">onde</strong>, <strong className="text-foreground">com qual frequência</strong> e <strong className="text-foreground">com qual prioridade</strong> os criativos serão exibidos.</p>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="font-semibold text-foreground text-xs uppercase tracking-wide">Campos do ciclo</p>
+                  <ul className="list-disc list-inside space-y-1 ml-2">
+                    <li><strong className="text-foreground">Nome:</strong> Ex.: "Ciclo 01 — Semana 1"</li>
+                    <li><strong className="text-foreground">Início e Fim:</strong> Período de veiculação do ciclo</li>
+                    <li><strong className="text-foreground">Frequência:</strong> Contínuo, horários específicos ou dias da semana</li>
+                    <li><strong className="text-foreground">Cap (limite):</strong> Máx. exibições por usuário/dia</li>
+                    <li><strong className="text-foreground">Canais/Formatos:</strong> Quais dos 15 formatos participam</li>
+                    <li><strong className="text-foreground">Observações:</strong> Notas internas (opcional)</li>
+                  </ul>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="font-semibold text-foreground text-xs uppercase tracking-wide">Quando usar</p>
+                  <p>Divida a campanha em fases (ex: "Lançamento", "Engajamento", "Reforço") com criativos e canais diferentes em cada ciclo.</p>
+                </div>
+
+                <div className="p-3 rounded-lg bg-muted/50 border border-border text-xs space-y-1">
+                  <span className="font-semibold text-foreground text-xs flex items-center gap-1.5"><Eye className="h-3.5 w-3.5" /> Exemplos</span>
+                  <p className="text-muted-foreground"><strong className="text-foreground">Ciclo 01 — Semana 1:</strong> Ads + Push, 5x/dia, todos os formatos</p>
+                  <p className="text-muted-foreground"><strong className="text-foreground">Ciclo 02 — Reforço:</strong> Publidoor + Newsletter, 2x/dia, apenas formatos premium</p>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="outline">Agendado</Badge>
+                  <Badge variant="secondary">Ativo</Badge>
+                  <Badge className="bg-green-600/90 text-white hover:bg-green-600">Concluído</Badge>
+                  <Badge variant="destructive">Cancelado</Badge>
+                </div>
+
+                <TipBox variant="warning">
+                  <strong>Sem ciclos = campanha não agenda exibição.</strong> Crie pelo menos 1 ciclo para que a campanha veicule.
+                </TipBox>
+
+                <TipBox variant="warning">
+                  Ciclos com <strong>Push</strong> ou <strong>Newsletter</strong> exigem confirmação manual antes do envio.
+                </TipBox>
+
+                <div className="space-y-2">
+                  <p className="font-semibold text-foreground text-xs uppercase tracking-wide">Erros comuns</p>
+                  <ul className="list-disc list-inside space-y-1 ml-2 text-xs">
+                    <li>Criar ciclo sem selecionar formatos — nada será exibido</li>
+                    <li>Criar ciclo sem definir período — o ciclo fica inativo</li>
+                    <li>Sobrepor ciclos com os mesmos formatos — pode gerar conflito de prioridade</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         {/* ═══════ TAB 3: SIMULAÇÃO ═══════ */}

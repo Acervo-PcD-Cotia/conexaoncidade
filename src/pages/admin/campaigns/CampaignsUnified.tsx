@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { campaignRoutes } from '@/lib/campaignRoutes';
 import { Plus, Search, Filter, LayoutGrid, List, BookOpen } from 'lucide-react';
@@ -22,8 +22,11 @@ import {
   useDeleteCampaignUnified, 
   useUpdateCampaignUnified,
   useDuplicateCampaignUnified,
+  useCreateCampaignUnified,
 } from '@/hooks/useCampaignsUnified';
 import type { CampaignStatus, ChannelType } from '@/types/campaigns-unified';
+
+const DEMO_CAMPAIGN_NAME = 'MODELO — Campanha Unificada (Exemplo)';
 
 export default function CampaignsUnified() {
   const navigate = useNavigate();
@@ -32,6 +35,7 @@ export default function CampaignsUnified() {
   const [statusFilter, setStatusFilter] = useState<CampaignStatus | 'all'>('all');
   const [channelFilter, setChannelFilter] = useState<ChannelType | 'all'>('all');
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const demoCreatedRef = useRef(false);
 
   useEffect(() => {
     const urlChannel = searchParams.get('channel');
@@ -49,6 +53,41 @@ export default function CampaignsUnified() {
   const deleteMutation = useDeleteCampaignUnified();
   const updateMutation = useUpdateCampaignUnified();
   const duplicateMutation = useDuplicateCampaignUnified();
+  const createMutation = useCreateCampaignUnified();
+
+  // Auto-create demo campaign if none exists
+  useEffect(() => {
+    if (isLoading || demoCreatedRef.current || createMutation.isPending) return;
+    if (!campaigns) return;
+
+    const hasDemo = campaigns.some(c => c.name.includes('MODELO'));
+    if (!hasDemo && campaigns.length === 0) {
+      demoCreatedRef.current = true;
+      createMutation.mutate({
+        name: DEMO_CAMPAIGN_NAME,
+        advertiser: 'Anunciante Demo (Exemplo)',
+        description: 'Campanha de exemplo criada automaticamente. Use como referência ou duplique para começar.',
+        status: 'paused',
+        starts_at: '',
+        ends_at: '',
+        priority: 100,
+        cta_text: 'Saiba Mais',
+        cta_url: 'https://exemplo.com',
+        frequency_cap_per_day: 0,
+        enabledChannels: ['ads', 'publidoor', 'webstories', 'push', 'newsletter', 'exit_intent', 'login_panel', 'banner_intro', 'floating_ad'],
+        adsConfig: { slot_type: 'home_top', size: '970x250', sort_order: 0, link_target: '_blank' },
+        publidoorConfig: { type: 'narrativo', phrase_1: 'Texto de exemplo para Publidoor' },
+        webstoriesConfig: { story_type: 'external', story_url: 'https://exemplo.com/story' },
+        pushConfig: { title: 'Título Push Exemplo', body: 'Mensagem push de exemplo', action_url: 'https://exemplo.com', target_audience: 'all' },
+        newsletterConfig: { subject: 'Newsletter Exemplo', preview_text: 'Preview de exemplo', target_list: '' },
+        exitIntentConfig: { hero_type: 'publidoor', cta_text: 'Continuar navegando', priority_type: 'commercial' },
+        loginPanelConfig: { display_type: 'publidoor' },
+        bannerIntroConfig: { cta_text: 'Ver Oferta', cta_url: 'https://exemplo.com' },
+        floatingAdConfig: { position: 'right', frequency_limit: 1 },
+        assets: [],
+      });
+    }
+  }, [campaigns, isLoading, createMutation.isPending]);
 
   const handleEdit = (id: string) => {
     navigate(campaignRoutes.edit(id));

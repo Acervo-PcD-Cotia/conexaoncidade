@@ -26,6 +26,7 @@ import {
   Copy,
   PanelTop,
   PanelRight,
+  Star,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -34,6 +35,20 @@ import type {
   ChannelType 
 } from '@/types/campaigns-unified';
 import { STATUS_LABELS, STATUS_COLORS, CHANNEL_LABELS } from '@/types/campaigns-unified';
+import { AD_SLOTS } from '@/lib/adSlots';
+
+/** Channel ordering based on AD_SLOTS block sequence */
+const CHANNEL_ORDER: Record<string, number> = {
+  ads: 1,
+  publidoor: 2,
+  webstories: 3,
+  login_panel: 4,
+  banner_intro: 5,
+  floating_ad: 6,
+  exit_intent: 7,
+  push: 8,
+  newsletter: 9,
+};
 
 const CHANNEL_ICONS: Partial<Record<ChannelType, React.ReactNode>> = {
   ads: <Layout className="h-4 w-4" />,
@@ -64,7 +79,9 @@ export function CampaignCard({
   onToggleStatus,
   onViewMetrics,
 }: CampaignCardProps) {
-  const enabledChannels = campaign.channels?.filter(c => c.enabled) || [];
+  const isDemo = campaign.name.includes('MODELO');
+  const enabledChannels = (campaign.channels?.filter(c => c.enabled) || [])
+    .sort((a, b) => (CHANNEL_ORDER[a.channel_type] || 99) - (CHANNEL_ORDER[b.channel_type] || 99));
   const isActive = campaign.status === 'active';
   
   const formatDate = (date?: string) => {
@@ -77,7 +94,15 @@ export function CampaignCard({
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-base truncate">{campaign.name}</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-base truncate">{campaign.name}</h3>
+              {isDemo && (
+                <Badge variant="outline" className="text-[10px] border-amber-500 text-amber-600 shrink-0 gap-1">
+                  <Star className="h-3 w-3" />
+                  EXEMPLO
+                </Badge>
+              )}
+            </div>
             <p className="text-sm text-muted-foreground truncate">{campaign.advertiser}</p>
           </div>
           
@@ -132,7 +157,7 @@ export function CampaignCard({
       </CardHeader>
       
       <CardContent className="pt-0 space-y-3">
-        {/* Channels */}
+        {/* Channels - sorted by official order */}
         <div className="flex flex-wrap gap-1.5">
           {enabledChannels.map(channel => (
             <Badge 
