@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 import type { PushChannelConfig } from '@/types/campaigns-unified';
 
 interface PushChannelFormProps {
@@ -15,10 +16,18 @@ interface PushChannelFormProps {
   onChange: (config: Partial<PushChannelConfig>) => void;
 }
 
+const TITLE_MAX = 50;
+const BODY_MAX = 150;
+
 export function PushChannelForm({ config, onChange }: PushChannelFormProps) {
   const updateConfig = (key: keyof PushChannelConfig, value: string) => {
     onChange({ ...config, [key]: value });
   };
+
+  const titleLen = (config?.title || '').length;
+  const bodyLen = (config?.body || '').length;
+  const urlValue = config?.action_url || '';
+  const urlInvalid = urlValue.length > 0 && !urlValue.startsWith('https://');
 
   return (
     <div className="space-y-4">
@@ -34,10 +43,13 @@ export function PushChannelForm({ config, onChange }: PushChannelFormProps) {
             placeholder="Título da notificação"
             value={config?.title || ''}
             onChange={(e) => updateConfig('title', e.target.value)}
-            maxLength={50}
+            maxLength={TITLE_MAX}
           />
-          <p className="text-xs text-muted-foreground">
-            Máximo 50 caracteres
+          <p className={cn(
+            "text-xs",
+            titleLen >= TITLE_MAX ? "text-destructive font-medium" : titleLen >= TITLE_MAX * 0.8 ? "text-yellow-600" : "text-muted-foreground"
+          )}>
+            {titleLen}/{TITLE_MAX} caracteres
           </p>
         </div>
 
@@ -47,9 +59,13 @@ export function PushChannelForm({ config, onChange }: PushChannelFormProps) {
             id="push-url"
             type="url"
             placeholder="https://..."
-            value={config?.action_url || ''}
+            value={urlValue}
             onChange={(e) => updateConfig('action_url', e.target.value)}
+            className={cn(urlInvalid && "border-destructive")}
           />
+          {urlInvalid && (
+            <p className="text-xs text-destructive">URL deve começar com https://</p>
+          )}
         </div>
       </div>
 
@@ -60,11 +76,14 @@ export function PushChannelForm({ config, onChange }: PushChannelFormProps) {
           placeholder="Corpo da notificação..."
           value={config?.body || ''}
           onChange={(e) => updateConfig('body', e.target.value)}
-          maxLength={150}
+          maxLength={BODY_MAX}
           rows={2}
         />
-        <p className="text-xs text-muted-foreground">
-          Máximo 150 caracteres
+        <p className={cn(
+          "text-xs",
+          bodyLen >= BODY_MAX ? "text-destructive font-medium" : bodyLen >= BODY_MAX * 0.8 ? "text-yellow-600" : "text-muted-foreground"
+        )}>
+          {bodyLen}/{BODY_MAX} caracteres
         </p>
       </div>
 

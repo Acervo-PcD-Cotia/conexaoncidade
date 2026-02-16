@@ -22,7 +22,10 @@ import {
   DoorOpen,
   LogIn,
   BarChart3,
-  Calendar
+  Calendar,
+  Copy,
+  PanelTop,
+  PanelRight,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -40,14 +43,15 @@ const CHANNEL_ICONS: Partial<Record<ChannelType, React.ReactNode>> = {
   newsletter: <Mail className="h-4 w-4" />,
   exit_intent: <DoorOpen className="h-4 w-4" />,
   login_panel: <LogIn className="h-4 w-4" />,
-  banner_intro: <Layout className="h-4 w-4" />,
-  floating_ad: <Layout className="h-4 w-4" />,
+  banner_intro: <PanelTop className="h-4 w-4" />,
+  floating_ad: <PanelRight className="h-4 w-4" />,
 };
 
 interface CampaignCardProps {
   campaign: CampaignUnified;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
+  onDuplicate: (id: string) => void;
   onToggleStatus: (id: string, status: 'active' | 'paused') => void;
   onViewMetrics: (id: string) => void;
 }
@@ -56,6 +60,7 @@ export function CampaignCard({
   campaign,
   onEdit,
   onDelete,
+  onDuplicate,
   onToggleStatus,
   onViewMetrics,
 }: CampaignCardProps) {
@@ -95,6 +100,10 @@ export function CampaignCard({
                 <DropdownMenuItem onClick={() => onViewMetrics(campaign.id)}>
                   <BarChart3 className="h-4 w-4 mr-2" />
                   Ver Métricas
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onDuplicate(campaign.id)}>
+                  <Copy className="h-4 w-4 mr-2" />
+                  Duplicar
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 {isActive ? (

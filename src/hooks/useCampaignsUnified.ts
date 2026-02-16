@@ -382,6 +382,90 @@ export function useDeleteCampaignAsset() {
   });
 }
 
+/**
+ * Duplicate an existing campaign (clone with new name and draft status)
+ */
+export function useDuplicateCampaignUnified() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (sourceId: string): Promise<CampaignUnified> => {
+      // 1. Fetch source campaign
+      const { data: source, error: fetchError } = await supabase
+        .from('campaigns_unified')
+        .select(`
+          *,
+          channels:campaign_channels(*),
+          assets:campaign_assets(*)
+        `)
+        .eq('id', sourceId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // 2. Create cloned campaign
+      const { data: newCampaign, error: insertError } = await supabase
+        .from('campaigns_unified')
+        .insert({
+          name: `${source.name} (Cópia)`,
+          advertiser: source.advertiser,
+          description: source.description,
+          status: 'draft',
+          starts_at: null,
+          ends_at: null,
+          priority: source.priority,
+          cta_text: source.cta_text,
+          cta_url: source.cta_url,
+          frequency_cap_per_day: source.frequency_cap_per_day,
+        })
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+
+      // 3. Clone channels
+      const channels = source.channels as Record<string, unknown>[] | null;
+      if (channels && channels.length > 0) {
+        const channelInserts = channels.map((ch: Record<string, unknown>) => ({
+          campaign_id: newCampaign.id,
+          channel_type: ch.channel_type,
+          enabled: ch.enabled,
+          config: ch.config,
+        }));
+
+        await supabase.from('campaign_channels').insert(channelInserts as any);
+      }
+
+      // 4. Clone assets
+      const assets = source.assets as Record<string, unknown>[] | null;
+      if (assets && assets.length > 0) {
+        const assetInserts = assets.map((a: Record<string, unknown>) => ({
+          campaign_id: newCampaign.id,
+          asset_type: a.asset_type,
+          file_url: a.file_url,
+          width: a.width,
+          height: a.height,
+          alt_text: a.alt_text,
+          channel_type: a.channel_type,
+          format_key: a.format_key,
+        }));
+
+        await supabase.from('campaign_assets').insert(assetInserts as any);
+      }
+
+      return transformCampaign(newCampaign);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
+      toast.success('Campanha duplicada com sucesso');
+    },
+    onError: (error) => {
+      console.error('Error duplicating campaign:', error);
+      toast.error('Erro ao duplicar campanha');
+    },
+  });
+}
+
 // Helper functions
 function getChannelConfig(channelType: ChannelType, formData: CampaignFormData): ChannelConfig {
   switch (channelType) {
@@ -441,6 +525,21 @@ function getChannelConfig(channelType: ChannelType, formData: CampaignFormData):
         cta_text: formData.loginPanelConfig?.cta_text,
         cta_url: formData.loginPanelConfig?.cta_url,
       } as LoginPanelChannelConfig;
+    case 'banner_intro':
+      return {
+        cta_text: formData.bannerIntroConfig?.cta_text || '',
+        cta_url: formData.bannerIntroConfig?.cta_url || '',
+        display_dates: formData.bannerIntroConfig?.display_dates,
+        scheduled_start: formData.bannerIntroConfig?.scheduled_start,
+        scheduled_end: formData.bannerIntroConfig?.scheduled_end,
+      };
+    case 'floating_ad':
+      return {
+        position: formData.floatingAdConfig?.position || 'right',
+        frequency_limit: formData.floatingAdConfig?.frequency_limit || 1,
+        cta_text: formData.floatingAdConfig?.cta_text,
+        cta_url: formData.floatingAdConfig?.cta_url,
+      };
     default:
       // Return a default config for unknown channel types
       return { slot_type: '', size: '', sort_order: 0, link_target: '_blank' } as AdsChannelConfig;

@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 import type { NewsletterChannelConfig } from '@/types/campaigns-unified';
 
 interface NewsletterChannelFormProps {
@@ -15,10 +16,16 @@ interface NewsletterChannelFormProps {
   onChange: (config: Partial<NewsletterChannelConfig>) => void;
 }
 
+const SUBJECT_MAX = 100;
+const PREVIEW_MAX = 200;
+
 export function NewsletterChannelForm({ config, onChange }: NewsletterChannelFormProps) {
   const updateConfig = (key: keyof NewsletterChannelConfig, value: string) => {
     onChange({ ...config, [key]: value });
   };
+
+  const subjectLen = (config?.subject || '').length;
+  const previewLen = (config?.preview_text || '').length;
 
   return (
     <div className="space-y-4">
@@ -34,8 +41,14 @@ export function NewsletterChannelForm({ config, onChange }: NewsletterChannelFor
             placeholder="Assunto da newsletter"
             value={config?.subject || ''}
             onChange={(e) => updateConfig('subject', e.target.value)}
-            maxLength={100}
+            maxLength={SUBJECT_MAX}
           />
+          <p className={cn(
+            "text-xs",
+            subjectLen >= SUBJECT_MAX ? "text-destructive font-medium" : subjectLen >= SUBJECT_MAX * 0.8 ? "text-yellow-600" : "text-muted-foreground"
+          )}>
+            {subjectLen}/{SUBJECT_MAX} caracteres
+          </p>
         </div>
 
         <div className="space-y-2">
@@ -63,11 +76,14 @@ export function NewsletterChannelForm({ config, onChange }: NewsletterChannelFor
           placeholder="Texto que aparece antes de abrir o e-mail..."
           value={config?.preview_text || ''}
           onChange={(e) => updateConfig('preview_text', e.target.value)}
-          maxLength={200}
+          maxLength={PREVIEW_MAX}
           rows={2}
         />
-        <p className="text-xs text-muted-foreground">
-          Este texto aparece na prévia do e-mail. Máximo 200 caracteres.
+        <p className={cn(
+          "text-xs",
+          previewLen >= PREVIEW_MAX ? "text-destructive font-medium" : previewLen >= PREVIEW_MAX * 0.8 ? "text-yellow-600" : "text-muted-foreground"
+        )}>
+          {previewLen}/{PREVIEW_MAX} caracteres
         </p>
       </div>
 

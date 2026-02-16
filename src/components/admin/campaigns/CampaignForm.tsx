@@ -62,6 +62,8 @@ export function CampaignForm({
     if (selectedChannels.includes('push')) {
       if (!channelConfigs.push.title?.trim()) errs.push('Push: Título é obrigatório');
       if (!channelConfigs.push.body?.trim()) errs.push('Push: Corpo da mensagem é obrigatório');
+      const pushUrl = channelConfigs.push.action_url?.trim() || '';
+      if (pushUrl && !pushUrl.startsWith('https://')) errs.push('Push: URL deve usar HTTPS');
     }
 
     if (selectedChannels.includes('newsletter')) {
@@ -83,6 +85,18 @@ export function CampaignForm({
 
   const handleFormSubmit = handleSubmit((data) => {
     const channelErrors = validateChannels();
+
+    // Date validation
+    if (data.starts_at && data.ends_at && data.ends_at < data.starts_at) {
+      channelErrors.push('Data de fim não pode ser anterior à data de início');
+    }
+
+    // CTA URL validation
+    const ctaUrl = data.cta_url?.trim() || '';
+    if (ctaUrl && !ctaUrl.startsWith('https://')) {
+      channelErrors.push('URL do CTA deve usar HTTPS');
+    }
+
     if (channelErrors.length > 0) {
       setValidationErrors(channelErrors);
       return;
@@ -340,10 +354,10 @@ export function CampaignForm({
         <CardHeader>
           <CardTitle>Upload de Criativos</CardTitle>
           <CardDescription>
-            Arraste imagens para auto-atribuição por dimensões oficiais
+            Arraste imagens para auto-atribuição por dimensões oficiais. Múltiplos formatos podem coexistir na mesma campanha.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <BatchAssetUploader
             onAssetsUploaded={(uploadedAssets) => {
               uploadedAssets.forEach(asset => {
@@ -366,6 +380,49 @@ export function CampaignForm({
               });
             }}
           />
+
+          {/* Active Assets Summary */}
+          {(() => {
+            const activeAssets = [
+              assets.ads.url && { label: 'Ads (Banner)', url: assets.ads.url },
+              assets.publidoor.url && { label: 'Publidoor', url: assets.publidoor.url },
+              assets.webstories.url && { label: 'WebStories', url: assets.webstories.url },
+              assets.exitIntentHero.url && { label: 'Exit-Intent (Hero)', url: assets.exitIntentHero.url },
+              assets.exitIntentSecondary1.url && { label: 'Exit-Intent (Sec. 1)', url: assets.exitIntentSecondary1.url },
+              assets.exitIntentSecondary2.url && { label: 'Exit-Intent (Sec. 2)', url: assets.exitIntentSecondary2.url },
+              assets.loginPanel.url && { label: 'Painel Login', url: assets.loginPanel.url },
+              assets.bannerIntro.url && { label: 'Banner Intro', url: assets.bannerIntro.url },
+              assets.floatingAd.url && { label: 'Destaque Flutuante', url: assets.floatingAd.url },
+            ].filter(Boolean) as { label: string; url: string }[];
+
+            if (activeAssets.length === 0) return null;
+
+            return (
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">
+                  {activeAssets.length} criativo(s) vinculado(s)
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {activeAssets.map((asset) => (
+                    <div key={asset.label} className="border rounded-lg p-2 space-y-1.5">
+                      <div className="aspect-video bg-muted rounded overflow-hidden">
+                        <img
+                          src={asset.url}
+                          alt={asset.label}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                      <p className="text-xs font-medium truncate">{asset.label}</p>
+                      <span className="inline-flex items-center gap-1 text-[10px] text-green-700 dark:text-green-400">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                        Vinculado
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </CardContent>
       </Card>
 
