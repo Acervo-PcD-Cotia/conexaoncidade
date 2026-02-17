@@ -22,23 +22,7 @@ export function useRequireRole(allowedRoles: AppRole[]) {
       if (isLoading) return;
 
       if (!user) {
-        setShowDenied('not_authenticated');
-        setCheckingRole(false);
-        
-        // Start countdown
-        let countdown = 3;
-        setRedirectCountdown(countdown);
-        
-        redirectTimerRef.current = setInterval(() => {
-          countdown -= 1;
-          setRedirectCountdown(countdown);
-          
-          if (countdown <= 0) {
-            if (redirectTimerRef.current) clearInterval(redirectTimerRef.current);
-            window.location.href = "https://conexaoncidade.lovable.app/spah";
-          }
-        }, 1000);
-        
+        navigate('/spah', { replace: true });
         return;
       }
 
