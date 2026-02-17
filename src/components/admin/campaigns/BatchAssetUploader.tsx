@@ -68,6 +68,7 @@ interface DuplicateConflict {
 interface BatchAssetUploaderProps {
   campaignId?: string;
   existingAssets?: Record<string, { url?: string; alt?: string }>;
+  existingSlotAssets?: Record<string, { file_url: string; channel_type: string; format_key: string; asset_type: string }>;
   onAssetsUploaded: (assets: {
     file_url: string;
     width: number;
@@ -78,6 +79,12 @@ interface BatchAssetUploaderProps {
     upscale_percent?: number;
     auto_corrected: boolean;
   }[]) => void;
+  onSlotAssetUploaded?: (slotId: string, result: {
+    file_url: string;
+    channel_type: ChannelType;
+    format_key: string;
+    asset_type: string;
+  }) => void;
   className?: string;
 }
 
@@ -100,12 +107,14 @@ function getExistingAssetKey(channel: string, formatKey: string): string | null 
 /** Individual upload list – one row per official slot (1–15) */
 function IndividualSlotUploadList({
   campaignId,
+  existingSlotAssets,
   existingAssets,
   onAssetUploaded,
 }: {
   campaignId?: string;
+  existingSlotAssets?: Record<string, { file_url: string; channel_type: string; format_key: string; asset_type: string }>;
   existingAssets?: Record<string, { url?: string; alt?: string }>;
-  onAssetUploaded: (result: {
+  onAssetUploaded: (slotId: string, result: {
     file_url: string;
     width: number;
     height: number;
@@ -175,7 +184,7 @@ function IndividualSlotUploadList({
 
       setSlotFiles(prev => ({ ...prev, [slot.id]: { ...prev[slot.id], uploading: false, uploaded: true } }));
 
-      onAssetUploaded({
+      onAssetUploaded(slot.id, {
         file_url: publicUrl,
         width: slot.width,
         height: slot.height,
@@ -202,6 +211,9 @@ function IndividualSlotUploadList({
   };
 
   const getExistingUrl = (slot: typeof AD_SLOTS[number]): string | undefined => {
+    // Prefer per-slot assets (new system)
+    if (existingSlotAssets?.[slot.id]?.file_url) return existingSlotAssets[slot.id].file_url;
+    // Fallback to legacy per-channel
     if (!existingAssets) return undefined;
     const key = getExistingAssetKey(slot.channel, slot.key);
     return key ? existingAssets[key]?.url : undefined;
@@ -313,7 +325,9 @@ function IndividualSlotUploadList({
 export function BatchAssetUploader({ 
   campaignId, 
   existingAssets,
+  existingSlotAssets,
   onAssetsUploaded,
+  onSlotAssetUploaded,
   className 
 }: BatchAssetUploaderProps) {
   const [assets, setAssets] = useState<UploadedAsset[]>([]);
@@ -651,8 +665,17 @@ export function BatchAssetUploader({
       {/* Individual upload per slot (1–15) */}
       <IndividualSlotUploadList
         campaignId={campaignId}
+        existingSlotAssets={existingSlotAssets}
         existingAssets={existingAssets}
-        onAssetUploaded={(result) => onAssetsUploaded([result])}
+        onAssetUploaded={(slotId, result) => {
+          onAssetsUploaded([result]);
+          onSlotAssetUploaded?.(slotId, {
+            file_url: result.file_url,
+            channel_type: result.channel_type,
+            format_key: result.format_key,
+            asset_type: 'banner',
+          });
+        }}
       />
 
       {/* Duplicate Confirmation Dialog */}
