@@ -1,137 +1,87 @@
 
-# Reestruturacao Completa - Campanhas 360
 
-## Resumo Executivo
+## Problema identificado
 
-Este plano implementa 7 melhorias estruturais no modulo de Campanhas Unificadas: campanha demo automatica, ciclos explicados no tutorial, formatos numerados 1-15 no cadastro, guia rapido embutido, tutorial com busca e secao de upload, prevencao de duplicacao de criativos, e ordenacao consistente em todo o sistema.
+O sistema atual tem uma falha arquitetural: o estado de assets no formulario (`ChannelAssets`) armazena **apenas 1 URL por canal** (ex: `ads: { url, alt }`), mas existem **5 formatos diferentes** so no canal `ads`. Isso causa:
 
----
-
-## 1. Campanha Demo Automatica
-
-**O que muda:** Ao abrir a listagem de campanhas, se nao existir campanha com nome contendo "MODELO", o sistema cria automaticamente uma campanha demo pausada.
-
-**Onde:** `CampaignsUnified.tsx`
-
-- Adicionar hook `useEffect` que verifica se ja existe campanha demo
-- Se nao existir, chamar `useCreateCampaignUnified` com dados pre-definidos:
-  - Nome: "MODELO -- Campanha Unificada (Exemplo)"
-  - Anunciante: "Anunciante Demo (Exemplo)"
-  - Status: "paused", Prioridade: 100
-  - Todos os 9 canais ativados com textos placeholder
-- No `CampaignCard.tsx`, adicionar badge "EXEMPLO" quando o nome contem "MODELO"
+1. **Sobreposicao**: ao enviar o formato #1 (728x90) e depois o #2 (970x250), ambos sao `channel: ads`, entao o segundo sobrescreve o primeiro no state
+2. **Exigencia de canal**: o `handleFormSubmit` so inclui assets se o canal estiver selecionado (`selectedChannels.includes('ads')`) -- o usuario quer que funcione **sem precisar ativar o canal**
+3. **Assets existentes nao aparecem**: ao reabrir a campanha, o `IndividualSlotUploadList` recebe `existingAssets` mapeado por canal (1 por canal), nao por `format_key`, entao so mostra 1 dos 5 ads
 
 ---
 
-## 2. Guia Rapido no Cadastro (Toggle)
+## Solucao
 
-**O que muda:** Card colapsavel no topo do formulario de campanha com checklist automatico.
+### 1. Novo estado: `uploadedSlotAssets` (por format_key)
 
-**Onde:** `CampaignForm.tsx`
+Adicionar ao reducer um mapa independente `Record<string, { file_url, channel_type, format_key }>` indexado pelo `slot.id` (ex: `leaderboard`, `super_banner`, etc.). Cada formato dos 15 tera seu proprio registro, sem conflito.
 
-- Adicionar estado `showGuide` (default: true para nova campanha, false para edicao)
-- Card com titulo "Guia Rapido -- Como cadastrar" e botao Exibir/Ocultar
-- Conteudo: 6 passos curtos + checklist automatico que valida em tempo real:
-  - Nome e anunciante preenchidos
-  - Periodo definido
-  - Pelo menos 1 canal selecionado
-  - Criativos vinculados
-  - CTA com HTTPS valido
-  - Ciclo criado (se status diferente de pausada)
+### 2. `IndividualSlotUploadList` alimenta o novo estado
 
----
+Quando o usuario envia uma imagem pelo upload individual (tabela dos 15 formatos), o resultado vai direto para o novo mapa `uploadedSlotAssets`, usando o `slot.id` como chave.
 
-## 3. Formatos Numerados 1-15 no Cadastro
+### 3. Assets existentes carregados por `format_key`
 
-**O que muda:** O `ChannelSelector` passa a exibir os 15 formatos oficiais como lista numerada com dimensoes e localizacao, na mesma ordem do tutorial.
+Ao abrir campanha existente, os registros de `campaign_assets` serao mapeados para o `IndividualSlotUploadList` usando `format_key` (nao mais por canal), permitindo que cada um dos 15 slots mostre corretamente "Ja enviado" com thumbnail.
 
-**Onde:** Novo componente `FormatReferenceList.tsx` + integracao no `CampaignForm.tsx`
+### 4. Submit inclui todos os slot assets (sem exigir canal)
 
-- Botao "Ver 15 Formatos Oficiais" que abre Dialog/modal
-- Tabela identica a do tutorial (consumindo `AD_SLOTS` de `adSlots.ts`), com colunas: #, Bloco, Nome Comercial, Dimensao, Onde Aparece
-- Cada canal no `ChannelSelector` passa a mostrar subtexto com dimensoes dos formatos correspondentes (ex: "Ads: 728x90, 970x250, 300x250, 300x600, 580x400")
+No `handleFormSubmit`, alem dos assets legados (que dependem de canal), incluir **todos os assets do mapa `uploadedSlotAssets`** incondicionalmente -- sem verificar `selectedChannels`.
+
+### 5. Exibir thumbnail e nome apos upload
+
+A `IndividualSlotUploadList` ja mostra preview e nome quando o arquivo e selecionado localmente. O ajuste e garantir que apos o upload (status "uploaded") e ao reabrir a campanha, a thumbnail + nome continuem visiveis.
 
 ---
 
-## 4. Tutorial - Busca e Novas Secoes
+## Arquivos a alterar
 
-**O que muda:** Campo de busca no topo do tutorial + secoes sobre Upload de Criativos e Ciclos detalhados.
-
-**Onde:** `CampaignsTutorial.tsx`
-
-- **Campo de busca:** Input no topo que filtra o conteudo das tabs por texto
-- **Secao "Upload de Criativos"** na tab "Passo a Passo":
-  - Quando usar (batch) vs quando nao usar (upload individual no bloco)
-  - Passo a passo: arrastar imagens, auto-atribuicao, revisao, enviar
-  - Aviso sobre duplicacao
-- **Secao "Ciclos de Distribuicao" expandida** na tab "Passo a Passo":
-  - O que sao ciclos (definicao)
-  - Quando usar, exemplos praticos
-  - Como criar o primeiro ciclo
-  - Erros comuns (ciclo sem formato, sem periodo)
-
----
-
-## 5. Prevencao de Duplicacao de Criativos
-
-**O que muda:** Ao enviar criativo via batch que ja existe para o mesmo format_key, o sistema pergunta se quer substituir.
-
-**Onde:** `BatchAssetUploader.tsx` + `CampaignForm.tsx`
-
-- Antes de chamar `onAssetsUploaded`, verificar se ja existe asset ativo para o mesmo `format_key` no estado do formulario
-- Se existir, mostrar Dialog de confirmacao: "Ja existe criativo para Mega Destaque (970x250). Substituir ou manter ambos?"
-- Default: Substituir (atualiza o asset existente)
-- Opcao: Manter ambos (adiciona como versao extra)
-
----
-
-## 6. Ordenacao Consistente 1-15
-
-**O que muda:** Chips de canais no CampaignCard e resumo de criativos seguem ordem `seq` do `AD_SLOTS`.
-
-**Onde:** `CampaignCard.tsx`, `CampaignForm.tsx` (secao Active Assets Summary)
-
-- Ordenar `enabledChannels` no card usando a ordem dos blocos de `AD_SLOTS`
-- No resumo de criativos ativos, ordenar pela sequencia oficial (1-15)
-
----
-
-## 7. CycleSelectorCard no Tutorial
-
-**O que muda:** Secao de ciclos no tutorial ganha mais detalhes sobre campos, regras e wizard.
-
-**Onde:** `CampaignsTutorial.tsx` (tab "Passo a Passo", secao Ciclos existente)
-
-- Expandir card de Ciclos para incluir: campos do ciclo (nome, inicio/fim, frequencia, cap, canais/formatos, observacoes)
-- Adicionar exemplos: "Ciclo 01 -- Semana 1", "Ciclo 02 -- Reforco"
-- Alertas: "Sem ciclos = campanha nao agenda exibicao"
-
----
-
-## Detalhes Tecnicos
-
-### Arquivos a Criar
-| Arquivo | Descricao |
-|---------|-----------|
-| `src/components/admin/campaigns/FormatReferenceDialog.tsx` | Modal com tabela dos 15 formatos |
-| `src/components/admin/campaigns/QuickGuideCard.tsx` | Card colapsavel do guia rapido |
-
-### Arquivos a Modificar
 | Arquivo | Mudanca |
-|---------|---------|
-| `CampaignsUnified.tsx` | Logica de criacao automatica da campanha demo |
-| `CampaignCard.tsx` | Badge "EXEMPLO", ordenacao de chips |
-| `CampaignForm.tsx` | Integrar QuickGuideCard + FormatReferenceDialog + ordenacao de assets |
-| `CampaignsTutorial.tsx` | Campo de busca, secoes Upload e Ciclos expandidas |
-| `BatchAssetUploader.tsx` | Verificacao de duplicacao antes do upload |
-| `CampaignEditor.tsx` | Passar `existingAssets` para CampaignForm para verificacao de duplicacao |
+|---|---|
+| `src/components/admin/campaigns/useCampaignFormReducer.ts` | Adicionar campo `uploadedSlotAssets` ao state, action `SET_SLOT_ASSET`, e popular a partir de `initialData.assets` usando `format_key` |
+| `src/components/admin/campaigns/BatchAssetUploader.tsx` | Receber `existingSlotAssets` (por slot.id) e usar no `IndividualSlotUploadList` para mostrar thumbnails corretas; propagar `onSlotAssetUploaded` com slot.id |
+| `src/components/admin/campaigns/CampaignForm.tsx` | Passar `existingSlotAssets` ao `BatchAssetUploader`; no submit, montar array de assets a partir de `uploadedSlotAssets` sem depender de `selectedChannels` |
 
-### Dependencias de Dados
-- Todos os formatos ja estao definidos em `adSlots.ts` (fonte unica de verdade)
-- Ciclos ja tem infraestrutura completa em `useCampaignCycles.ts` e `campaign_cycles` no banco
-- Nenhuma alteracao de banco de dados necessaria
+---
 
-### Riscos e Mitigacoes
-- **Campanha demo duplicada:** Usar verificacao por nome antes de criar; marcar com flag no campo description
-- **Performance do filtro de busca no tutorial:** Filtro client-side simples, sem impacto
-- **Duplicacao de criativos:** Verificacao no frontend apenas (estado do formulario), nao bloqueia no backend
+## Detalhes tecnicos
+
+### Novo campo no state do reducer
+
+```text
+uploadedSlotAssets: Record<string, {
+  file_url: string;
+  channel_type: ChannelType;
+  format_key: string;
+  asset_type: string;
+}>
+```
+
+Chave = `slot.id` (ex: `leaderboard`, `super_banner`, `retangulo_medio`...)
+
+### Nova action
+
+```text
+SET_SLOT_ASSET: { slotId: string, file_url: string, channel_type, format_key, asset_type }
+```
+
+### Inicializacao a partir de `initialData.assets`
+
+Ao criar o state inicial, iterar `initialData.assets` e mapear cada `format_key` para o `slot.id` correspondente usando `AD_SLOTS`.
+
+### Submit independente de canal
+
+```text
+// Alem dos assets legados:
+Object.values(state.uploadedSlotAssets).forEach(slotAsset => {
+  formAssets.push({
+    asset_type: slotAsset.asset_type,
+    file_url: slotAsset.file_url,
+    channel_type: slotAsset.channel_type,
+    format_key: slotAsset.format_key,
+  });
+});
+```
+
+Deduplicar por `format_key` para evitar duplicatas entre assets legados e slot assets.
+
