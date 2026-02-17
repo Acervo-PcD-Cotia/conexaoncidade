@@ -202,7 +202,7 @@ export function useUpdateCampaignUnified() {
         if (data.enabledChannels.length > 0) {
           const channelInserts = data.enabledChannels.map(channelType => ({
             campaign_id: id,
-            channel_type: channelType, // ChannelType is already correctly typed
+            channel_type: channelType,
             enabled: true,
             config: asJson(getChannelConfig(channelType, data as CampaignFormData)),
           }));
@@ -212,6 +212,26 @@ export function useUpdateCampaignUnified() {
             .insert(channelInserts as any);
 
           if (channelsError) throw channelsError;
+        }
+      }
+
+      // Update assets if provided
+      if (data.assets) {
+        // Delete existing assets
+        await supabase.from('campaign_assets').delete().eq('campaign_id', id);
+
+        // Insert new assets
+        if (data.assets.length > 0) {
+          const assetInserts = data.assets.map(asset => ({
+            ...asset,
+            campaign_id: id,
+          }));
+
+          const { error: assetsError } = await supabase
+            .from('campaign_assets')
+            .insert(assetInserts as any);
+
+          if (assetsError) throw assetsError;
         }
       }
     },

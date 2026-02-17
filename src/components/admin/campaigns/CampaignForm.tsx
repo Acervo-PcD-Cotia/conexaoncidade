@@ -208,6 +208,24 @@ export function CampaignForm({
       });
     }
 
+    if (selectedChannels.includes('banner_intro') && assets.bannerIntro.url) {
+      formAssets.push({
+        asset_type: 'banner',
+        file_url: assets.bannerIntro.url,
+        channel_type: 'banner_intro',
+        format_key: 'banner_intro',
+      });
+    }
+
+    if (selectedChannels.includes('floating_ad') && assets.floatingAd.url) {
+      formAssets.push({
+        asset_type: 'banner',
+        file_url: assets.floatingAd.url,
+        channel_type: 'floating_ad',
+        format_key: 'floating_ad',
+      });
+    }
+
     onSubmit({
       ...data,
       status,
