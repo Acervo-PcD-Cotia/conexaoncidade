@@ -95,10 +95,15 @@ export function usePushSubscription() {
 
   // Subscribe — works for both logged-in and anonymous users
   const subscribe = useCallback(async () => {
+    if (!checkSupport()) {
+      toast.error('Seu navegador não suporta notificações push.');
+      return false;
+    }
+
     const vapidKey = await getVapidPublicKey();
     if (!vapidKey) {
       console.error('VAPID_PUBLIC_KEY não configurada');
-      toast.error('Configuração de push não encontrada');
+      toast.error('Push ainda não foi configurado no painel. Contate o administrador.');
       return false;
     }
 
@@ -108,7 +113,11 @@ export function usePushSubscription() {
       const permission = await Notification.requestPermission();
       if (permission !== 'granted') {
         setState(prev => ({ ...prev, permission, isLoading: false }));
-        toast.error('Permissão de notificações negada');
+        if (permission === 'denied') {
+          toast.error('Você bloqueou as notificações. Libere nas configurações do navegador.');
+        } else {
+          toast.error('Permissão de notificações não concedida.');
+        }
         return false;
       }
 

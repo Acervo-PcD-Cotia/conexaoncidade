@@ -47,6 +47,8 @@ export function AdImageUploader({
   const [urlInput, setUrlInput] = useState('');
   const [showUrlOption, setShowUrlOption] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const [uploadedFileSize, setUploadedFileSize] = useState<number | null>(null);
+  const [uploadedDimensions, setUploadedDimensions] = useState<{ w: number; h: number } | null>(null);
 
   const formatConfig = FORMAT_DIMENSIONS[format];
 
@@ -67,6 +69,20 @@ export function AdImageUploader({
     setUploading(true);
 
     try {
+      // Read dimensions before upload
+      const imgDims = await new Promise<{ w: number; h: number }>((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          resolve({ w: img.naturalWidth, h: img.naturalHeight });
+          URL.revokeObjectURL(img.src);
+        };
+        img.onerror = () => {
+          resolve({ w: 0, h: 0 });
+          URL.revokeObjectURL(img.src);
+        };
+        img.src = URL.createObjectURL(file);
+      });
+
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `${format}/${fileName}`;
@@ -76,16 +92,12 @@ export function AdImageUploader({
         .upload(filePath, file);
 
       if (uploadError) {
-        // Check for specific error types
         if (uploadError.message?.includes('Bucket not found')) {
           toast.error('Bucket de armazenamento não configurado. Contate o administrador.');
-          console.error('Storage bucket "ads" not found');
         } else if (uploadError.message?.includes('row-level security') || uploadError.message?.includes('permission')) {
           toast.error('Sem permissão para upload. Verifique se está logado.');
-          console.error('Storage permission error:', uploadError);
         } else {
           toast.error(`Erro no upload: ${uploadError.message}`);
-          console.error('Upload error:', uploadError);
         }
         return;
       }
@@ -96,6 +108,8 @@ export function AdImageUploader({
 
       onChange(publicUrl);
       setUploadedFileName(file.name);
+      setUploadedFileSize(file.size);
+      setUploadedDimensions(imgDims.w > 0 ? imgDims : null);
       // Auto-generate alt text from label/format context
       if (onAltChange && !alt) {
         const autoAlt = `${label} - ${formatConfig.label} (${formatConfig.width}x${formatConfig.height}px)`;
@@ -143,6 +157,14 @@ export function AdImageUploader({
     onChange('');
     onAltChange?.('');
     setUploadedFileName(null);
+    setUploadedFileSize(null);
+    setUploadedDimensions(null);
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   return (
@@ -195,9 +217,14 @@ export function AdImageUploader({
             <X className="h-4 w-4" />
           </Button>
           {uploadedFileName && (
-            <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-3 py-1.5">
-              <p className="text-xs text-white truncate" title={uploadedFileName}>
+            <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-3 py-2">
+              <p className="text-xs text-white truncate font-medium" title={uploadedFileName}>
                 📄 {uploadedFileName}
+              </p>
+              <p className="text-[10px] text-white/70">
+                {uploadedDimensions ? `${uploadedDimensions.w}×${uploadedDimensions.h}px` : ''}
+                {uploadedDimensions && uploadedFileSize ? ' • ' : ''}
+                {uploadedFileSize ? formatFileSize(uploadedFileSize) : ''}
               </p>
             </div>
           )}
