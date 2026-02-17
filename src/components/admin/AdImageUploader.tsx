@@ -322,7 +322,7 @@ export function AdImageUploader({
 // Mapeamento de slots para formatos
 export const SLOT_TO_FORMAT: Record<string, AdFormat> = {
   leaderboard: 'leaderboard',
-  home_top: 'home-topo',
+  home_top: 'leaderboard',
   home_banner: 'home-topo',
   super_banner: 'home-topo',
   rectangle: 'retangulo-medio',
