@@ -94,6 +94,39 @@ const DEFAULT_ASSETS: ChannelAssets = {
 // ============================================
 
 export function createInitialState(initialData?: Partial<CampaignFormData>): CampaignFormState {
+  // Populate assets from existing campaign data
+  const assets = { ...DEFAULT_ASSETS };
+  if (initialData?.assets && initialData.assets.length > 0) {
+    for (const a of initialData.assets) {
+      switch (a.channel_type) {
+        case 'ads':
+          assets.ads = { url: a.file_url, alt: a.alt_text || '' };
+          break;
+        case 'publidoor':
+          assets.publidoor = { url: a.file_url, alt: a.alt_text || '' };
+          break;
+        case 'webstories':
+          assets.webstories = { url: a.file_url, alt: a.alt_text || '' };
+          break;
+        case 'exit_intent':
+          if (a.format_key === 'exit_hero') assets.exitIntentHero = { url: a.file_url };
+          else if (a.format_key === 'exit_secondary_1') assets.exitIntentSecondary1 = { url: a.file_url };
+          else if (a.format_key === 'exit_secondary_2') assets.exitIntentSecondary2 = { url: a.file_url };
+          else assets.exitIntentHero = { url: a.file_url };
+          break;
+        case 'login_panel':
+          assets.loginPanel = { url: a.file_url };
+          break;
+        case 'banner_intro':
+          assets.bannerIntro = { url: a.file_url };
+          break;
+        case 'floating_ad':
+          assets.floatingAd = { url: a.file_url };
+          break;
+      }
+    }
+  }
+
   return {
     status: initialData?.status || 'draft',
     selectedChannels: initialData?.enabledChannels || [],
@@ -108,7 +141,7 @@ export function createInitialState(initialData?: Partial<CampaignFormData>): Cam
       banner_intro: initialData?.bannerIntroConfig || DEFAULT_CONFIGS.banner_intro,
       floating_ad: initialData?.floatingAdConfig || DEFAULT_CONFIGS.floating_ad,
     },
-    assets: DEFAULT_ASSETS,
+    assets,
     validationErrors: [],
   };
 }
