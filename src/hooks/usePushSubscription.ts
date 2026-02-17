@@ -13,26 +13,26 @@ interface PushSubscriptionState {
 let cachedVapidKey: string | null = null;
 
 async function getVapidPublicKey(): Promise<string> {
-  // Check env var first
-  const envKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
-  if (envKey) return envKey;
-
   // Use cached value
   if (cachedVapidKey) return cachedVapidKey;
 
-  // Fetch from edge function
+  // Check env var first
+  const envKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+  if (envKey) {
+    cachedVapidKey = envKey;
+    return envKey;
+  }
+
+  // Fetch from edge function using supabase client (more reliable than raw fetch)
   try {
-    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-    const res = await fetch(`https://${projectId}.supabase.co/functions/v1/get-vapid-key`, {
-      headers: { 'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
-    });
-    if (res.ok) {
-      const data = await res.json();
-      cachedVapidKey = data.publicKey || '';
+    const { data, error } = await supabase.functions.invoke('get-vapid-key');
+    if (!error && data?.publicKey) {
+      cachedVapidKey = data.publicKey;
       return cachedVapidKey;
     }
+    console.warn('[Push] get-vapid-key returned:', error || 'no publicKey');
   } catch (e) {
-    console.error('Failed to fetch VAPID key:', e);
+    console.error('[Push] Failed to fetch VAPID key:', e);
   }
   return '';
 }

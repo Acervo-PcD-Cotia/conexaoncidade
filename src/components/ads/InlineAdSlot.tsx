@@ -31,7 +31,7 @@ export function InlineAdSlot({ position = 1, category, className, page = 'articl
           assets:campaign_assets(id, file_url, alt_text, width, height, channel_type, format_key)
         `)
         .eq('status', 'active')
-        .lte('starts_at', new Date().toISOString())
+        .or(`starts_at.is.null,starts_at.lte.${new Date().toISOString()}`)
         .or(`ends_at.is.null,ends_at.gte.${new Date().toISOString()}`)
         .order('priority', { ascending: false })
         .limit(5);
