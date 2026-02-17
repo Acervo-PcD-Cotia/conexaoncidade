@@ -76,6 +76,7 @@ export function ResponsiveAdUnit({
   }
 
   if (!ad) {
+    // Don't reserve space when there's no ad — avoids empty blocks on the page
     return (
       <AdSlotWrapper
         slotId={slotId}
@@ -84,7 +85,7 @@ export function ResponsiveAdUnit({
         expectedWidth={meta.w}
         expectedHeight={meta.h}
         page={page}
-        reserveSpace={shouldReserve}
+        reserveSpace={false}
         conditional={isConditional}
         className={className}
       />
