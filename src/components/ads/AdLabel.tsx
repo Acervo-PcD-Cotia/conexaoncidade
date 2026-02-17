@@ -42,6 +42,8 @@ export function AdLabel({
   const id = adId ? String(adId).slice(0, 8) : "—";
 
   if (level === "public") {
+    // Show format name when available (e.g. "Publicidade • Mega Destaque")
+    const publicLabel = type !== "ANÚNCIO" ? `Publicidade • ${type}` : "Publicidade";
     return (
       <span
         className={cn(
@@ -52,7 +54,7 @@ export function AdLabel({
           className,
         )}
       >
-        Publicidade
+        {publicLabel}
       </span>
     );
   }
