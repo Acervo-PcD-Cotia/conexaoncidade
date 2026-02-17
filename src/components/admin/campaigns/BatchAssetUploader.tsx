@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -95,6 +95,219 @@ function getExistingAssetKey(channel: string, formatKey: string): string | null 
     experience: 'bannerIntro',
   };
   return map[channel] || null;
+}
+
+/** Individual upload list – one row per official slot (1–15) */
+function IndividualSlotUploadList({
+  campaignId,
+  existingAssets,
+  onAssetUploaded,
+}: {
+  campaignId?: string;
+  existingAssets?: Record<string, { url?: string; alt?: string }>;
+  onAssetUploaded: (result: {
+    file_url: string;
+    width: number;
+    height: number;
+    channel_type: ChannelType;
+    format_key: string;
+    is_original: boolean;
+    auto_corrected: boolean;
+  }) => void;
+}) {
+  const [slotFiles, setSlotFiles] = useState<Record<string, {
+    file: File;
+    preview: string;
+    dimW: number;
+    dimH: number;
+    uploading: boolean;
+    uploaded: boolean;
+    error?: string;
+  }>>({});
+
+  const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const handleFileSelect = async (slot: typeof AD_SLOTS[number], file: File) => {
+    const preview = URL.createObjectURL(file);
+    // Read dimensions
+    const dims = await new Promise<{ w: number; h: number }>((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+      img.onerror = () => resolve({ w: 0, h: 0 });
+      img.src = preview;
+    });
+
+    setSlotFiles(prev => ({
+      ...prev,
+      [slot.id]: {
+        file,
+        preview,
+        dimW: dims.w,
+        dimH: dims.h,
+        uploading: false,
+        uploaded: false,
+      },
+    }));
+  };
+
+  const uploadSlot = async (slot: typeof AD_SLOTS[number]) => {
+    const entry = slotFiles[slot.id];
+    if (!entry || entry.uploading) return;
+
+    setSlotFiles(prev => ({ ...prev, [slot.id]: { ...prev[slot.id], uploading: true, error: undefined } }));
+
+    try {
+      const ext = entry.file.name.split('.').pop() || 'jpg';
+      const folder = campaignId ? `${campaignId}/` : '';
+      const path = `${folder}${slot.channel}/${slot.key}/original/${Date.now()}-${slot.id}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('campaign-assets')
+        .upload(path, entry.file, { cacheControl: '31536000', upsert: false });
+
+      if (uploadError) {
+        setSlotFiles(prev => ({ ...prev, [slot.id]: { ...prev[slot.id], uploading: false, error: uploadError.message } }));
+        toast.error(`Erro: ${uploadError.message}`);
+        return;
+      }
+
+      const { data: { publicUrl } } = supabase.storage.from('campaign-assets').getPublicUrl(path);
+
+      setSlotFiles(prev => ({ ...prev, [slot.id]: { ...prev[slot.id], uploading: false, uploaded: true } }));
+
+      onAssetUploaded({
+        file_url: publicUrl,
+        width: slot.width,
+        height: slot.height,
+        channel_type: slot.channel as ChannelType,
+        format_key: slot.key,
+        is_original: true,
+        auto_corrected: false,
+      });
+
+      toast.success(`${slot.label} enviado!`);
+    } catch {
+      setSlotFiles(prev => ({ ...prev, [slot.id]: { ...prev[slot.id], uploading: false, error: 'Erro inesperado' } }));
+    }
+  };
+
+  const removeSlot = (slotId: string) => {
+    setSlotFiles(prev => {
+      const entry = prev[slotId];
+      if (entry) URL.revokeObjectURL(entry.preview);
+      const next = { ...prev };
+      delete next[slotId];
+      return next;
+    });
+  };
+
+  const getExistingUrl = (slot: typeof AD_SLOTS[number]): string | undefined => {
+    if (!existingAssets) return undefined;
+    const key = getExistingAssetKey(slot.channel, slot.key);
+    return key ? existingAssets[key]?.url : undefined;
+  };
+
+  return (
+    <div className="space-y-1">
+      <h4 className="text-sm font-medium mb-2">Upload individual por formato (1–15)</h4>
+      <div className="rounded-lg border overflow-hidden">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="bg-muted/60">
+              <th className="border-b px-2 py-1.5 text-left font-semibold w-6">#</th>
+              <th className="border-b px-2 py-1.5 text-left font-semibold">Formato</th>
+              <th className="border-b px-2 py-1.5 text-left font-semibold">Dimensão</th>
+              <th className="border-b px-2 py-1.5 text-left font-semibold">Canal</th>
+              <th className="border-b px-2 py-1.5 text-left font-semibold">Arquivo</th>
+              <th className="border-b px-2 py-1.5 text-center font-semibold w-24">Ação</th>
+            </tr>
+          </thead>
+          <tbody>
+            {AD_SLOTS.map(slot => {
+              const entry = slotFiles[slot.id];
+              const existingUrl = getExistingUrl(slot);
+              return (
+                <tr key={slot.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                  <td className="px-2 py-2 font-mono text-muted-foreground">{slot.seq}</td>
+                  <td className="px-2 py-2 font-medium">{slot.label}</td>
+                  <td className="px-2 py-2 font-mono">{slot.width}×{slot.height}</td>
+                  <td className="px-2 py-2 text-muted-foreground">{slot.channel}</td>
+                  <td className="px-2 py-2 max-w-[200px]">
+                    {entry ? (
+                      <div className="flex items-center gap-2">
+                        <img src={entry.preview} alt="" className="h-8 w-8 rounded object-cover flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{entry.file.name}</p>
+                          <p className="text-muted-foreground">
+                            {entry.dimW}×{entry.dimH}px • {(entry.file.size / 1024 / 1024).toFixed(1)}MB
+                          </p>
+                        </div>
+                        {entry.uploaded && <Check className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />}
+                        {entry.error && <span title={entry.error}><AlertTriangle className="h-3.5 w-3.5 text-destructive flex-shrink-0" /></span>}
+                      </div>
+                    ) : existingUrl ? (
+                      <div className="flex items-center gap-2">
+                        <img src={existingUrl} alt="" className="h-8 w-8 rounded object-cover flex-shrink-0" />
+                        <span className="text-muted-foreground italic truncate">Já enviado</span>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </td>
+                  <td className="px-2 py-2 text-center">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      ref={(el) => { inputRefs.current[slot.id] = el; }}
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleFileSelect(slot, f);
+                        e.target.value = '';
+                      }}
+                    />
+                    <div className="flex items-center justify-center gap-1">
+                      {entry && !entry.uploaded ? (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="default"
+                            className="h-6 text-[10px] px-2"
+                            disabled={entry.uploading}
+                            onClick={() => uploadSlot(slot)}
+                          >
+                            {entry.uploading ? <RefreshCw className="h-3 w-3 animate-spin" /> : 'Enviar'}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0"
+                            onClick={() => removeSlot(slot.id)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-6 text-[10px] px-2"
+                          onClick={() => inputRefs.current[slot.id]?.click()}
+                        >
+                          <Upload className="h-3 w-3 mr-1" />
+                          {entry?.uploaded || existingUrl ? 'Trocar' : 'Selecionar'}
+                        </Button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 }
 
 export function BatchAssetUploader({ 
@@ -435,34 +648,12 @@ export function BatchAssetUploader({
         </div>
       )}
 
-      {/* Slot reference - ordered 1-15 */}
-      <details className="text-xs">
-        <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
-          Ver dimensões oficiais (1–15)
-        </summary>
-        <div className="mt-2 overflow-x-auto rounded-lg border">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="bg-muted/60">
-                <th className="border-b px-2 py-1.5 text-left font-semibold w-6">#</th>
-                <th className="border-b px-2 py-1.5 text-left font-semibold">Nome</th>
-                <th className="border-b px-2 py-1.5 text-left font-semibold">Dimensão</th>
-                <th className="border-b px-2 py-1.5 text-left font-semibold">Canal</th>
-              </tr>
-            </thead>
-            <tbody>
-              {AD_SLOTS.map(slot => (
-                <tr key={slot.id} className="border-b last:border-0">
-                  <td className="px-2 py-1 font-mono text-muted-foreground">{slot.seq}</td>
-                  <td className="px-2 py-1 font-medium">{slot.label}</td>
-                  <td className="px-2 py-1 font-mono">{slot.width}×{slot.height}</td>
-                  <td className="px-2 py-1 text-muted-foreground">{slot.channel}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </details>
+      {/* Individual upload per slot (1–15) */}
+      <IndividualSlotUploadList
+        campaignId={campaignId}
+        existingAssets={existingAssets}
+        onAssetUploaded={(result) => onAssetsUploaded([result])}
+      />
 
       {/* Duplicate Confirmation Dialog */}
       <AlertDialog open={!!duplicateConflict} onOpenChange={() => setDuplicateConflict(null)}>
