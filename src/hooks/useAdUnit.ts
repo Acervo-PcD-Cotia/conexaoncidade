@@ -6,6 +6,22 @@ import { useAdMetrics } from './useAdMetrics';
 import type { AdFormatKey } from '@/lib/adFormats';
 import { slotTypeToFormatKey } from '@/lib/adFormats';
 
+/**
+ * Maps canonical slot IDs to all legacy aliases stored in the database.
+ * Allows the query to find ads regardless of which naming convention was used.
+ */
+const SLOT_ALIASES: Record<string, string[]> = {
+  leaderboard: ['leaderboard', 'home_top'],
+  super_banner: ['super_banner', 'home_banner'],
+  retangulo_medio: ['retangulo_medio', 'rectangle', 'sidebar', 'content'],
+  arranha_ceu: ['arranha_ceu', 'skyscraper'],
+  popup: ['popup'],
+};
+
+function getSlotAliases(slotId: string): string[] {
+  return SLOT_ALIASES[slotId] || [slotId];
+}
+
 interface AdData {
   id: string;
   image_url: string;
@@ -41,7 +57,7 @@ export function useAdUnit({ format, slotId, source = 'ads', enabled = true }: Us
         const { data: legacyAd, error: legacyError } = await supabase
           .from('ads')
           .select('id, image_url, alt_text, link_url, link_target, name')
-          .eq('slot_type', slotId)
+          .in('slot_type', getSlotAliases(slotId))
           .eq('is_active', true)
           .or(`starts_at.is.null,starts_at.lte.${now}`)
           .or(`ends_at.is.null,ends_at.gte.${now}`)

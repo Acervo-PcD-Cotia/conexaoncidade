@@ -34,14 +34,12 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-const AD_SLOTS = [
-  { value: "home_top", label: "Destaque Horizontal", size: "728x90" },
-  { value: "home_banner", label: "Mega Destaque", size: "970x250" },
-  { value: "super_banner", label: "Mega Destaque Topo", size: "970x250" },
-  { value: "rectangle", label: "Destaque Inteligente", size: "300x250" },
-  { value: "skyscraper", label: "Painel Vertical", size: "300x600" },
-  { value: "popup", label: "Alerta Comercial", size: "580x400" },
-];
+import { AD_SLOTS as OFFICIAL_SLOTS } from '@/lib/adSlots';
+
+// Use official slot definitions from adSlots.ts (ads channel only)
+const AD_SLOTS = OFFICIAL_SLOTS
+  .filter(s => s.channel === 'ads')
+  .map(s => ({ value: s.id, label: s.label, size: s.key }));
 
 interface AdForm {
   id?: string;
@@ -64,7 +62,7 @@ interface AdForm {
 const defaultForm: AdForm = {
   name: "",
   advertiser: "",
-  slot_type: "home_top",
+  slot_type: "leaderboard",
   size: "728x90",
   image_url: "",
   link_url: "",
