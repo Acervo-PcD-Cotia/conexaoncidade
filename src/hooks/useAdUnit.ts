@@ -146,7 +146,7 @@ async function fetchCampaign360Ad(slotId: string, now: string): Promise<AdData |
         )
       `)
       .eq('status', 'active')
-      .lte('starts_at', now)
+      .or(`starts_at.is.null,starts_at.lte.${now}`)
       .or(`ends_at.is.null,ends_at.gte.${now}`)
       .order('priority', { ascending: false })
       .limit(10);
