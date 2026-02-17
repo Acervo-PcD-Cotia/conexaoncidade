@@ -3,13 +3,38 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
-const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
-
 interface PushSubscriptionState {
   isSupported: boolean;
   isSubscribed: boolean;
   permission: NotificationPermission | 'default';
   isLoading: boolean;
+}
+
+let cachedVapidKey: string | null = null;
+
+async function getVapidPublicKey(): Promise<string> {
+  // Check env var first
+  const envKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+  if (envKey) return envKey;
+
+  // Use cached value
+  if (cachedVapidKey) return cachedVapidKey;
+
+  // Fetch from edge function
+  try {
+    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+    const res = await fetch(`https://${projectId}.supabase.co/functions/v1/get-vapid-key`, {
+      headers: { 'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      cachedVapidKey = data.publicKey || '';
+      return cachedVapidKey;
+    }
+  } catch (e) {
+    console.error('Failed to fetch VAPID key:', e);
+  }
+  return '';
 }
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
@@ -70,7 +95,8 @@ export function usePushSubscription() {
 
   // Subscribe — works for both logged-in and anonymous users
   const subscribe = useCallback(async () => {
-    if (!VAPID_PUBLIC_KEY) {
+    const vapidKey = await getVapidPublicKey();
+    if (!vapidKey) {
       console.error('VAPID_PUBLIC_KEY não configurada');
       toast.error('Configuração de push não encontrada');
       return false;
@@ -95,7 +121,7 @@ export function usePushSubscription() {
 
       await navigator.serviceWorker.ready;
 
-      const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+      const applicationServerKey = urlBase64ToUint8Array(vapidKey);
       const subscription = await (registration as any).pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: applicationServerKey.buffer as ArrayBuffer,

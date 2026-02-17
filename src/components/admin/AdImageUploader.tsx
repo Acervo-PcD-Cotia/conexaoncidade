@@ -46,6 +46,7 @@ export function AdImageUploader({
   const [dragActive, setDragActive] = useState(false);
   const [urlInput, setUrlInput] = useState('');
   const [showUrlOption, setShowUrlOption] = useState(false);
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
 
   const formatConfig = FORMAT_DIMENSIONS[format];
 
@@ -94,6 +95,7 @@ export function AdImageUploader({
         .getPublicUrl(filePath);
 
       onChange(publicUrl);
+      setUploadedFileName(file.name);
       // Auto-generate alt text from label/format context
       if (onAltChange && !alt) {
         const autoAlt = `${label} - ${formatConfig.label} (${formatConfig.width}x${formatConfig.height}px)`;
@@ -140,6 +142,7 @@ export function AdImageUploader({
   const handleRemove = () => {
     onChange('');
     onAltChange?.('');
+    setUploadedFileName(null);
   };
 
   return (
@@ -191,6 +194,13 @@ export function AdImageUploader({
           >
             <X className="h-4 w-4" />
           </Button>
+          {uploadedFileName && (
+            <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-3 py-1.5">
+              <p className="text-xs text-white truncate" title={uploadedFileName}>
+                📄 {uploadedFileName}
+              </p>
+            </div>
+          )}
         </Card>
       ) : (
         <div className="space-y-3">
