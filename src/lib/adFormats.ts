@@ -193,21 +193,30 @@ export const FORMAT_OPTIONS = [
  */
 export function slotTypeToFormatKey(slotType: string): AdFormatKey {
   const mapping: Record<string, AdFormatKey> = {
-    'home_top': 'SUPER_BANNER_TOPO',
-    'home_banner': 'ANUNCIO_HOME',
+    // Official slot IDs (from adSlots.ts)
+    'leaderboard': 'ANUNCIO_HOME',
+    'super_banner': 'SUPER_BANNER_TOPO',
+    'retangulo_medio': 'RETANGULO_MEDIO',
+    'arranha_ceu': 'ARRANHA_CEU',
+    'popup': 'POPUP_INTELIGENTE',
+    // Legacy aliases (still in the database)
+    'home_top': 'ANUNCIO_HOME',
+    'home_banner': 'SUPER_BANNER_TOPO',
+    'rectangle': 'RETANGULO_MEDIO',
     'sidebar': 'RETANGULO_MEDIO',
     'content': 'RETANGULO_MEDIO',
     'skyscraper': 'ARRANHA_CEU',
-    'popup': 'POPUP_INTELIGENTE',
-    // Legacy mappings
-    '728x90': 'SUPER_BANNER_TOPO',
+    // Size-based legacy mappings
+    '728x90': 'ANUNCIO_HOME',
     '970x250': 'SUPER_BANNER_TOPO',
     '300x250': 'RETANGULO_MEDIO',
     '300x600': 'ARRANHA_CEU',
     '580x400': 'POPUP_INTELIGENTE',
-    // New format mappings
+    // Experience formats
     'banner_intro': 'BANNER_INTRO',
+    'destaque_flutuante': 'DESTAQUE_FLUTUANTE',
     'floating': 'DESTAQUE_FLUTUANTE',
+    'alerta_full_saida': 'ALERTA_FULL_SAIDA',
     'exit_full': 'ALERTA_FULL_SAIDA',
     '1280x720': 'ALERTA_FULL_SAIDA',
   };
