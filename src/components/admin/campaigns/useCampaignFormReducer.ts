@@ -13,6 +13,7 @@ import type {
   FloatingAdChannelConfig,
   CampaignFormData,
 } from '@/types/campaigns-unified';
+import { AD_SLOTS } from '@/lib/adSlots';
 
 // ============================================
 // STATE
@@ -42,11 +43,19 @@ export interface ChannelAssets {
   floatingAd: { url: string };
 }
 
+export interface SlotAssetEntry {
+  file_url: string;
+  channel_type: ChannelType;
+  format_key: string;
+  asset_type: string;
+}
+
 export interface CampaignFormState {
   status: CampaignStatus;
   selectedChannels: ChannelType[];
   channelConfigs: ChannelConfigs;
   assets: ChannelAssets;
+  uploadedSlotAssets: Record<string, SlotAssetEntry>;
   validationErrors: string[];
 }
 
@@ -59,6 +68,7 @@ export type CampaignFormAction =
   | { type: 'TOGGLE_CHANNEL'; payload: ChannelType }
   | { type: 'SET_CHANNEL_CONFIG'; payload: { channel: ChannelType; config: Partial<Record<string, unknown>> } }
   | { type: 'SET_ASSET'; payload: { key: keyof ChannelAssets; url: string; alt?: string } }
+  | { type: 'SET_SLOT_ASSET'; payload: { slotId: string; entry: SlotAssetEntry } }
   | { type: 'SET_VALIDATION_ERRORS'; payload: string[] };
 
 // ============================================
@@ -96,8 +106,11 @@ const DEFAULT_ASSETS: ChannelAssets = {
 export function createInitialState(initialData?: Partial<CampaignFormData>): CampaignFormState {
   // Populate assets from existing campaign data
   const assets = { ...DEFAULT_ASSETS };
+  const uploadedSlotAssets: Record<string, SlotAssetEntry> = {};
+
   if (initialData?.assets && initialData.assets.length > 0) {
     for (const a of initialData.assets) {
+      // Legacy per-channel mapping
       switch (a.channel_type) {
         case 'ads':
           assets.ads = { url: a.file_url, alt: a.alt_text || '' };
@@ -124,6 +137,19 @@ export function createInitialState(initialData?: Partial<CampaignFormData>): Cam
           assets.floatingAd = { url: a.file_url };
           break;
       }
+
+      // New per-slot mapping: match format_key to AD_SLOTS
+      if (a.format_key) {
+        const matchedSlot = AD_SLOTS.find(s => s.key === a.format_key || s.id === a.format_key);
+        if (matchedSlot) {
+          uploadedSlotAssets[matchedSlot.id] = {
+            file_url: a.file_url,
+            channel_type: a.channel_type as ChannelType,
+            format_key: a.format_key,
+            asset_type: a.asset_type || 'banner',
+          };
+        }
+      }
     }
   }
 
@@ -142,6 +168,7 @@ export function createInitialState(initialData?: Partial<CampaignFormData>): Cam
       floating_ad: initialData?.floatingAdConfig || DEFAULT_CONFIGS.floating_ad,
     },
     assets,
+    uploadedSlotAssets,
     validationErrors: [],
   };
 }
@@ -195,6 +222,17 @@ export function campaignFormReducer(
       };
     }
 
+    case 'SET_SLOT_ASSET': {
+      const { slotId, entry } = action.payload;
+      return {
+        ...state,
+        uploadedSlotAssets: {
+          ...state.uploadedSlotAssets,
+          [slotId]: entry,
+        },
+      };
+    }
+
     case 'SET_VALIDATION_ERRORS':
       return { ...state, validationErrors: action.payload };
 
@@ -234,6 +272,10 @@ export function useCampaignFormReducer(initialData?: Partial<CampaignFormData>) 
     dispatch({ type: 'SET_VALIDATION_ERRORS', payload: errors });
   }, []);
 
+  const setSlotAsset = useCallback((slotId: string, entry: SlotAssetEntry) => {
+    dispatch({ type: 'SET_SLOT_ASSET', payload: { slotId, entry } });
+  }, []);
+
   return {
     state,
     dispatch,
@@ -241,6 +283,7 @@ export function useCampaignFormReducer(initialData?: Partial<CampaignFormData>) 
     toggleChannel,
     setChannelConfig,
     setAsset,
+    setSlotAsset,
     setValidationErrors,
   };
 }

@@ -73,10 +73,11 @@ export function CampaignForm({
     toggleChannel,
     setChannelConfig,
     setAsset,
+    setSlotAsset,
     setValidationErrors,
   } = useCampaignFormReducer(initialData);
 
-  const { status, selectedChannels, channelConfigs, assets, validationErrors } = state;
+  const { status, selectedChannels, channelConfigs, assets, uploadedSlotAssets, validationErrors } = state;
 
   // Watch form values for checklist
   const watchName = watch('name');
@@ -225,6 +226,20 @@ export function CampaignForm({
         format_key: 'floating_ad',
       });
     }
+
+    // Include all per-slot assets (independent of selectedChannels)
+    Object.values(uploadedSlotAssets).forEach(slotAsset => {
+      // Deduplicate: skip if same format_key already present from legacy
+      const exists = formAssets.some(fa => fa.format_key === slotAsset.format_key);
+      if (!exists) {
+        formAssets.push({
+          asset_type: slotAsset.asset_type as CampaignFormData['assets'][number]['asset_type'],
+          file_url: slotAsset.file_url,
+          channel_type: slotAsset.channel_type,
+          format_key: slotAsset.format_key,
+        });
+      }
+    });
 
     onSubmit({
       ...data,
@@ -527,6 +542,7 @@ export function CampaignForm({
         <CardContent className="space-y-4">
           <BatchAssetUploader
             existingAssets={assets as unknown as Record<string, { url?: string; alt?: string }>}
+            existingSlotAssets={uploadedSlotAssets}
             onAssetsUploaded={(uploadedAssets) => {
               uploadedAssets.forEach(asset => {
                 const channel = asset.channel_type;
@@ -547,35 +563,35 @@ export function CampaignForm({
                 }
               });
             }}
+            onSlotAssetUploaded={(slotId, result) => {
+              setSlotAsset(slotId, {
+                file_url: result.file_url,
+                channel_type: result.channel_type,
+                format_key: result.format_key,
+                asset_type: result.asset_type,
+              });
+            }}
           />
 
-          {/* Active Assets Summary - ordered by AD_SLOTS seq */}
+          {/* Active Assets Summary - from uploadedSlotAssets (all 15 slots) */}
           {(() => {
-            const assetEntries = [
-              { label: '#1 — Destaque Horizontal (728×90)', url: assets.ads.url, seq: 1 },
-              { label: '#6 — Destaque Premium (970×250)', url: assets.publidoor.url, seq: 6 },
-              { label: '#9 — Story Premium (1080×1920)', url: assets.webstories.url, seq: 9 },
-              { label: '#10 — Login 01 (800×500)', url: assets.loginPanel.url, seq: 10 },
-              { label: '#13 — Banner Intro (970×250)', url: assets.bannerIntro.url, seq: 13 },
-              { label: '#14 — Destaque Flutuante (300×600)', url: assets.floatingAd.url, seq: 14 },
-              { label: '#15 — Alerta Full Saída (1280×720)', url: assets.exitIntentHero.url, seq: 15 },
-              { label: 'Exit-Intent (Sec. 1)', url: assets.exitIntentSecondary1.url, seq: 15 },
-              { label: 'Exit-Intent (Sec. 2)', url: assets.exitIntentSecondary2.url, seq: 15 },
-            ];
+            const slotAssetEntries = AD_SLOTS
+              .filter(slot => uploadedSlotAssets[slot.id]?.file_url)
+              .map(slot => ({
+                label: `#${slot.seq} — ${slot.label} (${slot.width}×${slot.height})`,
+                url: uploadedSlotAssets[slot.id].file_url,
+                seq: slot.seq,
+              }));
 
-            const activeAssets = assetEntries
-              .filter(a => a.url)
-              .sort((a, b) => a.seq - b.seq);
-
-            if (activeAssets.length === 0) return null;
+            if (slotAssetEntries.length === 0) return null;
 
             return (
               <div className="space-y-2">
                 <p className="text-sm font-medium text-muted-foreground">
-                  {activeAssets.length} criativo(s) vinculado(s)
+                  {slotAssetEntries.length} criativo(s) vinculado(s)
                 </p>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {activeAssets.map((asset) => (
+                  {slotAssetEntries.map((asset) => (
                     <div key={asset.label} className="border rounded-lg p-2 space-y-1.5">
                       <div className="aspect-video bg-muted rounded overflow-hidden">
                         <img
