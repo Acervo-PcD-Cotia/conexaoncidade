@@ -1,29 +1,41 @@
 
 
-## Bug: Formato errado no upload do 728x90
+## Remover tela "Autenticacao Necessaria" e redirecionar direto para o login
 
-O problema esta no mapeamento `SLOT_TO_FORMAT` dentro de `AdImageUploader.tsx`. Quando o usuario seleciona "Destaque Horizontal (728x90)" (slot `home_top`), o mapeamento envia o formato `'home-topo'` para o uploader, que corresponde a "Mega Destaque (970x250px)". Por isso o label do formato aparece errado e a validacao/dimensoes ficam inconsistentes.
+### Problema
 
-### Causa raiz
+Quando um usuario nao autenticado acessa `/spah/painel`, o `useRequireRole` exibe a tela `AccessDeniedScreen` com um countdown de 3 segundos antes de redirecionar para `/spah`. Isso cria uma experiencia ruim -- o usuario ve um card de "Autenticacao Necessaria" por 3 segundos antes de chegar ao formulario de login.
 
-Linha 325 de `AdImageUploader.tsx`:
-```text
-home_top: 'home-topo',   // ERRADO - home_top e 728x90, nao 970x250
-```
+### Solucao
 
-O slot `home_top` deveria mapear para `'leaderboard'` (728x90), nao para `'home-topo'` (970x250).
+No hook `useRequireRole.ts`, quando o motivo for `not_authenticated`, redirecionar imediatamente para `/spah` via `navigate()` (SPA), sem exibir a tela de acesso negado e sem countdown.
 
-### Correcao
-
-No arquivo `src/components/admin/AdImageUploader.tsx`, alterar o mapeamento:
-
-| Slot (valor) | Formato atual (ERRADO) | Formato correto |
-|---|---|---|
-| `home_top` | `'home-topo'` (970x250) | `'leaderboard'` (728x90) |
-
-Apenas 1 linha precisa mudar. Todos os outros mapeamentos estao corretos.
+Manter a tela `AccessDeniedScreen` apenas para o caso `not_authorized` (usuario logado mas sem permissao), que e um cenario legitimo para mostrar uma mensagem de erro.
 
 ### Arquivo a alterar
 
-- `src/components/admin/AdImageUploader.tsx` -- linha 325: trocar `'home-topo'` por `'leaderboard'`
+| Arquivo | Mudanca |
+|---|---|
+| `src/hooks/useRequireRole.ts` | Quando `!user`, usar `navigate('/spah', { replace: true })` imediatamente em vez de mostrar AccessDeniedScreen com countdown |
+
+### Detalhe tecnico
+
+Bloco atual (linhas 24-42):
+```text
+if (!user) {
+  setShowDenied('not_authenticated');
+  setCheckingRole(false);
+  // ... countdown 3s -> window.location.href
+}
+```
+
+Novo comportamento:
+```text
+if (!user) {
+  navigate('/spah', { replace: true });
+  return;
+}
+```
+
+Redirecionamento instantaneo, sem tela intermediaria, sem reload de pagina.
 
