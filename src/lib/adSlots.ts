@@ -82,8 +82,8 @@ export const AD_SLOTS: AdSlot[] = [
     location: 'Lateral da Home e matérias',
   },
   { 
-    id: 'popup', key: '580x400', label: 'Alerta Comercial', 
-    width: 580, height: 400, aspect: calculateAspect(580, 400),
+    id: 'popup', key: '800x550', label: 'Alerta Comercial', 
+    width: 800, height: 550, aspect: calculateAspect(800, 550),
     channel: 'ads', placement: 'modal', seq: 5,
     description: 'Banner modal de impacto imediato',
     location: 'Pop-up controlado por tempo/scroll',
