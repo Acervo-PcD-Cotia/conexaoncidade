@@ -142,7 +142,7 @@ export function useRegionalQueue(status?: string) {
         .from('regional_ingest_items')
         .select('*, regional_sources(city, name)')
         .order('created_at', { ascending: false })
-        .limit(100);
+        .limit(200);
 
       if (status) {
         query = query.eq('status', status);
@@ -187,7 +187,7 @@ export function useRegionalStats() {
       if (error) throw error;
       return data.stats as RegionalStats;
     },
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: 30000,
   });
 }
 
@@ -219,7 +219,6 @@ export function useRunRegionalIngest() {
 
   return useMutation({
     mutationFn: async (sourceId?: string) => {
-      // Use 'run_all' when no sourceId, 'run_now' for specific source
       const action = sourceId ? 'run_now' : 'run_all';
       
       const { data, error } = await supabase.functions.invoke('regional-admin-tools', {
@@ -234,7 +233,6 @@ export function useRunRegionalIngest() {
       queryClient.invalidateQueries({ queryKey: ['regional-runs'] });
       queryClient.invalidateQueries({ queryKey: ['regional-stats'] });
       
-      // Handle both single and multiple source results
       if (data.results && data.results.length > 0) {
         const totalNew = data.results.reduce((sum: number, r: any) => sum + (r.items_new || 0), 0);
         const totalDup = data.results.reduce((sum: number, r: any) => sum + (r.items_duplicated || 0), 0);
@@ -337,8 +335,6 @@ export function useSkipRegionalItem() {
   });
 }
 
-// NEW HOOKS - Sprint 5
-
 export function useProcessRegionalItem() {
   const queryClient = useQueryClient();
 
@@ -400,10 +396,60 @@ export function useProcessAllNew() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['regional-queue'] });
       queryClient.invalidateQueries({ queryKey: ['regional-stats'] });
-      toast.success(`${data.processed} itens processados`);
+      toast.success(`${data.processed} itens processados, ${data.failed || 0} erros`);
     },
     onError: (error) => {
       toast.error(`Erro: ${error.message}`);
+    },
+  });
+}
+
+export function usePublishAllProcessed() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke('regional-admin-tools', {
+        body: { action: 'publish_all_processed' },
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['regional-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['regional-stats'] });
+      toast.success(`${data.published} notícias publicadas, ${data.failed || 0} erros`);
+    },
+    onError: (error) => {
+      toast.error(`Erro ao publicar em lote: ${error.message}`);
+    },
+  });
+}
+
+export function useFullPipeline() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke('regional-admin-tools', {
+        body: { action: 'full_pipeline' },
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['regional-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['regional-runs'] });
+      queryClient.invalidateQueries({ queryKey: ['regional-stats'] });
+      const p = data.pipeline;
+      toast.success(
+        `Pipeline completo! Ingeridos: ${p.ingested}, Processados: ${p.processed}, Publicados: ${p.published}`
+      );
+    },
+    onError: (error) => {
+      toast.error(`Erro no pipeline: ${error.message}`);
     },
   });
 }
