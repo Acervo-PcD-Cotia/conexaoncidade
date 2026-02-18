@@ -278,9 +278,9 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const body = await req.json().catch(() => ({}));
-    const { source_id, dry_run = false } = body;
+    const { source_id, dry_run = false, date_from, date_to } = body;
 
-    console.log(`[Regional Ingest] Starting - source_id: ${source_id || 'all'}, dry_run: ${dry_run}`);
+    console.log(`[Regional Ingest] Starting - source_id: ${source_id || 'all'}, dry_run: ${dry_run}, date_from: ${date_from || 'none'}, date_to: ${date_to || 'none'}`);
 
     // Get sources to process
     let query = supabase
@@ -345,39 +345,58 @@ Deno.serve(async (req) => {
         let errorCount = 0;
 
         if (!dry_run) {
-          // Check daily limit
           const dailyMax = source.daily_max_items || 200;
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
           
-          const { count: todayCount } = await supabase
-            .from('regional_ingest_items')
-            .select('*', { count: 'exact', head: true })
-            .eq('source_id', source.id)
-            .gte('created_at', today.toISOString());
-          
-          const remainingSlots = Math.max(0, dailyMax - (todayCount || 0));
-          
-          if (remainingSlots === 0) {
-            console.log(`[Skip] Daily limit (${dailyMax}) reached for ${source.name}`);
-            results.push({
-              source_id: source.id,
-              source_name: source.name,
-              city: source.city,
-              items_found: items.length,
-              items_new: 0,
-              items_duplicated: 0,
-              items_errored: 0,
-              skipped: 'daily_limit_reached',
+          // Filter items by date range if provided
+          let filteredItems = items;
+          if (date_from || date_to) {
+            filteredItems = items.filter(item => {
+              if (!item.published_at) return true; // Keep items without date
+              const pubDate = new Date(item.published_at);
+              if (isNaN(pubDate.getTime())) return true;
+              
+              if (date_from) {
+                const [y, m, d] = date_from.split('-').map(Number);
+                const startDate = new Date(y, m - 1, d, 0, 0, 0, 0);
+                if (pubDate < startDate) return false;
+              }
+              if (date_to) {
+                const [y, m, d] = date_to.split('-').map(Number);
+                const endDate = new Date(y, m - 1, d, 23, 59, 59, 999);
+                if (pubDate > endDate) return false;
+              }
+              return true;
             });
-            continue;
+            console.log(`[DateFilter] ${items.length} items → ${filteredItems.length} within ${date_from} to ${date_to}`);
+          }
+
+          // Group items by publication day and apply daily_max per day
+          const itemsByDay = new Map<string, ParsedItem[]>();
+          for (const item of filteredItems) {
+            let dayKey = 'unknown';
+            if (item.published_at) {
+              const d = new Date(item.published_at);
+              if (!isNaN(d.getTime())) {
+                dayKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+              }
+            }
+            if (!itemsByDay.has(dayKey)) itemsByDay.set(dayKey, []);
+            itemsByDay.get(dayKey)!.push(item);
           }
           
-          // Limit items to remaining daily slots
-          const itemsToProcess = items.slice(0, remainingSlots);
+          // Apply daily_max per day
+          const itemsToProcess: ParsedItem[] = [];
+          for (const [dayKey, dayItems] of itemsByDay) {
+            const limited = dayItems.slice(0, dailyMax);
+            itemsToProcess.push(...limited);
+            if (dayItems.length > dailyMax) {
+              console.log(`[DailyLimit] Day ${dayKey}: ${dayItems.length} items, limited to ${dailyMax}`);
+            }
+          }
+          
+          console.log(`[Processing] ${itemsToProcess.length} items to insert for ${source.name}`);
           
           for (const item of itemsToProcess) {
-            // Try to insert (will fail if canonical_url exists)
             const { error: insertError } = await supabase
               .from('regional_ingest_items')
               .insert({

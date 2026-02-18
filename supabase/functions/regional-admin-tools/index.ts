@@ -15,9 +15,9 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { action, source_id, item_id, selectors } = await req.json();
+    const { action, source_id, item_id, selectors, date_from, date_to } = await req.json();
 
-    console.log(`[Regional Admin] Action: ${action}, source_id: ${source_id}`);
+    console.log(`[Regional Admin] Action: ${action}, source_id: ${source_id}, date_from: ${date_from}, date_to: ${date_to}`);
 
     switch (action) {
       case 'test_source': {
@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${supabaseKey}`,
           },
-          body: JSON.stringify({ source_id }),
+          body: JSON.stringify({ source_id, date_from, date_to }),
         });
 
         const result = await response.json();
@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${supabaseKey}`,
           },
-          body: JSON.stringify({}),
+          body: JSON.stringify({ date_from, date_to }),
         });
 
         const result = await response.json();
