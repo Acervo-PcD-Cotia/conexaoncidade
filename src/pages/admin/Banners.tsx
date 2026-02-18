@@ -445,8 +445,9 @@ export default function Banners() {
                     </p>
                     <ImageUploader
                       value={form.image_url}
-                      onChange={(url) => setForm({ ...form, image_url: url })}
-                      onAltChange={(alt) => setForm({ ...form, alt_text: alt })}
+                      onChange={(url) => setForm((prev) => ({ ...prev, image_url: url }))}
+                      onAltChange={(alt) => setForm((prev) => ({ ...prev, alt_text: alt }))}
+                      alt={form.alt_text}
                       bucket="banners"
                       path="banners"
                     />
