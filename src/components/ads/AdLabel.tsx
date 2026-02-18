@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { AD_SLOTS } from "@/lib/adSlots";
 
 export interface AdLabelProps {
   /** Tipo do anúncio (ex: "MEGA DESTAQUE", "DESTAQUE INTELIGENTE") */
@@ -21,11 +22,23 @@ export interface AdLabelProps {
 }
 
 /**
+ * Finds the official slot definition matching a given adType label.
+ * Returns seq number and dimensions string, e.g. { seq: 4, dims: "300×600" }
+ */
+function getSlotMeta(adType?: string): { seq: number; dims: string } | null {
+  if (!adType) return null;
+  const normalized = adType.trim().toUpperCase();
+  const slot = AD_SLOTS.find(s => s.label.toUpperCase() === normalized);
+  if (!slot) return null;
+  return { seq: slot.seq, dims: `${slot.width}×${slot.height}` };
+}
+
+/**
  * AdLabel — etiqueta padronizada de identificação de anúncios.
  * 
- * - public:     "PUBLICIDADE"
- * - admin:      "PUBLICIDADE • {TIPO} • ID: {ID}"
- * - superadmin: "PUBLICIDADE • {VARIANT} • {TIPO} • ID: {ID} • {POSIÇÃO} • {ÁREA} • CAMP: {CAMPAIGN_ID}"
+ * - public:     "02 - Publicidade • Mega Destaque • 970×250"
+ * - admin:      "02 - PUBLICIDADE • MEGA DESTAQUE • 970×250 • ID: {ID}"
+ * - superadmin: "02 - PUBLICIDADE • {VARIANT} • {TIPO} • {DIMS} • ID: {ID} • {POSIÇÃO} • {ÁREA} • CAMP: {CAMPAIGN_ID}"
  */
 export function AdLabel({
   adType,
@@ -40,10 +53,14 @@ export function AdLabel({
 }: AdLabelProps) {
   const type = adType?.trim() || "ANÚNCIO";
   const id = adId ? String(adId).slice(0, 8) : "—";
+  const meta = getSlotMeta(type);
+  const seqPrefix = meta ? `${String(meta.seq).padStart(2, "0")} - ` : "";
+  const dimsSuffix = meta ? ` • ${meta.dims}` : "";
 
   if (level === "public") {
-    // Show format name when available (e.g. "Publicidade • Mega Destaque")
-    const publicLabel = type !== "ANÚNCIO" ? `Publicidade • ${type}` : "Publicidade";
+    const publicLabel = type !== "ANÚNCIO"
+      ? `${seqPrefix}Publicidade • ${type}${dimsSuffix}`
+      : "Publicidade";
     return (
       <span
         className={cn(
@@ -70,16 +87,17 @@ export function AdLabel({
           className,
         )}
       >
-        PUBLICIDADE • {type.toUpperCase()} • ID: {id}
+        {seqPrefix}PUBLICIDADE • {type.toUpperCase()}{dimsSuffix} • ID: {id}
       </span>
     );
   }
 
   // superadmin
   const parts = [
-    "PUBLICIDADE",
+    `${seqPrefix}PUBLICIDADE`,
     variant?.toUpperCase(),
     type.toUpperCase(),
+    meta ? meta.dims : null,
     `ID: ${id}`,
     position?.toUpperCase(),
     area?.toUpperCase(),
