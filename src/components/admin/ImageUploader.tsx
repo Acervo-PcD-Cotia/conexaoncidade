@@ -117,8 +117,12 @@ export function ImageUploader({
             type="button"
             variant="destructive"
             size="icon"
-            className="absolute top-2 right-2 h-8 w-8"
-            onClick={handleRemove}
+            className="absolute top-2 right-2 h-8 w-8 z-10"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleRemove();
+            }}
           >
             <X className="h-4 w-4" />
           </Button>
