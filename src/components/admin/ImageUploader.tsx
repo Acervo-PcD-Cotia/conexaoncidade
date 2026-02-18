@@ -199,16 +199,18 @@ export function ImageUploader({
               💡 Dica: Descreva O QUE aparece na imagem (pessoas, objetos, ações) de forma clara e objetiva para leitores de tela. Ex: "Prefeito João Silva discursa em cerimônia no pátio da Prefeitura."
             </p>
           </div>
-          <div>
-            <Label htmlFor="image-credit" className="text-xs">Crédito</Label>
-            <Input
-              id="image-credit"
-              value={credit}
-              onChange={(e) => onCreditChange?.(e.target.value)}
-              placeholder="Fotógrafo / Agência"
-              className="mt-1"
-            />
-          </div>
+          {onCreditChange && (
+            <div>
+              <Label htmlFor="image-credit" className="text-xs">Crédito</Label>
+              <Input
+                id="image-credit"
+                value={credit}
+                onChange={(e) => onCreditChange(e.target.value)}
+                placeholder="Fotógrafo / Agência"
+                className="mt-1"
+              />
+            </div>
+          )}
         </div>
       )}
     </div>
