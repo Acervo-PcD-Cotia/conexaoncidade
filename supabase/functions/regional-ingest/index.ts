@@ -52,47 +52,65 @@ function isValidSourceUrl(url: string): boolean {
   }
 }
 
+// Helper: check if error is TLS-related
+function isTLSError(message: string): boolean {
+  return /TLS|SSL|certificate|close_notify|peer closed|handshake|CERT/i.test(message);
+}
+
 // Helper: fetch with retry and TLS fallback
-async function fetchWithRetry(url: string, maxRetries = 3): Promise<Response> {
+async function fetchWithRetry(url: string, maxRetries = 4): Promise<Response> {
   let lastError: Error | null = null;
   
   for (let i = 0; i < maxRetries; i++) {
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout
+      
       const response = await fetch(url, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; ConexaoNCidade/1.0)',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
           'Accept': 'application/rss+xml, application/xml, text/xml, */*',
+          'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8',
+          'Connection': 'keep-alive',
         },
+        signal: controller.signal,
       });
       
+      clearTimeout(timeout);
+      
       if (response.status === 429 || response.status === 503) {
-        console.log(`[Retry] Rate limited, waiting ${Math.pow(2, i)}s...`);
-        await sleep(Math.pow(2, i) * 1000);
+        console.log(`[Retry] Rate limited (${response.status}), waiting ${Math.pow(2, i) * 2}s...`);
+        await sleep(Math.pow(2, i) * 2000);
         continue;
       }
       
       return response;
     } catch (e) {
       lastError = e instanceof Error ? e : new Error('Unknown error');
-      console.log(`[Retry] Attempt ${i + 1} failed: ${lastError.message}`);
+      console.log(`[Retry] Attempt ${i + 1}/${maxRetries} failed: ${lastError.message}`);
       
-      // Try HTTP fallback for TLS errors
-      if (i === 0 && (lastError.message.includes('TLS') || lastError.message.includes('SSL') || lastError.message.includes('certificate'))) {
+      // For TLS errors, try HTTP fallback on first attempt
+      if (i === 0 && isTLSError(lastError.message)) {
         const httpUrl = url.replace('https://', 'http://');
         console.log(`[Retry] Trying HTTP fallback: ${httpUrl}`);
         try {
-          return await fetch(httpUrl, {
+          const httpResponse = await fetch(httpUrl, {
             headers: {
-              'User-Agent': 'Mozilla/5.0 (compatible; ConexaoNCidade/1.0)',
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
               'Accept': 'application/rss+xml, application/xml, text/xml, */*',
             },
           });
+          if (httpResponse.ok) return httpResponse;
+          console.log(`[Retry] HTTP fallback returned ${httpResponse.status}`);
         } catch (httpError) {
-          console.log(`[Retry] HTTP fallback failed`);
+          console.log(`[Retry] HTTP fallback also failed`);
         }
       }
       
-      await sleep(Math.pow(2, i) * 1000);
+      // Exponential backoff: 2s, 4s, 8s, 16s
+      const delay = Math.pow(2, i + 1) * 1000;
+      console.log(`[Retry] Waiting ${delay / 1000}s before next attempt...`);
+      await sleep(delay);
     }
   }
   
