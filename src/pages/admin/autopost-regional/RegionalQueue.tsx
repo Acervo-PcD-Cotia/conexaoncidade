@@ -47,6 +47,8 @@ import {
   Image,
   FileText,
   Tags,
+  Rocket,
+  Upload,
 } from 'lucide-react';
 import { 
   useRegionalQueue,
@@ -55,6 +57,9 @@ import {
   useProcessRegionalItem,
   usePublishRegionalItem,
   useProcessAllNew,
+  usePublishAllProcessed,
+  useFullPipeline,
+  useRunRegionalIngest,
   RegionalIngestItem,
 } from '@/hooks/useRegionalAutoPost';
 import { formatDistanceToNow } from 'date-fns';
@@ -71,6 +76,9 @@ export default function RegionalQueue() {
   const processItem = useProcessRegionalItem();
   const publishItem = usePublishRegionalItem();
   const processAllNew = useProcessAllNew();
+  const publishAllProcessed = usePublishAllProcessed();
+  const fullPipeline = useFullPipeline();
+  const runIngest = useRunRegionalIngest();
 
   const filteredQueue = queue?.filter((item) => {
     const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
@@ -81,6 +89,8 @@ export default function RegionalQueue() {
   });
 
   const newItemsCount = queue?.filter(item => item.status === 'new').length || 0;
+  const processedItemsCount = queue?.filter(item => item.status === 'processed').length || 0;
+  const isAnyPending = fullPipeline.isPending || processAllNew.isPending || publishAllProcessed.isPending || runIngest.isPending;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -124,23 +134,73 @@ export default function RegionalQueue() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {newItemsCount > 0 && (
-            <Button 
-              variant="default"
-              onClick={() => processAllNew.mutate()}
-              disabled={processAllNew.isPending}
-              className="bg-purple-600 hover:bg-purple-700"
-            >
-              <Zap className="h-4 w-4 mr-2" />
-              Processar Todos ({newItemsCount})
-            </Button>
-          )}
           <Button variant="outline" onClick={() => refetch()}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Atualizar
           </Button>
         </div>
       </div>
+
+      {/* Automation Actions */}
+      <Card className="border-amber-500/30 bg-amber-500/5">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Rocket className="h-5 w-5 text-amber-500" />
+            Automação em Lote
+          </CardTitle>
+          <CardDescription>
+            Execute todo o pipeline de uma vez ou etapas individuais
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-3">
+            {/* Full Pipeline - THE BIG BUTTON */}
+            <Button 
+              onClick={() => fullPipeline.mutate()}
+              disabled={isAnyPending}
+              className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
+              size="lg"
+            >
+              <Rocket className="h-4 w-4 mr-2" />
+              {fullPipeline.isPending ? 'Executando Pipeline...' : '🚀 Pipeline Completo (Ingerir + Processar + Publicar)'}
+            </Button>
+
+            {/* Individual steps */}
+            <Button 
+              variant="outline"
+              onClick={() => runIngest.mutate(undefined)}
+              disabled={isAnyPending}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${runIngest.isPending ? 'animate-spin' : ''}`} />
+              {runIngest.isPending ? 'Ingerindo...' : 'Buscar Notícias (Todas as Fontes)'}
+            </Button>
+
+            {newItemsCount > 0 && (
+              <Button 
+                variant="outline"
+                onClick={() => processAllNew.mutate()}
+                disabled={isAnyPending}
+                className="border-purple-500/30 text-purple-600 hover:bg-purple-50"
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                {processAllNew.isPending ? 'Processando...' : `Processar Todos (${newItemsCount})`}
+              </Button>
+            )}
+
+            {processedItemsCount > 0 && (
+              <Button 
+                variant="outline"
+                onClick={() => publishAllProcessed.mutate()}
+                disabled={isAnyPending}
+                className="border-green-500/30 text-green-600 hover:bg-green-50"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                {publishAllProcessed.isPending ? 'Publicando...' : `Publicar Todos (${processedItemsCount})`}
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Filters */}
       <Card>
@@ -229,7 +289,6 @@ export default function RegionalQueue() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        {/* View Details */}
                         <Button
                           variant="ghost"
                           size="icon"
@@ -239,7 +298,6 @@ export default function RegionalQueue() {
                           <Eye className="h-4 w-4" />
                         </Button>
                         
-                        {/* Open Original */}
                         <Button
                           variant="ghost"
                           size="icon"
@@ -251,7 +309,6 @@ export default function RegionalQueue() {
                           </a>
                         </Button>
                         
-                        {/* Process with AI - for new items */}
                         {(item.status === 'new' || item.status === 'queued') && (
                           <Button
                             variant="ghost"
@@ -265,7 +322,6 @@ export default function RegionalQueue() {
                           </Button>
                         )}
                         
-                        {/* Publish - for processed items */}
                         {item.status === 'processed' && (
                           <Button
                             variant="ghost"
@@ -279,7 +335,6 @@ export default function RegionalQueue() {
                           </Button>
                         )}
                         
-                        {/* Reprocess - for failed items */}
                         {item.status === 'failed' && (
                           <Button
                             variant="ghost"
@@ -292,7 +347,6 @@ export default function RegionalQueue() {
                           </Button>
                         )}
                         
-                        {/* Skip - for items not yet published/skipped */}
                         {item.status !== 'published' && item.status !== 'skipped' && (
                           <Button
                             variant="ghost"
@@ -364,6 +418,13 @@ export default function RegionalQueue() {
                     {selectedItem.canonical_url}
                   </a>
                 </div>
+
+                {selectedItem.published_at && (
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Data Original da Notícia</label>
+                    <p className="text-sm">{new Date(selectedItem.published_at).toLocaleString('pt-BR')}</p>
+                  </div>
+                )}
                 
                 {selectedItem.excerpt && (
                   <div>
@@ -431,15 +492,18 @@ export default function RegionalQueue() {
               
               <TabsContent value="image" className="mt-4 space-y-4">
                 {(selectedItem.generated_image_url || selectedItem.image_url) ? (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">
-                      {selectedItem.generated_image_url ? 'Imagem Gerada por IA' : 'Imagem Original'}
-                    </label>
+                  <div className="space-y-4">
                     <img 
                       src={selectedItem.generated_image_url || selectedItem.image_url || ''} 
                       alt="Preview" 
-                      className="mt-2 rounded-lg max-h-64 object-cover w-full"
+                      className="w-full max-h-80 object-cover rounded-lg border"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
                     />
+                    <p className="text-xs text-muted-foreground truncate">
+                      {selectedItem.generated_image_url || selectedItem.image_url}
+                    </p>
                   </div>
                 ) : (
                   <p className="text-muted-foreground text-center py-8">
