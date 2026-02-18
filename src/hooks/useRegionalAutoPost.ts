@@ -511,3 +511,52 @@ export function useCreateRegionalSource() {
     },
   });
 }
+
+export function useDeleteRegionalItems() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (itemIds: string[]) => {
+      const { error } = await supabase
+        .from('regional_ingest_items')
+        .delete()
+        .in('id', itemIds);
+
+      if (error) throw error;
+      return itemIds.length;
+    },
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ['regional-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['regional-stats'] });
+      toast.success(`${count} item(ns) excluído(s)`);
+    },
+    onError: (error) => {
+      toast.error(`Erro ao excluir: ${error.message}`);
+    },
+  });
+}
+
+export function useDeleteRegionalItemsByStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (status: string) => {
+      const { data, error } = await supabase
+        .from('regional_ingest_items')
+        .delete()
+        .eq('status', status)
+        .select('id');
+
+      if (error) throw error;
+      return data?.length || 0;
+    },
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ['regional-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['regional-stats'] });
+      toast.success(`${count} item(ns) excluído(s)`);
+    },
+    onError: (error) => {
+      toast.error(`Erro ao excluir: ${error.message}`);
+    },
+  });
+}

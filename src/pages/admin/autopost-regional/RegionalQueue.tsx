@@ -5,61 +5,32 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from '@/components/ui/table';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
+  Tabs, TabsContent, TabsList, TabsTrigger,
 } from '@/components/ui/tabs';
 import { 
-  MapPin, 
-  ArrowLeft, 
-  RefreshCw,
-  ExternalLink,
-  Eye,
-  SkipForward,
-  Search,
-  Sparkles,
-  Send,
-  Zap,
-  Image,
-  FileText,
-  Tags,
-  Rocket,
-  Upload,
+  MapPin, ArrowLeft, RefreshCw, ExternalLink, Eye, SkipForward, Search,
+  Sparkles, Send, Zap, Image, FileText, Tags, Rocket, Upload, Trash2,
 } from 'lucide-react';
 import { 
-  useRegionalQueue,
-  useReprocessRegionalItem,
-  useSkipRegionalItem,
-  useProcessRegionalItem,
-  usePublishRegionalItem,
-  useProcessAllNew,
-  usePublishAllProcessed,
-  useFullPipeline,
-  useRunRegionalIngest,
+  useRegionalQueue, useReprocessRegionalItem, useSkipRegionalItem,
+  useProcessRegionalItem, usePublishRegionalItem, useProcessAllNew,
+  usePublishAllProcessed, useFullPipeline, useRunRegionalIngest,
+  useDeleteRegionalItems, useDeleteRegionalItemsByStatus,
   RegionalIngestItem,
 } from '@/hooks/useRegionalAutoPost';
 import { formatDistanceToNow } from 'date-fns';
@@ -69,6 +40,7 @@ export default function RegionalQueue() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItem, setSelectedItem] = useState<RegionalIngestItem | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   
   const { data: queue, isLoading, refetch } = useRegionalQueue();
   const reprocessItem = useReprocessRegionalItem();
@@ -79,6 +51,8 @@ export default function RegionalQueue() {
   const publishAllProcessed = usePublishAllProcessed();
   const fullPipeline = useFullPipeline();
   const runIngest = useRunRegionalIngest();
+  const deleteItems = useDeleteRegionalItems();
+  const deleteByStatus = useDeleteRegionalItemsByStatus();
 
   const filteredQueue = queue?.filter((item) => {
     const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
@@ -90,7 +64,28 @@ export default function RegionalQueue() {
 
   const newItemsCount = queue?.filter(item => item.status === 'new').length || 0;
   const processedItemsCount = queue?.filter(item => item.status === 'processed').length || 0;
+  const failedItemsCount = queue?.filter(item => item.status === 'failed').length || 0;
   const isAnyPending = fullPipeline.isPending || processAllNew.isPending || publishAllProcessed.isPending || runIngest.isPending;
+
+  const toggleItemSelection = (id: string) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+
+  const toggleSelectAllFiltered = () => {
+    const ids = filteredQueue?.map(i => i.id) || [];
+    if (selectedIds.length === ids.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(ids);
+    }
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedIds.length > 0) {
+      deleteItems.mutate(selectedIds);
+      setSelectedIds([]);
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -198,6 +193,49 @@ export default function RegionalQueue() {
                 {publishAllProcessed.isPending ? 'Publicando...' : `Publicar Todos (${processedItemsCount})`}
               </Button>
             )}
+
+            {/* Delete buttons */}
+            {selectedIds.length > 0 && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Excluir Selecionados ({selectedIds.length})
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Excluir {selectedIds.length} item(ns)?</AlertDialogTitle>
+                    <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteSelected} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Excluir</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+
+            {failedItemsCount > 0 && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Excluir com Erro ({failedItemsCount})
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Excluir todos os itens com erro?</AlertDialogTitle>
+                    <AlertDialogDescription>Serão excluídos {failedItemsCount} itens com status "Erro".</AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => deleteByStatus.mutate('failed')} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Excluir</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -249,6 +287,12 @@ export default function RegionalQueue() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox 
+                      checked={selectedIds.length === (filteredQueue?.length || 0) && (filteredQueue?.length || 0) > 0}
+                      onCheckedChange={toggleSelectAllFiltered}
+                    />
+                  </TableHead>
                   <TableHead>Título</TableHead>
                   <TableHead>Cidade</TableHead>
                   <TableHead>Status</TableHead>
@@ -259,6 +303,12 @@ export default function RegionalQueue() {
               <TableBody>
                 {filteredQueue.map((item) => (
                   <TableRow key={item.id}>
+                    <TableCell>
+                      <Checkbox 
+                        checked={selectedIds.includes(item.id)}
+                        onCheckedChange={() => toggleItemSelection(item.id)}
+                      />
+                    </TableCell>
                     <TableCell>
                       <div className="max-w-md">
                         <p className="font-medium truncate">
@@ -358,6 +408,17 @@ export default function RegionalQueue() {
                             <SkipForward className="h-4 w-4" />
                           </Button>
                         )}
+
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => deleteItems.mutate([item.id])}
+                          disabled={deleteItems.isPending}
+                          title="Excluir"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
