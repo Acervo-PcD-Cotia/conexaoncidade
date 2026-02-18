@@ -18,6 +18,7 @@ interface RegionalSource {
   last_fetched_at: string | null;
   error_count: number;
   tags_default: string[];
+  daily_max_items: number | null;
 }
 
 interface ParsedItem {
@@ -344,7 +345,38 @@ Deno.serve(async (req) => {
         let errorCount = 0;
 
         if (!dry_run) {
-          for (const item of items) {
+          // Check daily limit
+          const dailyMax = source.daily_max_items || 200;
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          
+          const { count: todayCount } = await supabase
+            .from('regional_ingest_items')
+            .select('*', { count: 'exact', head: true })
+            .eq('source_id', source.id)
+            .gte('created_at', today.toISOString());
+          
+          const remainingSlots = Math.max(0, dailyMax - (todayCount || 0));
+          
+          if (remainingSlots === 0) {
+            console.log(`[Skip] Daily limit (${dailyMax}) reached for ${source.name}`);
+            results.push({
+              source_id: source.id,
+              source_name: source.name,
+              city: source.city,
+              items_found: items.length,
+              items_new: 0,
+              items_duplicated: 0,
+              items_errored: 0,
+              skipped: 'daily_limit_reached',
+            });
+            continue;
+          }
+          
+          // Limit items to remaining daily slots
+          const itemsToProcess = items.slice(0, remainingSlots);
+          
+          for (const item of itemsToProcess) {
             // Try to insert (will fail if canonical_url exists)
             const { error: insertError } = await supabase
               .from('regional_ingest_items')

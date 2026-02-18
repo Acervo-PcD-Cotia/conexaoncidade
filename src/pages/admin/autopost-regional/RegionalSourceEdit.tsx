@@ -59,6 +59,7 @@ export default function RegionalSourceEdit() {
     is_active: true,
     poll_interval_minutes: 120,
     rate_limit_per_hour: 10,
+    daily_max_items: 20,
     tags_default: [] as string[],
   });
 
@@ -88,6 +89,7 @@ export default function RegionalSourceEdit() {
         is_active: source.is_active,
         poll_interval_minutes: source.poll_interval_minutes,
         rate_limit_per_hour: source.rate_limit_per_hour,
+        daily_max_items: (source as any).daily_max_items ?? 20,
         tags_default: source.tags_default || [],
       });
       if (source.selectors) {
@@ -286,7 +288,7 @@ export default function RegionalSourceEdit() {
               </Select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Intervalo (minutos)</Label>
                 <Input
@@ -302,6 +304,19 @@ export default function RegionalSourceEdit() {
                   value={formData.rate_limit_per_hour}
                   onChange={(e) => setFormData({ ...formData, rate_limit_per_hour: parseInt(e.target.value) || 10 })}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>Máximo/Dia</Label>
+                <Input
+                  type="number"
+                  value={formData.daily_max_items}
+                  onChange={(e) => setFormData({ ...formData, daily_max_items: parseInt(e.target.value) || 20 })}
+                  min={1}
+                  max={200}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Limite de itens ingeridos por dia
+                </p>
               </div>
             </div>
 
