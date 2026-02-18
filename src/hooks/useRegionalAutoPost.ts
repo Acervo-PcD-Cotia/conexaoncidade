@@ -218,11 +218,14 @@ export function useRunRegionalIngest() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (sourceId?: string) => {
+    mutationFn: async (params?: string | { sourceId?: string; dateFrom?: string; dateTo?: string }) => {
+      const sourceId = typeof params === 'string' ? params : params?.sourceId;
+      const dateFrom = typeof params === 'object' ? params?.dateFrom : undefined;
+      const dateTo = typeof params === 'object' ? params?.dateTo : undefined;
       const action = sourceId ? 'run_now' : 'run_all';
       
       const { data, error } = await supabase.functions.invoke('regional-admin-tools', {
-        body: { action, source_id: sourceId },
+        body: { action, source_id: sourceId, date_from: dateFrom, date_to: dateTo },
       });
 
       if (error) throw error;

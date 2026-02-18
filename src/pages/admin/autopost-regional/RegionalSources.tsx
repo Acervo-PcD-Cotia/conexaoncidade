@@ -15,16 +15,21 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { 
   MapPin, ArrowLeft, Play, Pause, PlayCircle, TestTube, 
   CheckCircle2, AlertTriangle, Rss, Globe, ExternalLink, 
-  Pencil, Plus, Loader2, RefreshCw,
+  Pencil, Plus, Loader2, RefreshCw, CalendarIcon,
 } from 'lucide-react';
 import { 
   useRegionalSources, useTestRegionalSource, useRunRegionalIngest,
   usePauseRegionalSource, useResumeRegionalSource, useCreateRegionalSource,
+  useUpdateRegionalSource,
 } from '@/hooks/useRegionalAutoPost';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export default function RegionalSources() {
@@ -34,14 +39,19 @@ export default function RegionalSources() {
   const pauseSource = usePauseRegionalSource();
   const resumeSource = useResumeRegionalSource();
   const createSource = useCreateRegionalSource();
+  const updateSource = useUpdateRegionalSource();
   
   const [testResult, setTestResult] = useState<any>(null);
   const [showTestDialog, setShowTestDialog] = useState(false);
   const [showNewSourceDialog, setShowNewSourceDialog] = useState(false);
   const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([]);
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [newSource, setNewSource] = useState({
     city: '', name: '', type: 'rss' as 'rss' | 'listing',
     rss_url: '', listing_url: '', source_url: '',
+    mode: 'review' as 'review' | 'auto_publish' | 'off',
+    daily_max_items: 20,
   });
 
   const handleTest = async (sourceId: string) => {
@@ -54,23 +64,36 @@ export default function RegionalSources() {
     await createSource.mutateAsync({
       ...newSource,
       is_active: true,
-      mode: 'review',
+      mode: newSource.mode,
       poll_interval_minutes: 120,
       rate_limit_per_hour: 10,
       tags_default: [newSource.city.toLowerCase().replace(/\s+/g, '-')],
       selectors: null,
     });
     setShowNewSourceDialog(false);
-    setNewSource({ city: '', name: '', type: 'rss', rss_url: '', listing_url: '', source_url: '' });
+    setNewSource({ city: '', name: '', type: 'rss', rss_url: '', listing_url: '', source_url: '', mode: 'review', daily_max_items: 20 });
   };
 
   const handleIngestSelected = () => {
+    const body: any = {};
+    if (dateFrom) body.date_from = format(dateFrom, 'yyyy-MM-dd');
+    if (dateTo) body.date_to = format(dateTo, 'yyyy-MM-dd');
+
     if (selectedSourceIds.length === 0) {
-      runIngest.mutate(undefined);
+      runIngest.mutate({ dateFrom: body.date_from, dateTo: body.date_to });
     } else {
-      selectedSourceIds.forEach((id) => runIngest.mutate(id));
+      selectedSourceIds.forEach((id) => runIngest.mutate({ sourceId: id, dateFrom: body.date_from, dateTo: body.date_to }));
     }
     setSelectedSourceIds([]);
+  };
+
+  const handleInlineMode = (sourceId: string, mode: string) => {
+    updateSource.mutate({ id: sourceId, mode: mode as any });
+  };
+
+  const handleInlineDailyMax = (sourceId: string, value: string) => {
+    const num = parseInt(value) || 20;
+    updateSource.mutate({ id: sourceId, daily_max_items: num } as any);
   };
 
   const toggleSourceSelection = (id: string) => {
@@ -123,6 +146,50 @@ export default function RegionalSources() {
         </div>
       </div>
 
+      {/* Date Range Filter */}
+      <Card>
+        <CardContent className="pt-4">
+          <div className="flex flex-wrap items-end gap-4">
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Data Início</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-[160px] justify-start text-left font-normal">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateFrom ? format(dateFrom, 'dd/MM/yyyy') : 'Selecionar'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} locale={ptBR} />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Data Fim</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-[160px] justify-start text-left font-normal">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateTo ? format(dateTo, 'dd/MM/yyyy') : 'Selecionar'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={dateTo} onSelect={setDateTo} locale={ptBR} />
+                </PopoverContent>
+              </Popover>
+            </div>
+            {(dateFrom || dateTo) && (
+              <Button variant="ghost" size="sm" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
+                Limpar datas
+              </Button>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Filtre por período ao buscar notícias das fontes selecionadas
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Fontes Cadastradas</CardTitle>
@@ -143,6 +210,7 @@ export default function RegionalSources() {
                   <TableHead>Tipo</TableHead>
                   <TableHead>Última Execução</TableHead>
                   <TableHead>Modo</TableHead>
+                  <TableHead>Máx/Dia</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -172,12 +240,34 @@ export default function RegionalSources() {
                       ) : (<span className="text-sm text-muted-foreground">Nunca</span>)}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="capitalize">{source.mode === 'review' ? 'Revisão' : source.mode === 'auto_publish' ? 'Auto' : 'Off'}</Badge>
+                      <Select
+                        value={source.mode}
+                        onValueChange={(v) => handleInlineMode(source.id, v)}
+                      >
+                        <SelectTrigger className="h-8 w-[130px] text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="review">Revisão</SelectItem>
+                          <SelectItem value="auto_publish">Automático</SelectItem>
+                          <SelectItem value="off">Desligado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        className="h-8 w-[70px] text-xs text-center"
+                        defaultValue={(source as any).daily_max_items ?? 20}
+                        min={1}
+                        max={200}
+                        onBlur={(e) => handleInlineDailyMax(source.id, e.target.value)}
+                      />
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
                         <Button variant="ghost" size="icon" onClick={() => handleTest(source.id)} disabled={testSource.isPending} title="Testar fonte"><TestTube className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => runIngest.mutate(source.id)} disabled={runIngest.isPending || !source.is_active} title="Executar agora"><PlayCircle className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => runIngest.mutate({ sourceId: source.id })} disabled={runIngest.isPending || !source.is_active} title="Executar agora"><PlayCircle className="h-4 w-4" /></Button>
                         {source.is_active ? (
                           <Button variant="ghost" size="icon" onClick={() => pauseSource.mutate(source.id)} disabled={pauseSource.isPending} title="Pausar"><Pause className="h-4 w-4" /></Button>
                         ) : (
@@ -235,15 +325,38 @@ export default function RegionalSources() {
                 <Input value={newSource.name} onChange={(e) => setNewSource({ ...newSource, name: e.target.value })} placeholder="Ex: Prefeitura de Cotia" />
               </div>
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Tipo</Label>
+                <Select value={newSource.type} onValueChange={(v) => setNewSource({ ...newSource, type: v as 'rss' | 'listing' })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="rss">RSS Feed</SelectItem>
+                    <SelectItem value="listing">HTML Listing</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Modo de Publicação</Label>
+                <Select value={newSource.mode} onValueChange={(v) => setNewSource({ ...newSource, mode: v as any })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="review">Revisão Manual</SelectItem>
+                    <SelectItem value="auto_publish">Automático</SelectItem>
+                    <SelectItem value="off">Desligado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             <div className="space-y-2">
-              <Label>Tipo</Label>
-              <Select value={newSource.type} onValueChange={(v) => setNewSource({ ...newSource, type: v as 'rss' | 'listing' })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="rss">RSS Feed</SelectItem>
-                  <SelectItem value="listing">HTML Listing</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label>Máximo de Notícias/Dia</Label>
+              <Input
+                type="number"
+                value={newSource.daily_max_items}
+                onChange={(e) => setNewSource({ ...newSource, daily_max_items: parseInt(e.target.value) || 20 })}
+                min={1}
+                max={200}
+              />
             </div>
             {newSource.type === 'rss' ? (
               <div className="space-y-2">
