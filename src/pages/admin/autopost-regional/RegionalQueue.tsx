@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { sanitizeHtml } from '@/hooks/useSanitizedHtml';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Progress } from '@/components/ui/progress';
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from '@/components/ui/table';
@@ -24,7 +25,8 @@ import {
 } from '@/components/ui/tabs';
 import { 
   MapPin, ArrowLeft, RefreshCw, ExternalLink, Eye, SkipForward, Search,
-  Sparkles, Send, Zap, Image, FileText, Tags, Rocket, Upload, Trash2,
+  Sparkles, Send, Image, FileText, Tags, Rocket, Upload, Trash2,
+  CheckCircle2, Circle, Loader2, AlertCircle, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { 
   useRegionalQueue, useReprocessRegionalItem, useSkipRegionalItem,
@@ -36,12 +38,163 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+type StepStatus = 'idle' | 'running' | 'done' | 'error';
+
+interface PipelineStep {
+  id: string;
+  label: string;
+  description: string;
+  status: StepStatus;
+  result?: string;
+}
+
+interface ProgressState {
+  isOpen: boolean;
+  title: string;
+  steps: PipelineStep[];
+  logs: string[];
+  fakeProgress: number;
+  currentStep: number;
+}
+
+const INITIAL_PROGRESS: ProgressState = {
+  isOpen: false,
+  title: '',
+  steps: [],
+  logs: [],
+  fakeProgress: 0,
+  currentStep: 0,
+};
+
+// ─── Progress Panel Component ─────────────────────────────────────────────────
+function ProgressPanel({ state, onClose }: { state: ProgressState; onClose: () => void }) {
+  const [logsExpanded, setLogsExpanded] = useState(true);
+  const logsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (logsRef.current) {
+      logsRef.current.scrollTop = logsRef.current.scrollHeight;
+    }
+  }, [state.logs]);
+
+  const allDone = state.steps.every(s => s.status === 'done' || s.status === 'error');
+  const hasError = state.steps.some(s => s.status === 'error');
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-background border rounded-xl shadow-2xl w-full max-w-lg flex flex-col gap-0 overflow-hidden">
+        {/* Header */}
+        <div className={`px-5 py-4 flex items-center gap-3 ${hasError ? 'bg-destructive/10' : allDone ? 'bg-green-500/10' : 'bg-amber-500/10'}`}>
+          <div className="flex-1">
+            <h2 className="font-bold text-base">{state.title}</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {allDone
+                ? hasError ? 'Concluído com erros' : 'Concluído com sucesso!'
+                : 'Processando, aguarde...'}
+            </p>
+          </div>
+          {allDone ? (
+            hasError
+              ? <AlertCircle className="h-6 w-6 text-destructive" />
+              : <CheckCircle2 className="h-6 w-6 text-green-500" />
+          ) : (
+            <Loader2 className="h-6 w-6 text-amber-500 animate-spin" />
+          )}
+        </div>
+
+        {/* Progress Bar */}
+        <div className="px-5 pt-4 pb-2">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-medium text-muted-foreground">Progresso geral</span>
+            <span className="text-xs font-bold text-foreground">{Math.round(state.fakeProgress)}%</span>
+          </div>
+          <Progress value={state.fakeProgress} className="h-2" />
+        </div>
+
+        {/* Steps */}
+        <div className="px-5 py-3 space-y-2">
+          {state.steps.map((step, idx) => (
+            <div key={step.id} className="flex items-start gap-3">
+              <div className="mt-0.5 flex-shrink-0">
+                {step.status === 'done' && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                {step.status === 'error' && <AlertCircle className="h-4 w-4 text-destructive" />}
+                {step.status === 'running' && <Loader2 className="h-4 w-4 text-amber-500 animate-spin" />}
+                {step.status === 'idle' && <Circle className="h-4 w-4 text-muted-foreground/40" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm font-medium leading-tight ${
+                  step.status === 'running' ? 'text-amber-600 dark:text-amber-400' :
+                  step.status === 'done' ? 'text-green-600 dark:text-green-400' :
+                  step.status === 'error' ? 'text-destructive' : 'text-muted-foreground'
+                }`}>{step.label}</p>
+                {step.result ? (
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate">{step.result}</p>
+                ) : (
+                  <p className="text-xs text-muted-foreground/60 mt-0.5">{step.description}</p>
+                )}
+              </div>
+              {step.status === 'running' && (
+                <div className="flex gap-0.5 mt-1.5">
+                  {[0,1,2].map(i => (
+                    <div key={i} className="h-1 w-1 rounded-full bg-amber-500 animate-bounce"
+                      style={{ animationDelay: `${i * 0.15}s` }} />
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Logs */}
+        <div className="border-t mx-5 mb-0" />
+        <div className="px-5 py-2">
+          <button
+            onClick={() => setLogsExpanded(v => !v)}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors w-full"
+          >
+            {logsExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+            Log de atividade ({state.logs.length})
+          </button>
+          {logsExpanded && (
+            <div ref={logsRef} className="mt-2 bg-muted/60 rounded-lg p-3 h-28 overflow-y-auto font-mono text-[11px] space-y-1">
+              {state.logs.length === 0 ? (
+                <p className="text-muted-foreground">Aguardando atividade...</p>
+              ) : (
+                state.logs.map((log, i) => (
+                  <p key={i} className={`leading-snug ${log.startsWith('✅') ? 'text-green-600 dark:text-green-400' : log.startsWith('❌') ? 'text-destructive' : log.startsWith('⚡') ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`}>
+                    {log}
+                  </p>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-4 border-t flex justify-end">
+          {allDone ? (
+            <Button onClick={onClose} size="sm" className="w-full">
+              <CheckCircle2 className="h-4 w-4 mr-2" />
+              Fechar
+            </Button>
+          ) : (
+            <p className="text-xs text-muted-foreground italic">Não feche esta janela durante o processamento</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function RegionalQueue() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItem, setSelectedItem] = useState<RegionalIngestItem | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  
+  const [progress, setProgress] = useState<ProgressState>(INITIAL_PROGRESS);
+  const progressTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const { data: queue, isLoading, refetch } = useRegionalQueue();
   const reprocessItem = useReprocessRegionalItem();
   const skipItem = useSkipRegionalItem();
@@ -53,6 +206,175 @@ export default function RegionalQueue() {
   const runIngest = useRunRegionalIngest();
   const deleteItems = useDeleteRegionalItems();
   const deleteByStatus = useDeleteRegionalItemsByStatus();
+
+  // ── Progress helpers ────────────────────────────────────────────────────────
+  const startFakeProgress = (targetPct: number, durationMs: number) => {
+    if (progressTimerRef.current) clearInterval(progressTimerRef.current);
+    const tick = 200;
+    const steps = durationMs / tick;
+    let step = 0;
+    progressTimerRef.current = setInterval(() => {
+      step++;
+      setProgress(prev => ({
+        ...prev,
+        fakeProgress: Math.min(targetPct, prev.fakeProgress + (targetPct - prev.fakeProgress) / (steps - step + 1)),
+      }));
+      if (step >= steps) clearInterval(progressTimerRef.current!);
+    }, tick);
+  };
+
+  const addLog = (msg: string) =>
+    setProgress(prev => ({ ...prev, logs: [...prev.logs, `[${new Date().toLocaleTimeString('pt-BR')}] ${msg}`] }));
+
+  const setStepStatus = (id: string, status: StepStatus, result?: string) =>
+    setProgress(prev => ({
+      ...prev,
+      steps: prev.steps.map(s => s.id === id ? { ...s, status, result } : s),
+    }));
+
+  const finalizeProgress = (pct = 100) => {
+    if (progressTimerRef.current) clearInterval(progressTimerRef.current);
+    setProgress(prev => ({ ...prev, fakeProgress: pct }));
+  };
+
+  const closeProgress = () => {
+    if (progressTimerRef.current) clearInterval(progressTimerRef.current);
+    setProgress(INITIAL_PROGRESS);
+    refetch();
+  };
+
+  // ── Action handlers with progress ──────────────────────────────────────────
+  const handleFullPipeline = () => {
+    setProgress({
+      isOpen: true,
+      title: '🚀 Pipeline Completo',
+      fakeProgress: 0,
+      currentStep: 0,
+      logs: [],
+      steps: [
+        { id: 'ingest', label: 'Ingerindo notícias', description: 'Buscando feeds de todas as fontes ativas...', status: 'running' },
+        { id: 'process', label: 'Processando com IA', description: 'Reescrevendo e gerando SEO para cada item...', status: 'idle' },
+        { id: 'publish', label: 'Publicando notícias', description: 'Enviando itens processados para o portal...', status: 'idle' },
+      ],
+    });
+    addLog('⚡ Iniciando pipeline completo...');
+    startFakeProgress(30, 8000);
+
+    fullPipeline.mutate(undefined, {
+      onSuccess: (data) => {
+        const p = data?.pipeline || data || {};
+        finalizeProgress(100);
+        setStepStatus('ingest', 'done', `${p.ingested ?? '?'} item(s) ingerido(s)`);
+        setStepStatus('process', 'done', `${p.processed ?? '?'} item(s) processado(s)`);
+        setStepStatus('publish', 'done', `${p.published ?? '?'} item(s) publicado(s)`);
+        addLog(`✅ Ingestão: ${p.ingested ?? '?'} itens`);
+        addLog(`✅ Processamento: ${p.processed ?? '?'} itens`);
+        addLog(`✅ Publicação: ${p.published ?? '?'} itens`);
+      },
+      onError: (err) => {
+        finalizeProgress(progress.fakeProgress);
+        setStepStatus('ingest', 'error', err.message);
+        addLog(`❌ Erro: ${err.message}`);
+      },
+    });
+  };
+
+  const handleRunIngest = () => {
+    setProgress({
+      isOpen: true,
+      title: '🔄 Buscar Notícias',
+      fakeProgress: 0,
+      currentStep: 0,
+      logs: [],
+      steps: [
+        { id: 'fetch', label: 'Conectando às fontes', description: 'Acessando feeds RSS e APIs configuradas...', status: 'running' },
+        { id: 'parse', label: 'Analisando conteúdo', description: 'Extraindo itens novos de cada fonte...', status: 'idle' },
+        { id: 'save', label: 'Salvando na fila', description: 'Armazenando itens para processamento...', status: 'idle' },
+      ],
+    });
+    addLog('⚡ Iniciando busca de notícias...');
+    startFakeProgress(50, 6000);
+
+    runIngest.mutate(undefined, {
+      onSuccess: (data) => {
+        finalizeProgress(100);
+        const count = data?.ingested ?? data?.count ?? '?';
+        setStepStatus('fetch', 'done', 'Fontes acessadas');
+        setStepStatus('parse', 'done', 'Conteúdo extraído');
+        setStepStatus('save', 'done', `${count} item(s) salvos`);
+        addLog(`✅ ${count} notícias encontradas e salvas`);
+      },
+      onError: (err) => {
+        finalizeProgress(progress.fakeProgress);
+        setStepStatus('fetch', 'error', err.message);
+        addLog(`❌ Erro: ${err.message}`);
+      },
+    });
+  };
+
+  const handleProcessAllNew = () => {
+    setProgress({
+      isOpen: true,
+      title: '✨ Processar com IA',
+      fakeProgress: 0,
+      currentStep: 0,
+      logs: [],
+      steps: [
+        { id: 'queue', label: 'Carregando fila', description: 'Buscando itens com status "Novo"...', status: 'running' },
+        { id: 'rewrite', label: 'Reescrevendo com IA', description: 'Gerando conteúdo otimizado para cada item...', status: 'idle' },
+        { id: 'seo', label: 'Gerando metadados SEO', description: 'Criando títulos e descrições para SEO...', status: 'idle' },
+      ],
+    });
+    addLog('⚡ Iniciando processamento com IA...');
+    startFakeProgress(40, 15000);
+
+    processAllNew.mutate(undefined, {
+      onSuccess: (data) => {
+        finalizeProgress(100);
+        setStepStatus('queue', 'done', 'Fila carregada');
+        setStepStatus('rewrite', 'done', `${data?.processed ?? '?'} item(s) reescritos`);
+        setStepStatus('seo', 'done', 'Metadados gerados');
+        addLog(`✅ ${data?.processed ?? '?'} processados, ${data?.failed ?? 0} erros`);
+      },
+      onError: (err) => {
+        finalizeProgress(progress.fakeProgress);
+        setStepStatus('queue', 'error', err.message);
+        addLog(`❌ Erro: ${err.message}`);
+      },
+    });
+  };
+
+  const handlePublishAllProcessed = () => {
+    setProgress({
+      isOpen: true,
+      title: '📤 Publicar Notícias',
+      fakeProgress: 0,
+      currentStep: 0,
+      logs: [],
+      steps: [
+        { id: 'check', label: 'Verificando itens', description: 'Buscando itens com status "Processado"...', status: 'running' },
+        { id: 'publish', label: 'Publicando no portal', description: 'Enviando cada notícia para o site...', status: 'idle' },
+        { id: 'index', label: 'Finalizando', description: 'Atualizando índices e categorias...', status: 'idle' },
+      ],
+    });
+    addLog('⚡ Iniciando publicação em lote...');
+    startFakeProgress(40, 8000);
+
+    publishAllProcessed.mutate(undefined, {
+      onSuccess: (data) => {
+        finalizeProgress(100);
+        setStepStatus('check', 'done', 'Itens verificados');
+        setStepStatus('publish', 'done', `${data?.published ?? '?'} publicado(s)`);
+        setStepStatus('index', 'done', 'Concluído');
+        addLog(`✅ ${data?.published ?? '?'} publicados, ${data?.failed ?? 0} erros`);
+      },
+      onError: (err) => {
+        finalizeProgress(progress.fakeProgress);
+        setStepStatus('check', 'error', err.message);
+        addLog(`❌ Erro: ${err.message}`);
+      },
+    });
+  };
 
   const filteredQueue = queue?.filter((item) => {
     const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
@@ -110,6 +432,9 @@ export default function RegionalQueue() {
 
   return (
     <div className="space-y-6">
+      {/* Progress Panel Overlay */}
+      {progress.isOpen && <ProgressPanel state={progress} onClose={closeProgress} />}
+
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
@@ -144,53 +469,53 @@ export default function RegionalQueue() {
             Automação em Lote
           </CardTitle>
           <CardDescription>
-            Execute todo o pipeline de uma vez ou etapas individuais
+            Execute todo o pipeline de uma vez ou etapas individuais — acompanhe o progresso em tempo real
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-3">
             {/* Full Pipeline - THE BIG BUTTON */}
             <Button 
-              onClick={() => fullPipeline.mutate()}
+              onClick={handleFullPipeline}
               disabled={isAnyPending}
               className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
               size="lg"
             >
               <Rocket className="h-4 w-4 mr-2" />
-              {fullPipeline.isPending ? 'Executando Pipeline...' : '🚀 Pipeline Completo (Ingerir + Processar + Publicar)'}
+              🚀 Pipeline Completo (Ingerir + Processar + Publicar)
             </Button>
 
             {/* Individual steps */}
             <Button 
               variant="outline"
-              onClick={() => runIngest.mutate(undefined)}
+              onClick={handleRunIngest}
               disabled={isAnyPending}
             >
-              <RefreshCw className={`h-4 w-4 mr-2 ${runIngest.isPending ? 'animate-spin' : ''}`} />
-              {runIngest.isPending ? 'Ingerindo...' : 'Buscar Notícias (Todas as Fontes)'}
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Buscar Notícias (Todas as Fontes)
             </Button>
 
             {newItemsCount > 0 && (
               <Button 
                 variant="outline"
-                onClick={() => processAllNew.mutate()}
+                onClick={handleProcessAllNew}
                 disabled={isAnyPending}
                 className="border-purple-500/30 text-purple-600 hover:bg-purple-50"
               >
                 <Sparkles className="h-4 w-4 mr-2" />
-                {processAllNew.isPending ? 'Processando...' : `Processar Todos (${newItemsCount})`}
+                {`Processar Todos (${newItemsCount})`}
               </Button>
             )}
 
             {processedItemsCount > 0 && (
               <Button 
                 variant="outline"
-                onClick={() => publishAllProcessed.mutate()}
+                onClick={handlePublishAllProcessed}
                 disabled={isAnyPending}
                 className="border-green-500/30 text-green-600 hover:bg-green-50"
               >
                 <Upload className="h-4 w-4 mr-2" />
-                {publishAllProcessed.isPending ? 'Publicando...' : `Publicar Todos (${processedItemsCount})`}
+                {`Publicar Todos (${processedItemsCount})`}
               </Button>
             )}
 
