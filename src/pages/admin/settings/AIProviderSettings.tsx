@@ -24,6 +24,7 @@ interface AIProvider {
   logo: string;
   apiKeyRequired: boolean;
   nativeKey?: boolean; // Usa LOVABLE_API_KEY internamente
+  externalModelManagement?: boolean; // modelo gerenciado pelo provedor
 }
 
 const AI_PROVIDERS: AIProvider[] = [
@@ -52,12 +53,13 @@ const AI_PROVIDERS: AIProvider[] = [
   {
     id: "abacus",
     name: "Abacus AI",
-    description: "Plataforma enterprise com modelos customizados. Requer chave de API própria.",
-    models: ["abacus/chat-llm-v3", "abacus/custom"],
-    defaultModel: "abacus/chat-llm-v3",
+    description: "Plataforma enterprise com modelos customizados. O modelo é gerenciado diretamente pelo Abacus AI via API.",
+    models: [], // Abacus manages models internally
+    defaultModel: "abacus/auto",
     color: "from-purple-500 to-violet-400",
     logo: "⚡",
     apiKeyRequired: true,
+    externalModelManagement: true, // model selection done on Abacus side
   },
   {
     id: "anthropic",
@@ -196,7 +198,11 @@ export default function AIProviderSettings() {
               <div>
                 <p className="font-semibold text-sm">Provedor Ativo</p>
                 <p className="text-lg font-bold text-primary">{activeProvider?.name}</p>
-                <p className="text-xs text-muted-foreground">{config.activeModel}</p>
+                {activeProvider?.externalModelManagement ? (
+                  <p className="text-xs text-muted-foreground">Modelo gerenciado pelo {activeProvider.name}</p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">{config.activeModel}</p>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -340,8 +346,8 @@ export default function AIProviderSettings() {
             </CardContent>
           </Card>
 
-          {/* Modelo específico por provedor ativo */}
-          {config.mode === "manual" && activeProvider && (
+          {/* Modelo específico por provedor ativo - não mostra para provedores com gestão externa */}
+          {config.mode === "manual" && activeProvider && !activeProvider.externalModelManagement && activeProvider.models.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">Modelo de {activeProvider.name}</CardTitle>
@@ -364,6 +370,21 @@ export default function AIProviderSettings() {
                       {config.activeModel === model && <CheckCircle className="h-4 w-4" />}
                     </button>
                   ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          {config.mode === "manual" && activeProvider?.externalModelManagement && (
+            <Card className="border-muted">
+              <CardContent className="pt-4">
+                <div className="flex items-start gap-3">
+                  <Info className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium">Modelo gerenciado pelo {activeProvider.name}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      O Abacus AI seleciona automaticamente o melhor modelo disponível com base na sua configuração de conta e no deployment configurado na plataforma deles. Não é necessário escolher um modelo aqui.
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
