@@ -31,6 +31,7 @@ import { CommunityButton } from "@/components/community/CommunityButton";
 import { NotificationBell } from "@/components/community/NotificationBell";
 import { VocabText } from "@/components/ui/VocabText";
 import { ModuleGuard } from "@/components/guards/ModuleGuard";
+import { useBranding } from "@/hooks/useBranding";
 
 export function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -38,6 +39,7 @@ export function Header() {
   const { user, signOut } = useAuth();
   const { role, loading: roleLoading, isAdmin, isEditor } = useUserRole();
   const { data: categories } = useCategories();
+  const branding = useBranding();
   const isRadioEnabled = useModuleEnabled('web_radio');
   const isTvEnabled = useModuleEnabled('web_tv');
   const isMenuGoogleEnabled = useModuleEnabled('menu_google');
@@ -225,12 +227,13 @@ export function Header() {
             </SheetContent>
           </Sheet>
 
-          {/* Logo - Increased size for visual hierarchy */}
+          {/* Logo - Dynamic size from branding config */}
           <Link to="/" className="flex items-center">
             <img 
               src={logoFull} 
               alt="Conexão na Cidade" 
-              className="h-[70px] w-auto sm:h-[90px] md:h-[120px] max-w-[420px] object-contain"
+              className="w-auto max-w-[520px] object-contain"
+              style={{ height: `${Math.round((branding?.logo_size ?? 240) * 0.58)}px` }}
             />
           </Link>
 

@@ -353,6 +353,7 @@ import VocabularyEditor from "./pages/admin/settings/VocabularyEditor";
 import ModulesManager from "./pages/admin/settings/ModulesManager";
 import AppearanceSettings from "./pages/admin/settings/AppearanceSettings";
 import MenuToggleSettings from "./pages/admin/settings/MenuToggleSettings";
+import BrandingLogoSettings from "./pages/admin/settings/BrandingLogoSettings";
 
 import { ThemeProvider } from "@/contexts/ThemeContext";
 
@@ -536,6 +537,7 @@ const App = () => (
                         <Route path="settings/modules" element={<ModulesManager />} />
                         <Route path="settings/menus" element={<MenuToggleSettings />} />
                         <Route path="settings/appearance" element={<AppearanceSettings />} />
+                        <Route path="settings/logo" element={<BrandingLogoSettings />} />
                         <Route path="solutions" element={<Solutions />} />
                         <Route path="notificacoes" element={<PushNotificationsAdmin />} />
                         <Route path="events" element={<EventsList />} />
