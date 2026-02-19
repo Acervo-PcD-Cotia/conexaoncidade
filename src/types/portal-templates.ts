@@ -66,6 +66,7 @@ export interface SiteBranding {
     icon?: string;
     white?: string;
   };
+  logo_size?: number; // height in px for desktop (default 120)
   colors?: {
     primary?: string;
     secondary?: string;
