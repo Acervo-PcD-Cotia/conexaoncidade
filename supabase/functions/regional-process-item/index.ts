@@ -295,7 +295,7 @@ async function publishItemToNews(supabase: any, item: any, source: any): Promise
       status: 'published',
       published_at: publishedAt,
       original_published_at: publishedAt,
-      origin: 'autopost',
+      origin: 'ai',
       category_id: categoryId,
     })
     .select('id')
