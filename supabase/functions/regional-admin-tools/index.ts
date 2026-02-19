@@ -195,74 +195,60 @@ Deno.serve(async (req) => {
         });
       }
 
-      case 'publish_all_processed': {
-        // Publish ALL processed items — send with auto_publish:true so regional-process-item publishes directly
-        const { data: items, error: fetchError } = await supabase
+      case 'publish_all_direct': {
+        // Reset ALL failed items back to new, then publish everything (new + processed) without AI
+        console.log('[Regional Admin] Publishing ALL items directly (no AI rewrite)');
+
+        // Step 1: Reset failed items to new
+        await supabase
           .from('regional_ingest_items')
-          .select('id, canonical_url, title, rewritten_title')
-          .eq('status', 'processed')
-          .order('created_at', { ascending: true })
-          .limit(100);
+          .update({ status: 'new', error_message: null, retry_count: 0 })
+          .eq('status', 'failed');
 
-        if (fetchError) throw fetchError;
+        // Step 2: Fetch all new + processed items (up to 500)
+        const { data: allDirectItems } = await supabase
+          .from('regional_ingest_items')
+          .select('id, status')
+          .in('status', ['new', 'processed'])
+          .order('published_at', { ascending: false })
+          .limit(500);
 
-        if (!items || items.length === 0) {
-          return new Response(JSON.stringify({ 
-            success: true, 
-            published: 0, 
-            skipped: 0,
-            message: 'No processed items to publish' 
-          }), {
+        if (!allDirectItems || allDirectItems.length === 0) {
+          return new Response(JSON.stringify({ success: true, published: 0, skipped: 0, message: 'No items to publish' }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
         }
 
-        // Publish in batches of 3 concurrently, always with auto_publish:true
-        const pubBatchSize = 3;
-        let pubSuccessful = 0;
-        let pubFailed = 0;
-        let pubSkipped = 0;
+        const directBatchSize = 5;
+        let directPublished = 0;
+        let directFailed = 0;
+        let directSkipped = 0;
 
-        for (let i = 0; i < items.length; i += pubBatchSize) {
-          const batch = items.slice(i, i + pubBatchSize);
+        for (let i = 0; i < allDirectItems.length; i += directBatchSize) {
+          const batch = allDirectItems.slice(i, i + directBatchSize);
           const results = await Promise.allSettled(
             batch.map(async (item) => {
               const response = await fetch(`${supabaseUrl}/functions/v1/regional-process-item`, {
                 method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${supabaseKey}`,
-                },
-                body: JSON.stringify({ item_id: item.id, auto_publish: true }),
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseKey}` },
+                body: JSON.stringify({ item_id: item.id, auto_publish: true, skip_ai: true }),
               });
               if (!response.ok) throw new Error(`HTTP ${response.status}`);
-              const data = await response.json();
-              return data;
+              return response.json();
             })
           );
 
           for (const result of results) {
             if (result.status === 'fulfilled') {
-              if (result.value?.status === 'skipped') {
-                pubSkipped++;
-              } else {
-                pubSuccessful++;
-              }
-            } else {
-              pubFailed++;
-            }
+              if (result.value?.status === 'skipped') directSkipped++;
+              else directPublished++;
+            } else { directFailed++; }
           }
         }
 
         return new Response(JSON.stringify({
-          success: true,
-          published: pubSuccessful,
-          skipped: pubSkipped,
-          failed: pubFailed,
-          total: items.length,
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+          success: true, published: directPublished, skipped: directSkipped, failed: directFailed, total: allDirectItems.length,
+        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
       case 'full_pipeline': {

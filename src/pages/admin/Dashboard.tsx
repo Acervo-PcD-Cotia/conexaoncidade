@@ -1,19 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
-  Newspaper,
-  FileText,
-  PlaySquare,
-  Eye,
-  Plus,
-  Search,
+  Newspaper, FileText, PlaySquare, Eye, Plus, Search, Clock,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNewsCreationModal } from "@/contexts/NewsCreationModalContext";
-
-// Import new dashboard components
 import { GradientKpiCard } from "@/components/admin/dashboard/GradientKpiCard";
 import { DashboardAccessibilityPanel } from "@/components/admin/dashboard/DashboardAccessibilityPanel";
 import { TrendingPanel } from "@/components/admin/dashboard/TrendingPanel";
@@ -25,6 +19,15 @@ import { StreamingTogglePanel } from "@/components/admin/dashboard/StreamingTogg
 
 export default function Dashboard() {
   const { openModal } = useNewsCreationModal();
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const dateStr = now.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+  const timeStr = now.toLocaleTimeString('pt-BR');
 
   // Fetch operational stats
   const { data: stats } = useQuery({
@@ -108,20 +111,18 @@ export default function Dashboard() {
           <p className="text-sm text-muted-foreground">
             Visão geral do sistema de notícias Conexão na Cidade
           </p>
+          <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
+            <Clock className="h-3 w-3" />
+            <span className="capitalize">{dateStr}</span>
+            <span className="font-mono font-bold text-foreground">{timeStr}</span>
+          </div>
         </div>
         
         <div className="flex items-center gap-3">
-          {/* Global Search */}
           <div className="relative hidden sm:block">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Buscar... (Ctrl+K)"
-              className="w-64 pl-10 bg-card"
-            />
+            <Input type="search" placeholder="Buscar... (Ctrl+K)" className="w-64 pl-10 bg-card" />
           </div>
-          
-          {/* New News Button */}
           <Button onClick={openModal} className="gap-2">
             <Plus className="h-4 w-4" />
             Nova Notícia

@@ -142,7 +142,7 @@ export function useRegionalQueue(status?: string) {
         .from('regional_ingest_items')
         .select('*, regional_sources(city, name)')
         .order('created_at', { ascending: false })
-        .limit(200);
+        .limit(1000);
 
       if (status) {
         query = query.eq('status', status);
@@ -426,6 +426,27 @@ export function usePublishAllProcessed() {
     },
     onError: (error) => {
       toast.error(`Erro ao publicar em lote: ${error.message}`);
+    },
+  });
+}
+
+export function usePublishAllDirect() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke('regional-admin-tools', {
+        body: { action: 'publish_all_direct' },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['regional-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['regional-stats'] });
+      toast.success(`✅ ${data.published} publicadas, ${data.skipped || 0} duplicatas ignoradas`);
+    },
+    onError: (error) => {
+      toast.error(`Erro ao publicar: ${error.message}`);
     },
   });
 }

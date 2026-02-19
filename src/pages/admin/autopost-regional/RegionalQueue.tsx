@@ -32,7 +32,7 @@ import {
   useRegionalQueue, useReprocessRegionalItem, useSkipRegionalItem,
   useProcessRegionalItem, usePublishRegionalItem, useProcessAllNew,
   usePublishAllProcessed, useFullPipeline, useRunRegionalIngest,
-  useDeleteRegionalItems, useDeleteRegionalItemsByStatus,
+  useDeleteRegionalItems, useDeleteRegionalItemsByStatus, usePublishAllDirect,
   RegionalIngestItem,
 } from '@/hooks/useRegionalAutoPost';
 import { formatDistanceToNow } from 'date-fns';
