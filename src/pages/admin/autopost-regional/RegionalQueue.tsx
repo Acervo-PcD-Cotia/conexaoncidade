@@ -352,21 +352,23 @@ export default function RegionalQueue() {
       currentStep: 0,
       logs: [],
       steps: [
-        { id: 'check', label: 'Verificando itens', description: 'Buscando itens com status "Processado"...', status: 'running' },
+        { id: 'check', label: 'Verificando itens processados', description: 'Buscando itens prontos para publicar...', status: 'running' },
+        { id: 'dedup', label: 'Checando duplicatas', description: 'Removendo notícias já existentes no site...', status: 'idle' },
         { id: 'publish', label: 'Publicando no portal', description: 'Enviando cada notícia para o site...', status: 'idle' },
-        { id: 'index', label: 'Finalizando', description: 'Atualizando índices e categorias...', status: 'idle' },
       ],
     });
     addLog('⚡ Iniciando publicação em lote...');
-    startFakeProgress(40, 8000);
+    startFakeProgress(40, 10000);
 
     publishAllProcessed.mutate(undefined, {
       onSuccess: (data) => {
         finalizeProgress(100);
-        setStepStatus('check', 'done', 'Itens verificados');
+        setStepStatus('check', 'done', `${data?.total ?? '?'} itens verificados`);
+        setStepStatus('dedup', 'done', `${data?.skipped ?? 0} duplicata(s) removida(s)`);
         setStepStatus('publish', 'done', `${data?.published ?? '?'} publicado(s)`);
-        setStepStatus('index', 'done', 'Concluído');
-        addLog(`✅ ${data?.published ?? '?'} publicados, ${data?.failed ?? 0} erros`);
+        addLog(`✅ ${data?.published ?? '?'} publicados`);
+        if ((data?.skipped ?? 0) > 0) addLog(`⚠️ ${data.skipped} duplicata(s) ignorada(s) automaticamente`);
+        if ((data?.failed ?? 0) > 0) addLog(`❌ ${data.failed} erro(s)`);
       },
       onError: (err) => {
         finalizeProgress(progress.fakeProgress);
@@ -507,17 +509,15 @@ export default function RegionalQueue() {
               </Button>
             )}
 
-            {processedItemsCount > 0 && (
-              <Button 
-                variant="outline"
-                onClick={handlePublishAllProcessed}
-                disabled={isAnyPending}
-                className="border-green-500/30 text-green-600 hover:bg-green-50"
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                {`Publicar Todos (${processedItemsCount})`}
-              </Button>
-            )}
+            <Button 
+              variant="outline"
+              onClick={handlePublishAllProcessed}
+              disabled={isAnyPending || processedItemsCount === 0}
+              className="border-green-500/30 text-green-600 hover:bg-green-50 disabled:opacity-50"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              {`Publicar Todos (${processedItemsCount})`}
+            </Button>
 
             {/* Delete buttons */}
             {selectedIds.length > 0 && (
