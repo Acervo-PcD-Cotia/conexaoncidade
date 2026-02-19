@@ -5,26 +5,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Cluster cities for the Grande Cotia region
 const CLUSTER_CITIES = [
   'Cotia', 'Itapevi', 'Vargem Grande Paulista', 'São Roque', 'Ibiúna',
   'Embu-Guaçu', 'Embu das Artes', 'Itapecerica da Serra', 'São Lourenço da Serra',
   'São Paulo', 'Osasco', 'Jandira', 'Carapicuíba', 'Barueri'
 ];
 
-// Generate 12 mandatory tags
 function generateMandatoryTags(city: string, title: string, content: string): string[] {
-  const tags: string[] = [];
-  tags.push(city);
-  tags.push('regional');
-  tags.push('grande cotia');
-  tags.push('prefeitura');
-  tags.push('governo municipal');
-  tags.push('serviço público');
-  tags.push('administração');
-  tags.push('região oeste');
-  tags.push('são paulo');
-  tags.push('interior paulista');
+  const tags: string[] = [city, 'regional', 'grande cotia', 'prefeitura', 'governo municipal',
+    'serviço público', 'administração', 'região oeste', 'são paulo', 'interior paulista'];
 
   const lowerContent = (title + ' ' + content).toLowerCase();
   if (lowerContent.includes('saúde') || lowerContent.includes('hospital') || lowerContent.includes('ubs')) {
@@ -54,10 +43,9 @@ function generateMandatoryTags(city: string, title: string, content: string): st
     tags.push('atualidades');
   }
 
-  return [...new Set(tags)];
+  return [...new Set(tags)].slice(0, 12);
 }
 
-// Generate slug from title
 function generateSlug(title: string): string {
   return title
     .toLowerCase()
@@ -68,7 +56,6 @@ function generateSlug(title: string): string {
     .substring(0, 100);
 }
 
-// Sanitize HTML
 function sanitizeHtml(html: string): string {
   return html
     .replace(/<script[\s\S]*?<\/script>/gi, '')
@@ -79,52 +66,28 @@ function sanitizeHtml(html: string): string {
     .replace(/javascript:/gi, '');
 }
 
-// Extract clean text from HTML
 function extractText(html: string): string {
-  return html
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
-// Validate image URL
 async function validateImageUrl(url: string): Promise<string | null> {
   if (!url) return null;
   try {
-    const response = await fetch(url, { method: 'HEAD' });
+    const response = await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(5000) });
     if (response.ok) return url;
   } catch {}
-
-  const altUrl = url.endsWith('.jpeg')
-    ? url.replace(/\.jpeg$/i, '.jpg')
-    : url.endsWith('.jpg')
-    ? url.replace(/\.jpg$/i, '.jpeg')
-    : null;
-
-  if (altUrl) {
-    try {
-      const response = await fetch(altUrl, { method: 'HEAD' });
-      if (response.ok) {
-        console.log(`[Image] Fixed extension: ${url} -> ${altUrl}`);
-        return altUrl;
-      }
-    } catch {}
-  }
-
-  console.log(`[Image] URL not accessible: ${url}`);
   return null;
 }
 
-// Fetch full content from URL
 async function fetchFullContent(url: string): Promise<{ content: string; images: string[] }> {
   console.log(`[Fetch] Getting content from: ${url}`);
-
   try {
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       },
+      signal: AbortSignal.timeout(15000),
     });
 
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -140,10 +103,7 @@ async function fetchFullContent(url: string): Promise<{ content: string; images:
 
     for (const pattern of contentPatterns) {
       const match = html.match(pattern);
-      if (match && match[1].length > 200) {
-        content = match[1];
-        break;
-      }
+      if (match && match[1].length > 200) { content = match[1]; break; }
     }
 
     if (!content) {
@@ -164,76 +124,68 @@ async function fetchFullContent(url: string): Promise<{ content: string; images:
     return { content, images };
   } catch (error) {
     console.error(`[Fetch] Error: ${error}`);
-    throw error;
+    return { content: '', images: [] };
   }
 }
 
-// Rewrite content using Lovable AI
+// Rewrite with AI — returns null on failure (allowing fallback to direct publish)
 async function rewriteWithAI(
   originalTitle: string,
   originalContent: string,
   city: string,
   apiKey: string
-): Promise<{
-  title: string;
-  content: string;
-  metaTitle: string;
-  metaDescription: string;
-  summary: string;
-}> {
+): Promise<{ title: string; content: string; metaTitle: string; metaDescription: string; summary: string } | null> {
   console.log(`[AI] Rewriting content for ${city}...`);
 
   const cleanContent = extractText(originalContent).substring(0, 4000);
 
   const systemPrompt = `Você é um editor jornalístico especializado em notícias regionais da Grande Cotia, SP.
-Sua tarefa é reescrever notícias de prefeituras de forma 100% original, NUNCA copiando título ou estrutura.
+Reescreva a notícia de forma 100% original, NUNCA copiando título ou estrutura.
 
-REGRAS OBRIGATÓRIAS:
-1. Criar título COMPLETAMENTE NOVO (nunca usar palavras do título original na mesma ordem)
-2. Incluir contexto geográfico ("região de Cotia", "Grande Cotia", "região oeste de SP")
-3. Mencionar naturalmente cidades vizinhas quando relevante
-4. Manter tom jornalístico profissional
-5. Usar parágrafos curtos (máx 3 linhas)
-6. O conteúdo deve ter entre 300-600 palavras
-7. Formato: HTML limpo com <p>, <strong>, <ul>, <li> apenas
+REGRAS:
+1. Criar título COMPLETAMENTE NOVO (máx 70 caracteres)
+2. Incluir contexto geográfico ("região de Cotia", "Grande Cotia")
+3. Tom jornalístico profissional, parágrafos curtos (máx 3 linhas)
+4. Conteúdo entre 300-600 palavras
+5. Formato: HTML limpo com <p>, <strong>, <ul>, <li> apenas
 
 CIDADE FONTE: ${city}
 
-Retorne um JSON válido com:
+Retorne JSON válido:
 {
-  "title": "Título completamente novo (máx 70 caracteres)",
-  "content": "Conteúdo HTML reescrito",
-  "metaTitle": "Meta title SEO (máx 60 caracteres)",
-  "metaDescription": "Meta description (máx 155 caracteres)",
-  "summary": "Resumo em 1-2 frases (máx 200 caracteres)"
+  "title": "Título novo (máx 70 chars)",
+  "content": "HTML reescrito",
+  "metaTitle": "Meta title SEO (máx 60 chars)",
+  "metaDescription": "Meta description (máx 155 chars)",
+  "summary": "Resumo 1-2 frases (máx 200 chars)"
 }`;
 
-  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'google/gemini-2.5-flash',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: `TÍTULO ORIGINAL: ${originalTitle}\n\nCONTEÚDO ORIGINAL:\n${cleanContent}` }
-      ],
-      response_format: { type: 'json_object' },
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error(`[AI] Error: ${response.status} - ${errorText}`);
-    throw new Error(`AI rewrite failed: ${response.status}`);
-  }
-
-  const data = await response.json();
-  const resultText = data.choices?.[0]?.message?.content || '';
-
   try {
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `TÍTULO: ${originalTitle}\n\nCONTEÚDO:\n${cleanContent}` }
+        ],
+        response_format: { type: 'json_object' },
+      }),
+      signal: AbortSignal.timeout(30000),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[AI] Error: ${response.status} - ${errorText}`);
+      return null; // Return null to trigger fallback
+    }
+
+    const data = await response.json();
+    const resultText = data.choices?.[0]?.message?.content || '';
     const result = JSON.parse(resultText);
     return {
       title: result.title || originalTitle,
@@ -243,30 +195,51 @@ Retorne um JSON válido com:
       summary: result.summary || '',
     };
   } catch (e) {
-    console.error('[AI] Failed to parse response:', resultText);
-    throw new Error('Failed to parse AI response');
+    console.error('[AI] Failed:', e);
+    return null; // Return null to trigger fallback
   }
 }
 
-// Check if article already exists in news table (duplicate detection)
-async function checkDuplicate(supabase: any, canonicalUrl: string, title: string): Promise<{ isDuplicate: boolean; reason: string }> {
-  // Check by source URL
-  const { data: byUrl } = await supabase
-    .from('news')
-    .select('id, title')
-    .or(`source.eq.${canonicalUrl},source_url.eq.${canonicalUrl}`)
-    .limit(1);
+// Build direct content from original without AI rewrite
+function buildDirectContent(title: string, excerpt: string, content: string, city: string): {
+  title: string; content: string; metaTitle: string; metaDescription: string; summary: string;
+} {
+  const cleanExcerpt = extractText(excerpt || '').substring(0, 300);
+  const cleanContent = extractText(content || '').substring(0, 2000);
+  const bodyText = cleanContent || cleanExcerpt || title;
 
-  if (byUrl && byUrl.length > 0) {
-    console.log(`[Duplicate] Found by URL: ${canonicalUrl}`);
-    return { isDuplicate: true, reason: `Já publicado: URL duplicada (${byUrl[0].title?.substring(0, 50)})` };
+  // Build simple HTML content from original
+  const paragraphs = bodyText.split(/\.\s+/)
+    .filter(p => p.trim().length > 20)
+    .slice(0, 8)
+    .map(p => `<p>${p.trim()}${p.trim().endsWith('.') ? '' : '.'}</p>`)
+    .join('\n');
+
+  const htmlContent = paragraphs || `<p><strong>${cleanExcerpt || title}</strong></p>`;
+  const metaTitle = title.substring(0, 60);
+  const metaDesc = cleanExcerpt.substring(0, 155) || title.substring(0, 155);
+  const summary = cleanExcerpt.substring(0, 200) || title.substring(0, 200);
+
+  return { title, content: htmlContent, metaTitle, metaDescription: metaDesc, summary };
+}
+
+async function checkDuplicate(supabase: any, canonicalUrl: string, title: string): Promise<{ isDuplicate: boolean; reason: string }> {
+  if (canonicalUrl) {
+    const { data: byUrl } = await supabase
+      .from('news')
+      .select('id, title')
+      .or(`source.eq.${canonicalUrl},source_url.eq.${canonicalUrl}`)
+      .limit(1);
+
+    if (byUrl && byUrl.length > 0) {
+      return { isDuplicate: true, reason: `Já publicado: URL duplicada` };
+    }
   }
 
-  // Check by slug
   const slug = generateSlug(title);
   const { data: bySlug } = await supabase
     .from('news')
-    .select('id, title')
+    .select('id')
     .eq('slug', slug)
     .limit(1);
 
@@ -277,22 +250,19 @@ async function checkDuplicate(supabase: any, canonicalUrl: string, title: string
   return { isDuplicate: false, reason: '' };
 }
 
-// Publish a processed item to news table
 async function publishItemToNews(supabase: any, item: any, source: any): Promise<{ newsId: string; slug: string; title: string }> {
   const rewrittenTitle = item.rewritten_title || item.title || 'Notícia';
   const rewrittenContent = item.rewritten_content || item.content || '';
   const metaTitle = item.seo_meta_title || rewrittenTitle.substring(0, 60);
   const metaDescription = item.seo_meta_description || '';
-  const excerpt = extractText(rewrittenContent).substring(0, 160);
+  const excerpt = extractText(rewrittenContent).substring(0, 160) || extractText(item.excerpt || '').substring(0, 160);
   const imageUrl = item.generated_image_url || item.image_url || null;
   const tags = generateMandatoryTags(source.city, rewrittenTitle, rewrittenContent);
 
-  // Ensure unique slug
   const baseSlug = generateSlug(rewrittenTitle);
   const timestamp = Date.now().toString(36);
-  let slug = `${baseSlug}-${timestamp}`;
+  const slug = `${baseSlug}-${timestamp}`;
 
-  // Get or create "Cidades" category
   let categoryId: string | null = null;
   const { data: category } = await supabase
     .from('categories')
@@ -301,26 +271,24 @@ async function publishItemToNews(supabase: any, item: any, source: any): Promise
     .single();
   categoryId = category?.id || null;
 
-  // Validate image URL
   const validatedImageUrl = imageUrl ? await validateImageUrl(imageUrl) : null;
   const finalImageUrl = validatedImageUrl || imageUrl;
 
   // PRESERVE original published date from the source
   const publishedAt = item.published_at || new Date().toISOString();
 
-  // Insert into news
   const { data: newsEntry, error: newsError } = await supabase
     .from('news')
     .insert({
       title: rewrittenTitle,
-      slug: slug,
+      slug,
       content: rewrittenContent,
-      excerpt: excerpt,
+      excerpt,
       featured_image_url: finalImageUrl,
       og_image_url: finalImageUrl,
       card_image_url: finalImageUrl,
-      image_alt: `Imagem ilustrativa: ${source.city}`,
-      image_credit: 'IA | Conexão na Cidade',
+      image_alt: `Imagem: ${source.city} - ${rewrittenTitle.substring(0, 50)}`,
+      image_credit: 'Prefeitura Municipal | Conexão na Cidade',
       meta_title: metaTitle,
       meta_description: metaDescription,
       source: item.canonical_url,
@@ -342,31 +310,18 @@ async function publishItemToNews(supabase: any, item: any, source: any): Promise
   for (const tagName of tags) {
     let tagId: string;
     const { data: existingTag } = await supabase
-      .from('tags')
-      .select('id')
-      .eq('name', tagName)
-      .single();
+      .from('tags').select('id').eq('name', tagName).single();
 
     if (existingTag) {
       tagId = existingTag.id;
     } else {
       const { data: newTag } = await supabase
-        .from('tags')
-        .insert({
-          name: tagName,
-          slug: generateSlug(tagName)
-        })
-        .select('id')
-        .single();
-
+        .from('tags').insert({ name: tagName, slug: generateSlug(tagName) }).select('id').single();
       if (!newTag) continue;
       tagId = newTag.id;
     }
 
-    await supabase
-      .from('news_tags')
-      .insert({ news_id: newsEntry.id, tag_id: tagId })
-      .select();
+    await supabase.from('news_tags').insert({ news_id: newsEntry.id, tag_id: tagId }).select();
   }
 
   return { newsId: newsEntry.id, slug, title: rewrittenTitle };
@@ -381,16 +336,15 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY')!;
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY') || '';
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { item_id, auto_publish = false } = await req.json();
+    const { item_id, auto_publish = false, skip_ai = false } = await req.json();
 
     if (!item_id) throw new Error('item_id is required');
 
-    console.log(`[Process] Starting item: ${item_id}, auto_publish: ${auto_publish}`);
+    console.log(`[Process] Starting item: ${item_id}, auto_publish: ${auto_publish}, skip_ai: ${skip_ai}`);
 
-    // Get item with source info
     const { data: item, error: itemError } = await supabase
       .from('regional_ingest_items')
       .select('*, regional_sources(city, name, mode, tags_default)')
@@ -403,61 +357,33 @@ Deno.serve(async (req) => {
 
     const source = item.regional_sources as { city: string; name: string; mode: string; tags_default: string[] };
 
-    // ─── If item is already processed, just publish it (skip reprocessing) ──────
+    // ─── If item is already processed, just publish it ──────────────────────────
     if (item.status === 'processed' && auto_publish) {
       console.log(`[Process] Item already processed, publishing directly: ${item.rewritten_title}`);
 
-      // Check for duplicates before publishing
       const dupCheck = await checkDuplicate(supabase, item.canonical_url, item.rewritten_title || item.title);
       if (dupCheck.isDuplicate) {
-        console.log(`[Process] Duplicate detected, marking as skipped: ${dupCheck.reason}`);
-        await supabase
-          .from('regional_ingest_items')
+        await supabase.from('regional_ingest_items')
           .update({ status: 'skipped', error_message: dupCheck.reason })
           .eq('id', item_id);
-
-        return new Response(JSON.stringify({
-          success: true,
-          item_id,
-          status: 'skipped',
-          reason: dupCheck.reason,
-        }), {
+        return new Response(JSON.stringify({ success: true, item_id, status: 'skipped', reason: dupCheck.reason }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
       const published = await publishItemToNews(supabase, item, source);
-
-      await supabase
-        .from('regional_ingest_items')
-        .update({
-          status: 'published',
-          news_id: published.newsId,
-          published_at_portal: new Date().toISOString(),
-        })
+      await supabase.from('regional_ingest_items')
+        .update({ status: 'published', news_id: published.newsId, published_at_portal: new Date().toISOString() })
         .eq('id', item_id);
 
-      console.log(`[Process] Published directly: ${published.newsId}`);
-      return new Response(JSON.stringify({
-        success: true,
-        item_id,
-        status: 'published',
-        news_id: published.newsId,
-        slug: published.slug,
-        title: published.title,
-      }), {
+      return new Response(JSON.stringify({ success: true, item_id, status: 'published', news_id: published.newsId, slug: published.slug, title: published.title }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
     // ─── Skip if already published or skipped ───────────────────────────────────
     if (item.status === 'published' || item.status === 'skipped') {
-      return new Response(JSON.stringify({
-        success: true,
-        item_id,
-        status: item.status,
-        message: 'Item already processed',
-      }), {
+      return new Response(JSON.stringify({ success: true, item_id, status: item.status, message: 'Already done' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -465,62 +391,50 @@ Deno.serve(async (req) => {
     // ─── Check for duplicates BEFORE processing ──────────────────────────────────
     const dupCheck = await checkDuplicate(supabase, item.canonical_url, item.title);
     if (dupCheck.isDuplicate) {
-      console.log(`[Process] Duplicate detected before processing: ${dupCheck.reason}`);
-      await supabase
-        .from('regional_ingest_items')
+      await supabase.from('regional_ingest_items')
         .update({ status: 'skipped', error_message: dupCheck.reason })
         .eq('id', item_id);
-
-      return new Response(JSON.stringify({
-        success: true,
-        item_id,
-        status: 'skipped',
-        reason: dupCheck.reason,
-      }), {
+      return new Response(JSON.stringify({ success: true, item_id, status: 'skipped', reason: dupCheck.reason }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
     // Mark as processing
-    await supabase
-      .from('regional_ingest_items')
-      .update({
-        status: 'processing',
-        processing_started_at: new Date().toISOString(),
-      })
+    await supabase.from('regional_ingest_items')
+      .update({ status: 'processing', processing_started_at: new Date().toISOString() })
       .eq('id', item_id);
 
     try {
-      // 1. Fetch full content
+      // 1. Fetch full content (best-effort, won't block if fails)
       const { content: fullContent, images } = await fetchFullContent(item.canonical_url);
 
-      // 2. Rewrite with AI
-      const rewritten = await rewriteWithAI(
-        item.title || 'Notícia',
-        fullContent || item.excerpt || '',
-        source.city,
-        lovableApiKey
-      );
+      // 2. Try AI rewrite — fall back to direct content if AI fails or is skipped
+      let rewritten: { title: string; content: string; metaTitle: string; metaDescription: string; summary: string } | null = null;
 
-      // 3. Generate tags
+      if (!skip_ai && lovableApiKey) {
+        rewritten = await rewriteWithAI(item.title || 'Notícia', fullContent || item.excerpt || '', source.city, lovableApiKey);
+      }
+
+      // FALLBACK: If AI failed/unavailable, use original content directly
+      if (!rewritten) {
+        console.log(`[Process] AI unavailable, using direct content for: ${item.title}`);
+        rewritten = buildDirectContent(item.title, item.excerpt || '', fullContent || item.content || '', source.city);
+      }
+
       const tags = generateMandatoryTags(source.city, rewritten.title, rewritten.content);
-
-      // 4. Generate slug
       const baseSlug = generateSlug(rewritten.title);
       const timestamp = Date.now().toString(36);
       const slug = `${baseSlug}-${timestamp}`;
 
-      // 5. Determine image
       const candidateImageUrl = images[0] || item.image_url || null;
       const validatedImageUrl = candidateImageUrl ? await validateImageUrl(candidateImageUrl) : null;
       const finalImageUrl = validatedImageUrl || candidateImageUrl;
 
-      // 6. Update item as processed
-      await supabase
-        .from('regional_ingest_items')
+      // Update item as processed
+      await supabase.from('regional_ingest_items')
         .update({
           status: 'processed',
-          content: fullContent,
+          content: fullContent || item.content,
           rewritten_title: rewritten.title,
           rewritten_content: rewritten.content,
           seo_meta_title: rewritten.metaTitle,
@@ -532,20 +446,16 @@ Deno.serve(async (req) => {
         })
         .eq('id', item_id);
 
-      console.log(`[Process] Item processed successfully: ${rewritten.title}`);
+      console.log(`[Process] Item processed: ${rewritten.title}`);
 
-      // 7. Auto-publish if requested
+      // Auto-publish if requested
       const shouldPublish = auto_publish || source.mode === 'auto_publish';
 
       if (shouldPublish) {
         console.log('[Process] Auto-publishing to news...');
 
-        // Re-fetch updated item for publish
         const { data: updatedItem } = await supabase
-          .from('regional_ingest_items')
-          .select('*')
-          .eq('id', item_id)
-          .single();
+          .from('regional_ingest_items').select('*').eq('id', item_id).single();
 
         const published = await publishItemToNews(supabase, updatedItem || {
           ...item,
@@ -556,36 +466,18 @@ Deno.serve(async (req) => {
           generated_image_url: finalImageUrl,
         }, source);
 
-        await supabase
-          .from('regional_ingest_items')
-          .update({
-            status: 'published',
-            news_id: published.newsId,
-            published_at_portal: new Date().toISOString(),
-          })
+        await supabase.from('regional_ingest_items')
+          .update({ status: 'published', news_id: published.newsId, published_at_portal: new Date().toISOString() })
           .eq('id', item_id);
 
-        console.log(`[Process] Published as news: ${published.newsId}`);
+        console.log(`[Process] Published: ${published.newsId}`);
 
-        return new Response(JSON.stringify({
-          success: true,
-          item_id,
-          status: 'published',
-          news_id: published.newsId,
-          slug: published.slug,
-          title: rewritten.title,
-        }), {
+        return new Response(JSON.stringify({ success: true, item_id, status: 'published', news_id: published.newsId, slug: published.slug, title: rewritten.title }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
-      return new Response(JSON.stringify({
-        success: true,
-        item_id,
-        status: 'processed',
-        title: rewritten.title,
-        tags,
-      }), {
+      return new Response(JSON.stringify({ success: true, item_id, status: 'processed', title: rewritten.title, tags }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
 
@@ -593,13 +485,8 @@ Deno.serve(async (req) => {
       const errorMessage = processError instanceof Error ? processError.message : 'Unknown error';
       console.error(`[Process] Error: ${errorMessage}`);
 
-      await supabase
-        .from('regional_ingest_items')
-        .update({
-          status: 'failed',
-          error_message: errorMessage,
-          retry_count: (item.retry_count || 0) + 1,
-        })
+      await supabase.from('regional_ingest_items')
+        .update({ status: 'failed', error_message: errorMessage, retry_count: (item.retry_count || 0) + 1 })
         .eq('id', item_id);
 
       throw processError;
@@ -607,10 +494,7 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('[Regional Process] Fatal error:', error);
-    return new Response(JSON.stringify({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    }), {
+    return new Response(JSON.stringify({ success: false, error: error instanceof Error ? error.message : 'Unknown error' }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
