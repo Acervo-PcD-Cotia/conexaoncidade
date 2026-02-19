@@ -184,6 +184,7 @@ const portalManagementItems: MenuItem[] = [
   { title: "Categorias", url: "/spah/painel/categories", icon: FolderTree },
   { title: "Tags", url: "/spah/painel/tags", icon: Tag },
   { title: "Logo do Site", url: "/spah/painel/settings/logo", icon: ImageIcon },
+  { title: "Provedores de IA", url: "/spah/painel/settings/ai-providers", icon: Bot },
   { title: "Aparência", url: "/spah/painel/settings/appearance", icon: Palette },
   { title: "Modelo do Portal", url: "/spah/painel/settings/template", icon: Settings },
   { title: "Vocabulário", url: "/spah/painel/settings/vocabulary", icon: Languages },
