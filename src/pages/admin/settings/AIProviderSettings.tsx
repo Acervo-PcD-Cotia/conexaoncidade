@@ -155,6 +155,10 @@ export default function AIProviderSettings() {
       ...prev,
       activeProviderId: providerId,
       activeModel: provider.defaultModel,
+      // Garante que o provedor selecionado manualmente sempre esteja na lista de habilitados
+      enabledProviders: prev.enabledProviders.includes(providerId)
+        ? prev.enabledProviders
+        : [...prev.enabledProviders, providerId],
     }));
   };
 
@@ -263,7 +267,7 @@ export default function AIProviderSettings() {
                     </p>
                     {config.mode === "manual" && (
                       <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
-                        {AI_PROVIDERS.filter((p) => config.enabledProviders.includes(p.id)).map((p) => (
+                        {AI_PROVIDERS.map((p) => (
                           <button
                             key={p.id}
                             onClick={(e) => { e.stopPropagation(); selectProvider(p.id); }}
@@ -424,11 +428,11 @@ export default function AIProviderSettings() {
                                 <Zap className="h-2.5 w-2.5 mr-1" /> Nativo
                               </Badge>
                             ) : hasKey ? (
-                              <Badge variant="secondary" className="text-[10px] bg-green-500/10 text-green-600">
+                              <Badge variant="secondary" className="text-[10px] bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
                                 <CheckCircle className="h-2.5 w-2.5 mr-1" /> Chave configurada
                               </Badge>
                             ) : (
-                              <Badge variant="outline" className="text-[10px] text-orange-500 border-orange-300">
+                              <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-300 dark:text-amber-400 dark:border-amber-700">
                                 <Key className="h-2.5 w-2.5 mr-1" /> Chave necessária
                               </Badge>
                             )}
@@ -463,9 +467,9 @@ export default function AIProviderSettings() {
                   <span className="text-lg">{provider.logo}</span>
                   <CardTitle className="text-sm">{provider.name}</CardTitle>
                   {config.customApiKeys[provider.id] && (
-                    <Badge variant="secondary" className="text-[10px] bg-green-500/10 text-green-600 ml-auto">
-                      <CheckCircle className="h-2.5 w-2.5 mr-1" /> Configurada
-                    </Badge>
+                     <Badge variant="secondary" className="text-[10px] bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 ml-auto">
+                       <CheckCircle className="h-2.5 w-2.5 mr-1" /> Configurada
+                     </Badge>
                   )}
                 </div>
               </CardHeader>
