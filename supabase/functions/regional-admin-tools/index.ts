@@ -196,10 +196,10 @@ Deno.serve(async (req) => {
       }
 
       case 'publish_all_processed': {
-        // Publish ALL processed items at once
+        // Publish ALL processed items — send with auto_publish:true so regional-process-item publishes directly
         const { data: items, error: fetchError } = await supabase
           .from('regional_ingest_items')
-          .select('id')
+          .select('id, canonical_url, title, rewritten_title')
           .eq('status', 'processed')
           .order('created_at', { ascending: true })
           .limit(100);
@@ -210,16 +210,18 @@ Deno.serve(async (req) => {
           return new Response(JSON.stringify({ 
             success: true, 
             published: 0, 
+            skipped: 0,
             message: 'No processed items to publish' 
           }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
         }
 
-        // Publish in batches of 3 concurrently
+        // Publish in batches of 3 concurrently, always with auto_publish:true
         const pubBatchSize = 3;
         let pubSuccessful = 0;
         let pubFailed = 0;
+        let pubSkipped = 0;
 
         for (let i = 0; i < items.length; i += pubBatchSize) {
           const batch = items.slice(i, i + pubBatchSize);
@@ -234,17 +236,28 @@ Deno.serve(async (req) => {
                 body: JSON.stringify({ item_id: item.id, auto_publish: true }),
               });
               if (!response.ok) throw new Error(`HTTP ${response.status}`);
-              return response.json();
+              const data = await response.json();
+              return data;
             })
           );
 
-          pubSuccessful += results.filter(r => r.status === 'fulfilled').length;
-          pubFailed += results.filter(r => r.status === 'rejected').length;
+          for (const result of results) {
+            if (result.status === 'fulfilled') {
+              if (result.value?.status === 'skipped') {
+                pubSkipped++;
+              } else {
+                pubSuccessful++;
+              }
+            } else {
+              pubFailed++;
+            }
+          }
         }
 
         return new Response(JSON.stringify({
           success: true,
           published: pubSuccessful,
+          skipped: pubSkipped,
           failed: pubFailed,
           total: items.length,
         }), {
