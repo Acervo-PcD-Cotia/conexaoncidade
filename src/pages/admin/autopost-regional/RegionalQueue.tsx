@@ -206,6 +206,7 @@ export default function RegionalQueue() {
   const runIngest = useRunRegionalIngest();
   const deleteItems = useDeleteRegionalItems();
   const deleteByStatus = useDeleteRegionalItemsByStatus();
+  const publishAllDirect = usePublishAllDirect();
 
   // ── Progress helpers ────────────────────────────────────────────────────────
   const startFakeProgress = (targetPct: number, durationMs: number) => {
@@ -378,6 +379,41 @@ export default function RegionalQueue() {
     });
   };
 
+  const handlePublishAllDirect = () => {
+    const totalToPublish = (queue?.filter(i => i.status === 'new' || i.status === 'failed' || i.status === 'processed').length) || 0;
+    setProgress({
+      isOpen: true,
+      title: '⚡ Publicar Tudo Diretamente',
+      fakeProgress: 0,
+      currentStep: 0,
+      logs: [],
+      steps: [
+        { id: 'reset', label: 'Resetando itens com erro', description: 'Reativando itens que falharam anteriormente...', status: 'running' },
+        { id: 'dedup', label: 'Verificando duplicatas', description: 'Filtrando notícias já publicadas no site...', status: 'idle' },
+        { id: 'publish', label: `Publicando ${totalToPublish} notícias`, description: 'Enviando todas as notícias para o portal (sem reescrita IA)...', status: 'idle' },
+      ],
+    });
+    addLog(`⚡ Iniciando publicação direta de ${totalToPublish} itens...`);
+    startFakeProgress(80, 30000);
+
+    publishAllDirect.mutate(undefined, {
+      onSuccess: (data) => {
+        finalizeProgress(100);
+        setStepStatus('reset', 'done', 'Itens com erro reativados');
+        setStepStatus('dedup', 'done', `${data?.skipped ?? 0} duplicata(s) ignorada(s)`);
+        setStepStatus('publish', 'done', `${data?.published ?? '?'} publicado(s) de ${data?.total ?? '?'}`);
+        addLog(`✅ ${data?.published ?? '?'} notícias publicadas com sucesso!`);
+        if ((data?.skipped ?? 0) > 0) addLog(`⚠️ ${data.skipped} duplicata(s) já existiam no site`);
+        if ((data?.failed ?? 0) > 0) addLog(`❌ ${data.failed} erro(s) durante publicação`);
+      },
+      onError: (err) => {
+        finalizeProgress(progress.fakeProgress);
+        setStepStatus('reset', 'error', err.message);
+        addLog(`❌ Erro: ${err.message}`);
+      },
+    });
+  };
+
   const filteredQueue = queue?.filter((item) => {
     const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
     const matchesSearch = !searchTerm || 
@@ -389,7 +425,7 @@ export default function RegionalQueue() {
   const newItemsCount = queue?.filter(item => item.status === 'new').length || 0;
   const processedItemsCount = queue?.filter(item => item.status === 'processed').length || 0;
   const failedItemsCount = queue?.filter(item => item.status === 'failed').length || 0;
-  const isAnyPending = fullPipeline.isPending || processAllNew.isPending || publishAllProcessed.isPending || runIngest.isPending;
+  const isAnyPending = fullPipeline.isPending || processAllNew.isPending || publishAllProcessed.isPending || runIngest.isPending || publishAllDirect.isPending;
 
   const toggleItemSelection = (id: string) => {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
@@ -517,6 +553,17 @@ export default function RegionalQueue() {
             >
               <Upload className="h-4 w-4 mr-2" />
               {`Publicar Todos (${processedItemsCount})`}
+            </Button>
+
+            {/* PUBLISH ALL DIRECT - handles new + failed + processed without AI */}
+            <Button 
+              onClick={handlePublishAllDirect}
+              disabled={isAnyPending}
+              className="bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white"
+              size="lg"
+            >
+              <Send className="h-4 w-4 mr-2" />
+              ⚡ Publicar Tudo Direto ({(queue?.filter(i => i.status === 'new' || i.status === 'failed' || i.status === 'processed').length) || 0})
             </Button>
 
             {/* Delete buttons */}

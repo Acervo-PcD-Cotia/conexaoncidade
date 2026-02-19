@@ -365,8 +365,18 @@ Deno.serve(async (req) => {
 
         if (itemError || !item) throw new Error('Item not found');
 
-        if (item.status !== 'processed') {
-          throw new Error('Item must be processed before publishing');
+        // Allow publishing from any status except already published/skipped
+        if (item.status === 'published') {
+          return new Response(JSON.stringify({ success: true, status: 'already_published', message: 'Already published' }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // If failed, reset to new first
+        if (item.status === 'failed') {
+          await supabase.from('regional_ingest_items')
+            .update({ status: 'new', error_message: null, retry_count: 0 })
+            .eq('id', item_id);
         }
 
         const response = await fetch(`${supabaseUrl}/functions/v1/regional-process-item`, {
@@ -375,7 +385,7 @@ Deno.serve(async (req) => {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${supabaseKey}`,
           },
-          body: JSON.stringify({ item_id, auto_publish: true }),
+          body: JSON.stringify({ item_id, auto_publish: true, skip_ai: item.status !== 'processed' }),
         });
 
         const result = await response.json();
