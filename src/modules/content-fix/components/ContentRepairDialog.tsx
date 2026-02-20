@@ -82,11 +82,11 @@ export function ContentRepairDialog({
 
       try {
         if (mode === "content") {
-          // Fetch content from source and update
           const { data, error } = await supabase.functions.invoke("fix-news-content", {
             body: { newsId: item.id, sourceUrl: item.source, mode: "content" },
           });
           if (error) throw error;
+          if (data?.success === false) throw new Error(data?.error || "Erro desconhecido");
           newResults[i] = {
             ...newResults[i],
             status: "success",
@@ -94,11 +94,11 @@ export function ContentRepairDialog({
             newValue: data?.preview,
           };
         } else {
-          // Fix title/subtitle using AI
           const { data, error } = await supabase.functions.invoke("fix-news-content", {
             body: { newsId: item.id, sourceUrl: item.source, mode: "title" },
           });
           if (error) throw error;
+          if (data?.success === false) throw new Error(data?.error || "Erro desconhecido");
           newResults[i] = {
             ...newResults[i],
             status: "success",
@@ -107,10 +107,19 @@ export function ContentRepairDialog({
           };
         }
       } catch (err) {
+        const msg = err instanceof Error ? err.message : "Erro ao processar";
+        // User-friendly messages for common errors
+        const friendlyMsg = msg.includes("402")
+          ? "Créditos Lovable AI esgotados. Acesse Configurações > IA."
+          : msg.includes("429")
+          ? "Limite de requisições atingido. Aguarde e tente novamente."
+          : msg.includes("Failed to send")
+          ? "Erro de conexão com a função de IA."
+          : msg;
         newResults[i] = {
           ...newResults[i],
           status: "error",
-          message: err instanceof Error ? err.message : "Erro ao processar",
+          message: friendlyMsg,
         };
       }
 
