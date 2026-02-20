@@ -32,8 +32,8 @@ const AI_PROVIDERS: AIProvider[] = [
     id: "lovable",
     name: "Lovable AI",
     description: "Gateway nativo da Lovable. Acessa Gemini e GPT-5 sem necessidade de chave própria. Recomendado.",
-    models: ["google/gemini-3-flash-preview", "google/gemini-2.5-flash", "google/gemini-2.5-pro", "google/gemini-3-pro-preview", "openai/gpt-5-mini", "openai/gpt-5"],
-    defaultModel: "google/gemini-3-flash-preview",
+    models: ["auto", "google/gemini-3-flash-preview", "google/gemini-2.5-flash", "google/gemini-2.5-pro", "google/gemini-3-pro-preview", "openai/gpt-5-mini", "openai/gpt-5"],
+    defaultModel: "auto",
     color: "from-violet-600 to-purple-500",
     logo: "🪄",
     apiKeyRequired: false,
@@ -108,7 +108,7 @@ interface AIConfig {
 const DEFAULT_CONFIG: AIConfig = {
   mode: "manual",
   activeProviderId: "lovable",
-  activeModel: "google/gemini-3-flash-preview",
+  activeModel: "auto",
   enabledProviders: ["lovable", "gemini", "openai"],
   alternatingInterval: 10,
   customApiKeys: {},
@@ -381,7 +381,12 @@ export default function AIProviderSettings() {
                           : "hover:border-primary/40 hover:bg-accent"
                       )}
                     >
-                      <span>{model}</span>
+                      <span className="flex items-center gap-2">
+                        {model === "auto" && <Zap className="h-3.5 w-3.5 text-primary" />}
+                        {model === "auto" ? (
+                          <span>Automático <span className="text-xs text-muted-foreground font-normal">(Lovable seleciona o melhor modelo)</span></span>
+                        ) : model}
+                      </span>
                       {config.activeModel === model && <CheckCircle className="h-4 w-4" />}
                     </button>
                   ))}
