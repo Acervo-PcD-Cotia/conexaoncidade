@@ -6,6 +6,64 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// ── QUALITY GATE ─────────────────────────────────────────────────────────────
+function extractPlainText(html: string): string {
+  return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function validateNewsQuality(params: {
+  title: string;
+  content: string;
+  source: string | null;
+  imageUrl: string | null;
+}): string[] {
+  const errors: string[] = [];
+
+  // 1. Title must not contain HTML entities
+  if (
+    params.title &&
+    (/&#[0-9]+;/.test(params.title) ||
+      /&amp;/.test(params.title) ||
+      /&lt;/.test(params.title) ||
+      /&gt;/.test(params.title) ||
+      /&quot;/.test(params.title) ||
+      /&[a-z]+;/.test(params.title))
+  ) {
+    errors.push("Título contém entidades HTML não decodificadas");
+  }
+
+  // 2. Content must be meaningful
+  const plainText = extractPlainText(params.content || "");
+  if (!params.content || plainText.length < 200) {
+    errors.push(`Conteúdo insuficiente: ${plainText.length} chars (mínimo: 200)`);
+  }
+
+  // 3. Source mandatory
+  if (!params.source || params.source.trim() === "") {
+    errors.push("Notícia sem fonte de referência");
+  }
+
+  // 4. Image must not be a generic thumbnail
+  if (params.imageUrl) {
+    const lowerUrl = params.imageUrl.toLowerCase();
+    if (
+      lowerUrl.includes("_0001") ||
+      lowerUrl.includes("-120x86") ||
+      lowerUrl.includes("-150x") ||
+      lowerUrl.includes("generico") ||
+      lowerUrl.includes("placeholder") ||
+      lowerUrl.includes("default-image") ||
+      lowerUrl.includes("no-image") ||
+      lowerUrl.includes("thumbnail")
+    ) {
+      errors.push("Imagem genérica ou thumbnail detectada");
+    }
+  }
+
+  return errors;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -46,6 +104,24 @@ serve(async (req) => {
 
     console.log(`Publishing post: ${post.final_title}`);
 
+    // ── QUALITY GATE ─────────────────────────────────────────────
+    const qualityErrors = validateNewsQuality({
+      title: post.final_title || "",
+      content: post.content_html || "",
+      source: post.source_credit || post.source_url || null,
+      imageUrl: post.hero_image_url || null,
+    });
+
+    if (qualityErrors.length > 0) {
+      console.warn(`[QualityGate] BLOCKED: "${post.final_title}" — ${qualityErrors.join("; ")}`);
+      return new Response(
+        JSON.stringify({ error: "Bloqueado pelo Quality Gate", details: qualityErrors }),
+        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    console.log(`[QualityGate] Passed: "${post.final_title}"`);
+    // ─────────────────────────────────────────────────────────────
+
     // Validate required fields
     const validationErrors: string[] = [];
 
@@ -71,7 +147,6 @@ serve(async (req) => {
       validationErrors.push("Imagem de capa é obrigatória");
     }
     if (!post.alt_text && post.hero_image_url) {
-      // Auto-generate alt text if missing
       post.alt_text = `Imagem ilustrativa: ${post.final_title}`;
     }
 
