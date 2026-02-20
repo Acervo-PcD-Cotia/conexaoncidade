@@ -29,6 +29,17 @@ interface AIProvider {
 
 const AI_PROVIDERS: AIProvider[] = [
   {
+    id: "lovable",
+    name: "Lovable AI",
+    description: "Gateway nativo da Lovable. Acessa Gemini e GPT-5 sem necessidade de chave própria. Recomendado.",
+    models: ["google/gemini-3-flash-preview", "google/gemini-2.5-flash", "google/gemini-2.5-pro", "google/gemini-3-pro-preview", "openai/gpt-5-mini", "openai/gpt-5"],
+    defaultModel: "google/gemini-3-flash-preview",
+    color: "from-violet-600 to-purple-500",
+    logo: "🪄",
+    apiKeyRequired: false,
+    nativeKey: true,
+  },
+  {
     id: "gemini",
     name: "Google Gemini",
     description: "Modelos Gemini 2.5 e 3. Excelente para raciocínio multimodal e contexto longo.",
@@ -96,9 +107,9 @@ interface AIConfig {
 
 const DEFAULT_CONFIG: AIConfig = {
   mode: "manual",
-  activeProviderId: "gemini",
+  activeProviderId: "lovable",
   activeModel: "google/gemini-3-flash-preview",
-  enabledProviders: ["gemini", "openai"],
+  enabledProviders: ["lovable", "gemini", "openai"],
   alternatingInterval: 10,
   customApiKeys: {},
   requestCount: 0,
