@@ -112,6 +112,8 @@ import {
   ImageFixer,
   DateFixer,
   ContentValidator,
+  ContentFixer,
+  TitleFixer,
 } from "./modules/content-fix/pages";
 
 // Conexão Academy Pages
@@ -585,6 +587,8 @@ const App = () => (
                         <Route path="content-fix/images" element={<ImageFixer />} />
                         <Route path="content-fix/dates" element={<DateFixer />} />
                         <Route path="content-fix/validator" element={<ContentValidator />} />
+                        <Route path="content-fix/content" element={<ContentFixer />} />
+                        <Route path="content-fix/titles" element={<TitleFixer />} />
                         
                         {/* Conexão Academy Routes */}
                         <Route path="academy" element={<AcademyDashboard />} />

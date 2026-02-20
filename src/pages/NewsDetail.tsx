@@ -106,20 +106,22 @@ export default function NewsDetail() {
   if (isLoading) {
     return (
       <div className="min-h-screen">
-        <div className="bg-[hsl(217,91%,20%)] py-12">
-          <div className="container max-w-4xl text-center">
-            <Skeleton className="h-6 w-24 mx-auto mb-4 bg-white/20" />
-            <Skeleton className="h-12 w-full mb-2 bg-white/20" />
-            <Skeleton className="h-12 w-3/4 mx-auto mb-6 bg-white/20" />
-            <Skeleton className="h-6 w-1/2 mx-auto bg-white/20" />
+        <div className="border-b py-10">
+          <div className="container max-w-[820px]">
+            <Skeleton className="h-4 w-20 mb-4" />
+            <Skeleton className="h-10 w-full mb-2" />
+            <Skeleton className="h-10 w-3/4 mb-6" />
+            <Skeleton className="h-4 w-1/2" />
           </div>
         </div>
-        <div className="container max-w-4xl py-8">
-          <Skeleton className="aspect-video w-full mb-8" />
-          <div className="space-y-4">
+        <div className="container max-w-[820px] py-8">
+          <Skeleton className="aspect-video w-full mb-8 rounded-xl" />
+          <div className="space-y-3">
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
           </div>
         </div>
       </div>

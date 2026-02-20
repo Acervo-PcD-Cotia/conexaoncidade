@@ -338,7 +338,7 @@ export function Header() {
         )}
 
         {/* Services Bar - Individual Links */}
-        <div className="hidden border-t bg-muted/50 lg:block">
+        <div className="hidden border-t bg-background lg:block">
           <div className="container flex items-center justify-center gap-3 py-1">
             {/* 1. Você no Google - blue */}
             {isMenuGoogleEnabled && (
