@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { sanitizeHtml } from '@/hooks/useSanitizedHtml';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -379,8 +380,17 @@ export default function RegionalQueue() {
     });
   };
 
-  const handlePublishAllDirect = () => {
-    const totalToPublish = (queue?.filter(i => i.status === 'new' || i.status === 'failed' || i.status === 'processed').length) || 0;
+  const handlePublishAllDirect = async () => {
+    // Get all publishable items from the current queue data
+    const itemsToPublish = queue?.filter(i => 
+      i.status === 'new' || i.status === 'failed' || i.status === 'processed'
+    ) || [];
+    const totalToPublish = itemsToPublish.length;
+
+    if (totalToPublish === 0) {
+      return;
+    }
+
     setProgress({
       isOpen: true,
       title: '⚡ Publicar Tudo Diretamente',
@@ -388,30 +398,75 @@ export default function RegionalQueue() {
       currentStep: 0,
       logs: [],
       steps: [
-        { id: 'reset', label: 'Resetando itens com erro', description: 'Reativando itens que falharam anteriormente...', status: 'running' },
-        { id: 'dedup', label: 'Verificando duplicatas', description: 'Filtrando notícias já publicadas no site...', status: 'idle' },
-        { id: 'publish', label: `Publicando ${totalToPublish} notícias`, description: 'Enviando todas as notícias para o portal (sem reescrita IA)...', status: 'idle' },
+        { id: 'prepare', label: 'Preparando itens', description: 'Organizando fila de publicação...', status: 'running' },
+        { id: 'publish', label: `Publicando ${totalToPublish} notícias`, description: 'Enviando para o portal (sem reescrita IA)...', status: 'idle' },
+        { id: 'done', label: 'Finalizando', description: 'Atualizando estatísticas...', status: 'idle' },
       ],
     });
-    addLog(`⚡ Iniciando publicação direta de ${totalToPublish} itens...`);
-    startFakeProgress(80, 30000);
 
-    publishAllDirect.mutate(undefined, {
-      onSuccess: (data) => {
-        finalizeProgress(100);
-        setStepStatus('reset', 'done', 'Itens com erro reativados');
-        setStepStatus('dedup', 'done', `${data?.skipped ?? 0} duplicata(s) ignorada(s)`);
-        setStepStatus('publish', 'done', `${data?.published ?? '?'} publicado(s) de ${data?.total ?? '?'}`);
-        addLog(`✅ ${data?.published ?? '?'} notícias publicadas com sucesso!`);
-        if ((data?.skipped ?? 0) > 0) addLog(`⚠️ ${data.skipped} duplicata(s) já existiam no site`);
-        if ((data?.failed ?? 0) > 0) addLog(`❌ ${data.failed} erro(s) durante publicação`);
-      },
-      onError: (err) => {
-        finalizeProgress(progress.fakeProgress);
-        setStepStatus('reset', 'error', err.message);
-        addLog(`❌ Erro: ${err.message}`);
-      },
-    });
+    addLog(`⚡ Iniciando publicação direta de ${totalToPublish} itens...`);
+
+    let published = 0;
+    let skipped = 0;
+    let failed = 0;
+    const BATCH_SIZE = 3; // Small batches to avoid timeouts
+    const BATCH_DELAY = 800; // ms between batches
+
+    setStepStatus('prepare', 'done', `${totalToPublish} itens prontos`);
+    setStepStatus('publish', 'running', 'Iniciando...');
+
+    for (let i = 0; i < itemsToPublish.length; i += BATCH_SIZE) {
+      const batch = itemsToPublish.slice(i, i + BATCH_SIZE);
+
+      // Update progress
+      const pct = Math.round((i / totalToPublish) * 90);
+      setProgress(prev => ({ ...prev, fakeProgress: pct }));
+      setStepStatus('publish', 'running', `${i}/${totalToPublish} processados...`);
+
+      // Process batch concurrently
+      const results = await Promise.allSettled(
+        batch.map(async (item) => {
+          try {
+            const { data, error } = await supabase.functions.invoke('regional-admin-tools', {
+              body: { action: 'publish_item', item_id: item.id },
+            });
+            if (error) throw error;
+            return data;
+          } catch (e: any) {
+            throw new Error(e.message || 'Falha ao publicar');
+          }
+        })
+      );
+
+      for (const result of results) {
+        if (result.status === 'fulfilled') {
+          if (result.value?.status === 'skipped' || result.value?.status === 'already_published') {
+            skipped++;
+          } else {
+            published++;
+          }
+        } else {
+          failed++;
+        }
+      }
+
+      if (i % (BATCH_SIZE * 5) === 0 && i > 0) {
+        addLog(`✅ ${published} publicadas | ⚠️ ${skipped} duplicatas | ❌ ${failed} erros`);
+      }
+
+      // Small delay between batches to avoid overloading
+      if (i + BATCH_SIZE < itemsToPublish.length) {
+        await new Promise(res => setTimeout(res, BATCH_DELAY));
+      }
+    }
+
+    finalizeProgress(100);
+    setStepStatus('publish', 'done', `${published} publicado(s) de ${totalToPublish}`);
+    setStepStatus('done', 'done', 'Concluído!');
+    addLog(`✅ Publicação concluída: ${published} notícias publicadas!`);
+    if (skipped > 0) addLog(`⚠️ ${skipped} duplicata(s) ignoradas (já existiam no site)`);
+    if (failed > 0) addLog(`❌ ${failed} erro(s) durante publicação`);
+    refetch();
   };
 
   const filteredQueue = queue?.filter((item) => {
