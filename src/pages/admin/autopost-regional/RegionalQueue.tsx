@@ -246,7 +246,7 @@ export default function RegionalQueue() {
   };
 
   // ── Action handlers with progress ──────────────────────────────────────────
-  const handleFullPipeline = () => {
+  const handleFullPipeline = async () => {
     setProgress({
       isOpen: true,
       title: '🚀 Pipeline Completo',
@@ -255,30 +255,86 @@ export default function RegionalQueue() {
       logs: [],
       steps: [
         { id: 'ingest', label: 'Ingerindo notícias', description: 'Buscando feeds de todas as fontes ativas...', status: 'running' },
-        { id: 'process', label: 'Processando com IA', description: 'Reescrevendo e gerando SEO para cada item...', status: 'idle' },
-        { id: 'publish', label: 'Publicando notícias', description: 'Enviando itens processados para o portal...', status: 'idle' },
+        { id: 'publish', label: 'Publicando notícias', description: 'Enviando itens para o portal...', status: 'idle' },
+        { id: 'done', label: 'Finalizando', description: 'Atualizando estatísticas...', status: 'idle' },
       ],
     });
     addLog('⚡ Iniciando pipeline completo...');
-    startFakeProgress(30, 8000);
+    startFakeProgress(20, 5000);
 
-    fullPipeline.mutate(undefined, {
-      onSuccess: (data) => {
-        const p = data?.pipeline || data || {};
-        finalizeProgress(100);
-        setStepStatus('ingest', 'done', `${p.ingested ?? '?'} item(s) ingerido(s)`);
-        setStepStatus('process', 'done', `${p.processed ?? '?'} item(s) processado(s)`);
-        setStepStatus('publish', 'done', `${p.published ?? '?'} item(s) publicado(s)`);
-        addLog(`✅ Ingestão: ${p.ingested ?? '?'} itens`);
-        addLog(`✅ Processamento: ${p.processed ?? '?'} itens`);
-        addLog(`✅ Publicação: ${p.published ?? '?'} itens`);
-      },
-      onError: (err) => {
-        finalizeProgress(progress.fakeProgress);
-        setStepStatus('ingest', 'error', err.message);
-        addLog(`❌ Erro: ${err.message}`);
-      },
-    });
+    // Step 1: Ingest
+    try {
+      const { data: ingestData, error: ingestErr } = await supabase.functions.invoke('regional-admin-tools', {
+        body: { action: 'run_all' },
+      });
+      if (ingestErr) throw ingestErr;
+      const totalNew = ingestData?.results?.reduce((s: number, r: any) => s + (r.items_new || 0), 0) || 0;
+      setStepStatus('ingest', 'done', `${totalNew} item(s) capturado(s)`);
+      addLog(`✅ Ingestão concluída: ${totalNew} novos itens`);
+    } catch (e: any) {
+      setStepStatus('ingest', 'error', e.message || 'Erro na ingestão');
+      addLog(`⚠️ Ingestão com erro: ${e.message} — continuando com publicação direta...`);
+    }
+
+    setProgress(prev => ({ ...prev, fakeProgress: 40 }));
+    setStepStatus('publish', 'running', 'Publicando itens existentes...');
+
+    // Step 2: Publish all direct (new + processed + failed) in batches
+    const { data: queueData } = await supabase
+      .from('regional_ingest_items')
+      .select('id, status')
+      .in('status', ['new', 'processed', 'failed'])
+      .order('created_at', { ascending: false })
+      .limit(500);
+
+    const itemsToPublish = queueData || [];
+    addLog(`📋 ${itemsToPublish.length} itens na fila para publicar...`);
+
+    let published = 0;
+    let skipped = 0;
+    let failed = 0;
+    const BATCH_SIZE = 3;
+    const BATCH_DELAY = 600;
+
+    for (let i = 0; i < itemsToPublish.length; i += BATCH_SIZE) {
+      const batch = itemsToPublish.slice(i, i + BATCH_SIZE);
+      const pct = 40 + Math.round((i / Math.max(itemsToPublish.length, 1)) * 55);
+      setProgress(prev => ({ ...prev, fakeProgress: pct }));
+      setStepStatus('publish', 'running', `${i + batch.length}/${itemsToPublish.length} processados...`);
+
+      const results = await Promise.allSettled(
+        batch.map(async (item) => {
+          const { data, error } = await supabase.functions.invoke('regional-admin-tools', {
+            body: { action: 'publish_item', item_id: item.id },
+          });
+          if (error) throw error;
+          return data;
+        })
+      );
+
+      for (const result of results) {
+        if (result.status === 'fulfilled') {
+          if (result.value?.status === 'skipped' || result.value?.status === 'already_published') skipped++;
+          else published++;
+        } else {
+          failed++;
+        }
+      }
+
+      if (i > 0 && i % (BATCH_SIZE * 5) === 0) {
+        addLog(`📊 Progresso: ${published} publicadas | ${skipped} duplicatas | ${failed} erros`);
+      }
+
+      if (i + BATCH_SIZE < itemsToPublish.length) {
+        await new Promise(res => setTimeout(res, BATCH_DELAY));
+      }
+    }
+
+    finalizeProgress(100);
+    setStepStatus('publish', 'done', `${published} publicado(s)`);
+    setStepStatus('done', 'done', 'Pipeline concluído!');
+    addLog(`✅ Pipeline concluído: ${published} publicadas, ${skipped} duplicatas, ${failed} erros`);
+    refetch();
   };
 
   const handleRunIngest = () => {
