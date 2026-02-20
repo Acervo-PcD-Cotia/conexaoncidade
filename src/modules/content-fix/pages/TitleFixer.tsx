@@ -13,11 +13,13 @@ export default function TitleFixer() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  // Fetch all published news - title fixer can work on any article
   const { data: news, isLoading, refetch } = useNewsWithIssues({
-    issueType: "missing_category",
+    issueType: "all",
     limit: 200,
   });
 
+  // Show all news - title/subtitle can always be improved
   const newsToFix = (news || []);
 
   const toggleSelect = (id: string) => {

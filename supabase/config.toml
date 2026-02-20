@@ -227,3 +227,6 @@ verify_jwt = false
 
 [functions.guia-seo]
 verify_jwt = false
+
+[functions.fix-news-content]
+verify_jwt = false
