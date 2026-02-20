@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Wrench, Image, Calendar, ShieldCheck, ArrowRight, AlertCircle } from "lucide-react";
+import { Wrench, Image, Calendar, ShieldCheck, ArrowRight, AlertCircle, FileText, Type } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -94,6 +94,50 @@ export default function ContentFixDashboard() {
           <CardContent>
             <CardDescription className="mb-3">
               Verifique URLs, detecte duplicatas e valide a integridade do conteúdo
+            </CardDescription>
+            <Button variant="ghost" size="sm" className="group-hover:translate-x-1 transition-transform">
+              Acessar <ArrowRight className="h-4 w-4 ml-1" />
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-md transition-shadow cursor-pointer group" onClick={() => navigate("/spah/painel/content-fix/content")}>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-950/30">
+                <FileText className="h-5 w-5 text-purple-600" />
+              </div>
+              <CardTitle className="text-base flex items-center gap-2">
+                Corrigir Conteúdo Vazio
+                <Badge variant="secondary" className="text-xs">IA</Badge>
+              </CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="mb-3">
+              Recupere conteúdo completo da fonte original sem resumir — preservando 95–105% do tamanho
+            </CardDescription>
+            <Button variant="ghost" size="sm" className="group-hover:translate-x-1 transition-transform">
+              Acessar <ArrowRight className="h-4 w-4 ml-1" />
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-md transition-shadow cursor-pointer group" onClick={() => navigate("/spah/painel/content-fix/titles")}>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-950/30">
+                <Type className="h-5 w-5 text-indigo-600" />
+              </div>
+              <CardTitle className="text-base flex items-center gap-2">
+                Corrigir Título e Subtítulo
+                <Badge variant="secondary" className="text-xs">IA</Badge>
+              </CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="mb-3">
+              Aprimore títulos (máx. 60 chars) e gere subtítulos (máx. 160 chars) com IA sem alterar o conteúdo
             </CardDescription>
             <Button variant="ghost" size="sm" className="group-hover:translate-x-1 transition-transform">
               Acessar <ArrowRight className="h-4 w-4 ml-1" />

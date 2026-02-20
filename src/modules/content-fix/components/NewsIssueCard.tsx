@@ -12,7 +12,7 @@ interface NewsIssueCardProps {
   news: NewsWithIssue;
   selected: boolean;
   onSelect: (selected: boolean) => void;
-  issueType: "image" | "date" | "general";
+  issueType: "image" | "date" | "general" | "content" | "title";
 }
 
 export function NewsIssueCard({ news, selected, onSelect, issueType }: NewsIssueCardProps) {
