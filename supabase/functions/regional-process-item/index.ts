@@ -79,6 +79,63 @@ async function validateImageUrl(url: string): Promise<string | null> {
   return null;
 }
 
+// ============================================================
+// QUALITY GATE: Validates news before publishing
+// Returns array of blocking errors (empty = OK to publish)
+// ============================================================
+function validateNewsQuality(params: {
+  title: string;
+  content: string;
+  source: string | null;
+  imageUrl: string | null;
+}): string[] {
+  const errors: string[] = [];
+
+  // 1. Title must not contain HTML entities
+  if (
+    params.title &&
+    (/&#[0-9]+;/.test(params.title) ||
+      /&amp;/.test(params.title) ||
+      /&lt;/.test(params.title) ||
+      /&gt;/.test(params.title) ||
+      /&quot;/.test(params.title) ||
+      /&#x[0-9a-fA-F]+;/.test(params.title) ||
+      /&[a-z]+;/.test(params.title))
+  ) {
+    errors.push('Título contém entidades HTML não decodificadas (ex: &#250; ou &amp;)');
+  }
+
+  // 2. Content must exist and have meaningful length
+  const plainText = extractText(params.content || '');
+  if (!params.content || plainText.length < 200) {
+    errors.push(`Conteúdo insuficiente: apenas ${plainText.length} caracteres de texto (mínimo: 200)`);
+  }
+
+  // 3. Source is mandatory
+  if (!params.source || params.source.trim() === '') {
+    errors.push('Notícia sem fonte de referência');
+  }
+
+  // 4. Image must not be a known generic/thumbnail image
+  if (params.imageUrl) {
+    const lowerUrl = params.imageUrl.toLowerCase();
+    if (
+      lowerUrl.includes('_0001') ||
+      lowerUrl.includes('-120x86') ||
+      lowerUrl.includes('-150x') ||
+      lowerUrl.includes('generico') ||
+      lowerUrl.includes('placeholder') ||
+      lowerUrl.includes('default-image') ||
+      lowerUrl.includes('no-image') ||
+      lowerUrl.includes('thumbnail')
+    ) {
+      errors.push('Imagem genérica ou thumbnail detectada (muito pequena ou sem relação com a notícia)');
+    }
+  }
+
+  return errors;
+}
+
 async function fetchFullContent(url: string): Promise<{ content: string; images: string[] }> {
   console.log(`[Fetch] Getting content from: ${url}`);
   try {
@@ -253,6 +310,22 @@ async function checkDuplicate(supabase: any, canonicalUrl: string, title: string
 async function publishItemToNews(supabase: any, item: any, source: any): Promise<{ newsId: string; slug: string; title: string }> {
   const rewrittenTitle = item.rewritten_title || item.title || 'Notícia';
   const rewrittenContent = item.rewritten_content || item.content || '';
+
+  // ── QUALITY GATE ────────────────────────────────────────────
+  const imageUrl0 = item.generated_image_url || item.image_url || null;
+  const qualityErrors = validateNewsQuality({
+    title: rewrittenTitle,
+    content: rewrittenContent,
+    source: item.canonical_url || item.source_url || source?.name || null,
+    imageUrl: imageUrl0,
+  });
+
+  if (qualityErrors.length > 0) {
+    console.warn(`[QualityGate] BLOQUEADO: "${rewrittenTitle}" — ${qualityErrors.join('; ')}`);
+    throw new Error(`Bloqueado pelo Quality Gate: ${qualityErrors.join('; ')}`);
+  }
+  console.log(`[QualityGate] OK: "${rewrittenTitle}"`);
+  // ────────────────────────────────────────────────────────────
   const metaTitle = item.seo_meta_title || rewrittenTitle.substring(0, 60);
   const metaDescription = item.seo_meta_description || '';
   const excerpt = extractText(rewrittenContent).substring(0, 160) || extractText(item.excerpt || '').substring(0, 160);
