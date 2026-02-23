@@ -242,7 +242,24 @@ export default function NoticiasAI() {
       const subtitle = article.subtitulo || article.resumo?.substring(0, 100) || null;
       // ALWAYS use Redação Conexão na Cidade, ignoring any editor from source
       const editorName = 'Redação Conexão na Cidade';
-      const chapeu = article.chapeu || categoryToUse?.toUpperCase() || null;
+      // Nova lógica do chapéu: CIDADE | CATEGORIA ou BRASIL | CATEGORIA
+      let chapeu = article.chapeu;
+      if (!chapeu || !chapeu.includes('|')) {
+        const cat = (categoryToUse || 'GERAL').toUpperCase();
+        const tagsLower = (article.tags || []).map((t: string) => t.toLowerCase());
+        const isNacional = cat === 'BRASIL' || cat === 'INTERNACIONAL'
+          || tagsLower.includes('brasil') || tagsLower.includes('nacional');
+        if (isNacional) {
+          chapeu = `BRASIL | ${cat}`;
+        } else {
+          const cidadeTag = (article.tags || []).find((t: string) => {
+            const lower = t.toLowerCase();
+            return !['cotia', 'são paulo', 'regional', 'atualidades', 'destaque'].includes(lower)
+              && t.length > 2 && t.length < 30;
+          });
+          chapeu = `${(cidadeTag || 'COTIA').toUpperCase()} | ${cat}`;
+        }
+      }
       const sanitizedSource = sanitizeSource(article.fonte);
       
       // REGRA BLINDADA: Garantir entre 3 e 12 tags

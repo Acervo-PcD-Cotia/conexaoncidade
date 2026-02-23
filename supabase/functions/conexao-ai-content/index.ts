@@ -13,7 +13,7 @@ ESTRUTURA OBRIGATÓRIA (retorne em JSON):
 {
   "titulo": "Título otimizado para SEO, máximo 60 caracteres",
   "slug": "titulo-em-formato-url-amigavel",
-  "chapeu": "CATEGORIA EM MAIÚSCULAS (ex: ECONOMIA, SAÚDE, CULTURA)",
+  "chapeu": "CIDADE | CATEGORIA (ex: COTIA | ECONOMIA) ou BRASIL | CATEGORIA (ex: BRASIL | SAÚDE)",
   "subtitulo": "Linha fina que complementa o título, máximo 120 caracteres",
   "resumo": "2-3 frases respondendo O QUÊ, QUEM, QUANDO, ONDE. Ideal para redes sociais.",
   "conteudo": "Corpo da notícia em HTML com parágrafos <p>. Estrutura: Lead forte, desenvolvimento, conclusão. Parágrafos curtos (2-4 frases). Mínimo 3 parágrafos.",
