@@ -53,11 +53,27 @@ function sanitizeContent(content: string, sourceUrl?: string): string {
 }
 
 // Helper: Ensure article has all required fields with fallbacks
+// Helper: Gerar chapéu com nova lógica CIDADE | CATEGORIA ou BRASIL | CATEGORIA
+function generateChapeuFromArticle(article: any): string {
+  if (article.chapeu && article.chapeu.includes('|')) return article.chapeu;
+  const categoria = (article.categoria || 'GERAL').toUpperCase();
+  const tagsLower = (article.tags || []).map((t: string) => t.toLowerCase());
+  const isNacional = categoria === 'BRASIL' || categoria === 'INTERNACIONAL'
+    || tagsLower.includes('brasil') || tagsLower.includes('nacional');
+  if (isNacional) return `BRASIL | ${categoria}`;
+  const cidadeTag = (article.tags || []).find((t: string) => {
+    const lower = t.toLowerCase();
+    return !['cotia', 'são paulo', 'regional', 'atualidades', 'destaque'].includes(lower)
+      && t.length > 2 && t.length < 30 && /^[A-ZÀ-Úa-zà-ú\s-]+$/.test(t);
+  });
+  return `${(cidadeTag || 'COTIA').toUpperCase()} | ${categoria}`;
+}
+
 function ensureRequiredFields(article: any, sourceUrl?: string): any {
   return {
     ...article,
     subtitulo: article.subtitulo || article.resumo?.substring(0, 100) || 'Saiba mais sobre esta notícia',
-    chapeu: article.chapeu || article.categoria?.toUpperCase() || 'NOTÍCIAS',
+    chapeu: generateChapeuFromArticle(article),
     editor: article.editor || 'Redação Conexão na Cidade',
     fonte: sourceUrl || sanitizeSource(article.fonte),
     conteudo: sanitizeContent(article.conteudo, sourceUrl || article.fonte),
@@ -201,7 +217,7 @@ FORMATO JSON COMPLETO:
   "titulo": "...",
   "slug": "...",
   "subtitulo": "Linha fina descritiva",
-  "chapeu": "CATEGORIA",
+  "chapeu": "CIDADE | CATEGORIA ou BRASIL | CATEGORIA",
   "resumo": "...",
   "conteudo": "<p><strong>Lide em negrito</strong></p><h2>Intertítulo</h2><p>Texto...</p>",
   "categoria": "...",

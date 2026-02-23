@@ -92,6 +92,34 @@ function sanitizeContent(content: string, sourceUrl?: string): string {
 }
 
 // Helper: Ensure article has all required fields with fallbacks
+// Helper: Gerar chapéu baseado na origem (municipal vs nacional)
+function generateChapeu(article: NewsArticle): string {
+  if (article.chapeu && article.chapeu.includes('|')) return article.chapeu;
+  
+  const categoria = (article.categoria || 'GERAL').toUpperCase();
+  
+  // Detectar se é notícia nacional via tags, categoria ou contexto
+  const tagsLower = (article.tags || []).map(t => t.toLowerCase());
+  const isNacional = categoria === 'BRASIL' || categoria === 'INTERNACIONAL'
+    || tagsLower.includes('brasil') || tagsLower.includes('nacional')
+    || tagsLower.includes('governo federal');
+  
+  if (isNacional) {
+    return `BRASIL | ${categoria}`;
+  }
+  
+  // Para municipal, usar a cidade da primeira tag ou "COTIA" como default
+  const cidadeTag = (article.tags || []).find(t => {
+    const lower = t.toLowerCase();
+    return !['cotia', 'são paulo', 'regional', 'atualidades', 'destaque'].includes(lower)
+      && t.length > 2 && t.length < 30
+      && /^[A-ZÀ-Úa-zà-ú\s-]+$/.test(t);
+  });
+  
+  const prefixo = (cidadeTag || 'COTIA').toUpperCase();
+  return `${prefixo} | ${categoria}`;
+}
+
 // REGRA BLINDADA: Garantir mínimo 3 tags, máximo 12 tags
 function ensureRequiredFields(article: NewsArticle, sourceUrl?: string): NewsArticle {
   let tags = article.tags || [];
@@ -122,7 +150,7 @@ function ensureRequiredFields(article: NewsArticle, sourceUrl?: string): NewsArt
     ...article,
     tags: tags.slice(0, 12),  // Limitar a 12 tags (máximo)
     subtitulo: (article.subtitulo || article.resumo?.substring(0, 100) || 'Saiba mais sobre esta notícia').substring(0, 160),
-    chapeu: article.chapeu || article.categoria?.toUpperCase() || 'NOTÍCIAS',
+    chapeu: generateChapeu({ ...article, tags }),
     // ALWAYS force editor to Redação Conexão na Cidade, ignoring AI response
     editor: 'Redação Conexão na Cidade',
     fonte: sourceUrl || sanitizeSource(article.fonte),
@@ -643,18 +671,31 @@ Se a categoria original não estiver na whitelist:
 - Reescrever mantendo ~95-105% do tamanho original (NUNCA resumir)
 - Preservar todos os dados factuais (datas, números, locais, serviços, regras)
 - NUNCA inventar informações
+- NUNCA usar travessão (—) em nenhuma hipótese
 - SEMPRE mencionar "Cotia" no corpo das notícias de cidades vizinhas
 - Fonte sempre oficial (prefeitura/secretaria/governo)
 - NÃO incluir URLs de imagens dentro do conteúdo
 
+## 4.1 SEO SEMÂNTICO (OBRIGATÓRIO)
+Aplique a metodologia SEO Genome:
+- H1: Título com palavra-chave principal (campo "titulo")
+- H2: Sessões principais com centralidade tópica clara
+- H3: Subtópicos estratégicos dentro de cada H2
+- Distribua termos relacionados naturalmente nos parágrafos
+- Cada sessão H2 deve reforçar o tema central sem misturar intenções de busca
+- Aplique desambiguação quando necessário (ex: separar "plano de saúde" de "saúde pública")
+- Construção progressiva de relevância: cada parágrafo acumula autoridade semântica
+- Use perguntas reais do Google como subtítulos H3 quando aplicável
+
 ## 5. CONTEÚDO HTML (OBRIGATÓRIO)
 O campo "conteudo" deve ser HTML válido usando APENAS estas tags:
-&lt;p&gt;, &lt;h2&gt;, &lt;blockquote&gt;, &lt;strong&gt;, &lt;ul&gt;, &lt;li&gt;
+&lt;p&gt;, &lt;h2&gt;, &lt;h3&gt;, &lt;blockquote&gt;, &lt;strong&gt;, &lt;ul&gt;, &lt;li&gt;
 
 Regras:
 - O primeiro parágrafo deve ser o lide em negrito:
   &lt;p&gt;&lt;strong&gt;Lide completo com informações principais.&lt;/strong&gt;&lt;/p&gt;
-- Intertítulos: usar &lt;h2&gt;...&lt;/h2&gt;
+- Sessões principais: usar &lt;h2&gt;...&lt;/h2&gt; (centralidade tópica)
+- Subtópicos: usar &lt;h3&gt;...&lt;/h3&gt; (termos relacionados)
 - Citações longas: usar &lt;blockquote&gt;...&lt;/blockquote&gt;
 - Parágrafos sempre separados por &lt;p&gt;...&lt;/p&gt;
 
@@ -662,6 +703,7 @@ PROIBIÇÕES:
 - NÃO inclua URLs de imagens no conteúdo
 - NÃO inclua tags HTML fora da lista permitida
 - NÃO inclua o array "tags" dentro do conteúdo
+- NÃO use travessão (—) em nenhuma hipótese
 
 ## 6. TAGS (OBRIGATÓRIO 3-12)
 - Mínimo: 3 tags
@@ -687,7 +729,7 @@ Cada notícia DEVE conter:
 categoria, titulo, slug, subtitulo, chapeu, resumo, conteudo, fonte, imagem(hero,og,card,alt,credito,galeria), tags, seo(meta_titulo,meta_descricao), destaque, generateWebStory
 
 Regras específicas:
-- chapeu = categoria em MAIÚSCULAS (ex: "SAÚDE", "EDUCAÇÃO")
+- chapeu = "CIDADE | CATEGORIA" para fontes municipais (ex: "COTIA | SAÚDE") ou "BRASIL | CATEGORIA" para fontes nacionais (ex: "BRASIL | ECONOMIA"). Nunca depender das tags para o chapéu.
 - destaque deve ser um destes: none, home, featured, urgent
 - generateWebStory deve ser true por padrão
 
@@ -698,7 +740,7 @@ Regras específicas:
     "titulo": "Título (max 100 chars)",
     "slug": "titulo-em-kebab-case",
     "subtitulo": "Linha fina descritiva (max 160 chars)",
-    "chapeu": "CATEGORIA EM MAIÚSCULAS",
+    "chapeu": "CIDADE | CATEGORIA ou BRASIL | CATEGORIA",
     "resumo": "Resumo (max 160 chars)",
     "conteudo": "<p><strong>Lide...</strong></p><h2>...</h2><p>...</p>",
     "fonte": "URL oficial da fonte",

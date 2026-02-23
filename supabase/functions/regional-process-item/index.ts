@@ -196,22 +196,28 @@ async function rewriteWithAI(
 
   const cleanContent = extractText(originalContent).substring(0, 4000);
 
-  const systemPrompt = `Você é um editor jornalístico especializado em notícias regionais da Grande Cotia, SP.
-Reescreva a notícia de forma 100% original, NUNCA copiando título ou estrutura.
+  const systemPrompt = `Você é um redator especialista em SEO semântico e jornalismo regional da Grande Cotia, SP.
+Reescreva a notícia de forma 100% original, aplicando a metodologia SEO Genome.
 
 REGRAS:
-1. Criar título COMPLETAMENTE NOVO (máx 70 caracteres)
+1. Criar título COMPLETAMENTE NOVO (máx 70 caracteres) com palavra-chave principal
 2. Incluir contexto geográfico ("região de Cotia", "Grande Cotia")
 3. Tom jornalístico profissional, parágrafos curtos (máx 3 linhas)
 4. Conteúdo entre 300-600 palavras
-5. Formato: HTML limpo com <p>, <strong>, <ul>, <li> apenas
+5. NUNCA usar travessão (—)
+6. Formato HTML: <p>, <h2>, <h3>, <strong>, <ul>, <li>
+7. Primeiro parágrafo: lide em <strong>
+8. Use <h2> para sessões com centralidade tópica
+9. Use <h3> para subtópicos com termos relacionados
+10. Distribua palavras-chave relacionadas naturalmente
+11. Cada sessão acumula relevância semântica progressiva
 
 CIDADE FONTE: ${city}
 
 Retorne JSON válido:
 {
   "title": "Título novo (máx 70 chars)",
-  "content": "HTML reescrito",
+  "content": "HTML reescrito com h2/h3 semânticos",
   "metaTitle": "Meta title SEO (máx 60 chars)",
   "metaDescription": "Meta description (máx 155 chars)",
   "summary": "Resumo 1-2 frases (máx 200 chars)"
@@ -350,6 +356,11 @@ async function publishItemToNews(supabase: any, item: any, source: any): Promise
   // PRESERVE original published date from the source
   const publishedAt = item.published_at || new Date().toISOString();
 
+  // Gerar chapéu: CIDADE | CATEGORIA ou BRASIL | CATEGORIA
+  const isNacional = source.city.toLowerCase() === 'nacional';
+  const chapeuPrefix = isNacional ? 'BRASIL' : source.city.toUpperCase();
+  const chapeu = `${chapeuPrefix} | CIDADES`;
+
   const { data: newsEntry, error: newsError } = await supabase
     .from('news')
     .insert({
@@ -357,6 +368,7 @@ async function publishItemToNews(supabase: any, item: any, source: any): Promise
       slug,
       content: rewrittenContent,
       excerpt,
+      hat: chapeu,
       featured_image_url: finalImageUrl,
       og_image_url: finalImageUrl,
       card_image_url: finalImageUrl,
