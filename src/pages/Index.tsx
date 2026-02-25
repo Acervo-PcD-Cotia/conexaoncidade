@@ -56,9 +56,9 @@ const Index = () => {
           <MarketDataBar />
         </Suspense>
 
-        {/* 2. Banner Publicitário Topo (horizontal, abaixo da barra de cotações) */}
+        {/* 2. Banner Publicitário Topo (logo abaixo do menu, sem espaço extra) */}
         <Suspense fallback={<SectionSkeleton h="h-16" />}>
-          <div className="home-container home-section-spacing flex justify-center">
+          <div className="home-container flex justify-center py-2">
             <BannerIntro />
           </div>
         </Suspense>
