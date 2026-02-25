@@ -5,6 +5,7 @@ import { ResponsiveAdUnit } from "@/components/ads/ResponsiveAdUnit";
 
 // Lazy load sections
 const MarketDataBar = lazy(() => import("@/components/home/MarketDataBar").then(m => ({ default: m.MarketDataBar })));
+const UrgentNewsTicker = lazy(() => import("@/components/home/UrgentNewsTicker").then(m => ({ default: m.UrgentNewsTicker })));
 const HeroSection = lazy(() => import("@/components/home/HeroSection").then(m => ({ default: m.HeroSection })));
 const LatestNewsList = lazy(() => import("@/components/home/LatestNewsList").then(m => ({ default: m.LatestNewsList })));
 const MostReadSection = lazy(() => import("@/components/home/MostReadSection").then(m => ({ default: m.MostReadSection })));
@@ -63,6 +64,10 @@ const Index = () => {
           </div>
         </Suspense>
 
+        {/* 3. Ticker de Notícias Urgentes */}
+        <Suspense fallback={null}>
+          <UrgentNewsTicker />
+        </Suspense>
 
         {/* 4. Hero Principal */}
         <Suspense fallback={<SectionSkeleton h="h-72" />}>
