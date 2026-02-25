@@ -16,6 +16,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { useRegionalStats, useRegionalRuns, useRegionalQueue, useRunRegionalIngest } from '@/hooks/useRegionalAutoPost';
+import { ImportActivityPanel } from '@/components/admin/autopost-regional/ImportActivityPanel';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -210,74 +211,8 @@ export default function RegionalDashboard() {
         </Link>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Recent Runs */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Execuções Recentes</CardTitle>
-            <CardDescription>Últimas 10 ingestões</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {runsLoading ? (
-              <p className="text-muted-foreground">Carregando...</p>
-            ) : runs && runs.length > 0 ? (
-              <div className="space-y-3">
-                {runs.slice(0, 10).map((run) => (
-                  <div key={run.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                    <div>
-                      <p className="font-medium text-sm">
-                        {(run.regional_sources as any)?.city || 'Fonte desconhecida'}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(new Date(run.started_at), { addSuffix: true, locale: ptBR })}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">
-                        {run.items_new} novos
-                      </span>
-                      {getStatusBadge(run.status)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-muted-foreground text-sm">Nenhuma execução ainda</p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Queue Preview */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Fila Editorial</CardTitle>
-            <CardDescription>Últimos 10 itens capturados</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {queueLoading ? (
-              <p className="text-muted-foreground">Carregando...</p>
-            ) : queue && queue.length > 0 ? (
-              <div className="space-y-3">
-                {queue.slice(0, 10).map((item) => (
-                  <div key={item.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                    <div className="flex-1 min-w-0 mr-4">
-                      <p className="font-medium text-sm truncate">
-                        {item.title || 'Sem título'}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {(item.regional_sources as any)?.city || 'Cidade'}
-                      </p>
-                    </div>
-                    {getItemStatusBadge(item.status)}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-muted-foreground text-sm">Nenhum item na fila</p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      {/* Import Activity Monitor */}
+      <ImportActivityPanel />
     </div>
   );
 }
