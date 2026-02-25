@@ -58,19 +58,19 @@ const Index = () => {
 
         {/* 2. Super Banner (logo abaixo do menu, acima do hero) */}
         <Suspense fallback={<SectionSkeleton h="h-16" />}>
-          <div className="home-container flex justify-center py-2">
+          <div className="home-container flex justify-center">
             <SuperBanner />
           </div>
         </Suspense>
 
         {/* 3. Banner Publicitário Topo */}
         <Suspense fallback={<SectionSkeleton h="h-16" />}>
-          <div className="home-container flex justify-center py-2">
+          <div className="home-container flex justify-center">
             <BannerIntro />
           </div>
         </Suspense>
 
-        {/* 4. Hero Principal (destaque 70/30 + Web Stories sidebar + mini cards) */}
+        {/* 4. Hero Principal */}
         <Suspense fallback={<SectionSkeleton h="h-72" />}>
           <HeroSection />
         </Suspense>
