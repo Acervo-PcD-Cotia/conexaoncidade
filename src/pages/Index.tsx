@@ -10,7 +10,6 @@ const LatestNewsList = lazy(() => import("@/components/home/LatestNewsList").the
 const MostReadSection = lazy(() => import("@/components/home/MostReadSection").then(m => ({ default: m.MostReadSection })));
 const SuperBanner = lazy(() => import("@/components/home/SuperBanner").then(m => ({ default: m.SuperBanner })));
 const QuickNotes = lazy(() => import("@/components/home/QuickNotes").then(m => ({ default: m.QuickNotes })));
-const TopWebStoriesBar = lazy(() => import("@/components/home/TopWebStoriesBar").then(m => ({ default: m.TopWebStoriesBar })));
 const HomeVideoBlock = lazy(() => import("@/components/home/HomeVideoBlock").then(m => ({ default: m.HomeVideoBlock })));
 const BannerIntro = lazy(() => import("@/components/ads/BannerIntro").then(m => ({ default: m.BannerIntro })));
 
@@ -57,40 +56,36 @@ const Index = () => {
           <MarketDataBar />
         </Suspense>
 
-        {/* 2. Stories Bar - logo abaixo da barra de cotação */}
-        <Suspense fallback={<SectionSkeleton h="h-24" />}>
-          <TopWebStoriesBar />
+        {/* 2. Banner Publicitário Topo (horizontal, abaixo da barra de cotações) */}
+        <Suspense fallback={<SectionSkeleton h="h-16" />}>
+          <div className="home-container home-section-spacing flex justify-center">
+            <BannerIntro />
+          </div>
         </Suspense>
 
-        {/* 3. Hero Principal (destaque 70/30 + mini cards) */}
+        {/* 3. Hero Principal (destaque 70/30 + Web Stories sidebar + mini cards) */}
         <Suspense fallback={<SectionSkeleton h="h-72" />}>
           <HeroSection />
         </Suspense>
 
-        {/* 4. Publicidade Horizontal - Banner após hero */}
+        {/* 4. Banner Publicitário Intermediário (SuperBanner após hero + mini cards) */}
         <Suspense fallback={<SectionSkeleton h="h-16" />}>
           <div className="home-container home-section-spacing flex justify-center">
             <SuperBanner />
           </div>
         </Suspense>
 
-        {/* 5. Main Content: Últimas Notícias + Sidebar */}
+        {/* 5. Main Content: Últimas Notícias + Sidebar Mais Lidas */}
         <div className="home-container home-section-spacing">
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
-            {/* Main Column */}
+            {/* Main Column — Últimas Notícias grid 4+4 */}
             <div className="min-w-0 space-y-6">
-              {/* Últimas Notícias - grid 4+4 */}
               <Suspense fallback={<SectionSkeleton h="h-64" />}>
                 <LatestNewsList />
               </Suspense>
-
-              {/* Video Block */}
-              <Suspense fallback={<SectionSkeleton h="h-48" />}>
-                <HomeVideoBlock />
-              </Suspense>
             </div>
 
-            {/* Sidebar 30% - fixa */}
+            {/* Sidebar 30% — fixa com Mais Lidas + Publicidade Vertical */}
             <aside className="hidden lg:block space-y-6">
               <div className="sticky top-20">
                 {/* 🔥 Mais Lidas */}
@@ -114,14 +109,19 @@ const Index = () => {
           </Suspense>
         </div>
 
-        {/* 6. Notas Rápidas - carrossel de chips */}
+        {/* 6. Video Block (Web TV) */}
+        <Suspense fallback={<SectionSkeleton h="h-48" />}>
+          <HomeVideoBlock />
+        </Suspense>
+
+        {/* 7. Notas Rápidas — carrossel de chips */}
         <Suspense fallback={<SectionSkeleton h="h-16" />}>
           <div className="home-container home-section-spacing">
             <QuickNotes />
           </div>
         </Suspense>
 
-        {/* 7. Publicidade Intermediária (antes do rodapé) */}
+        {/* 8. Publicidade Intermediária (antes do rodapé) */}
         <div className="home-container home-section-spacing flex justify-center">
           <ResponsiveAdUnit format="ANUNCIO_HOME" slotId="leaderboard" source="ads" page="home" />
         </div>
