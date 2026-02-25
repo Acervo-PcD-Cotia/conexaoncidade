@@ -812,8 +812,31 @@ Valide TUDO antes de responder. Responda APENAS com JSON válido.`;
       
       case 'json': {
         const cleanContent = content.replace(/^JSON\s*/i, '').trim();
-        const aiResult = await generateWithAI(cleanContent, systemPrompt);
-        let parsed = JSON.parse(aiResult.replace(/```json\n?|\n?```/g, ''));
+        
+        // Try to parse user JSON directly first (skip AI if valid)
+        let parsed: any = null;
+        let usedAI = false;
+        
+        try {
+          const directParsed = JSON.parse(cleanContent);
+          // Check if it's a valid news JSON structure
+          const articles = directParsed.noticias || (Array.isArray(directParsed) ? directParsed : null);
+          if (articles && Array.isArray(articles) && articles.length > 0 && articles[0].titulo && articles[0].conteudo) {
+            // Valid structured JSON — use directly without AI
+            parsed = directParsed.noticias ? directParsed : { noticias: directParsed };
+            console.log(`JSON mode: Direct parse OK, ${parsed.noticias.length} article(s), skipping AI`);
+          }
+        } catch {
+          // Not valid JSON, will use AI
+        }
+        
+        // Fallback to AI if direct parse failed (raw text input)
+        if (!parsed) {
+          console.log('JSON mode: Using AI to generate from raw text');
+          const aiResult = await generateWithAI(cleanContent, systemPrompt);
+          parsed = JSON.parse(aiResult.replace(/```json\n?|\n?```/g, ''));
+          usedAI = true;
+        }
         
         // Ensure required fields and auto-fix lide
         if (parsed.noticias) {

@@ -113,10 +113,26 @@ export default function NoticiasAI() {
         },
       });
 
-      if (response.error) throw response.error;
+      if (response.error) {
+        // Extract meaningful message from edge function errors
+        const errMsg = typeof response.error === 'object' && response.error?.message 
+          ? response.error.message 
+          : String(response.error);
+        
+        if (errMsg.includes('non-2xx') || errMsg.includes('FunctionsHttpError')) {
+          // Try to get details from the response body
+          const body = response.data;
+          const detail = body?.error || body?.message || '';
+          if (detail.includes('credits') || detail.includes('payment')) {
+            throw new Error('Créditos de IA insuficientes. Para JSON estruturado, o sistema tentará importar diretamente sem IA.');
+          }
+          throw new Error(`Erro no servidor: ${detail || 'Verifique os logs para mais detalhes'}`);
+        }
+        throw new Error(errMsg);
+      }
       const data = response.data;
 
-      if (data.error) {
+      if (data?.error) {
         throw new Error(data.error);
       }
 
