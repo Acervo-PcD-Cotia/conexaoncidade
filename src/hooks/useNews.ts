@@ -137,6 +137,8 @@ export function useNews(limit?: number) {
 
       return enrichNewsItems(data || []);
     },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
   });
 }
 
@@ -354,6 +356,8 @@ export function useFeaturedNews(limit = 5) {
 
       return enrichNewsItems(data || [], { authors: false });
     },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
   });
 }
 
@@ -376,6 +380,8 @@ export function useMostReadNews(limit = 10) {
 
       return enrichNewsItems(data || [], { authors: false });
     },
+    staleTime: 10 * 60 * 1000,
+    gcTime: 20 * 60 * 1000,
   });
 }
 

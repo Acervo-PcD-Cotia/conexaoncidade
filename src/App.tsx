@@ -363,10 +363,11 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1 * 60 * 1000,   // 1 minute default
-      gcTime: 10 * 60 * 1000,     // 10 minutes garbage collection
+      staleTime: 5 * 60 * 1000,   // 5 minutes — data rarely changes mid-session
+      gcTime: 15 * 60 * 1000,     // 15 minutes garbage collection
       retry: 1,
       refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
     },
   },
 });
