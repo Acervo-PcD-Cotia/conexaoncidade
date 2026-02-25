@@ -358,6 +358,10 @@ import MenuToggleSettings from "./pages/admin/settings/MenuToggleSettings";
 import BrandingLogoSettings from "./pages/admin/settings/BrandingLogoSettings";
 import AIProviderSettings from "./pages/admin/settings/AIProviderSettings";
 
+// Core Engine Pages
+import CoreEngineDashboard from "./pages/admin/core-engine/CoreEngineDashboard";
+import CoreModulePage from "./pages/admin/core-engine/CoreModulePage";
+
 import { ThemeProvider } from "@/contexts/ThemeContext";
 
 const queryClient = new QueryClient({
@@ -737,6 +741,10 @@ const App = () => (
                         <Route path="tv/players" element={<TvPlayers />} />
                         <Route path="tv/settings" element={<TvSettings />} />
                         
+                        {/* Core Engine Routes */}
+                        <Route path="core-engine" element={<CoreEngineDashboard />} />
+                        <Route path="core-engine/:moduleId" element={<CoreModulePage />} />
+
                         {/* Classifieds & Jobs Admin */}
                         <Route path="classifieds" element={<ClassifiedsAdmin />} />
                         <Route path="jobs" element={<JobsAdmin />} />
