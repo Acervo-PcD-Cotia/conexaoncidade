@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { TrendingUp, Eye, Volume2 } from "lucide-react";
+import { TrendingUp, Eye } from "lucide-react";
 import { useMostReadNews } from "@/hooks/useNews";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
-export function MostReadSection() {
+interface MostReadSectionProps {
+  sidebar?: boolean;
+}
+
+export function MostReadSection({ sidebar = false }: MostReadSectionProps) {
   const [period, setPeriod] = useState<"today" | "week">("today");
   const { data: mostRead, isLoading } = useMostReadNews(10);
 
@@ -52,10 +55,10 @@ export function MostReadSection() {
   };
 
   return (
-    <section className="container py-4" aria-labelledby="most-read-title">
+    <section className={sidebar ? "" : "container"} aria-labelledby="most-read-title">
       <div className="rounded-xl bg-card border border-border overflow-hidden">
         {/* Header with tabs */}
-        <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <div className="flex items-center justify-between border-b border-border px-3 py-2">
           <div className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-primary" aria-hidden="true" />
             <h2 id="most-read-title" className="font-heading text-lg font-bold">
@@ -84,14 +87,14 @@ export function MostReadSection() {
               <article
                 key={item.id}
                 className={cn(
-                  "group relative flex items-start gap-4 p-4 transition-colors hover:bg-muted/50",
+                  "group relative flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-muted/50",
                   isTop3 && "bg-primary/5"
                 )}
               >
-                {/* Ranking number */}
-                <div
+                {/* Ranking number - large */}
+                <span
                   className={cn(
-                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg font-heading text-lg font-bold",
+                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg font-heading text-base font-extrabold",
                     isTop3 
                       ? "bg-primary text-primary-foreground" 
                       : "bg-muted text-muted-foreground"
@@ -99,7 +102,7 @@ export function MostReadSection() {
                   aria-label={`Posição ${index + 1}`}
                 >
                   {index + 1}
-                </div>
+                </span>
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
@@ -107,51 +110,26 @@ export function MostReadSection() {
                     to={`/noticia/${item.slug}`}
                     className="focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
                   >
-                    <h3 className="font-medium text-sm leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+                    <h3 className="font-medium text-xs leading-snug line-clamp-2 group-hover:text-primary transition-colors">
                       {item.title}
                     </h3>
                   </Link>
 
                   {/* Popularity bar + views */}
-                  <div className="mt-2 flex items-center gap-3">
-                    <div className="flex-1 max-w-32">
+                  <div className="mt-1 flex items-center gap-2">
+                    <div className="flex-1 max-w-24">
                       <Progress 
                         value={progressValue} 
-                        className="h-1.5"
+                        className="h-1"
                         aria-label={`${formatViews(item.view_count)} visualizações`}
                       />
                     </div>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Eye className="h-3 w-3" aria-hidden="true" />
-                      <span>{formatViews(item.view_count)}</span>
-                    </div>
+                    <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                      <Eye className="h-2.5 w-2.5" aria-hidden="true" />
+                      {formatViews(item.view_count)}
+                    </span>
                   </div>
                 </div>
-
-                {/* Thumbnail for top 5 */}
-                {index < 5 && item.featured_image_url && (
-                  <div className="hidden sm:block shrink-0 w-16 h-16 overflow-hidden rounded-lg">
-                    <img
-                      src={item.featured_image_url}
-                      alt=""
-                      className="h-full w-full object-cover"
-                      loading="lazy"
-                      decoding="async"
-                      aria-hidden="true"
-                    />
-                  </div>
-                )}
-
-                {/* Quick TTS button */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute top-2 right-2 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={(e) => handleTTS(e, item.title)}
-                  aria-label={`Ouvir: ${item.title}`}
-                >
-                  <Volume2 className="h-4 w-4" />
-                </Button>
               </article>
             );
           })}
