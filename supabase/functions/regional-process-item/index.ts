@@ -107,8 +107,8 @@ function validateNewsQuality(params: {
 
   // 2. Content must exist and have meaningful length
   const plainText = extractText(params.content || '');
-  if (!params.content || plainText.length < 200) {
-    errors.push(`Conteúdo insuficiente: apenas ${plainText.length} caracteres de texto (mínimo: 200)`);
+  if (!params.content || plainText.length < 80) {
+    errors.push(`Conteúdo insuficiente: apenas ${plainText.length} caracteres de texto (mínimo: 80)`);
   }
 
   // 3. Source is mandatory
@@ -116,20 +116,16 @@ function validateNewsQuality(params: {
     errors.push('Notícia sem fonte de referência');
   }
 
-  // 4. Image must not be a known generic/thumbnail image
+  // 4. Image must not be a known generic/placeholder image (thumbnails are OK - they still reference real images)
   if (params.imageUrl) {
     const lowerUrl = params.imageUrl.toLowerCase();
     if (
-      lowerUrl.includes('_0001') ||
-      lowerUrl.includes('-120x86') ||
-      lowerUrl.includes('-150x') ||
       lowerUrl.includes('generico') ||
       lowerUrl.includes('placeholder') ||
       lowerUrl.includes('default-image') ||
-      lowerUrl.includes('no-image') ||
-      lowerUrl.includes('thumbnail')
+      lowerUrl.includes('no-image')
     ) {
-      errors.push('Imagem genérica ou thumbnail detectada (muito pequena ou sem relação com a notícia)');
+      errors.push('Imagem genérica ou placeholder detectada');
     }
   }
 
