@@ -1,27 +1,13 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Clock, RefreshCw, ArrowRight } from "lucide-react";
+import { RefreshCw, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNews } from "@/hooks/useNews";
 import { NewsCardVisual } from "./NewsCardVisual";
-import { InlineAdSlot } from "@/components/ads/InlineAdSlot";
-
-function formatTimeAgo(date: string) {
-  const now = new Date();
-  const past = new Date(date);
-  const diffMs = now.getTime() - past.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMins / 60);
-
-  if (diffMins < 60) return `${diffMins}min`;
-  if (diffHours < 24) return `${diffHours}h`;
-  return past.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
-}
 
 export function LatestNewsList() {
   const { data: news, isLoading: rawLoading, error } = useNews(12);
 
-  // Safety timeout — avoid infinite loading
   const [timedOut, setTimedOut] = React.useState(false);
   React.useEffect(() => {
     if (rawLoading) {
@@ -36,7 +22,7 @@ export function LatestNewsList() {
   if (error) {
     console.error('[LatestNewsList] Erro ao carregar notícias:', error);
     return (
-      <section className="container py-4">
+      <section className="py-4">
         <div className="text-center py-8 text-muted-foreground">
           <p className="mb-3">Não foi possível carregar as notícias</p>
           <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
@@ -49,7 +35,7 @@ export function LatestNewsList() {
 
   if (isLoading) {
     return (
-      <section className="container py-4" aria-label="Carregando últimas notícias">
+      <section className="py-4" aria-label="Carregando últimas notícias">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="rounded-lg border border-border bg-card overflow-hidden">
@@ -68,14 +54,13 @@ export function LatestNewsList() {
 
   if (!news || news.length === 0) return null;
 
-  // First 4 are featured with full cards, rest are compact list
-  const featuredNews = news.slice(0, 8);
-  const compactNews = news.slice(8);
+  // 8 news in 2 rows of 4
+  const gridNews = news.slice(0, 8);
 
   return (
     <section aria-labelledby="latest-news-title">
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <RefreshCw className="h-5 w-5 text-primary" aria-hidden="true" />
           <h2 id="latest-news-title" className="font-heading text-lg font-bold">
@@ -90,9 +75,9 @@ export function LatestNewsList() {
         </Button>
       </div>
 
-      {/* Visual cards grid - first row */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {featuredNews.slice(0, 4).map((item, index) => (
+      {/* Grid 4 columns x 2 rows = 8 cards */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {gridNews.map((item, index) => (
           <NewsCardVisual 
             key={item.id} 
             news={item} 
@@ -101,59 +86,6 @@ export function LatestNewsList() {
           />
         ))}
       </div>
-
-      {/* Inline ad between rows */}
-      <div className="my-3 flex justify-center">
-        <InlineAdSlot position={1} className="max-w-[300px]" />
-      </div>
-
-      {/* Visual cards grid - second row */}
-      {featuredNews.length > 4 && (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {featuredNews.slice(4).map((item) => (
-            <NewsCardVisual 
-              key={item.id} 
-              news={item} 
-              priority={false}
-              showActions={false}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Compact list for additional news */}
-      {compactNews.length > 0 && (
-        <div className="mt-3 rounded-lg border border-border bg-card overflow-hidden">
-          <div className="grid gap-0 divide-y divide-border md:grid-cols-2 md:divide-y-0">
-            {compactNews.map((item, index) => (
-              <Link
-                key={item.id}
-                to={`/noticia/${item.slug}`}
-                className={`group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50 ${
-                  index % 2 === 0 ? "md:border-r md:border-border" : ""
-                }`}
-              >
-                <span
-                  className="h-2 w-2 shrink-0 rounded-full"
-                  style={{
-                    backgroundColor: item.category?.color || "hsl(var(--primary))",
-                  }}
-                  aria-hidden="true"
-                />
-                <h3 className="flex-1 text-sm font-medium leading-snug line-clamp-1 group-hover:text-primary transition-colors">
-                  {item.title}
-                </h3>
-                <div className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
-                  <Clock className="h-3 w-3" aria-hidden="true" />
-                  <time dateTime={item.published_at || undefined}>
-                    {item.published_at && formatTimeAgo(item.published_at)}
-                  </time>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
     </section>
   );
 }

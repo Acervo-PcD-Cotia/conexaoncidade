@@ -6,7 +6,7 @@ import { useWebStories } from "@/hooks/useWebStories";
 import { cn } from "@/lib/utils";
 
 export function TopWebStoriesBar() {
-  const { data: stories, isLoading } = useWebStories(14);
+  const { data: stories, isLoading } = useWebStories(15);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const scroll = useCallback((direction: "left" | "right") => {
@@ -20,23 +20,20 @@ export function TopWebStoriesBar() {
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (e.key === "ArrowLeft") {
-        scroll("left");
-      } else if (e.key === "ArrowRight") {
-        scroll("right");
-      }
+      if (e.key === "ArrowLeft") scroll("left");
+      else if (e.key === "ArrowRight") scroll("right");
     },
     [scroll]
   );
 
   if (isLoading) {
     return (
-      <div className="border-b bg-card py-4">
-        <div className="container">
+      <div className="border-b bg-card py-3">
+        <div className="home-container">
           <div className="flex items-center gap-4">
-            {Array.from({ length: 8 }).map((_, i) => (
+            {Array.from({ length: 10 }).map((_, i) => (
               <div key={i} className="flex flex-col items-center gap-2">
-                <div className="h-20 w-16 animate-pulse rounded-xl bg-muted" />
+                <div className="h-16 w-16 animate-pulse rounded-full bg-muted" />
                 <div className="h-3 w-14 animate-pulse rounded bg-muted" />
               </div>
             ))}
@@ -46,52 +43,33 @@ export function TopWebStoriesBar() {
     );
   }
 
-  if (!stories || stories.length === 0) {
-    return null;
-  }
+  if (!stories || stories.length === 0) return null;
 
   return (
-    <section 
-      className="border-b bg-card py-4"
-      aria-label="Web Stories"
-    >
-      <div className="container">
+    <section className="border-b bg-card py-3" aria-label="Stories">
+      <div className="home-container">
         {/* Header */}
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-            <Play className="h-4 w-4 fill-current" />
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+            <Play className="h-3.5 w-3.5 fill-current" />
             Stories
           </h2>
-          
-          {/* Navigation Arrows - Desktop */}
           <div className="hidden sm:flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-full"
-              onClick={() => scroll("left")}
-              aria-label="Scroll para esquerda"
-            >
+            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full" onClick={() => scroll("left")} aria-label="Scroll esquerda">
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-full"
-              onClick={() => scroll("right")}
-              aria-label="Scroll para direita"
-            >
+            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full" onClick={() => scroll("right")} aria-label="Scroll direita">
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>
 
-        {/* Stories Carousel */}
+        {/* Circular Stories Carousel */}
         <div
           ref={scrollRef}
           onKeyDown={handleKeyDown}
           tabIndex={0}
-          className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4 snap-x snap-mandatory"
+          className="flex gap-4 overflow-x-auto scrollbar-hide pb-1 -mx-4 px-4 snap-x snap-mandatory"
           role="list"
           aria-label="Lista de stories"
         >
@@ -99,46 +77,42 @@ export function TopWebStoriesBar() {
             <Link
               key={story.id}
               to={`/stories/${story.slug}`}
-              className="group flex flex-col items-center gap-2 flex-shrink-0 snap-start"
+              className="group flex flex-col items-center gap-1.5 flex-shrink-0 snap-start"
               role="listitem"
             >
-              {/* Story Thumbnail */}
+              {/* Circular thumbnail with gradient ring */}
               <div className="relative">
-                {/* Colorful ring */}
                 <div
                   className={cn(
-                    "absolute -inset-0.5 rounded-2xl",
+                    "absolute -inset-[3px] rounded-full",
                     "bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500",
                     "opacity-80 group-hover:opacity-100 transition-opacity"
                   )}
                 />
-                
-                {/* Thumbnail container */}
-                <div className="relative h-24 w-[68px] rounded-xl overflow-hidden bg-muted">
+                <div className="relative h-16 w-16 rounded-full overflow-hidden bg-muted border-2 border-background">
                   {story.cover_image_url ? (
                     <img
                       src={story.cover_image_url}
                       alt={story.title}
                       className="h-full w-full object-cover transition-transform group-hover:scale-110"
-                      loading={index < 4 ? "eager" : "lazy"}
+                      loading={index < 5 ? "eager" : "lazy"}
                     />
                   ) : (
                     <div className="h-full w-full bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center">
-                      <Play className="h-6 w-6 text-primary fill-primary" />
+                      <Play className="h-5 w-5 text-primary fill-primary" />
                     </div>
                   )}
-                  
                   {/* Play overlay on hover */}
-                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="bg-white/90 rounded-full p-1.5">
-                      <Play className="h-4 w-4 text-black fill-black" />
+                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+                    <div className="bg-white/90 rounded-full p-1">
+                      <Play className="h-3 w-3 text-black fill-black" />
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Story Title */}
-              <span className="text-xs text-center font-medium text-foreground/80 max-w-[72px] line-clamp-2 leading-tight">
+              {/* Title */}
+              <span className="text-[10px] text-center font-medium text-foreground/80 max-w-[68px] line-clamp-1 leading-tight">
                 {story.title}
               </span>
             </Link>
