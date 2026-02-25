@@ -56,23 +56,23 @@ const Index = () => {
           <MarketDataBar />
         </Suspense>
 
-        {/* 2. Banner Publicitário Topo (logo abaixo do menu, sem espaço extra) */}
+        {/* 2. Super Banner (logo abaixo do menu, acima do hero) */}
+        <Suspense fallback={<SectionSkeleton h="h-16" />}>
+          <div className="home-container flex justify-center py-2">
+            <SuperBanner />
+          </div>
+        </Suspense>
+
+        {/* 3. Banner Publicitário Topo */}
         <Suspense fallback={<SectionSkeleton h="h-16" />}>
           <div className="home-container flex justify-center py-2">
             <BannerIntro />
           </div>
         </Suspense>
 
-        {/* 3. Hero Principal (destaque 70/30 + Web Stories sidebar + mini cards) */}
+        {/* 4. Hero Principal (destaque 70/30 + Web Stories sidebar + mini cards) */}
         <Suspense fallback={<SectionSkeleton h="h-72" />}>
           <HeroSection />
-        </Suspense>
-
-        {/* 4. Banner Publicitário Intermediário (SuperBanner após hero + mini cards) */}
-        <Suspense fallback={<SectionSkeleton h="h-16" />}>
-          <div className="home-container home-section-spacing flex justify-center">
-            <SuperBanner />
-          </div>
         </Suspense>
 
         {/* 5. Main Content: Últimas Notícias + Sidebar Mais Lidas */}
