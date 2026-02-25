@@ -65,6 +65,7 @@ import {
   Globe,
   Trophy,
   Wrench,
+  Cpu,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useUserRole } from "@/hooks/useRequireRole";
@@ -192,6 +193,25 @@ const portalManagementItems: MenuItem[] = [
   { title: "Menus do Site", url: "/spah/painel/settings/menus", icon: ToggleLeft },
 ];
 
+// CORE ENGINE - Motor proprietário
+const coreEngineItems: MenuItem[] = [
+  { title: "Dashboard", url: "/spah/painel/core-engine", icon: LayoutDashboard },
+  { title: "SEO Profissional", url: "/spah/painel/core-engine/seo", icon: TrendingUp },
+  { title: "Monetização", url: "/spah/painel/core-engine/ads", icon: DollarSign },
+  { title: "Performance", url: "/spah/painel/core-engine/performance", icon: Zap },
+  { title: "Segurança", url: "/spah/painel/core-engine/security", icon: Shield },
+  { title: "Analytics", url: "/spah/painel/core-engine/analytics", icon: BarChart3 },
+  { title: "Push", url: "/spah/painel/core-engine/push", icon: Bell },
+  { title: "Editorial", url: "/spah/painel/core-engine/editorial", icon: FileText },
+  { title: "Mídia", url: "/spah/painel/core-engine/media", icon: ImageIcon },
+  { title: "Leads", url: "/spah/painel/core-engine/leads", icon: UsersRound },
+  { title: "Redirecionamento", url: "/spah/painel/core-engine/redirect", icon: Link2, badge: "Novo", badgeColor: "bg-primary" },
+  { title: "Schema", url: "/spah/painel/core-engine/schema", icon: Globe },
+  { title: "Backup", url: "/spah/painel/core-engine/backup", icon: Settings },
+  { title: "Controle Acesso", url: "/spah/painel/core-engine/roles", icon: Users },
+  { title: "Automação", url: "/spah/painel/core-engine/automation", icon: Bot },
+];
+
 // 6️⃣ INTELIGÊNCIA & MÉTRICAS - Dados
 const intelligenceItems: MenuItem[] = [
   { title: "Analytics", url: "/spah/painel/analytics", icon: BarChart3 },
@@ -289,6 +309,13 @@ const sidebarGroups: SidebarGroupConfig[] = [
     title: "Gestão do Portal",
     icon: Settings,
     items: portalManagementItems,
+    adminOnly: true,
+  },
+  {
+    id: "core-engine",
+    title: "Core Engine",
+    icon: Cpu,
+    items: coreEngineItems,
     adminOnly: true,
   },
   {
