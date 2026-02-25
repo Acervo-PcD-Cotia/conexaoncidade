@@ -361,6 +361,9 @@ import AIProviderSettings from "./pages/admin/settings/AIProviderSettings";
 // Core Engine Pages
 import CoreEngineDashboard from "./pages/admin/core-engine/CoreEngineDashboard";
 import CoreModulePage from "./pages/admin/core-engine/CoreModulePage";
+import CoreRedirects from "./pages/admin/core-engine/CoreRedirects";
+import CoreAnalytics from "./pages/admin/core-engine/CoreAnalytics";
+import CoreSEO from "./pages/admin/core-engine/CoreSEO";
 
 import { ThemeProvider } from "@/contexts/ThemeContext";
 
@@ -743,6 +746,9 @@ const App = () => (
                         
                         {/* Core Engine Routes */}
                         <Route path="core-engine" element={<CoreEngineDashboard />} />
+                        <Route path="core-engine/redirect" element={<CoreRedirects />} />
+                        <Route path="core-engine/analytics" element={<CoreAnalytics />} />
+                        <Route path="core-engine/seo" element={<CoreSEO />} />
                         <Route path="core-engine/:moduleId" element={<CoreModulePage />} />
 
                         {/* Classifieds & Jobs Admin */}

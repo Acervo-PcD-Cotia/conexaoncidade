@@ -6653,6 +6653,200 @@ export type Database = {
         }
         Relationships: []
       }
+      core_404_log: {
+        Row: {
+          first_seen: string
+          hit_count: number
+          id: string
+          last_seen: string
+          path: string
+          redirect_id: string | null
+          referrer: string | null
+          resolved: boolean
+          user_agent: string | null
+        }
+        Insert: {
+          first_seen?: string
+          hit_count?: number
+          id?: string
+          last_seen?: string
+          path: string
+          redirect_id?: string | null
+          referrer?: string | null
+          resolved?: boolean
+          user_agent?: string | null
+        }
+        Update: {
+          first_seen?: string
+          hit_count?: number
+          id?: string
+          last_seen?: string
+          path?: string
+          redirect_id?: string | null
+          referrer?: string | null
+          resolved?: boolean
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "core_404_log_redirect_id_fkey"
+            columns: ["redirect_id"]
+            isOneToOne: false
+            referencedRelation: "core_redirects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      core_analytics_pageviews: {
+        Row: {
+          city: string | null
+          country: string | null
+          created_at: string
+          device_type: string | null
+          duration_ms: number | null
+          id: string
+          news_id: string | null
+          page_path: string
+          page_title: string | null
+          referrer: string | null
+          session_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          device_type?: string | null
+          duration_ms?: number | null
+          id?: string
+          news_id?: string | null
+          page_path: string
+          page_title?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          device_type?: string | null
+          duration_ms?: number | null
+          id?: string
+          news_id?: string | null
+          page_path?: string
+          page_title?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      core_redirects: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          hits: number
+          id: string
+          is_active: boolean
+          notes: string | null
+          redirect_type: number
+          source_path: string
+          target_path: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          hits?: number
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          redirect_type?: number
+          source_path: string
+          target_path: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          hits?: number
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          redirect_type?: number
+          source_path?: string
+          target_path?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      core_seo_scores: {
+        Row: {
+          created_at: string
+          id: string
+          issues: Json | null
+          keyword: string | null
+          last_analyzed_at: string | null
+          news_id: string
+          readability_score: number | null
+          seo_score: number | null
+          suggestions: Json | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          issues?: Json | null
+          keyword?: string | null
+          last_analyzed_at?: string | null
+          news_id: string
+          readability_score?: number | null
+          seo_score?: number | null
+          suggestions?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          issues?: Json | null
+          keyword?: string | null
+          last_analyzed_at?: string | null
+          news_id?: string
+          readability_score?: number | null
+          seo_score?: number | null
+          suggestions?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      core_seo_settings: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       digital_edition_items: {
         Row: {
           created_at: string | null
