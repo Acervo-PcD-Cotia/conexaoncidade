@@ -19,12 +19,13 @@ const JSON_TEMPLATE = {
   noticias: [
     {
       categoria: "Cidades",
-      titulo: "Título da notícia (máximo 100 caracteres)",
+      titulo: "Título da notícia (máx 100 caracteres)",
       slug: "titulo-da-noticia-em-kebab-case",
-      subtitulo: "Linha fina descritiva (máximo 160 caracteres)",
+      subtitulo: "Linha fina descritiva (máx 160 caracteres)",
       chapeu: "CIDADES",
-      resumo: "Resumo com até 160 caracteres para exibição em cards.",
-      conteudo: "<p><strong>Primeiro parágrafo em negrito (Lide).</strong></p><h2>Subtítulo</h2><p>Desenvolvimento...</p>",
+      editor: "Redação Conexão na Cidade",
+      resumo: "Resumo com 30 a 160 caracteres para exibição em cards.",
+      conteudo: "<p><strong>Primeiro parágrafo em negrito (Lide obrigatório).</strong></p><h2>Subtítulo de seção</h2><p>Desenvolvimento do texto com pelo menos 100 caracteres. Proibido usar travessão (—).</p>",
       fonte: "https://prefeitura.gov.br/noticia-original",
       imagem: {
         hero: "https://exemplo.com/imagem-principal.jpg",
@@ -32,11 +33,11 @@ const JSON_TEMPLATE = {
         card: "https://exemplo.com/imagem-card-800x450.jpg",
         alt: "Descrição acessível da imagem",
         credito: "Foto: Prefeitura Municipal / Divulgação",
-        galeria: []
+        galeria: ["https://exemplo.com/foto2.jpg", "https://exemplo.com/foto3.jpg"]
       },
       tags: ["Cotia", "São Paulo", "Prefeitura", "Investimento", "Obras", "Desenvolvimento"],
       seo: {
-        meta_titulo: "Meta título (máx 60 caracteres)",
+        meta_titulo: "Meta título SEO (máx 60 caracteres)",
         meta_descricao: "Meta descrição para SEO (máx 160 caracteres)."
       },
       destaque: "none",
@@ -45,12 +46,18 @@ const JSON_TEMPLATE = {
   ]
 };
 
+// Categorias válidas (referência rápida para mensagens de erro)
+const CATEGORIES_HINT = ALLOWED_CATEGORIES.slice(0, 8).join(', ') + '...';
+
 // Interface para erros de validação
 interface ValidationError {
   field: string;
   message: string;
   type: 'error' | 'warning';
   articleIndex?: number;
+  hint?: string;        // Dica de como corrigir
+  expected?: string;    // Valor esperado
+  actual?: string;      // Valor encontrado
 }
 
 // Função de validação do JSON
@@ -63,9 +70,11 @@ const validateNewsJson = (text: string): ValidationError[] => {
     // Verifica estrutura raiz
     if (!parsed.noticias && !Array.isArray(parsed)) {
       errors.push({ 
-        field: 'root', 
-        message: 'JSON deve ter objeto "noticias" ou ser um array', 
-        type: 'error' 
+        field: 'raiz', 
+        message: 'Estrutura raiz inválida', 
+        type: 'error',
+        hint: 'O JSON deve conter { "noticias": [...] } ou ser um array direto de artigos',
+        expected: '{ "noticias": [ { ... } ] }',
       });
       return errors;
     }
@@ -75,191 +84,323 @@ const validateNewsJson = (text: string): ValidationError[] => {
     if (!Array.isArray(articles)) {
       errors.push({ 
         field: 'noticias', 
-        message: 'Campo "noticias" deve ser um array', 
-        type: 'error' 
+        message: 'O campo "noticias" deve ser um array', 
+        type: 'error',
+        hint: 'Envolva os artigos em colchetes: "noticias": [ { artigo1 }, { artigo2 } ]',
+      });
+      return errors;
+    }
+
+    if (articles.length === 0) {
+      errors.push({
+        field: 'noticias',
+        message: 'Array de notícias está vazio',
+        type: 'error',
+        hint: 'Adicione pelo menos um artigo dentro do array "noticias"',
       });
       return errors;
     }
     
     articles.forEach((article: any, index: number) => {
-      // Campos obrigatórios
-      if (!article.titulo || article.titulo.length < 10) {
+      const prefix = articles.length > 1 ? `Artigo ${index + 1}` : 'Artigo';
+      const titleHint = article.titulo ? ` ("${article.titulo.substring(0, 30)}${article.titulo.length > 30 ? '...' : ''}")` : '';
+      const label = `${prefix}${titleHint}`;
+      
+      // === CAMPOS OBRIGATÓRIOS ===
+      
+      if (!article.titulo) {
         errors.push({ 
           field: 'titulo', 
-          message: `Artigo ${index + 1}: Título obrigatório (min 10 caracteres)`, 
+          message: `${label} → Título ausente`,
           type: 'error', 
-          articleIndex: index 
+          articleIndex: index,
+          hint: 'Adicione "titulo": "Texto do título" ao artigo',
+        });
+      } else if (article.titulo.length < 10) {
+        errors.push({ 
+          field: 'titulo', 
+          message: `${label} → Título muito curto`,
+          type: 'error', 
+          articleIndex: index,
+          actual: `${article.titulo.length} caracteres`,
+          expected: 'Mínimo 10 caracteres',
         });
       }
       
       if (!article.slug) {
         errors.push({ 
           field: 'slug', 
-          message: `Artigo ${index + 1}: Slug obrigatório`, 
+          message: `${label} → Slug ausente`,
           type: 'error', 
-          articleIndex: index 
+          articleIndex: index,
+          hint: 'Gere o slug a partir do título: "meu-titulo-em-kebab-case"',
         });
       } else if (!/^[a-z0-9-]+$/.test(article.slug)) {
         errors.push({ 
           field: 'slug', 
-          message: `Artigo ${index + 1}: Slug inválido (use apenas letras minúsculas, números e hífens)`, 
+          message: `${label} → Slug com caracteres inválidos`,
           type: 'error', 
-          articleIndex: index 
+          articleIndex: index,
+          actual: `"${article.slug.substring(0, 40)}"`,
+          expected: 'Apenas letras minúsculas (a-z), números (0-9) e hífens (-)',
+          hint: 'Remova acentos, espaços e caracteres especiais',
         });
       }
       
-      if (!article.resumo || article.resumo.length < 30) {
+      if (!article.resumo) {
         errors.push({ 
           field: 'resumo', 
-          message: `Artigo ${index + 1}: Resumo obrigatório (min 30 caracteres)`, 
+          message: `${label} → Resumo ausente`,
           type: 'error', 
-          articleIndex: index 
+          articleIndex: index,
+          hint: 'Adicione "resumo": "Texto descritivo de 30-160 caracteres"',
+        });
+      } else if (article.resumo.length < 30) {
+        errors.push({ 
+          field: 'resumo', 
+          message: `${label} → Resumo muito curto`,
+          type: 'error', 
+          articleIndex: index,
+          actual: `${article.resumo.length} caracteres`,
+          expected: 'Mínimo 30 caracteres',
         });
       }
       
-      if (!article.conteudo || article.conteudo.length < 100) {
+      if (!article.conteudo) {
         errors.push({ 
           field: 'conteudo', 
-          message: `Artigo ${index + 1}: Conteúdo obrigatório (min 100 caracteres)`, 
+          message: `${label} → Conteúdo HTML ausente`,
           type: 'error', 
-          articleIndex: index 
+          articleIndex: index,
+          hint: 'Adicione "conteudo": "<p><strong>Lide em negrito.</strong></p><p>Texto...</p>"',
+        });
+      } else if (article.conteudo.length < 100) {
+        errors.push({ 
+          field: 'conteudo', 
+          message: `${label} → Conteúdo muito curto`,
+          type: 'error', 
+          articleIndex: index,
+          actual: `${article.conteudo.length} caracteres`,
+          expected: 'Mínimo 100 caracteres de HTML',
         });
       }
       
       if (!article.categoria) {
         errors.push({ 
           field: 'categoria', 
-          message: `Artigo ${index + 1}: Categoria obrigatória`, 
+          message: `${label} → Categoria ausente`,
           type: 'error', 
-          articleIndex: index 
+          articleIndex: index,
+          hint: `Categorias válidas: ${CATEGORIES_HINT}`,
         });
       } else if (!isValidCategory(article.categoria)) {
         errors.push({
           field: 'categoria',
-          message: `Artigo ${index + 1}: Categoria "${article.categoria}" será convertida em tag (fallback: Geral)`,
+          message: `${label} → Categoria "${article.categoria}" não está na whitelist`,
           type: 'warning',
-          articleIndex: index
+          articleIndex: index,
+          hint: `Será convertida em tag e a categoria "Geral" será usada. Categorias válidas: ${CATEGORIES_HINT}`,
         });
       }
       
-      // REGRAS DEFINITIVAS DE VALIDAÇÃO DE TAGS (3-12)
-      if (!article.tags || article.tags.length < 3) {
+      // === TAGS (3-12) ===
+      if (!article.tags || !Array.isArray(article.tags)) {
         errors.push({ 
           field: 'tags', 
-          message: `Artigo ${index + 1}: Mínimo 3 tags obrigatórias (atual: ${article.tags?.length || 0})`, 
+          message: `${label} → Tags ausentes ou formato inválido`,
           type: 'error', 
-          articleIndex: index 
+          articleIndex: index,
+          hint: 'Adicione "tags": ["Tag1", "Tag2", "Tag3"] (mínimo 3)',
+          expected: 'Array com 3 a 12 strings',
+        });
+      } else if (article.tags.length < 3) {
+        errors.push({ 
+          field: 'tags', 
+          message: `${label} → Poucas tags`,
+          type: 'error', 
+          articleIndex: index,
+          actual: `${article.tags.length} tag(s)`,
+          expected: 'Mínimo 3 tags',
         });
       } else if (article.tags.length > 12) {
         errors.push({ 
           field: 'tags', 
-          message: `Artigo ${index + 1}: Máximo 12 tags permitidas (atual: ${article.tags.length})`, 
+          message: `${label} → Tags em excesso`,
           type: 'error', 
-          articleIndex: index 
+          articleIndex: index,
+          actual: `${article.tags.length} tags`,
+          expected: 'Máximo 12 tags',
         });
       }
       
-      // LIMITES DE CARACTERES SEO
-      // Título: máximo 100 caracteres
+      // === LIMITES DE CARACTERES (avisos) ===
       if (article.titulo && article.titulo.length > 100) {
         errors.push({ 
           field: 'titulo', 
-          message: `Artigo ${index + 1}: Título excede 100 caracteres (atual: ${article.titulo.length})`, 
+          message: `${label} → Título longo demais`,
           type: 'warning', 
-          articleIndex: index 
+          articleIndex: index,
+          actual: `${article.titulo.length} caracteres`,
+          expected: 'Máximo 100 caracteres',
         });
       }
       
-      // Resumo: máximo 160 caracteres
       if (article.resumo && article.resumo.length > 160) {
         errors.push({ 
           field: 'resumo', 
-          message: `Artigo ${index + 1}: Resumo excede 160 caracteres (atual: ${article.resumo.length})`, 
+          message: `${label} → Resumo longo demais`,
           type: 'warning', 
-          articleIndex: index 
+          articleIndex: index,
+          actual: `${article.resumo.length} caracteres`,
+          expected: 'Máximo 160 caracteres',
         });
       }
       
-      // SEO: meta_titulo máximo 60 caracteres
       if (article.seo?.meta_titulo && article.seo.meta_titulo.length > 60) {
         errors.push({ 
           field: 'seo.meta_titulo', 
-          message: `Artigo ${index + 1}: Meta título excede 60 caracteres (atual: ${article.seo.meta_titulo.length})`, 
+          message: `${label} → Meta título excede limite SEO`,
           type: 'warning', 
-          articleIndex: index 
+          articleIndex: index,
+          actual: `${article.seo.meta_titulo.length} caracteres`,
+          expected: 'Máximo 60 caracteres (será truncado)',
         });
       }
       
-      // SEO: meta_descricao máximo 160 caracteres
       if (article.seo?.meta_descricao && article.seo.meta_descricao.length > 160) {
         errors.push({ 
           field: 'seo.meta_descricao', 
-          message: `Artigo ${index + 1}: Meta descrição excede 160 caracteres (atual: ${article.seo.meta_descricao.length})`, 
+          message: `${label} → Meta descrição excede limite SEO`,
           type: 'warning', 
-          articleIndex: index 
+          articleIndex: index,
+          actual: `${article.seo.meta_descricao.length} caracteres`,
+          expected: 'Máximo 160 caracteres (será truncado)',
         });
       }
       
-      // Imagem hero recomendada
       if (!article.imagem?.hero) {
         errors.push({ 
-          field: 'imagem', 
-          message: `Artigo ${index + 1}: Imagem hero recomendada`, 
+          field: 'imagem.hero', 
+          message: `${label} → Sem imagem principal`,
           type: 'warning', 
-          articleIndex: index 
+          articleIndex: index,
+          hint: 'Adicione "imagem": { "hero": "https://url-da-imagem.jpg", "alt": "Descrição", "credito": "Fonte" }',
         });
       }
       
-      // Destaque inválido
       if (article.destaque && !['none', 'home', 'featured', 'urgent'].includes(article.destaque)) {
         errors.push({ 
           field: 'destaque', 
-          message: `Artigo ${index + 1}: Destaque inválido (use: none, home, featured ou urgent)`, 
+          message: `${label} → Valor de destaque inválido`,
           type: 'error', 
-          articleIndex: index 
+          articleIndex: index,
+          actual: `"${article.destaque}"`,
+          expected: '"none", "home", "featured" ou "urgent"',
         });
       }
       
-      // Validar generateWebStory (deve ser boolean)
       if (article.generateWebStory !== undefined && typeof article.generateWebStory !== 'boolean') {
         errors.push({ 
           field: 'generateWebStory', 
-          message: `Artigo ${index + 1}: generateWebStory deve ser true ou false`, 
+          message: `${label} → Tipo inválido para generateWebStory`,
           type: 'warning', 
-          articleIndex: index 
+          articleIndex: index,
+          actual: `${typeof article.generateWebStory} (${JSON.stringify(article.generateWebStory)})`,
+          expected: 'true ou false (boolean, sem aspas)',
         });
       }
       
-      // Subtítulo: máximo 160 caracteres
       if (article.subtitulo && article.subtitulo.length > 160) {
         errors.push({ 
           field: 'subtitulo', 
-          message: `Artigo ${index + 1}: Subtítulo excede 160 caracteres (atual: ${article.subtitulo.length})`, 
+          message: `${label} → Subtítulo longo demais`,
           type: 'warning', 
-          articleIndex: index 
+          articleIndex: index,
+          actual: `${article.subtitulo.length} caracteres`,
+          expected: 'Máximo 160 caracteres (será truncado)',
         });
       }
       
-      // Validar tags individuais (máximo 40 caracteres cada)
+      // Validar tags individuais
       if (article.tags && Array.isArray(article.tags)) {
         article.tags.forEach((tag: string, tagIndex: number) => {
           if (tag && tag.length > 40) {
             errors.push({
-              field: 'tags',
-              message: `Artigo ${index + 1}: Tag "${tag.substring(0, 20)}..." excede 40 caracteres`,
+              field: `tags[${tagIndex}]`,
+              message: `${label} → Tag "${tag.substring(0, 20)}..." muito longa`,
               type: 'warning',
-              articleIndex: index
+              articleIndex: index,
+              actual: `${tag.length} caracteres`,
+              expected: 'Máximo 40 caracteres por tag',
             });
           }
         });
       }
+
+      // === CAMPOS RECOMENDADOS ===
+      if (!article.editor) {
+        errors.push({
+          field: 'editor',
+          message: `${label} → Editor não informado`,
+          type: 'warning',
+          articleIndex: index,
+          hint: 'Será preenchido automaticamente como "Redação Conexão na Cidade"',
+        });
+      }
+
+      if (!article.fonte) {
+        errors.push({
+          field: 'fonte',
+          message: `${label} → Fonte/URL original não informada`,
+          type: 'warning',
+          articleIndex: index,
+          hint: 'Recomendado para rastreabilidade e créditos',
+        });
+      }
+
+      if (!article.seo) {
+        errors.push({
+          field: 'seo',
+          message: `${label} → Bloco SEO ausente`,
+          type: 'warning',
+          articleIndex: index,
+          hint: 'Adicione "seo": { "meta_titulo": "...", "meta_descricao": "..." }',
+        });
+      }
     });
     
-  } catch (e) {
+  } catch (e: any) {
+    // Tentar extrair posição do erro de parse
+    const posMatch = e.message?.match(/position\s+(\d+)/i) || e.message?.match(/at\s+(\d+)/i);
+    const lineMatch = e.message?.match(/line\s+(\d+)/i);
+    
+    let positionHint = '';
+    if (lineMatch) {
+      positionHint = ` (linha ~${lineMatch[1]})`;
+    } else if (posMatch) {
+      const pos = parseInt(posMatch[1]);
+      const lines = text.substring(0, pos).split('\n');
+      positionHint = ` (linha ~${lines.length}, coluna ~${lines[lines.length - 1].length + 1})`;
+    }
+    
+    // Detectar erros comuns de sintaxe
+    let hint = 'Verifique vírgulas, aspas, chaves {} e colchetes []';
+    if (e.message?.includes('Unexpected token')) {
+      const tokenMatch = e.message.match(/Unexpected token\s*(.)/);
+      if (tokenMatch) {
+        hint = `Caractere inesperado "${tokenMatch[1]}"${positionHint}. Verifique se há vírgula faltando ou sobrando`;
+      }
+    } else if (e.message?.includes('Unexpected end')) {
+      hint = 'JSON incompleto — verifique se todas as chaves {} e colchetes [] estão fechados';
+    } else if (e.message?.includes('Expected')) {
+      hint = `${e.message}${positionHint}`;
+    }
+    
     errors.push({ 
-      field: 'json', 
-      message: 'JSON inválido: verifique a sintaxe', 
-      type: 'error' 
+      field: 'sintaxe JSON', 
+      message: `Erro de parse${positionHint}`,
+      type: 'error',
+      hint,
     });
   }
   
@@ -919,20 +1060,58 @@ Dicas:
             
             {/* Lista de erros de validação */}
             {validationErrors.length > 0 && (
-              <div className="rounded-lg border p-3 space-y-1 max-h-32 overflow-y-auto bg-muted/30">
+              <div className="rounded-lg border p-3 space-y-0.5 max-h-48 overflow-y-auto bg-muted/30">
+                {/* Sumário */}
+                <div className="flex items-center gap-2 pb-2 mb-2 border-b border-border/50">
+                  <span className="text-xs font-medium text-foreground">
+                    {validationErrors.filter(e => e.type === 'error').length > 0 && (
+                      <span className="text-destructive mr-3">
+                        ✕ {validationErrors.filter(e => e.type === 'error').length} erro(s) bloqueante(s)
+                      </span>
+                    )}
+                    {validationErrors.filter(e => e.type === 'warning').length > 0 && (
+                      <span className="text-amber-600">
+                        ⚠ {validationErrors.filter(e => e.type === 'warning').length} aviso(s)
+                      </span>
+                    )}
+                  </span>
+                </div>
                 {validationErrors.map((err, idx) => (
                   <div 
                     key={idx} 
-                    className={`text-xs flex items-start gap-2 ${
-                      err.type === 'error' ? 'text-destructive' : 'text-amber-600'
+                    className={`text-xs py-1 px-2 rounded ${
+                      err.type === 'error' 
+                        ? 'text-destructive bg-destructive/5' 
+                        : 'text-amber-700 dark:text-amber-400 bg-amber-500/5'
                     }`}
                   >
-                    {err.type === 'error' ? (
-                      <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
-                    ) : (
-                      <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
-                    )}
-                    <span><strong>{err.field}:</strong> {err.message}</span>
+                    <div className="flex items-start gap-2">
+                      {err.type === 'error' ? (
+                        <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                      ) : (
+                        <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline gap-1.5 flex-wrap">
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 font-mono shrink-0">
+                            {err.field}
+                          </Badge>
+                          <span className="font-medium">{err.message}</span>
+                        </div>
+                        {(err.actual || err.expected) && (
+                          <div className="mt-0.5 text-[11px] opacity-80 pl-0.5">
+                            {err.actual && <span>Atual: <code className="bg-muted px-1 rounded">{err.actual}</code></span>}
+                            {err.actual && err.expected && <span className="mx-1">→</span>}
+                            {err.expected && <span>Esperado: <code className="bg-muted px-1 rounded">{err.expected}</code></span>}
+                          </div>
+                        )}
+                        {err.hint && (
+                          <div className="mt-0.5 text-[11px] opacity-70 pl-0.5 italic">
+                            💡 {err.hint}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -946,23 +1125,29 @@ Estrutura esperada:
 {
   "noticias": [
     {
-      "titulo": "Título da notícia (obrigatório, min 10 caracteres)",
-      "slug": "slug-da-noticia (obrigatório, letras minúsculas, números e hífens)",
-      "resumo": "Resumo com 30-300 caracteres (obrigatório)",
-      "conteudo": "<p><strong>Primeiro parágrafo em negrito.</strong></p><p>Conteúdo HTML...</p>",
-      "categoria": "Nome da categoria (obrigatório)",
-      "tags": ["tag1", "tag2", ...] (recomendado 12 tags),
-      "destaque": "none" | "home" | "featured" | "urgent",
+      "titulo": "Título da notícia (obrigatório, máx 100)",
+      "slug": "slug-kebab-case (obrigatório)",
+      "subtitulo": "Linha fina (máx 160)",
+      "chapeu": "CATEGORIA EM MAIÚSCULO",
+      "editor": "Redação Conexão na Cidade",
+      "resumo": "Resumo 30-160 caracteres (obrigatório)",
+      "conteudo": "<p><strong>Lide em negrito.</strong></p>...",
+      "categoria": "Cidades (obrigatório, da whitelist)",
+      "tags": ["Tag1", "Tag2", "Tag3"] (3 a 12 tags),
+      "fonte": "https://url-fonte-original",
+      "destaque": "none | home | featured | urgent",
       "generateWebStory": true,
       "imagem": {
-        "hero": "https://url-imagem-principal.jpg",
+        "hero": "https://imagem-principal.jpg",
+        "og": "https://og-1200x630.jpg",
+        "card": "https://card-800x450.jpg",
         "alt": "Descrição da imagem",
-        "credito": "Foto: Nome do Fotógrafo",
+        "credito": "Foto: Autor / Fonte",
         "galeria": ["url1.jpg", "url2.jpg"]
       },
       "seo": {
-        "meta_titulo": "Título SEO (max 60 caracteres)",
-        "meta_descricao": "Descrição SEO (max 160 caracteres)"
+        "meta_titulo": "Título SEO (máx 60)",
+        "meta_descricao": "Descrição SEO (máx 160)"
       }
     }
   ]
