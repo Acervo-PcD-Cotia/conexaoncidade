@@ -44,92 +44,102 @@ const Index = () => {
   }
 
   return (
-    <div className="home-layout">
-      {/* 1. Market Data Bar - compact */}
-      <Suspense fallback={<SectionSkeleton h="h-10" />}>
-        <MarketDataBar />
-      </Suspense>
-
-      {/* 2. Banner Intro */}
-      <Suspense fallback={<SectionSkeleton h="h-12" />}>
-        <BannerIntro />
-      </Suspense>
-
-      {/* 3. Stories Bar */}
-      <Suspense fallback={<SectionSkeleton h="h-20" />}>
-        <TopWebStoriesBar />
-      </Suspense>
-
-      {/* 4. Ad Slot Top */}
-      <div className="home-container home-section-spacing flex justify-center">
-        <ResponsiveAdUnit format="SUPER_BANNER_TOPO" slotId="super_banner_top" source="ads" page="home" />
+    <Suspense fallback={
+      <div className="home-container space-y-4 py-4">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-48 w-full" />
       </div>
+    }>
+      <div className="home-layout">
+        {/* 1. Market Data Bar - compact */}
+        <Suspense fallback={<SectionSkeleton h="h-10" />}>
+          <MarketDataBar />
+        </Suspense>
 
-      {/* 5. HERO — destaque principal + 3 secundárias */}
-      <Suspense fallback={<SectionSkeleton h="h-72" />}>
-        <HeroSection />
-      </Suspense>
+        {/* 2. Banner Intro */}
+        <Suspense fallback={<SectionSkeleton h="h-12" />}>
+          <BannerIntro />
+        </Suspense>
 
-      {/* 6. Banner Horizontal após hero */}
-      <div className="home-container home-section-spacing flex justify-center">
-        <SuperBanner />
-      </div>
+        {/* 3. Stories Bar */}
+        <Suspense fallback={<SectionSkeleton h="h-20" />}>
+          <TopWebStoriesBar />
+        </Suspense>
 
-      {/* 7. Main Content Area: 70% news | 30% sidebar */}
-      <div className="home-container home-section-spacing">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
-          {/* Main Column */}
-          <div className="min-w-0 space-y-6">
-            {/* Video Block */}
-            <Suspense fallback={<SectionSkeleton h="h-48" />}>
-              <HomeVideoBlock />
-            </Suspense>
+        {/* 4. Ad Slot Top */}
+        <div className="home-container home-section-spacing flex justify-center">
+          <ResponsiveAdUnit format="SUPER_BANNER_TOPO" slotId="super_banner_top" source="ads" page="home" />
+        </div>
 
-            {/* Últimas Notícias */}
-            <Suspense fallback={<SectionSkeleton h="h-64" />}>
-              <LatestNewsList />
-            </Suspense>
+        {/* 5. HERO — destaque principal + 3 secundárias */}
+        <Suspense fallback={<SectionSkeleton h="h-72" />}>
+          <HeroSection />
+        </Suspense>
 
-            {/* Ad mid */}
-            <div className="flex justify-center">
-              <ResponsiveAdUnit format="RETANGULO_MEDIO" slotId="retangulo_medio" source="ads" page="home" />
-            </div>
-
-            {/* Quick Notes */}
-            <Suspense fallback={<SectionSkeleton h="h-32" />}>
-              <QuickNotes />
-            </Suspense>
+        {/* 6. Banner Horizontal após hero */}
+        <Suspense fallback={<SectionSkeleton h="h-16" />}>
+          <div className="home-container home-section-spacing flex justify-center">
+            <SuperBanner />
           </div>
+        </Suspense>
 
-          {/* Sidebar 30% */}
-          <aside className="hidden lg:block space-y-6">
-            {/* Mais Lidas - sticky */}
-            <div className="sticky top-20">
-              <Suspense fallback={<SectionSkeleton h="h-96" />}>
-                <MostReadSection sidebar />
+        {/* 7. Main Content Area: 70% news | 30% sidebar */}
+        <div className="home-container home-section-spacing">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+            {/* Main Column */}
+            <div className="min-w-0 space-y-6">
+              {/* Video Block */}
+              <Suspense fallback={<SectionSkeleton h="h-48" />}>
+                <HomeVideoBlock />
               </Suspense>
 
-              {/* Banner vertical sticky */}
-              <div className="mt-6">
-                <ResponsiveAdUnit format="ARRANHA_CEU" slotId="arranha_ceu" source="ads" page="home" />
+              {/* Últimas Notícias */}
+              <Suspense fallback={<SectionSkeleton h="h-64" />}>
+                <LatestNewsList />
+              </Suspense>
+
+              {/* Ad mid */}
+              <div className="flex justify-center">
+                <ResponsiveAdUnit format="RETANGULO_MEDIO" slotId="retangulo_medio" source="ads" page="home" />
               </div>
+
+              {/* Quick Notes */}
+              <Suspense fallback={<SectionSkeleton h="h-32" />}>
+                <QuickNotes />
+              </Suspense>
             </div>
-          </aside>
+
+            {/* Sidebar 30% */}
+            <aside className="hidden lg:block space-y-6">
+              {/* Mais Lidas - sticky */}
+              <div className="sticky top-20">
+                <Suspense fallback={<SectionSkeleton h="h-96" />}>
+                  <MostReadSection sidebar />
+                </Suspense>
+
+                {/* Banner vertical sticky */}
+                <div className="mt-6">
+                  <ResponsiveAdUnit format="ARRANHA_CEU" slotId="arranha_ceu" source="ads" page="home" />
+                </div>
+              </div>
+            </aside>
+          </div>
+        </div>
+
+        {/* Mobile-only MostRead (below content) */}
+        <div className="lg:hidden">
+          <Suspense fallback={<SectionSkeleton h="h-64" />}>
+            <MostReadSection />
+          </Suspense>
+        </div>
+
+        {/* Ad bottom */}
+        <div className="home-container home-section-spacing flex justify-center">
+          <ResponsiveAdUnit format="ANUNCIO_HOME" slotId="leaderboard" source="ads" page="home" />
         </div>
       </div>
-
-      {/* Mobile-only MostRead (below content) */}
-      <div className="lg:hidden">
-        <Suspense fallback={<SectionSkeleton h="h-64" />}>
-          <MostReadSection />
-        </Suspense>
-      </div>
-
-      {/* Ad bottom */}
-      <div className="home-container home-section-spacing flex justify-center">
-        <ResponsiveAdUnit format="ANUNCIO_HOME" slotId="leaderboard" source="ads" page="home" />
-      </div>
-    </div>
+    </Suspense>
   );
 };
 
