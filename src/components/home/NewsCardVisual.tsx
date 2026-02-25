@@ -101,16 +101,16 @@ export function NewsCardVisual({
       </Link>
 
       {/* Content */}
-      <div className="flex flex-1 flex-col p-3">
+      <div className="flex flex-1 flex-col p-2.5">
         <Link to={`/noticia/${news.slug}`} className="flex-1">
-          <h3 className="font-heading text-sm font-bold leading-snug line-clamp-2 group-hover:text-primary transition-colors">
-            {truncateTitle(news.title, 80)}
+          <h3 className="font-heading text-xs font-bold leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+            {truncateTitle(news.title, 70)}
           </h3>
         </Link>
 
         {/* Date */}
-        <div className="mt-2 flex items-center gap-1 text-[10px] text-muted-foreground">
-          <Clock className="h-3 w-3" aria-hidden="true" />
+        <div className="mt-1.5 flex items-center gap-1 text-[10px] text-muted-foreground">
+          <Clock className="h-2.5 w-2.5" aria-hidden="true" />
           <time dateTime={news.published_at || undefined}>
             {news.published_at && formatTimeAgo(news.published_at)}
           </time>
@@ -118,7 +118,7 @@ export function NewsCardVisual({
 
         {/* Actions */}
         {showActions && (
-          <div className="mt-3 flex items-center gap-1 border-t border-border pt-3">
+          <div className="mt-2 flex items-center gap-1 border-t border-border pt-2">
             <Button
               variant="ghost"
               size="sm"

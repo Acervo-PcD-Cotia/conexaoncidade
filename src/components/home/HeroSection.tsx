@@ -90,11 +90,11 @@ export function HeroSection() {
   if (!heroNews) return null;
 
   return (
-    <section className="container py-4" aria-labelledby="hero-title">
+    <section className="home-container home-section-spacing" aria-labelledby="hero-title">
       <h2 id="hero-title" className="sr-only">Destaque Principal</h2>
       
       {/* Main 3-column hero layout with WebStories sidebar */}
-      <div className="grid gap-6 lg:grid-cols-[1fr_1fr_280px] items-start">
+      <div className="grid gap-5 lg:grid-cols-[1fr_1fr_260px] items-start">
         {/* Left: Large image */}
         <Link 
           to={`/noticia/${heroNews.slug}`} 
@@ -138,7 +138,7 @@ export function HeroSection() {
 
           {/* Title (max 60 chars visible, but shows full on hover/focus) */}
           <Link to={`/noticia/${heroNews.slug}`} className="group">
-            <h3 className="font-heading text-2xl md:text-3xl lg:text-4xl font-bold leading-tight text-foreground group-hover:text-primary transition-colors">
+            <h3 className="font-heading text-xl md:text-2xl lg:text-3xl font-extrabold leading-tight text-foreground group-hover:text-primary transition-colors">
               {truncateText(heroNews.title, 80)}
             </h3>
           </Link>
@@ -187,7 +187,7 @@ export function HeroSection() {
 
       {/* Side news cards - Visual cards instead of overlay text */}
       {sideNews.length > 0 && (
-        <div className="grid gap-4 mt-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 mt-4 sm:grid-cols-2 lg:grid-cols-3">
           {sideNews.map((news) => (
             <article 
               key={news.id} 

@@ -73,9 +73,9 @@ export function LatestNewsList() {
   const compactNews = news.slice(8);
 
   return (
-    <section className="container py-4" aria-labelledby="latest-news-title">
+    <section aria-labelledby="latest-news-title">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <RefreshCw className="h-5 w-5 text-primary" aria-hidden="true" />
           <h2 id="latest-news-title" className="font-heading text-lg font-bold">
@@ -91,7 +91,7 @@ export function LatestNewsList() {
       </div>
 
       {/* Visual cards grid - first row */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {featuredNews.slice(0, 4).map((item, index) => (
           <NewsCardVisual 
             key={item.id} 
@@ -103,13 +103,13 @@ export function LatestNewsList() {
       </div>
 
       {/* Inline ad between rows */}
-      <div className="my-4 flex justify-center">
+      <div className="my-3 flex justify-center">
         <InlineAdSlot position={1} className="max-w-[300px]" />
       </div>
 
       {/* Visual cards grid - second row */}
       {featuredNews.length > 4 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {featuredNews.slice(4).map((item) => (
             <NewsCardVisual 
               key={item.id} 
@@ -123,7 +123,7 @@ export function LatestNewsList() {
 
       {/* Compact list for additional news */}
       {compactNews.length > 0 && (
-        <div className="mt-4 rounded-lg border border-border bg-card overflow-hidden">
+        <div className="mt-3 rounded-lg border border-border bg-card overflow-hidden">
           <div className="grid gap-0 divide-y divide-border md:grid-cols-2 md:divide-y-0">
             {compactNews.map((item, index) => (
               <Link
