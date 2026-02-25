@@ -11,7 +11,7 @@ const MostReadSection = lazy(() => import("@/components/home/MostReadSection").t
 const SuperBanner = lazy(() => import("@/components/home/SuperBanner").then(m => ({ default: m.SuperBanner })));
 const QuickNotes = lazy(() => import("@/components/home/QuickNotes").then(m => ({ default: m.QuickNotes })));
 const HomeVideoBlock = lazy(() => import("@/components/home/HomeVideoBlock").then(m => ({ default: m.HomeVideoBlock })));
-const BannerIntro = lazy(() => import("@/components/ads/BannerIntro").then(m => ({ default: m.BannerIntro })));
+
 
 const LOADING_TIMEOUT_MS = 5000;
 
@@ -63,12 +63,6 @@ const Index = () => {
           </div>
         </Suspense>
 
-        {/* 3. Banner Publicitário Topo */}
-        <Suspense fallback={<SectionSkeleton h="h-16" />}>
-          <div className="home-container flex justify-center">
-            <BannerIntro />
-          </div>
-        </Suspense>
 
         {/* 4. Hero Principal */}
         <Suspense fallback={<SectionSkeleton h="h-72" />}>
