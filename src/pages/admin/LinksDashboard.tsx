@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ROUTES } from '@/config/routes';
 import { useLinkStats, useLinks } from '@/hooks/useLinks';
 import { formatNumber } from '@/lib/linkUtils';
 import { Link2, QrCode, FileText, BarChart3, Plus, MousePointerClick, TrendingUp, Clock } from 'lucide-react';
@@ -45,7 +46,7 @@ export default function LinksDashboard() {
 
       {/* Quick Actions */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Link to="/admin/links/create">
+        <Link to={`${ROUTES.ADMIN}/links/create`}>
           <Card className="cursor-pointer hover:bg-accent transition-colors">
             <CardContent className="flex items-center gap-4 p-6">
               <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900">
@@ -59,7 +60,7 @@ export default function LinksDashboard() {
           </Card>
         </Link>
 
-        <Link to="/admin/links/qr">
+        <Link to={`${ROUTES.ADMIN}/links/qr`}>
           <Card className="cursor-pointer hover:bg-accent transition-colors">
             <CardContent className="flex items-center gap-4 p-6">
               <div className="p-3 rounded-full bg-green-100 dark:bg-green-900">
@@ -73,7 +74,7 @@ export default function LinksDashboard() {
           </Card>
         </Link>
 
-        <Link to="/admin/links/bio">
+        <Link to={`${ROUTES.ADMIN}/links/bio`}>
           <Card className="cursor-pointer hover:bg-accent transition-colors">
             <CardContent className="flex items-center gap-4 p-6">
               <div className="p-3 rounded-full bg-purple-100 dark:bg-purple-900">
@@ -87,7 +88,7 @@ export default function LinksDashboard() {
           </Card>
         </Link>
 
-        <Link to="/admin/links/reports">
+        <Link to={`${ROUTES.ADMIN}/links/reports`}>
           <Card className="cursor-pointer hover:bg-accent transition-colors">
             <CardContent className="flex items-center gap-4 p-6">
               <div className="p-3 rounded-full bg-orange-100 dark:bg-orange-900">
