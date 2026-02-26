@@ -173,13 +173,49 @@ async function extractFromUrl(url: string): Promise<{
   };
 }
 
+interface AIProviderPayload {
+  providerId?: string;
+  model?: string;
+}
+
+function getAIEndpointAndHeaders(provider: AIProviderPayload): { url: string; headers: Record<string, string>; model: string } {
+  const providerId = provider.providerId || "lovable";
+  let model = provider.model || "google/gemini-2.5-flash";
+
+  if (providerId === "abacus") {
+    const apiKey = Deno.env.get("ABACUS_API_KEY");
+    if (!apiKey) throw new Error("ABACUS_API_KEY não configurada. Adicione a chave nas configurações.");
+    model = model === "auto" || model === "abacus/auto" ? "route-llm" : model;
+    return {
+      url: "https://routellm.abacus.ai/v1/chat/completions",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      model,
+    };
+  }
+
+  // Default: Lovable AI gateway (covers lovable, gemini, openai providers)
+  const apiKey = Deno.env.get("LOVABLE_API_KEY");
+  if (!apiKey) throw new Error("LOVABLE_API_KEY não configurada.");
+  if (model === "auto") model = "google/gemini-2.5-flash";
+  return {
+    url: "https://ai.gateway.lovable.dev/v1/chat/completions",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    model,
+  };
+}
+
 async function rewriteWithAI(extracted: {
   title: string;
   content: string;
   charCount: number;
-}, sourceUrl: string, imageUrl: string, dataPublicacao: string): Promise<any> {
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+}, sourceUrl: string, imageUrl: string, dataPublicacao: string, provider: AIProviderPayload = {}): Promise<any> {
+  const { url: aiUrl, headers: aiHeaders, model } = getAIEndpointAndHeaders(provider);
 
   const minChars = Math.floor(extracted.charCount * 0.95);
   const maxChars = Math.ceil(extracted.charCount * 1.05);
@@ -249,14 +285,13 @@ Título: ${extracted.title}
 Conteúdo Original (${extracted.charCount} caracteres):
 ${extracted.content}`;
 
-  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+  console.log(`Using AI provider: ${provider.providerId || 'lovable'}, model: ${model}`);
+
+  const response = await fetch(aiUrl, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${LOVABLE_API_KEY}`,
-      "Content-Type": "application/json",
-    },
+    headers: aiHeaders,
     body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
+      model,
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
@@ -275,7 +310,7 @@ ${extracted.content}`;
     if (response.status === 402) {
       throw new Error('Créditos de IA insuficientes.');
     }
-    throw new Error('Falha na reescrita com IA');
+    throw new Error(`Falha na reescrita com IA (${response.status})`);
   }
 
   const data = await response.json();
@@ -344,8 +379,8 @@ serve(async (req) => {
   }
 
   try {
-    const body: BatchRequest = await req.json();
-    const { quantidadeNoticias, noticias } = body;
+    const body = await req.json();
+    const { quantidadeNoticias, noticias, aiProvider } = body as BatchRequest & { aiProvider?: AIProviderPayload };
 
     if (!noticias || !Array.isArray(noticias) || noticias.length === 0) {
       return new Response(
@@ -357,6 +392,8 @@ serve(async (req) => {
     if (noticias.length !== quantidadeNoticias) {
       console.warn(`quantidadeNoticias (${quantidadeNoticias}) differs from actual items (${noticias.length})`);
     }
+
+    console.log(`AI Provider config:`, JSON.stringify(aiProvider || { providerId: 'lovable' }));
 
     const results: any[] = [];
     const errors: { index: number; url: string; error: string }[] = [];
@@ -376,7 +413,8 @@ serve(async (req) => {
           extracted,
           item.linkMateria,
           item.linkImagem || extracted.allImages[0] || '',
-          item.dataPublicacao || new Date().toLocaleDateString('pt-BR')
+          item.dataPublicacao || new Date().toLocaleDateString('pt-BR'),
+          aiProvider || {}
         );
 
         results.push(article);
