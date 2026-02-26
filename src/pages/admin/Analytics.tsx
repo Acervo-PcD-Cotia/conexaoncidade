@@ -25,7 +25,7 @@ export default function Analytics() {
     start: format(subDays(new Date(), 30), "yyyy-MM-dd"),
     end: format(new Date(), "yyyy-MM-dd"),
   });
-  const [categoryFilter, setCategoryFilter] = useState<string>("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
 
   // Fetch page views data
   const { data: pageViews } = useQuery({
@@ -53,7 +53,7 @@ export default function Analytics() {
         .order("view_count", { ascending: false })
         .limit(20);
 
-      if (categoryFilter) {
+      if (categoryFilter && categoryFilter !== "all") {
         query = query.eq("category_id", categoryFilter);
       }
 
@@ -259,7 +259,7 @@ export default function Analytics() {
                   <SelectValue placeholder="Todas" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas</SelectItem>
+                  <SelectItem value="all">Todas</SelectItem>
                   {categories?.map((cat) => (
                     <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                   ))}
