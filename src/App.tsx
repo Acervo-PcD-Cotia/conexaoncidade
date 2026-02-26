@@ -369,6 +369,11 @@ import CorePerformance from "./pages/admin/core-engine/CorePerformance";
 import CoreLeads from "./pages/admin/core-engine/CoreLeads";
 import CoreSchema from "./pages/admin/core-engine/CoreSchema";
 import CoreSecurity from "./pages/admin/core-engine/CoreSecurity";
+import CoreAds from "./pages/admin/core-engine/CoreAds";
+import CorePush from "./pages/admin/core-engine/CorePush";
+import CoreEditorial from "./pages/admin/core-engine/CoreEditorial";
+import CoreRoles from "./pages/admin/core-engine/CoreRoles";
+import CoreAutomation from "./pages/admin/core-engine/CoreAutomation";
 
 import { ThemeProvider } from "@/contexts/ThemeContext";
 
@@ -759,6 +764,11 @@ const App = () => (
                         <Route path="core-engine/leads" element={<CoreLeads />} />
                         <Route path="core-engine/schema" element={<CoreSchema />} />
                         <Route path="core-engine/security" element={<CoreSecurity />} />
+                        <Route path="core-engine/ads" element={<CoreAds />} />
+                        <Route path="core-engine/push" element={<CorePush />} />
+                        <Route path="core-engine/editorial" element={<CoreEditorial />} />
+                        <Route path="core-engine/roles" element={<CoreRoles />} />
+                        <Route path="core-engine/automation" element={<CoreAutomation />} />
                         <Route path="core-engine/:moduleId" element={<CoreModulePage />} />
 
                         {/* Classifieds & Jobs Admin */}
