@@ -7086,6 +7086,53 @@ export type Database = {
         }
         Relationships: []
       }
+      core_schema_configs: {
+        Row: {
+          auto_generate: boolean | null
+          created_at: string | null
+          default_data: Json | null
+          id: string
+          is_enabled: boolean | null
+          label: string
+          override_fields: Json | null
+          schema_type: string
+          tenant_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          auto_generate?: boolean | null
+          created_at?: string | null
+          default_data?: Json | null
+          id?: string
+          is_enabled?: boolean | null
+          label: string
+          override_fields?: Json | null
+          schema_type: string
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          auto_generate?: boolean | null
+          created_at?: string | null
+          default_data?: Json | null
+          id?: string
+          is_enabled?: boolean | null
+          label?: string
+          override_fields?: Json | null
+          schema_type?: string
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "core_schema_configs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       core_seo_scores: {
         Row: {
           created_at: string
