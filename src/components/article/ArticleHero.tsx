@@ -21,16 +21,16 @@ export function ArticleHero({
         fetchPriority="high"
       />
       
-      {/* Credit overlay on image */}
+      {/* Credit overlay on bottom of image - Agência Brasil style */}
       {imageCredit && (
-        <span className="absolute bottom-0 right-0 bg-black/70 text-white text-xs px-3 py-1.5">
-          {imageCredit}
+        <span className="absolute bottom-0 left-0 right-0 bg-black/60 text-white/90 text-[11px] px-3 py-1.5 tracking-wide uppercase">
+          © {imageCredit}
         </span>
       )}
       
       {/* Caption below image */}
       {imageAlt && (
-        <figcaption className="text-sm text-muted-foreground mt-3 italic">
+        <figcaption className="text-xs text-muted-foreground mt-2 uppercase tracking-wide">
           {imageAlt}
         </figcaption>
       )}
