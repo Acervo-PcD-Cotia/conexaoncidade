@@ -458,6 +458,12 @@
     padding-bottom: 2px;
   }
 
+  /* Chapéu pill style - Agência Brasil centered badge */
+  .article-themed .article-chapeu-pill {
+    background-color: var(--category-color);
+    color: white;
+  }
+
   /* Dividers use category color with transparency */
   .article-themed .article-divider {
     border-color: color-mix(in srgb, var(--category-color) 25%, transparent);
