@@ -27,55 +27,49 @@ export function ArticleHeader({
 
   return (
     <header className="max-w-[820px] mx-auto px-4 md:px-6 pt-10 pb-6">
-      {/* Chapéu (Category Label) - centered pill like Agência Brasil */}
-      <div className="flex justify-center mb-5">
-        {categorySlug ? (
-          <Link to={`/categoria/${categorySlug}`}>
-            <span className="article-chapeu-pill inline-block text-xs font-semibold uppercase tracking-wider px-4 py-1.5 rounded-full hover:opacity-80 transition-opacity">
-              {categoryDisplay}
-            </span>
-          </Link>
-        ) : (
-          <span className="article-chapeu-pill inline-block text-xs font-semibold uppercase tracking-wider px-4 py-1.5 rounded-full">
+      {/* Chapéu (Category Label) - left aligned, uppercase text like production */}
+      {categorySlug ? (
+        <Link to={`/categoria/${categorySlug}`}>
+          <span className="article-chapeu inline-block text-xs font-semibold uppercase tracking-widest pb-1 mb-4 hover:opacity-80 transition-opacity">
             {categoryDisplay}
           </span>
-        )}
-      </div>
+        </Link>
+      ) : (
+        <span className="article-chapeu inline-block text-xs font-semibold uppercase tracking-widest pb-1 mb-4">
+          {categoryDisplay}
+        </span>
+      )}
 
-      {/* Title (H1) - centered, large, bold */}
+      {/* Title (H1) - left aligned, large, bold */}
       <h1 
         id="news-title"
-        className="text-2xl md:text-3xl lg:text-[2.5rem] font-bold leading-tight text-foreground mb-4 text-center"
+        className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight text-foreground mb-4"
       >
         {title}
       </h1>
 
-      {/* Linha Fina (Subtitle) - centered */}
+      {/* Linha Fina (Subtitle) */}
       {subtitle && (
-        <p className="text-base md:text-lg text-muted-foreground leading-relaxed mb-6 text-center max-w-[700px] mx-auto">
+        <p className="text-lg md:text-xl text-muted-foreground leading-relaxed mb-6">
           {subtitle}
         </p>
       )}
 
-      {/* Thin separator */}
-      <hr className="border-t border-border/50 mb-4" />
-
-      {/* Meta (Author, Source, Date) - left aligned like Agência Brasil */}
-      <div className="flex flex-col gap-1 text-sm text-muted-foreground">
-        <div className="flex items-center gap-1">
-          <span className="font-bold uppercase tracking-wide text-foreground text-xs">
-            {authorName}
-          </span>
-          {source && !source.startsWith('http') && (
-            <span className="text-xs">– {source}</span>
-          )}
-        </div>
+      {/* Meta (Author, Source, Date) */}
+      <div className="flex flex-col md:flex-row md:items-center gap-2 text-sm text-muted-foreground">
+        <span className="font-bold uppercase tracking-wide text-foreground">
+          {authorName}
+        </span>
+        {source && !source.startsWith('http') && (
+          <span className="hidden md:inline">– {source}</span>
+        )}
         {formattedDate && (
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <>
+            <span className="hidden md:inline text-muted-foreground">|</span>
             <time dateTime={publishedAt || undefined}>
-              Publicado em {formattedDate}
+              Publicado em {formattedDate} • Brasília
             </time>
-          </div>
+          </>
         )}
       </div>
     </header>

@@ -389,8 +389,8 @@ function NewsDetailContent({ news }: NewsDetailContentProps) {
           </div>
         </div>
 
-        {/* Clean Header - Agência Brasil Style (no colored background) */}
-        <div className="print-hide bg-background">
+        {/* Header with category-colored top band */}
+        <div className="print-hide" style={{ background: `linear-gradient(to bottom, var(--category-color) 0px, var(--category-color) 6px, hsl(var(--background)) 6px)` }}>
           <ArticleHeader
             categoryDisplay={categoryDisplay}
             categorySlug={news.category?.slug}
