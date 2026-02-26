@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Upload, Sparkles, Trash2, Loader2, FileText, Link, Layers, Zap, X, Star, Home, AlertTriangle, Newspaper, Wand2, Download, AlertCircle } from 'lucide-react';
+import { Upload, Sparkles, Trash2, Loader2, FileText, Link, Layers, Zap, X, Star, Home, AlertTriangle, Newspaper, Wand2, Download, AlertCircle, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -408,7 +408,13 @@ const validateNewsJson = (text: string): ValidationError[] => {
 };
 
 type DetectedMode = 'exclusiva' | 'manual' | 'json' | 'url' | 'batch' | 'auto';
-type TabType = 'cadastro' | 'manual' | 'json' | 'link' | 'lote';
+type TabType = 'cadastro' | 'manual' | 'json' | 'link' | 'lote' | 'gerador';
+
+interface GeneratorNewsItem {
+  linkMateria: string;
+  linkImagem: string;
+  dataPublicacao: string;
+}
 
 export interface HighlightSettings {
   is_home_highlight: boolean;
@@ -439,6 +445,7 @@ const TAB_CONFIG: Record<TabType, { label: string; icon: React.ElementType; desc
   json: { label: 'JSON', icon: FileText, description: 'Importação via JSON' },
   link: { label: 'Link', icon: Link, description: 'Extrair de uma URL' },
   lote: { label: 'Lote', icon: Layers, description: 'Processar múltiplas URLs' },
+  gerador: { label: 'Gerador', icon: Zap, description: 'Gerador automático: insira links + imagens + datas' },
 };
 
 export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUseBatch }: NoticiasAIInputProps) {
@@ -468,6 +475,13 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
   // Lote state
   const [batchUrls, setBatchUrls] = useState('');
   
+  // Gerador state
+  const [generatorItems, setGeneratorItems] = useState<GeneratorNewsItem[]>([
+    { linkMateria: '', linkImagem: '', dataPublicacao: '' }
+  ]);
+  const [generatorProgress, setGeneratorProgress] = useState(0);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatorResult, setGeneratorResult] = useState<string | null>(null);
   // Common states
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [imageUrlInput, setImageUrlInput] = useState('');
@@ -631,6 +645,83 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
     });
   };
 
+  // Generator helpers
+  const addGeneratorItem = () => {
+    setGeneratorItems(prev => [...prev, { linkMateria: '', linkImagem: '', dataPublicacao: '' }]);
+  };
+
+  const removeGeneratorItem = (index: number) => {
+    setGeneratorItems(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateGeneratorItem = (index: number, field: keyof GeneratorNewsItem, value: string) => {
+    setGeneratorItems(prev => prev.map((item, i) => i === index ? { ...item, [field]: value } : item));
+  };
+
+  const handleGeneratorSubmit = async () => {
+    const validItems = generatorItems.filter(item => item.linkMateria.trim());
+    if (validItems.length === 0) {
+      toast({ title: 'Nenhuma URL preenchida', variant: 'destructive' });
+      return;
+    }
+
+    setIsGenerating(true);
+    setGeneratorProgress(0);
+    setGeneratorResult(null);
+
+    const progressInterval = setInterval(() => {
+      setGeneratorProgress(prev => {
+        if (prev >= 90) { clearInterval(progressInterval); return prev; }
+        return prev + (90 / (validItems.length * 10));
+      });
+    }, 1000);
+
+    try {
+      const response = await supabase.functions.invoke('noticias-ai-batch-generator', {
+        body: {
+          quantidadeNoticias: validItems.length,
+          noticias: validItems,
+        },
+      });
+
+      clearInterval(progressInterval);
+      setGeneratorProgress(100);
+
+      if (response.error) {
+        throw new Error(typeof response.error === 'object' ? response.error.message : String(response.error));
+      }
+
+      const data = response.data;
+      if (data?.error) throw new Error(data.error);
+
+      if (data?.json) {
+        const jsonOutput = JSON.stringify(data.json, null, 2);
+        setGeneratorResult(jsonOutput);
+
+        // Also set it in the JSON tab for direct import
+        setJsonContent(jsonOutput);
+        
+        toast({
+          title: `✓ ${data.summary?.processed || 0} notícia(s) gerada(s)`,
+          description: data.summary?.failed > 0 
+            ? `${data.summary.failed} falha(s). O JSON está pronto para importação.` 
+            : 'JSON gerado com sucesso! Vá para a aba JSON para importar.',
+        });
+      }
+    } catch (error) {
+      clearInterval(progressInterval);
+      console.error('Generator error:', error);
+      toast({
+        title: 'Erro no gerador',
+        description: error instanceof Error ? error.message : 'Tente novamente',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsGenerating(false);
+      setTimeout(() => setGeneratorProgress(0), 1500);
+    }
+  };
+
   const getContentAndMode = (): { content: string; mode: DetectedMode } => {
     switch (activeTab) {
       case 'cadastro':
@@ -663,6 +754,8 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
         return !singleUrl.trim();
       case 'lote':
         return !batchUrls.trim();
+      case 'gerador':
+        return !generatorItems.some(item => item.linkMateria.trim());
       default:
         return true;
     }
@@ -733,6 +826,8 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
     setSingleUrl('');
     setBatchUrls('');
     setImageUrls([]);
+    setGeneratorItems([{ linkMateria: '', linkImagem: '', dataPublicacao: '' }]);
+    setGeneratorResult(null);
     setHighlights({
       is_home_highlight: false,
       is_urgent: false,
@@ -754,7 +849,7 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
       <CardContent className="space-y-4">
         {/* Tabs Navigation */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabType)} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 h-auto">
+          <TabsList className="grid w-full grid-cols-6 h-auto">
             {Object.entries(TAB_CONFIG).map(([key, config]) => {
               const Icon = config.icon;
               return (
@@ -1211,6 +1306,132 @@ https://exemplo.com/noticia-3
               Cada URL será processada individualmente. Máximo recomendado: 10 URLs por lote.
             </p>
           </TabsContent>
+
+          <TabsContent value="gerador" className="mt-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Badge variant="default" className="bg-amber-500">
+                  <Zap className="h-3 w-3 mr-1" />
+                  {generatorItems.filter(i => i.linkMateria.trim()).length} notícia(s)
+                </Badge>
+              </div>
+              <Button variant="outline" size="sm" onClick={addGeneratorItem}>
+                <PlusCircle className="h-4 w-4 mr-1" />
+                Adicionar
+              </Button>
+            </div>
+
+            <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+              {generatorItems.map((item, idx) => (
+                <Card key={idx} className="p-3 space-y-2 border-l-2 border-l-amber-400">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-muted-foreground">Notícia {idx + 1}</span>
+                    {generatorItems.length > 1 && (
+                      <Button variant="ghost" size="sm" onClick={() => removeGeneratorItem(idx)} className="h-6 w-6 p-0">
+                        <X className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                  <Input
+                    placeholder="https://... (link da matéria)"
+                    value={item.linkMateria}
+                    onChange={(e) => updateGeneratorItem(idx, 'linkMateria', e.target.value)}
+                    className="text-sm"
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      placeholder="https://... (link da imagem)"
+                      value={item.linkImagem}
+                      onChange={(e) => updateGeneratorItem(idx, 'linkImagem', e.target.value)}
+                      className="text-sm"
+                    />
+                    <Input
+                      placeholder="DD/MM/AAAA"
+                      value={item.dataPublicacao}
+                      onChange={(e) => updateGeneratorItem(idx, 'dataPublicacao', e.target.value)}
+                      className="text-sm"
+                    />
+                  </div>
+                </Card>
+              ))}
+            </div>
+
+            {generatorProgress > 0 && (
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Extraindo e reescrevendo...</span>
+                  <span>{Math.round(generatorProgress)}%</span>
+                </div>
+                <Progress value={generatorProgress} className="h-2" />
+              </div>
+            )}
+
+            {generatorResult && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Badge variant="default" className="bg-green-600">✓ JSON gerado</Badge>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(generatorResult);
+                        toast({ title: 'JSON copiado!' });
+                      }}
+                    >
+                      Copiar JSON
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const blob = new Blob([generatorResult], { type: 'application/json' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `noticias-geradas-${Date.now()}.json`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        toast({ title: 'JSON baixado!' });
+                      }}
+                    >
+                      <Download className="h-4 w-4 mr-1" />
+                      Baixar
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setActiveTab('json');
+                        toast({ title: 'Pronto para importar', description: 'Clique em "Gerar Notícia" para processar o JSON.' });
+                      }}
+                    >
+                      Importar →
+                    </Button>
+                  </div>
+                </div>
+                <Textarea
+                  value={generatorResult}
+                  readOnly
+                  className="min-h-[150px] font-mono text-xs"
+                />
+              </div>
+            )}
+
+            <Button
+              onClick={handleGeneratorSubmit}
+              disabled={!generatorItems.some(i => i.linkMateria.trim()) || isGenerating}
+              className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+            >
+              {isGenerating ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Zap className="mr-2 h-4 w-4" />
+              )}
+              {isGenerating ? 'Gerando...' : `Gerar ${generatorItems.filter(i => i.linkMateria.trim()).length} Notícia(s) em JSON`}
+            </Button>
+          </TabsContent>
         </Tabs>
 
         {/* Batch Progress */}
@@ -1224,24 +1445,26 @@ https://exemplo.com/noticia-3
           </div>
         )}
 
-        {/* Action Buttons */}
-        <div className="flex gap-2" data-tour="generate-button">
-          <Button
-            onClick={handleGenerate}
-            disabled={isContentEmpty() || isProcessing}
-            className="flex-1 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700"
-          >
-            {isProcessing ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Sparkles className="mr-2 h-4 w-4" />
-            )}
-            {isProcessing ? 'Processando...' : 'Gerar Notícia'}
-          </Button>
-          <Button variant="outline" onClick={handleClear} disabled={isProcessing}>
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
+        {/* Action Buttons (hidden on gerador tab since it has its own button) */}
+        {activeTab !== 'gerador' && (
+          <div className="flex gap-2" data-tour="generate-button">
+            <Button
+              onClick={handleGenerate}
+              disabled={isContentEmpty() || isProcessing}
+              className="flex-1 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700"
+            >
+              {isProcessing ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="mr-2 h-4 w-4" />
+              )}
+              {isProcessing ? 'Processando...' : 'Gerar Notícia'}
+            </Button>
+            <Button variant="outline" onClick={handleClear} disabled={isProcessing}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
