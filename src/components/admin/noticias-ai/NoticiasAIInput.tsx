@@ -688,14 +688,27 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
       setGeneratorProgress(100);
 
       if (response.error) {
-        throw new Error(typeof response.error === 'object' ? response.error.message : String(response.error));
+        const errMsg = typeof response.error === 'object' 
+          ? (response.error as any).message || JSON.stringify(response.error)
+          : String(response.error);
+        throw new Error(errMsg);
       }
 
       const data = response.data;
+      console.log('Generator response data:', data);
+      
       if (data?.error) throw new Error(data.error);
 
       if (data?.json) {
-        const jsonOutput = JSON.stringify(data.json, null, 2);
+        const jsonData = data.json;
+        
+        // Check if noticias array is actually populated
+        if (!jsonData.noticias || jsonData.noticias.length === 0) {
+          const errorDetails = data.errors?.map((e: any) => `• ${e.url}: ${e.error}`).join('\n') || 'Nenhuma notícia foi processada com sucesso.';
+          throw new Error(`Nenhuma notícia gerada.\n${errorDetails}`);
+        }
+
+        const jsonOutput = JSON.stringify(jsonData, null, 2);
         setGeneratorResult(jsonOutput);
 
         // Also set it in the JSON tab for direct import
@@ -705,8 +718,10 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
           title: `✓ ${data.summary?.processed || 0} notícia(s) gerada(s)`,
           description: data.summary?.failed > 0 
             ? `${data.summary.failed} falha(s). O JSON está pronto para importação.` 
-            : 'JSON gerado com sucesso! Vá para a aba JSON para importar.',
+            : 'JSON gerado com sucesso! Clique em "Importar" para processar.',
         });
+      } else {
+        throw new Error('Resposta inválida do servidor. Tente novamente.');
       }
     } catch (error) {
       clearInterval(progressInterval);
