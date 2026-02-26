@@ -234,11 +234,18 @@ async function rewriteWithAI(extracted: {
 ## CATEGORIAS VÁLIDAS
 Justiça, Geral, Saúde, Economia, Política, Meio Ambiente, Esportes, Direitos Humanos, Educação, Internacional, Cidades, Segurança Pública, Ciência, Tecnologia, Infraestrutura, Entretenimento, Cultura, Comportamento, Lifestyle, Emprego & Renda, Mobilidade Urbana, Inclusão & PCD, Projetos Sociais, Inovação Pública, Brasil
 
-## ESTRUTURA HTML DO CONTEÚDO
+## ESTRUTURA HTML DO CONTEÚDO (OBRIGATÓRIO - Modelo Agência Brasil)
 - Primeiro parágrafo = lide em <p><strong>...</strong></p>
-- Sessões com <h2> e <h3>
+- Sessões principais com <h2> (centralidade tópica, pelo menos 2-3 seções H2)
+- Subtópicos com <h3> quando aplicável
+- Citações em <blockquote>
 - Parágrafos com <p>
 - Sem estilos inline, sem classes, sem comentários
+
+## TAGS (OBRIGATÓRIO 3-12)
+- Tags devem ser NOMES PRÓPRIOS legíveis (ex: "Domingos Brazão", "Marielle Franco", "STF")
+- NUNCA use formato slug nas tags (ex: NÃO use "domingos-brazao")
+- Cada tag com máximo de 40 caracteres
 
 ## FORMATO DE SAÍDA (JSON PURO)
 Responda APENAS com este JSON (sem markdown, sem comentários):
@@ -250,6 +257,7 @@ Responda APENAS com este JSON (sem markdown, sem comentários):
   "chapeu": "",
   "resumo": "",
   "conteudo": "",
+  "editor": "Redação Conexão na Cidade",
   "fonte": "${sourceUrl}",
   "dataPublicacao": "${dataPublicacao}",
   "imagem": {
@@ -276,7 +284,7 @@ Responda APENAS com este JSON (sem markdown, sem comentários):
 - slug: kebab-case sem acentos
 - seo.meta_titulo: max 60 chars
 - seo.meta_descricao: max 160 chars
-- tags: 3-12 itens
+- tags: 3-12 itens, NOMES PRÓPRIOS legíveis
 - chapeu: "CIDADE | CATEGORIA" ou "BRASIL | CATEGORIA"`;
 
   const userPrompt = `Reescreva esta notícia mantendo ${minChars}-${maxChars} caracteres:
@@ -343,6 +351,20 @@ ${extracted.content}`;
   parsed.destaque = parsed.destaque || 'none';
   parsed.generateWebStory = parsed.generateWebStory ?? true;
 
+  // Normalize tags: convert slug-format to proper names (e.g., "domingos-brazao" → "Domingos Brazão")
+  if (parsed.tags && Array.isArray(parsed.tags)) {
+    parsed.tags = parsed.tags.map((tag: string) => {
+      // If tag is in slug format (contains hyphens and no spaces), convert to proper name
+      if (tag.includes('-') && !tag.includes(' ')) {
+        return tag
+          .split('-')
+          .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(' ');
+      }
+      return tag;
+    });
+  }
+
   // Ensure tags 3-12
   if (!parsed.tags || parsed.tags.length < 3) {
     const fallback = [parsed.categoria || 'Notícias', 'Cotia', 'São Paulo', 'Atualidades'];
@@ -356,10 +378,23 @@ ${extracted.content}`;
   }
   parsed.tags = parsed.tags.slice(0, 12);
 
+  // ALWAYS force editor to Redação Conexão na Cidade
+  parsed.editor = 'Redação Conexão na Cidade';
+
   // Truncate SEO
   if (parsed.seo) {
     parsed.seo.meta_titulo = (parsed.seo.meta_titulo || parsed.titulo)?.substring(0, 60);
     parsed.seo.meta_descricao = (parsed.seo.meta_descricao || parsed.resumo)?.substring(0, 160);
+  }
+
+  // Ensure chapeu format: "CIDADE | CATEGORIA" or "BRASIL | CATEGORIA"
+  if (!parsed.chapeu || !parsed.chapeu.includes('|')) {
+    const categoria = (parsed.categoria || 'GERAL').toUpperCase();
+    const tagsLower = (parsed.tags || []).map((t: string) => t.toLowerCase());
+    const isNacional = categoria === 'BRASIL' || categoria === 'INTERNACIONAL'
+      || tagsLower.includes('brasil') || tagsLower.includes('nacional')
+      || tagsLower.includes('governo federal');
+    parsed.chapeu = isNacional ? `BRASIL | ${categoria}` : `COTIA | ${categoria}`;
   }
 
   // Ensure lide is bold
@@ -368,6 +403,13 @@ ${extracted.content}`;
       /^(<p>)?([^<]+)/,
       '<p><strong>$2</strong></p>'
     );
+  }
+
+  // Ensure H2/H3 structure exists (Agência Brasil style)
+  if (parsed.conteudo && !parsed.conteudo.includes('<h2>') && !parsed.conteudo.includes('<h2 ')) {
+    // Content lacks H2 headings - the prompt should have generated them
+    // but as fallback, we leave content as-is since forcing headers could break structure
+    console.warn('Content lacks H2/H3 headers - AI should have generated them');
   }
 
   return parsed;
