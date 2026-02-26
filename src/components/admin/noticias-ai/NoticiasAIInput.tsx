@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ALLOWED_CATEGORIES, isValidCategory } from '@/constants/categories';
+import { getAIProviderConfig } from '@/hooks/useAIProvider';
 
 // Template JSON oficial do Prompt Mestre — Notícias AI (v2)
 const JSON_TEMPLATE = {
@@ -677,10 +678,17 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
     }, 1000);
 
     try {
+      const aiProvider = getAIProviderConfig();
+      console.log('Using AI provider:', aiProvider);
+
       const response = await supabase.functions.invoke('noticias-ai-batch-generator', {
         body: {
           quantidadeNoticias: validItems.length,
           noticias: validItems,
+          aiProvider: {
+            providerId: aiProvider.providerId,
+            model: aiProvider.model,
+          },
         },
       });
 
