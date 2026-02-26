@@ -366,6 +366,7 @@ import CoreAnalytics from "./pages/admin/core-engine/CoreAnalytics";
 import CoreSEO from "./pages/admin/core-engine/CoreSEO";
 import CoreMedia from "./pages/admin/core-engine/CoreMedia";
 import CorePerformance from "./pages/admin/core-engine/CorePerformance";
+import CoreLeads from "./pages/admin/core-engine/CoreLeads";
 
 import { ThemeProvider } from "@/contexts/ThemeContext";
 
@@ -753,6 +754,7 @@ const App = () => (
                         <Route path="core-engine/seo" element={<CoreSEO />} />
                         <Route path="core-engine/media" element={<CoreMedia />} />
                         <Route path="core-engine/performance" element={<CorePerformance />} />
+                        <Route path="core-engine/leads" element={<CoreLeads />} />
                         <Route path="core-engine/:moduleId" element={<CoreModulePage />} />
 
                         {/* Classifieds & Jobs Admin */}
