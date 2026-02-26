@@ -368,6 +368,7 @@ import CoreMedia from "./pages/admin/core-engine/CoreMedia";
 import CorePerformance from "./pages/admin/core-engine/CorePerformance";
 import CoreLeads from "./pages/admin/core-engine/CoreLeads";
 import CoreSchema from "./pages/admin/core-engine/CoreSchema";
+import CoreSecurity from "./pages/admin/core-engine/CoreSecurity";
 
 import { ThemeProvider } from "@/contexts/ThemeContext";
 
@@ -757,6 +758,7 @@ const App = () => (
                         <Route path="core-engine/performance" element={<CorePerformance />} />
                         <Route path="core-engine/leads" element={<CoreLeads />} />
                         <Route path="core-engine/schema" element={<CoreSchema />} />
+                        <Route path="core-engine/security" element={<CoreSecurity />} />
                         <Route path="core-engine/:moduleId" element={<CoreModulePage />} />
 
                         {/* Classifieds & Jobs Admin */}
