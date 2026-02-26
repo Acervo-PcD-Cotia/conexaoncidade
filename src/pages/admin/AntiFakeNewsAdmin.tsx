@@ -22,12 +22,12 @@ import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 
 export default function AntiFakeNewsAdmin() {
-  const [statusFilter, setStatusFilter] = useState<FactCheckStatus | ''>('');
-  const [verdictFilter, setVerdictFilter] = useState<FactCheckVerdict | ''>('');
+  const [statusFilter, setStatusFilter] = useState<FactCheckStatus | 'all'>('all');
+  const [verdictFilter, setVerdictFilter] = useState<FactCheckVerdict | 'all'>('all');
 
   const { data: factChecks, isLoading } = useAdminFactChecks({
-    status: statusFilter || undefined,
-    verdict: verdictFilter || undefined,
+    status: statusFilter === 'all' ? undefined : statusFilter,
+    verdict: verdictFilter === 'all' ? undefined : verdictFilter,
     limit: 50
   });
 
@@ -167,12 +167,12 @@ export default function AntiFakeNewsAdmin() {
           <TabsContent value="verifications" className="space-y-4">
             {/* Filters */}
             <div className="flex gap-4">
-              <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as FactCheckStatus | '')}>
+              <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as FactCheckStatus | 'all')}>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="Filtrar por status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="NEW">Novo</SelectItem>
                   <SelectItem value="UNDER_REVIEW">Em análise</SelectItem>
                   <SelectItem value="EDITORIAL_QUEUE">Na fila</SelectItem>
@@ -181,12 +181,12 @@ export default function AntiFakeNewsAdmin() {
                 </SelectContent>
               </Select>
 
-              <Select value={verdictFilter} onValueChange={(v) => setVerdictFilter(v as FactCheckVerdict | '')}>
+              <Select value={verdictFilter} onValueChange={(v) => setVerdictFilter(v as FactCheckVerdict | 'all')}>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="Filtrar por veredito" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="CONFIRMADO">Confirmado</SelectItem>
                   <SelectItem value="PROVAVELMENTE_VERDADEIRO">Provavelmente Verdadeiro</SelectItem>
                   <SelectItem value="ENGANOSO">Enganoso</SelectItem>
