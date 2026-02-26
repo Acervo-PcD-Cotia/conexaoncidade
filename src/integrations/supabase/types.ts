@@ -6814,6 +6814,161 @@ export type Database = {
         }
         Relationships: []
       }
+      core_lead_forms: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          fields: Json
+          id: string
+          is_active: boolean | null
+          name: string
+          notify_email: string | null
+          notify_whatsapp: string | null
+          redirect_url: string | null
+          settings: Json | null
+          slug: string
+          submissions_count: number | null
+          tenant_id: string | null
+          thank_you_message: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          fields?: Json
+          id?: string
+          is_active?: boolean | null
+          name: string
+          notify_email?: string | null
+          notify_whatsapp?: string | null
+          redirect_url?: string | null
+          settings?: Json | null
+          slug: string
+          submissions_count?: number | null
+          tenant_id?: string | null
+          thank_you_message?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          fields?: Json
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          notify_email?: string | null
+          notify_whatsapp?: string | null
+          redirect_url?: string | null
+          settings?: Json | null
+          slug?: string
+          submissions_count?: number | null
+          tenant_id?: string | null
+          thank_you_message?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "core_lead_forms_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      core_leads: {
+        Row: {
+          assigned_to: string | null
+          created_at: string | null
+          data: Json | null
+          email: string | null
+          form_id: string | null
+          form_name: string | null
+          id: string
+          name: string | null
+          notes: string | null
+          phone: string | null
+          score: number | null
+          segment: string | null
+          source: string | null
+          source_url: string | null
+          status: string | null
+          tags: string[] | null
+          tenant_id: string | null
+          updated_at: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string | null
+          data?: Json | null
+          email?: string | null
+          form_id?: string | null
+          form_name?: string | null
+          id?: string
+          name?: string | null
+          notes?: string | null
+          phone?: string | null
+          score?: number | null
+          segment?: string | null
+          source?: string | null
+          source_url?: string | null
+          status?: string | null
+          tags?: string[] | null
+          tenant_id?: string | null
+          updated_at?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string | null
+          data?: Json | null
+          email?: string | null
+          form_id?: string | null
+          form_name?: string | null
+          id?: string
+          name?: string | null
+          notes?: string | null
+          phone?: string | null
+          score?: number | null
+          segment?: string | null
+          source?: string | null
+          source_url?: string | null
+          status?: string | null
+          tags?: string[] | null
+          tenant_id?: string | null
+          updated_at?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "core_leads_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "core_lead_forms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "core_leads_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       core_performance_alerts: {
         Row: {
           created_at: string
