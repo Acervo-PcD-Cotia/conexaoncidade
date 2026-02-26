@@ -6697,6 +6697,36 @@ export type Database = {
           },
         ]
       }
+      core_analytics_integrations: {
+        Row: {
+          config: Json | null
+          created_at: string
+          display_name: string
+          id: string
+          integration_key: string
+          is_enabled: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string
+          display_name: string
+          id?: string
+          integration_key: string
+          is_enabled?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string
+          display_name?: string
+          id?: string
+          integration_key?: string
+          is_enabled?: boolean | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       core_analytics_pageviews: {
         Row: {
           city: string | null
@@ -6738,6 +6768,48 @@ export type Database = {
           page_title?: string | null
           referrer?: string | null
           session_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      core_analytics_sessions: {
+        Row: {
+          city: string | null
+          country: string | null
+          device_type: string | null
+          id: string
+          last_seen_at: string
+          page_count: number | null
+          page_path: string | null
+          session_id: string
+          source: string | null
+          started_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          device_type?: string | null
+          id?: string
+          last_seen_at?: string
+          page_count?: number | null
+          page_path?: string | null
+          session_id: string
+          source?: string | null
+          started_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          device_type?: string | null
+          id?: string
+          last_seen_at?: string
+          page_count?: number | null
+          page_path?: string | null
+          session_id?: string
+          source?: string | null
+          started_at?: string
           user_agent?: string | null
         }
         Relationships: []
