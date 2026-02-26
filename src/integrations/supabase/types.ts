@@ -6814,6 +6814,81 @@ export type Database = {
         }
         Relationships: []
       }
+      core_performance_alerts: {
+        Row: {
+          created_at: string
+          current_value: number
+          id: string
+          is_resolved: boolean | null
+          metric: string
+          page_path: string | null
+          resolved_at: string | null
+          severity: string | null
+          threshold: number
+        }
+        Insert: {
+          created_at?: string
+          current_value: number
+          id?: string
+          is_resolved?: boolean | null
+          metric: string
+          page_path?: string | null
+          resolved_at?: string | null
+          severity?: string | null
+          threshold: number
+        }
+        Update: {
+          created_at?: string
+          current_value?: number
+          id?: string
+          is_resolved?: boolean | null
+          metric?: string
+          page_path?: string | null
+          resolved_at?: string | null
+          severity?: string | null
+          threshold?: number
+        }
+        Relationships: []
+      }
+      core_performance_metrics: {
+        Row: {
+          cls: number | null
+          connection_type: string | null
+          created_at: string
+          device_type: string | null
+          fid: number | null
+          id: string
+          inp: number | null
+          lcp: number | null
+          page_path: string
+          ttfb: number | null
+        }
+        Insert: {
+          cls?: number | null
+          connection_type?: string | null
+          created_at?: string
+          device_type?: string | null
+          fid?: number | null
+          id?: string
+          inp?: number | null
+          lcp?: number | null
+          page_path: string
+          ttfb?: number | null
+        }
+        Update: {
+          cls?: number | null
+          connection_type?: string | null
+          created_at?: string
+          device_type?: string | null
+          fid?: number | null
+          id?: string
+          inp?: number | null
+          lcp?: number | null
+          page_path?: string
+          ttfb?: number | null
+        }
+        Relationships: []
+      }
       core_redirects: {
         Row: {
           created_at: string
