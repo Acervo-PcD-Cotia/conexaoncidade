@@ -29,7 +29,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Trash2, Settings2, CheckCircle2, AlertCircle, ExternalLink } from "lucide-react";
+import { Plus, Trash2, Settings2, CheckCircle2, AlertCircle, ExternalLink, Key } from "lucide-react";
 import { 
   useSocialAccountsNew, 
   useCreateSocialAccount, 
@@ -114,10 +114,16 @@ export default function PostSocialSettings() {
             Gerencie suas contas conectadas para postagem
           </p>
         </div>
-        <Button onClick={() => setIsAddModalOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Adicionar Conta
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => window.location.href = '/spah/painel/postsocial/platforms'}>
+            <Key className="h-4 w-4 mr-2" />
+            Configurar APIs
+          </Button>
+          <Button onClick={() => setIsAddModalOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Adicionar Conta
+          </Button>
+        </div>
       </div>
       
       {/* Info Card */}

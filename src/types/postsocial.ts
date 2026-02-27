@@ -263,13 +263,13 @@ export function getPlatformUrl(platform: SocialPlatform): string {
 }
 
 export function canAutoPost(platform: SocialPlatform): boolean {
-  // Platforms that support API posting
-  const autoPostable: SocialPlatform[] = ['facebook', 'linkedin', 'x', 'pinterest', 'telegram'];
+  // Platforms that support API posting (Instagram via Meta Graph API for Business accounts)
+  const autoPostable: SocialPlatform[] = ['facebook', 'instagram', 'linkedin', 'x', 'pinterest', 'telegram', 'whatsapp'];
   return autoPostable.includes(platform);
 }
 
 export function requiresAssistedMode(platform: SocialPlatform): boolean {
   // Platforms that always need manual/assisted posting
-  const assistedOnly: SocialPlatform[] = ['instagram', 'tiktok', 'youtube', 'whatsapp'];
+  const assistedOnly: SocialPlatform[] = ['tiktok', 'youtube'];
   return assistedOnly.includes(platform);
 }
