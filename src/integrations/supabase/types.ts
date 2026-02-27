@@ -11365,8 +11365,11 @@ export type Database = {
           original_published_at: string | null
           podcast_audio_url: string | null
           podcast_enabled: boolean | null
+          podcast_external_url: string | null
           podcast_generated_at: string | null
+          podcast_media_type: string | null
           podcast_status: string | null
+          podcast_video_url: string | null
           published_at: string | null
           scheduled_at: string | null
           share_count: number
@@ -11429,8 +11432,11 @@ export type Database = {
           original_published_at?: string | null
           podcast_audio_url?: string | null
           podcast_enabled?: boolean | null
+          podcast_external_url?: string | null
           podcast_generated_at?: string | null
+          podcast_media_type?: string | null
           podcast_status?: string | null
+          podcast_video_url?: string | null
           published_at?: string | null
           scheduled_at?: string | null
           share_count?: number
@@ -11493,8 +11499,11 @@ export type Database = {
           original_published_at?: string | null
           podcast_audio_url?: string | null
           podcast_enabled?: boolean | null
+          podcast_external_url?: string | null
           podcast_generated_at?: string | null
+          podcast_media_type?: string | null
           podcast_status?: string | null
+          podcast_video_url?: string | null
           published_at?: string | null
           scheduled_at?: string | null
           share_count?: number

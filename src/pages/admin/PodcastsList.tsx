@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Mic, Settings, RefreshCw, Loader2, Search } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Mic, Settings, RefreshCw, Loader2, Search, Plus, Youtube, Upload as UploadIcon, Cloud } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +23,7 @@ import { usePodcasts, PodcastNews } from "@/hooks/usePodcasts";
 import { PodcastActionsMenu } from "@/components/admin/podcasts/PodcastActionsMenu";
 import { PodcastLogsDialog } from "@/components/admin/podcasts/PodcastLogsDialog";
 import { PodcastSettingsDialog } from "@/components/admin/podcasts/PodcastSettingsDialog";
+import { PodcastAddDialog } from "@/components/admin/podcasts/PodcastAddDialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { NavLink } from "@/components/NavLink";
@@ -49,11 +50,31 @@ function getStatusBadge(status: string | null) {
   }
 }
 
+function getMediaTypeBadge(mediaType: string | null) {
+  switch (mediaType) {
+    case "upload":
+      return <span title="Upload"><UploadIcon className="h-3.5 w-3.5 text-muted-foreground" /></span>;
+    case "youtube":
+      return <span title="YouTube"><Youtube className="h-3.5 w-3.5 text-red-500" /></span>;
+    case "google_drive":
+      return <span title="Google Drive"><Cloud className="h-3.5 w-3.5 text-blue-500" /></span>;
+    case "tts":
+      return <span title="Narração IA"><Mic className="h-3.5 w-3.5 text-primary" /></span>;
+    default:
+      return null;
+  }
+}
+
 export default function PodcastsList() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [logsNewsId, setLogsNewsId] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [addDialogState, setAddDialogState] = useState<{ open: boolean; newsId: string; newsTitle: string }>({
+    open: false,
+    newsId: "",
+    newsTitle: "",
+  });
 
   const { data: podcasts, isLoading, refetch } = usePodcasts(100);
 
@@ -131,6 +152,7 @@ export default function PodcastsList() {
                     <TableHead>Data</TableHead>
                     <TableHead>Título</TableHead>
                     <TableHead>Categoria</TableHead>
+                    <TableHead>Tipo</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Duração</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
@@ -164,6 +186,11 @@ export default function PodcastsList() {
                           </Badge>
                         )}
                       </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          {getMediaTypeBadge(podcast.podcast_media_type)}
+                        </div>
+                      </TableCell>
                       <TableCell>{getStatusBadge(podcast.podcast_status)}</TableCell>
                       <TableCell className="font-mono text-sm">
                         {formatDuration(podcast.audio_duration_seconds)}
@@ -172,6 +199,13 @@ export default function PodcastsList() {
                         <PodcastActionsMenu
                           podcast={podcast}
                           onViewLogs={() => setLogsNewsId(podcast.id)}
+                          onAddPodcast={() =>
+                            setAddDialogState({
+                              open: true,
+                              newsId: podcast.id,
+                              newsTitle: podcast.title,
+                            })
+                          }
                         />
                       </TableCell>
                     </TableRow>
@@ -185,6 +219,12 @@ export default function PodcastsList() {
 
       <PodcastLogsDialog newsId={logsNewsId} onClose={() => setLogsNewsId(null)} />
       <PodcastSettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <PodcastAddDialog
+        open={addDialogState.open}
+        onOpenChange={(o) => setAddDialogState((s) => ({ ...s, open: o }))}
+        newsId={addDialogState.newsId}
+        newsTitle={addDialogState.newsTitle}
+      />
     </div>
   );
 }
