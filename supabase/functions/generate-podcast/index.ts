@@ -16,7 +16,7 @@ serve(async (req) => {
   }
 
   try {
-    const { newsId, voiceId = 'JBFqnCBsd6RMkjVDRZzb' } = await req.json();
+    const { newsId, voiceId = 'onwK4e9ZLuTAKqWW03F9' } = await req.json();
 
     if (!newsId) {
       throw new Error('newsId is required');
@@ -91,10 +91,11 @@ serve(async (req) => {
           text: podcastScript,
           model_id: 'eleven_multilingual_v2',
           voice_settings: {
-            stability: 0.6,
-            similarity_boost: 0.75,
-            style: 0.3,
+            stability: 0.4,
+            similarity_boost: 0.7,
+            style: 0.45,
             use_speaker_boost: true,
+            speed: 1.0,
           },
         }),
       }
