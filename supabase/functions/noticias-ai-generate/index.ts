@@ -687,23 +687,48 @@ Aplique a metodologia SEO Genome:
 - Construção progressiva de relevância: cada parágrafo acumula autoridade semântica
 - Use perguntas reais do Google como subtítulos H3 quando aplicável
 
-## 5. CONTEÚDO HTML (OBRIGATÓRIO)
-O campo "conteudo" deve ser HTML válido usando APENAS estas tags:
-&lt;p&gt;, &lt;h2&gt;, &lt;h3&gt;, &lt;blockquote&gt;, &lt;strong&gt;, &lt;ul&gt;, &lt;li&gt;
+## 5. CONTEÚDO HTML — PADRÃO AGÊNCIA BRASIL (OBRIGATÓRIO)
+O campo "conteudo" deve seguir EXATAMENTE o modelo editorial da Agência Brasil.
+Tags permitidas: &lt;p&gt;, &lt;h2&gt;, &lt;h3&gt;, &lt;blockquote&gt;, &lt;strong&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;a&gt;
 
-Regras:
-- O primeiro parágrafo deve ser o lide em negrito:
-  &lt;p&gt;&lt;strong&gt;Lide completo com informações principais.&lt;/strong&gt;&lt;/p&gt;
-- Sessões principais: usar &lt;h2&gt;...&lt;/h2&gt; (centralidade tópica)
-- Subtópicos: usar &lt;h3&gt;...&lt;/h3&gt; (termos relacionados)
-- Citações longas: usar &lt;blockquote&gt;...&lt;/blockquote&gt;
-- Parágrafos sempre separados por &lt;p&gt;...&lt;/p&gt;
+### ESTRUTURA DO CORPO (seguir esta ordem):
+1. **Lide (1º parágrafo)**: Resumo factual com as informações-chave em &lt;strong&gt;.
+   Exemplo: &lt;p&gt;&lt;strong&gt;O Brasil registrou 88 casos confirmados do vírus Mpox&lt;/strong&gt;, com a maioria sendo no estado de São Paulo, que desde janeiro contabiliza 62 casos.&lt;/p&gt;
+   IMPORTANTE: O &lt;strong&gt; envolve APENAS a frase-chave, NÃO o parágrafo inteiro.
+
+2. **Desenvolvimento com H2**: Cada seção principal usa &lt;h2&gt; como pergunta ou afirmação direta.
+   Exemplos de H2 estilo Agência Brasil:
+   - "O que é Mpox e quais são os sintomas?"
+   - "Como a Mpox é transmitida?"
+   - "Qual é o tratamento?"
+   Formato: perguntas reais que o leitor faria, em linguagem clara.
+
+3. **Parágrafos com negrito editorial**: Ao longo do texto, use &lt;strong&gt; para destacar
+   frases-chave, dados importantes ou declarações relevantes DENTRO dos parágrafos.
+   Exemplo: &lt;p&gt;&lt;strong&gt;O intervalo de tempo entre o primeiro contato com o vírus até o início dos sinais é de 3 a 16 dias, mas pode chegar a 21 dias.&lt;/strong&gt;&lt;/p&gt;
+
+4. **Citações em blockquote**: Para declarações oficiais ou falas de autoridades.
+   Formato: &lt;blockquote&gt;&lt;p&gt;"Pessoas com suspeita ou confirmação da doença devem cumprir isolamento imediato", orienta o Ministério da Saúde.&lt;/p&gt;&lt;/blockquote&gt;
+
+5. **Subtópicos com H3**: Para detalhamentos dentro de seções H2 (ex: dados regionais, listas).
+
+6. **Links inline**: Use &lt;a href="URL"&gt;texto descritivo&lt;/a&gt; quando referenciar termos
+   que possuem matérias relacionadas ou fontes oficiais.
+
+### REGRAS DE FORMATAÇÃO:
+- Parágrafos curtos (3-5 frases) para facilitar a leitura
+- Alternar parágrafos normais com parágrafos que possuem &lt;strong&gt; em frases-chave
+- Blockquotes apenas para citações diretas com aspas
+- H2 devem ser perguntas ou títulos descritivos curtos
+- NÃO usar itálico
+- NÃO usar travessão (—) em nenhuma hipótese
 
 PROIBIÇÕES:
 - NÃO inclua URLs de imagens no conteúdo
 - NÃO inclua tags HTML fora da lista permitida
 - NÃO inclua o array "tags" dentro do conteúdo
 - NÃO use travessão (—) em nenhuma hipótese
+- NÃO envolva o parágrafo inteiro em &lt;strong&gt; (apenas frases-chave)
 
 ## 6. TAGS (OBRIGATÓRIO 3-12)
 - Mínimo: 3 tags

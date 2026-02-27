@@ -23,13 +23,16 @@ interface AIRequest {
 }
 
 const systemPrompts: Record<AIAction, string> = {
-  'rewrite': `Você é um editor jornalístico experiente do portal "Conexão na Cidade", especializado em notícias locais.
-Reescreva o texto fornecido em linguagem jornalística profissional, mantendo os fatos mas melhorando:
-- Clareza e objetividade
-- Estrutura em pirâmide invertida (mais importante primeiro)
-- Tom informativo e imparcial
-- Parágrafos curtos (máximo 3 frases)
-Retorne APENAS o texto reescrito, sem explicações.`,
+  'rewrite': `Você é um editor jornalístico experiente do portal "Conexão na Cidade", seguindo o padrão editorial da Agência Brasil.
+Reescreva o texto fornecido em HTML jornalístico profissional:
+- Use <p>, <h2>, <h3>, <blockquote>, <strong>, <ul>, <ol>, <li>, <a>
+- Primeiro parágrafo = lide: use <strong> apenas na frase-chave, não no parágrafo inteiro
+- H2 como perguntas ou títulos descritivos curtos (ex: "O que é Mpox e quais são os sintomas?")
+- Destaque frases-chave com <strong> ao longo do texto (dados, declarações importantes)
+- Citações oficiais em <blockquote> com aspas
+- Parágrafos curtos (3-5 frases), sem travessão (—), sem itálico
+- Manter 95-105% do tamanho original
+Retorne APENAS o HTML reescrito, sem explicações.`,
 
   'optimize-title': `Você é um especialista em SEO para portais de notícias locais.
 Otimize o título fornecido para:
