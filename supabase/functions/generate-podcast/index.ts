@@ -10,7 +10,24 @@ const corsHeaders = {
 const INTRO_TEXT = "Você está ouvindo o Conexão na Cidade. ";
 const OUTRO_TEXT = " Para mais notícias e informações, acesse conexaonacidade.com.br.";
 
-async function generateTTS(text: string, voiceId: string, apiKey: string): Promise<Response> {
+interface VoiceSettings {
+  stability?: number;
+  similarity_boost?: number;
+  style?: number;
+  speed?: number;
+  use_speaker_boost?: boolean;
+}
+
+const DEFAULT_VOICE_SETTINGS: VoiceSettings = {
+  stability: 0.4,
+  similarity_boost: 0.7,
+  style: 0.45,
+  use_speaker_boost: true,
+  speed: 1.0,
+};
+
+async function generateTTS(text: string, voiceId: string, apiKey: string, settings?: VoiceSettings): Promise<Response> {
+  const voiceSettings = { ...DEFAULT_VOICE_SETTINGS, ...settings, use_speaker_boost: true };
   return fetch(
     `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`,
     {
@@ -22,13 +39,7 @@ async function generateTTS(text: string, voiceId: string, apiKey: string): Promi
       body: JSON.stringify({
         text,
         model_id: 'eleven_multilingual_v2',
-        voice_settings: {
-          stability: 0.4,
-          similarity_boost: 0.7,
-          style: 0.45,
-          use_speaker_boost: true,
-          speed: 1.0,
-        },
+        voice_settings: voiceSettings,
       }),
     }
   );
@@ -41,7 +52,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { voiceId = 'onwK4e9ZLuTAKqWW03F9', previewVoice, sampleText } = body;
+    const { voiceId = 'onwK4e9ZLuTAKqWW03F9', previewVoice, sampleText, voiceSettings } = body;
 
     const ELEVENLABS_API_KEY = Deno.env.get('ELEVENLABS_API_KEY');
     if (!ELEVENLABS_API_KEY) {
@@ -51,7 +62,7 @@ serve(async (req) => {
     // --- Voice Preview Mode ---
     if (previewVoice) {
       const text = sampleText || "Você está ouvindo o Conexão na Cidade. Sua fonte de notícias local.";
-      const ttsResponse = await generateTTS(text, voiceId, ELEVENLABS_API_KEY);
+      const ttsResponse = await generateTTS(text, voiceId, ELEVENLABS_API_KEY, voiceSettings);
 
       if (!ttsResponse.ok) {
         const errorText = await ttsResponse.text();
