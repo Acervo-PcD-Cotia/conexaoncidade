@@ -27,49 +27,53 @@ export function ArticleHeader({
 
   return (
     <header className="max-w-[820px] mx-auto px-4 md:px-6 pt-10 pb-6">
-      {/* Chapéu (Category Label) - left aligned, uppercase text like production */}
-      {categorySlug ? (
-        <Link to={`/categoria/${categorySlug}`}>
-          <span className="article-chapeu inline-block text-xs font-semibold uppercase tracking-widest pb-1 mb-4 hover:opacity-80 transition-opacity">
+      {/* Chapéu (Category Label) - centered badge like Agência Brasil */}
+      <div className="text-center mb-5">
+        {categorySlug ? (
+          <Link to={`/categoria/${categorySlug}`}>
+            <span className="article-chapeu inline-block text-[11px] font-bold uppercase tracking-widest px-4 py-1 rounded-full hover:opacity-80 transition-opacity"
+              style={{ background: 'var(--category-color)', color: '#fff' }}>
+              {categoryDisplay}
+            </span>
+          </Link>
+        ) : (
+          <span className="article-chapeu inline-block text-[11px] font-bold uppercase tracking-widest px-4 py-1 rounded-full"
+            style={{ background: 'var(--category-color)', color: '#fff' }}>
             {categoryDisplay}
           </span>
-        </Link>
-      ) : (
-        <span className="article-chapeu inline-block text-xs font-semibold uppercase tracking-widest pb-1 mb-4">
-          {categoryDisplay}
-        </span>
-      )}
+        )}
+      </div>
 
-      {/* Title (H1) - left aligned, large, bold */}
+      {/* Title (H1) - centered, large, bold like Agência Brasil */}
       <h1 
         id="news-title"
-        className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight text-foreground mb-4"
+        className="text-2xl md:text-3xl lg:text-[2.5rem] font-bold leading-tight text-foreground mb-4 text-center"
       >
         {title}
       </h1>
 
-      {/* Linha Fina (Subtitle) */}
+      {/* Linha Fina (Subtitle) - centered */}
       {subtitle && (
-        <p className="text-lg md:text-xl text-muted-foreground leading-relaxed mb-6">
+        <p className="text-base md:text-lg text-muted-foreground leading-relaxed mb-6 text-center">
           {subtitle}
         </p>
       )}
 
-      {/* Meta (Author, Source, Date) */}
-      <div className="flex flex-col md:flex-row md:items-center gap-2 text-sm text-muted-foreground">
-        <span className="font-bold uppercase tracking-wide text-foreground">
+      {/* Divider */}
+      <div className="border-t border-border my-4" />
+
+      {/* Meta (Author, Source, Date) - left aligned like Agência Brasil */}
+      <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+        <span className="font-bold uppercase tracking-wide text-foreground text-xs">
           {authorName}
+          {source && !source.startsWith('http') && (
+            <span className="font-normal text-muted-foreground"> – {source}</span>
+          )}
         </span>
-        {source && !source.startsWith('http') && (
-          <span className="hidden md:inline">– {source}</span>
-        )}
         {formattedDate && (
-          <>
-            <span className="hidden md:inline text-muted-foreground">|</span>
-            <time dateTime={publishedAt || undefined}>
-              Publicado em {formattedDate} • Brasília
-            </time>
-          </>
+          <time dateTime={publishedAt || undefined} className="text-xs text-muted-foreground">
+            Publicado em {formattedDate}
+          </time>
         )}
       </div>
     </header>
