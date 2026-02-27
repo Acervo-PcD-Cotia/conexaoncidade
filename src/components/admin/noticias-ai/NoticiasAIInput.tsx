@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Upload, Sparkles, Trash2, Loader2, FileText, Link, Layers, Zap, X, Star, Home, AlertTriangle, Newspaper, Wand2, Download, AlertCircle, PlusCircle } from 'lucide-react';
+import { Upload, Sparkles, Trash2, Loader2, FileText, Link, Layers, Zap, X, Star, Home, AlertTriangle, Newspaper, Wand2, Download, AlertCircle, PlusCircle, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -1181,7 +1181,7 @@ Dicas:
               <div className="rounded-lg border p-3 space-y-0.5 max-h-48 overflow-y-auto bg-muted/30">
                 {/* Sumário */}
                 <div className="flex items-center gap-2 pb-2 mb-2 border-b border-border/50">
-                  <span className="text-xs font-medium text-foreground">
+                  <span className="text-xs font-medium text-foreground flex-1">
                     {validationErrors.filter(e => e.type === 'error').length > 0 && (
                       <span className="text-destructive mr-3">
                         ✕ {validationErrors.filter(e => e.type === 'error').length} erro(s) bloqueante(s)
@@ -1193,6 +1193,28 @@ Dicas:
                       </span>
                     )}
                   </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-[10px] gap-1"
+                    onClick={() => {
+                      const text = validationErrors.map(err => {
+                        let line = `[${err.type === 'error' ? 'ERRO' : 'AVISO'}] ${err.field}: ${err.message}`;
+                        if (err.actual) line += ` | Atual: ${err.actual}`;
+                        if (err.expected) line += ` | Esperado: ${err.expected}`;
+                        if (err.hint) line += ` | Dica: ${err.hint}`;
+                        return line;
+                      }).join('\n');
+                      navigator.clipboard.writeText(text).then(() => {
+                        toast({ title: 'Erros e avisos copiados!' });
+                      }).catch(() => {
+                        toast({ title: 'Erro ao copiar', variant: 'destructive' });
+                      });
+                    }}
+                  >
+                    <Copy className="h-3 w-3" />
+                    Copiar
+                  </Button>
                 </div>
                 {validationErrors.map((err, idx) => (
                   <div 
