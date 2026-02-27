@@ -399,22 +399,20 @@ function NewsDetailContent({ news }: NewsDetailContentProps) {
             authorName={news.author?.full_name || 'Redação'}
             publishedAt={news.published_at}
             source={news.source}
+            shareSlot={
+              <div className="flex items-center gap-2">
+                <ShareButtons 
+                  url={currentUrl} 
+                  title={news.title} 
+                  contentId={news.id}
+                  contentType="news"
+                  variant="circular"
+                  onShare={trackShare}
+                />
+                <PrintButton />
+              </div>
+            }
           />
-          
-          {/* Share Buttons + Print - aligned right */}
-          <div className="max-w-[820px] mx-auto px-4 md:px-6 pb-4">
-            <div className="flex items-center justify-end gap-2">
-              <ShareButtons 
-                url={currentUrl} 
-                title={news.title} 
-                contentId={news.id}
-                contentType="news"
-                variant="circular"
-                onShare={trackShare}
-              />
-              <PrintButton />
-            </div>
-          </div>
         </div>
 
         <ArticleDivider />
