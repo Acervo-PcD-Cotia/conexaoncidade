@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
-import { Plus, Mic, Upload, Youtube, Cloud, Loader2, X } from "lucide-react";
+import { useState, useCallback, useRef } from "react";
+import { Plus, Mic, Upload, Youtube, Cloud, Loader2, X, Play, Square } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +22,7 @@ import { useDropzone } from "react-dropzone";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { VOICES, DEFAULT_VOICE_ID } from "@/constants/voices";
 
 interface PodcastAddDialogProps {
   open: boolean;
@@ -30,23 +31,14 @@ interface PodcastAddDialogProps {
   newsTitle: string;
 }
 
-const VOICES = [
-  { id: "onwK4e9ZLuTAKqWW03F9", name: "Daniel", desc: "Masculina, natural e confiante" },
-  { id: "nPczCjzI2devNBz1zQrb", name: "Brian", desc: "Masculina, madura e autoridade" },
-  { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah", desc: "Feminina, clara e profissional" },
-  { id: "FGY2WhTYpPnrIDTdsKH5", name: "Laura", desc: "Feminina, elegante e suave" },
-  { id: "JBFqnCBsd6RMkjVDRZzb", name: "George", desc: "Masculina, clássica" },
-  { id: "CwhRBWXzGAHq8TQ4Fs17", name: "Roger", desc: "Masculina, grave" },
-  { id: "Xb7hH8MSUJpSbSDYk0k2", name: "Alice", desc: "Feminina, jovem" },
-  { id: "pFZP5JQG7iQjIQuC4Bku", name: "Lily", desc: "Feminina, suave" },
-];
-
 export function PodcastAddDialog({ open, onOpenChange, newsId, newsTitle }: PodcastAddDialogProps) {
   const [tab, setTab] = useState("tts");
-  const [voiceId, setVoiceId] = useState("onwK4e9ZLuTAKqWW03F9");
+  const [voiceId, setVoiceId] = useState(DEFAULT_VOICE_ID);
   const [externalUrl, setExternalUrl] = useState("");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [previewingVoice, setPreviewingVoice] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const queryClient = useQueryClient();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -64,14 +56,55 @@ export function PodcastAddDialog({ open, onOpenChange, newsId, newsTitle }: Podc
       "video/mp4": [".mp4"],
     },
     maxFiles: 1,
-    maxSize: 100 * 1024 * 1024, // 100MB
+    maxSize: 100 * 1024 * 1024,
   });
+
+  const handlePreviewVoice = async (vId: string) => {
+    // Stop current preview
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+
+    if (previewingVoice === vId) {
+      setPreviewingVoice(null);
+      return;
+    }
+
+    setPreviewingVoice(vId);
+    try {
+      const sampleText = "Você está ouvindo o Conexão na Cidade. Sua fonte de notícias local.";
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-podcast`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ previewVoice: true, voiceId: vId, sampleText }),
+        }
+      );
+
+      if (!response.ok) throw new Error("Erro ao gerar preview");
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      audio.onended = () => setPreviewingVoice(null);
+      await audio.play();
+    } catch {
+      toast.error("Não foi possível reproduzir a amostra da voz");
+      setPreviewingVoice(null);
+    }
+  };
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
       if (tab === "tts") {
-        // Generate via ElevenLabs with selected voice
         const response = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-podcast`,
           {
@@ -90,7 +123,6 @@ export function PodcastAddDialog({ open, onOpenChange, newsId, newsTitle }: Podc
           throw new Error(err.error || "Falha ao gerar podcast");
         }
 
-        // Update media type and voice
         await supabase
           .from("news")
           .update({
@@ -152,7 +184,6 @@ export function PodcastAddDialog({ open, onOpenChange, newsId, newsTitle }: Podc
 
         const isYoutube = externalUrl.includes("youtube.com") || externalUrl.includes("youtu.be") || externalUrl.includes("music.youtube.com");
         const isGoogleDrive = externalUrl.includes("drive.google.com");
-
         const mediaType = isYoutube ? "youtube" : isGoogleDrive ? "google_drive" : "youtube";
 
         await supabase
@@ -187,10 +218,17 @@ export function PodcastAddDialog({ open, onOpenChange, newsId, newsTitle }: Podc
 
   const resetForm = () => {
     setTab("tts");
-    setVoiceId("onwK4e9ZLuTAKqWW03F9");
+    setVoiceId(DEFAULT_VOICE_ID);
     setExternalUrl("");
     setUploadFile(null);
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setPreviewingVoice(null);
   };
+
+  const selectedVoice = VOICES.find((v) => v.id === voiceId);
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) resetForm(); onOpenChange(o); }}>
@@ -219,7 +257,7 @@ export function PodcastAddDialog({ open, onOpenChange, newsId, newsTitle }: Podc
             </TabsTrigger>
           </TabsList>
 
-          {/* TTS Tab - Voice Selection */}
+          {/* TTS Tab */}
           <TabsContent value="tts" className="space-y-4 mt-4">
             <div>
               <Label className="text-sm font-medium">Locutor(a)</Label>
@@ -231,12 +269,41 @@ export function PodcastAddDialog({ open, onOpenChange, newsId, newsTitle }: Podc
                   {VOICES.map((v) => (
                     <SelectItem key={v.id} value={v.id}>
                       <span className="font-medium">{v.name}</span>
-                      <span className="text-muted-foreground ml-2 text-xs">— {v.desc}</span>
+                      <span className="text-muted-foreground ml-2 text-xs">— {v.gender}, {v.desc}</span>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Voice preview */}
+            {selectedVoice && (
+              <div className="flex items-center gap-3 rounded-lg border p-3 bg-muted/30">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 shrink-0"
+                  onClick={() => handlePreviewVoice(voiceId)}
+                  disabled={isSubmitting}
+                >
+                  {previewingVoice === voiceId ? (
+                    <Square className="h-4 w-4" />
+                  ) : (
+                    <Play className="h-4 w-4" />
+                  )}
+                </Button>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">{selectedVoice.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {previewingVoice === voiceId
+                      ? "Reproduzindo amostra..."
+                      : `${selectedVoice.gender} • ${selectedVoice.desc} — Clique ▶ para ouvir`}
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="rounded-lg border bg-muted/30 p-3 text-sm text-muted-foreground">
               <p>A narração será gerada automaticamente a partir do conteúdo da notícia usando ElevenLabs.</p>
             </div>

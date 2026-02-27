@@ -28,9 +28,13 @@ interface NewsAIControlsProps {
 }
 
 const VOICE_OPTIONS = [
-  { id: 'JBFqnCBsd6RMkjVDRZzb', name: 'George', gender: 'Masculino' },
-  { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', gender: 'Feminino' },
   { id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel', gender: 'Masculino' },
+  { id: 'nPczCjzI2devNBz1zQrb', name: 'Brian', gender: 'Masculino' },
+  { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', gender: 'Feminino' },
+  { id: 'FGY2WhTYpPnrIDTdsKH5', name: 'Laura', gender: 'Feminino' },
+  { id: 'JBFqnCBsd6RMkjVDRZzb', name: 'George', gender: 'Masculino' },
+  { id: 'CwhRBWXzGAHq8TQ4Fs17', name: 'Roger', gender: 'Masculino' },
+  { id: 'Xb7hH8MSUJpSbSDYk0k2', name: 'Alice', gender: 'Feminino' },
   { id: 'pFZP5JQG7iQjIQuC4Bku', name: 'Lily', gender: 'Feminino' },
 ];
 

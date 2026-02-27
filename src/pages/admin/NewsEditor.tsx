@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Save, Loader2, Calendar, Cloud, CloudOff, Search, Bot, FileEdit, Smartphone } from "lucide-react";
+import { VOICES as PODCAST_VOICES, DEFAULT_VOICE_ID } from "@/constants/voices";
 import { GenerateStoryButton } from "@/components/admin/GenerateStoryButton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -77,6 +78,7 @@ export default function NewsEditor() {
     is_indexable: true,
     auto_generate_podcast: true,
     auto_publish_podcast: true,
+    podcast_voice_id: "onwK4e9ZLuTAKqWW03F9",
     auto_generate_webstory: true,
     editor_name: "",
   });
@@ -217,6 +219,7 @@ export default function NewsEditor() {
         is_indexable: news.is_indexable !== false,
         auto_generate_podcast: news.auto_generate_podcast ?? true,
         auto_publish_podcast: news.auto_publish_podcast ?? true,
+        podcast_voice_id: (news as any).audio_voice_id || DEFAULT_VOICE_ID,
         auto_generate_webstory: (news as any).auto_generate_webstory ?? true,
         editor_name: news.editor_name || "",
       });
@@ -366,7 +369,7 @@ export default function NewsEditor() {
         // 4. Generate Podcast (if enabled)
         if (data.auto_generate_podcast) {
           supabase.functions.invoke('generate-podcast', {
-            body: { newsId, autoPublish: data.auto_publish_podcast }
+            body: { newsId, voiceId: formData.podcast_voice_id, autoPublish: data.auto_publish_podcast }
           }).catch(err => console.error('[NewsEditor] Podcast generation failed:', err));
         }
 
@@ -742,19 +745,42 @@ export default function NewsEditor() {
                 </div>
 
                 {/* Podcast */}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-sm">Publicar no Podcast/RSS</Label>
-                    <p className="text-xs text-muted-foreground">Disponibiliza nas plataformas</p>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Publicar no Podcast/RSS</Label>
+                      <p className="text-xs text-muted-foreground">Disponibiliza nas plataformas</p>
+                    </div>
+                    <Switch
+                      checked={formData.auto_generate_podcast && formData.auto_publish_podcast}
+                      onCheckedChange={(checked) => setFormData(prev => ({ 
+                        ...prev, 
+                        auto_generate_podcast: checked,
+                        auto_publish_podcast: checked 
+                      }))}
+                    />
                   </div>
-                  <Switch
-                    checked={formData.auto_generate_podcast && formData.auto_publish_podcast}
-                    onCheckedChange={(checked) => setFormData(prev => ({ 
-                      ...prev, 
-                      auto_generate_podcast: checked,
-                      auto_publish_podcast: checked 
-                    }))}
-                  />
+                  {formData.auto_generate_podcast && (
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Locutor(a)</Label>
+                      <Select
+                        value={formData.podcast_voice_id}
+                        onValueChange={(val) => setFormData(prev => ({ ...prev, podcast_voice_id: val }))}
+                      >
+                        <SelectTrigger className="h-8 text-xs mt-1">
+                          <SelectValue placeholder="Escolha a voz" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {PODCAST_VOICES.map((v) => (
+                            <SelectItem key={v.id} value={v.id}>
+                              <span className="font-medium">{v.name}</span>
+                              <span className="text-muted-foreground ml-1 text-xs">({v.gender})</span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
 
                 {/* WebStory */}
