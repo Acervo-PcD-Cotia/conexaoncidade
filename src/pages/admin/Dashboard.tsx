@@ -16,6 +16,7 @@ import { RecentArticlesPanel } from "@/components/admin/dashboard/RecentArticles
 import { ImportLogsPanel } from "@/components/admin/dashboard/ImportLogsPanel";
 import { QuickStatsPanel } from "@/components/admin/dashboard/QuickStatsPanel";
 import { StreamingTogglePanel } from "@/components/admin/dashboard/StreamingTogglePanel";
+import { MenuTogglePanel } from "@/components/admin/dashboard/MenuTogglePanel";
 
 export default function Dashboard() {
   const { openModal } = useNewsCreationModal();
@@ -156,6 +157,7 @@ export default function Dashboard() {
         {/* Sidebar Column - 4 cols */}
         <div className="lg:col-span-4 space-y-6">
           <StreamingTogglePanel />
+          <MenuTogglePanel />
           <TrendingPanel />
           <UserManagementPanel />
           <QuickStatsPanel />
