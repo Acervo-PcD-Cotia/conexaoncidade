@@ -1,6 +1,7 @@
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
+import { ReactNode } from 'react';
 
 interface ArticleHeaderProps {
   categoryDisplay: string;
@@ -10,6 +11,7 @@ interface ArticleHeaderProps {
   authorName: string;
   publishedAt: string | null;
   source?: string | null;
+  shareSlot?: ReactNode;
 }
 
 export function ArticleHeader({
@@ -20,6 +22,7 @@ export function ArticleHeader({
   authorName,
   publishedAt,
   source,
+  shareSlot,
 }: ArticleHeaderProps) {
   const formattedDate = publishedAt
     ? format(new Date(publishedAt), "dd/MM/yyyy '-' HH:mm", { locale: ptBR })
@@ -62,18 +65,25 @@ export function ArticleHeader({
       {/* Divider */}
       <div className="border-t border-border my-4" />
 
-      {/* Meta (Author, Source, Date) - left aligned like Agência Brasil */}
-      <div className="flex flex-col gap-1 text-sm text-muted-foreground">
-        <span className="font-bold uppercase tracking-wide text-foreground text-xs">
-          {authorName}
-          {source && !source.startsWith('http') && (
-            <span className="font-normal text-muted-foreground"> – {source}</span>
+      {/* Meta row: Author/Date left, Share buttons right - like Agência Brasil */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+          <span className="font-bold uppercase tracking-wide text-foreground text-xs">
+            {authorName}
+            {source && !source.startsWith('http') && (
+              <span className="font-normal text-muted-foreground"> – {source}</span>
+            )}
+          </span>
+          {formattedDate && (
+            <time dateTime={publishedAt || undefined} className="text-xs text-muted-foreground">
+              Publicado em {formattedDate}
+            </time>
           )}
-        </span>
-        {formattedDate && (
-          <time dateTime={publishedAt || undefined} className="text-xs text-muted-foreground">
-            Publicado em {formattedDate}
-          </time>
+        </div>
+        {shareSlot && (
+          <div className="flex-shrink-0">
+            {shareSlot}
+          </div>
         )}
       </div>
     </header>
