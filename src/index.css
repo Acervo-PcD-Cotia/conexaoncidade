@@ -488,35 +488,33 @@
   .prose-news {
     @apply text-foreground leading-relaxed;
     max-width: 780px;
-    font-size: 1.125rem;
-    line-height: 1.9;
+    font-size: 1.0625rem;
+    line-height: 1.75;
   }
 
-  /* First paragraph (lead) - normal weight per Agência Brasil */
+  /* First paragraph (lead) - Agência Brasil: normal weight, strong only on key phrase */
   .prose-news > p:first-of-type {
-    @apply font-normal;
+    @apply font-normal text-foreground;
+    font-size: 1.0625rem;
   }
 
-  /* If lead is wrapped in <strong>, respect it */
+  /* If lead has <strong>, make it truly bold */
   .prose-news > p:first-of-type strong {
     @apply font-bold;
   }
 
   .prose-news p {
     @apply mb-5;
+    font-size: 1.0625rem;
   }
 
-  /* H2 - Clean intertitle with subtle category-colored border */
-  .article-themed .prose-news h2 {
-    @apply text-xl font-bold mt-10 mb-4 pb-2 text-foreground;
-    border-bottom: 1px solid color-mix(in srgb, var(--category-color) 20%, transparent);
-    scroll-margin-top: 100px;
-  }
-
+  /* H2 - Agência Brasil style: bold, clean, no border, slightly larger */
+  .article-themed .prose-news h2,
   .prose-news h2 {
-    @apply text-xl font-bold mt-10 mb-4 text-foreground;
+    @apply text-[1.375rem] font-bold mt-10 mb-4 text-foreground;
     border: none;
     scroll-margin-top: 100px;
+    line-height: 1.35;
   }
 
   .prose-news h3 {
@@ -541,24 +539,28 @@
     color: var(--category-color);
   }
 
-  /* Blockquote - Uses category color for border */
+  /* Blockquote - Agência Brasil: left border, light gray bg, normal text */
   .article-themed .prose-news blockquote {
-    @apply border-l-4 pl-6 py-5 my-8 text-base;
+    @apply border-l-4 pl-6 pr-6 py-5 my-8;
     border-left-color: var(--category-color);
-    background: hsl(var(--muted) / 0.3);
-    color: hsl(var(--foreground) / 0.85);
+    background: hsl(var(--muted) / 0.25);
+    color: hsl(var(--foreground) / 0.9);
     font-style: normal;
+    font-size: 1.0625rem;
     line-height: 1.7;
+    border-radius: 0;
   }
 
   /* Default blockquote (fallback) */
   .prose-news blockquote {
-    @apply border-l-4 pl-6 py-5 my-8 text-base;
-    border-color: #1a3c6e;
-    background: hsl(var(--muted) / 0.3);
-    color: hsl(var(--foreground) / 0.85);
+    @apply border-l-4 pl-6 pr-6 py-5 my-8;
+    border-color: hsl(var(--muted-foreground) / 0.4);
+    background: hsl(var(--muted) / 0.25);
+    color: hsl(var(--foreground) / 0.9);
     font-style: normal;
+    font-size: 1.0625rem;
     line-height: 1.7;
+    border-radius: 0;
   }
 
   .prose-news blockquote::before {
@@ -568,6 +570,7 @@
   .prose-news blockquote p {
     @apply mb-0;
     color: hsl(var(--foreground) / 0.9);
+    font-size: 1.0625rem;
   }
 
   /* Images - No rounded corners for editorial feel */
@@ -607,14 +610,9 @@
     @apply text-sm text-muted-foreground mt-2 italic;
   }
 
-  /* Strong/bold text - usado para citações "afirmou X" */
+  /* Strong/bold text - Agência Brasil: used for key phrases inline */
   .prose-news strong {
-    @apply font-semibold text-foreground;
-  }
-
-  /* Citação inline com fonte: "declarou X na rede social." */
-  .prose-news p strong:last-child {
-    @apply font-semibold;
+    @apply font-bold text-foreground;
   }
 
   .prose-news hr {
