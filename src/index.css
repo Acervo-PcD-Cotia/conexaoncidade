@@ -543,22 +543,22 @@
 
   /* Blockquote - Uses category color for border */
   .article-themed .prose-news blockquote {
-    @apply border-l-4 pl-6 py-6 my-10 text-xl;
+    @apply border-l-4 pl-6 py-5 my-8 text-base;
     border-left-color: var(--category-color);
-    background: hsl(var(--muted) / 0.2);
-    color: hsl(var(--foreground) / 0.9);
-    font-style: italic;
-    line-height: 1.6;
+    background: hsl(var(--muted) / 0.3);
+    color: hsl(var(--foreground) / 0.85);
+    font-style: normal;
+    line-height: 1.7;
   }
 
   /* Default blockquote (fallback) */
   .prose-news blockquote {
-    @apply border-l-4 pl-6 py-6 my-10 text-xl;
+    @apply border-l-4 pl-6 py-5 my-8 text-base;
     border-color: #1a3c6e;
-    background: hsl(var(--muted) / 0.2);
-    color: hsl(var(--foreground) / 0.9);
-    font-style: italic;
-    line-height: 1.6;
+    background: hsl(var(--muted) / 0.3);
+    color: hsl(var(--foreground) / 0.85);
+    font-style: normal;
+    line-height: 1.7;
   }
 
   .prose-news blockquote::before {
