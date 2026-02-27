@@ -1,4 +1,4 @@
-import { MoreHorizontal, Mic, RefreshCw, Upload, History, Copy, Trash2, ExternalLink } from "lucide-react";
+import { MoreHorizontal, Mic, RefreshCw, Upload, History, Copy, Trash2, ExternalLink, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -7,20 +7,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useGeneratePodcast, usePublishPodcast, useDeletePodcast, PodcastNews } from "@/hooks/usePodcasts";
+import { usePublishPodcast, useDeletePodcast, PodcastNews } from "@/hooks/usePodcasts";
 import { toast } from "sonner";
 
 interface PodcastActionsMenuProps {
   podcast: PodcastNews;
   onViewLogs: () => void;
+  onAddPodcast?: () => void;
 }
 
-export function PodcastActionsMenu({ podcast, onViewLogs }: PodcastActionsMenuProps) {
-  const generateMutation = useGeneratePodcast();
+export function PodcastActionsMenu({ podcast, onViewLogs, onAddPodcast }: PodcastActionsMenuProps) {
   const publishMutation = usePublishPodcast();
   const deleteMutation = useDeletePodcast();
 
-  const isGenerating = podcast.podcast_status === "generating" || generateMutation.isPending;
+  const isGenerating = podcast.podcast_status === "generating";
   const isReady = podcast.podcast_status === "ready";
   const isPublished = podcast.podcast_status === "published";
   const hasAudio = !!podcast.podcast_audio_url;
@@ -42,25 +42,11 @@ export function PodcastActionsMenu({ podcast, onViewLogs }: PodcastActionsMenuPr
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
-        {!hasAudio && !isGenerating && (
-          <DropdownMenuItem
-            onClick={() => generateMutation.mutate(podcast.id)}
-            disabled={generateMutation.isPending}
-          >
-            <Mic className="mr-2 h-4 w-4" />
-            Gerar Podcast
-          </DropdownMenuItem>
-        )}
-
-        {hasAudio && (
-          <DropdownMenuItem
-            onClick={() => generateMutation.mutate(podcast.id)}
-            disabled={generateMutation.isPending}
-          >
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Regenerar Podcast
-          </DropdownMenuItem>
-        )}
+        {/* Add/Replace Podcast - opens the full dialog */}
+        <DropdownMenuItem onClick={onAddPodcast}>
+          <Plus className="mr-2 h-4 w-4" />
+          {hasAudio ? "Substituir Podcast" : "Adicionar Podcast"}
+        </DropdownMenuItem>
 
         {(isReady || hasAudio) && !isPublished && (
           <DropdownMenuItem

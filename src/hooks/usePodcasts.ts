@@ -13,6 +13,10 @@ export interface PodcastNews {
   auto_generate_podcast: boolean;
   auto_publish_podcast: boolean;
   audio_duration_seconds: number | null;
+  podcast_media_type: string | null;
+  podcast_external_url: string | null;
+  podcast_video_url: string | null;
+  audio_voice_id: string | null;
   category: {
     name: string;
     color: string;
@@ -45,6 +49,10 @@ export function usePodcasts(limit = 50) {
           auto_generate_podcast,
           auto_publish_podcast,
           audio_duration_seconds,
+          podcast_media_type,
+          podcast_external_url,
+          podcast_video_url,
+          audio_voice_id,
           category:category_id(name, color)
         `)
         .eq("status", "published")
