@@ -96,7 +96,7 @@ export function Header() {
                   {/* 1. Você no Google - blue */}
                   {isMenuGoogleEnabled && (
                   <Link
-                    to="/google-maps"
+                    to="/voce-no-google"
                     className="flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:underline"
                   >
                     <MapPin className="h-4 w-4" />
@@ -343,7 +343,7 @@ export function Header() {
             {/* 1. Você no Google - blue */}
             {isMenuGoogleEnabled && (
             <Link
-              to="/campanha/google-maps"
+              to="/voce-no-google"
               className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-blue-700 dark:text-blue-400 bg-blue-100 dark:bg-blue-950/60 rounded-full hover:bg-blue-200 dark:hover:bg-blue-900/60 transition-colors border border-blue-200 dark:border-blue-800"
             >
               <MapPin className="h-4 w-4" />
