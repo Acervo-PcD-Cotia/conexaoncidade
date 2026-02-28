@@ -55,7 +55,7 @@ function EditionCard({ edition, onDelete }: { edition: DigitalEdition; onDelete:
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => navigate(`/admin/editions/${edition.id}/edit`)}>
+              <DropdownMenuItem onClick={() => navigate(`/spah/painel/editions/${edition.id}/edit`)}>
                 <Edit className="h-4 w-4 mr-2" />
                 Editar
               </DropdownMenuItem>
@@ -124,7 +124,7 @@ export default function EditionsList() {
           <p className="text-muted-foreground">Organize suas notícias em edições periódicas</p>
         </div>
         <Button asChild>
-          <Link to="/admin/editions/new">
+          <Link to="/spah/painel/editions/new">
             <Plus className="h-4 w-4 mr-2" />
             Nova Edição
           </Link>
@@ -192,7 +192,7 @@ export default function EditionsList() {
                 Crie sua primeira edição digital para começar
               </p>
               <Button asChild>
-                <Link to="/admin/editions/new">
+                <Link to="/spah/painel/editions/new">
                   <Plus className="h-4 w-4 mr-2" />
                   Criar Edição
                 </Link>

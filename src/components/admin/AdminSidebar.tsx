@@ -66,6 +66,7 @@ import {
   Trophy,
   Wrench,
   Cpu,
+  Store,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useUserRole } from "@/hooks/useRequireRole";
@@ -239,6 +240,7 @@ const conexaoAIItems: MenuItem[] = [
 
 // Negócios - Módulos especiais
 const businessItems: MenuItem[] = [
+  { title: "Guia Empresário", url: "/guia/anunciante", icon: Store },
   { title: "Soluções", url: "/spah/painel/solutions", icon: Puzzle },
   { title: "Financeiro", url: "/spah/painel/financial", icon: Receipt },
   { title: "Auto Post PRO", url: "/spah/painel/autopost", icon: Bot },
