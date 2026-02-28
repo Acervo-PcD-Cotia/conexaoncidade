@@ -8,6 +8,8 @@ interface SafeImageProps {
   className?: string;
   loading?: 'lazy' | 'eager';
   fetchPriority?: 'high' | 'low' | 'auto';
+  width?: number | string;
+  height?: number | string;
 }
 
 export function SafeImage({ 
@@ -16,7 +18,9 @@ export function SafeImage({
   fallback = "/placeholder.svg", 
   className,
   loading = 'lazy',
-  fetchPriority = 'auto'
+  fetchPriority = 'auto',
+  width,
+  height,
 }: SafeImageProps) {
   const [imgSrc, setImgSrc] = useState(src || fallback);
   const [hasError, setHasError] = useState(false);
@@ -35,6 +39,9 @@ export function SafeImage({
       className={cn(className)}
       loading={loading}
       fetchPriority={fetchPriority}
+      width={width}
+      height={height}
+      decoding="async"
       onError={handleError}
     />
   );
