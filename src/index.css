@@ -1008,3 +1008,26 @@ body.vlibras-hidden [vw] {
 .animate-slide-in { animation: ticker-slide-in 0.3s ease-out forwards; }
 .animate-slide-out-left { animation: ticker-slide-out-left 0.3s ease-out forwards; }
 .animate-slide-out-right { animation: ticker-slide-out-right 0.3s ease-out forwards; }
+
+/* ============ PERFORMANCE: CONTENT-VISIBILITY ============ */
+
+/* Defer rendering of off-screen sections to improve LCP and reduce main-thread work */
+.home-section-spacing {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 400px;
+}
+
+/* Ensure ads don't cause CLS on mobile */
+@media (max-width: 767px) {
+  .ad-slot-wrapper {
+    min-height: 0 !important;
+    contain: layout style;
+  }
+}
+
+/* Smooth iOS scrolling */
+@supports (-webkit-touch-callout: none) {
+  main {
+    -webkit-overflow-scrolling: touch;
+  }
+}

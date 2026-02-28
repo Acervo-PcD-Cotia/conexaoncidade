@@ -4,8 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
-import { ExitIntentModal } from "@/components/ads/ExitIntentModal";
-import { FloatingAd } from "@/components/ads/FloatingAd";
+// Ad components removed from global scope — they are loaded in PublicLayout only
 import { AuthProvider } from "@/contexts/AuthContext";
 import { TenantProvider } from "@/contexts/TenantContext";
 import { AccessibilityProvider } from "@/contexts/AccessibilityContext";
@@ -405,8 +404,6 @@ const App = () => (
                       <TooltipProvider>
                     <Toaster />
                     <Sonner />
-                    <ExitIntentModal />
-                    <FloatingAd />
                 <BrowserRouter>
                   <MaintenanceGuard>
                     <Routes>
