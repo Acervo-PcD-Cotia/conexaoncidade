@@ -57,6 +57,7 @@ const Ads = lazy(() => import("./pages/admin/Ads"));
 const StoriesList = lazy(() => import("./pages/admin/StoriesList"));
 const StoryEditor = lazy(() => import("./pages/admin/StoryEditor"));
 const Users = lazy(() => import("./pages/admin/Users"));
+const TenantManagement = lazy(() => import("./pages/admin/TenantManagement"));
 const HomeEditor = lazy(() => import("./pages/admin/HomeEditor"));
 const QuickNotesAdmin = lazy(() => import("./pages/admin/QuickNotesAdmin"));
 const Analytics = lazy(() => import("./pages/admin/Analytics"));
@@ -763,6 +764,9 @@ const App = () => (
                                   <Route path="core-engine/roles" element={<S><CoreRoles /></S>} />
                                   <Route path="core-engine/automation" element={<S><CoreAutomation /></S>} />
                                   <Route path="core-engine/:moduleId" element={<S><CoreModulePage /></S>} />
+
+                                  {/* Tenant Management (Superadmin) */}
+                                  <Route path="tenants" element={<S><TenantManagement /></S>} />
 
                                   {/* Classifieds & Jobs Admin */}
                                   <Route path="classifieds" element={<S><ClassifiedsAdmin /></S>} />
