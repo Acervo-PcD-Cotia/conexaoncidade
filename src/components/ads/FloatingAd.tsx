@@ -73,7 +73,7 @@ export function FloatingAd({ className }: FloatingAdProps) {
             exit={{ opacity: 0, x: 100 }}
             transition={{ duration: 0.4, ease: 'easeOut' }}
             className={cn(
-              "fixed bottom-4 right-4 z-40 w-[300px] shadow-2xl rounded-lg overflow-hidden",
+              "fixed bottom-4 right-4 z-40 w-[300px] shadow-2xl rounded-lg overflow-hidden hidden md:block",
               className
             )}
           >

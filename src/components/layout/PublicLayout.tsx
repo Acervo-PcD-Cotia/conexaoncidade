@@ -8,10 +8,10 @@ import { useKeyboardNavigation } from "@/hooks/useKeyboardNavigation";
 import MiniPlayer from "@/components/broadcast/MiniPlayer";
 import { useMiniPlayer } from "@/contexts/MiniPlayerContext";
 import { GlobalRadioProvider } from "@/contexts/GlobalRadioContext";
-import { FloatingAd } from "@/components/ads/FloatingAd";
-import { AutoPopupAd } from "@/components/ads/AutoPopupAd";
 import { lazy, Suspense } from "react";
 
+const FloatingAd = lazy(() => import("@/components/ads/FloatingAd").then(m => ({ default: m.FloatingAd })));
+const AutoPopupAd = lazy(() => import("@/components/ads/AutoPopupAd").then(m => ({ default: m.AutoPopupAd })));
 const ExitIntentModal = lazy(() => import("@/components/ads/ExitIntentModal").then(m => ({ default: m.ExitIntentModal })));
 
 
@@ -62,11 +62,15 @@ export function PublicLayout() {
         />
       )}
 
-      {/* Global floating ad (1x per session, campaign-driven) */}
-      <FloatingAd />
+      {/* Global floating ad (1x per session, campaign-driven, desktop only) */}
+      <Suspense fallback={null}>
+        <FloatingAd />
+      </Suspense>
 
       {/* Auto popup ad from ads table (1x per session) */}
-      <AutoPopupAd />
+      <Suspense fallback={null}>
+        <AutoPopupAd />
+      </Suspense>
 
       {/* Exit-intent modal (campaign-driven) */}
       <Suspense fallback={null}>
