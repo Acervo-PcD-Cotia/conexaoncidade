@@ -1,294 +1,286 @@
-# CONEXÃO CORE ENGINE — Plano de Arquitetura v3.0
 
-## Visão Geral
 
-Módulo proprietário que centraliza todas as funcionalidades do portal, substituindo dependências de plugins externos por um ecossistema nativo integrado.
+# Diagnostico Tecnico Completo -- Modulo "Streaming e Midia"
 
----
+## Resumo Executivo
 
-## STATUS GERAL DOS MÓDULOS
-
-| # | Módulo | Status | Prioridade |
-|---|--------|--------|------------|
-| 1 | core-seo | 🟡 Parcial | Alta |
-| 2 | core-ads | ✅ Implementado | Manutenção |
-| 3 | core-performance | 🟡 Parcial | Alta |
-| 4 | core-security | 🟡 Parcial | Média |
-| 5 | core-analytics | 🔴 Básico | Alta |
-| 6 | core-push | ✅ Implementado | Manutenção |
-| 7 | core-editorial | ✅ Implementado | Manutenção |
-| 8 | core-media | 🟡 Parcial | Média |
-| 9 | core-leads | 🟡 Parcial | Média |
-| 10 | core-redirect | 🔴 Não existe | Alta |
-| 11 | core-schema | 🟡 Parcial | Média |
-| 12 | core-backup | ⬜ N/A (Cloud) | — |
-| 13 | core-roles | ✅ Implementado | Manutenção |
-| 14 | core-automation | ✅ Implementado | Manutenção |
+O modulo de Streaming e Midia do Portal Conexao na Cidade e composto por tres subsistemas: **Hub Central (Broadcast)**, **Ao Vivo (Radio Web + TV Web)** e **Studio (Conexao Studio)**. Apos analise detalhada de todo o codigo-fonte, edge functions, integracao com LiveKit e arquitetura de dados, a estimativa de conclusao real e de **55-65%** -- significativamente acima dos 25-35% sugeridos no prompt. O sistema possui infraestrutura backend real (LiveKit, Egress RTMP, gravacao S3) ja integrada, porem depende de servicos externos que ainda nao estao todos provisionados.
 
 ---
 
-## FASE 1 — Painel Unificado Core Engine (PRIMEIRO)
+## 1. HUB CENTRAL (Modelo Streamyard)
 
-### Objetivo
-Criar menu "Core Engine" no painel admin que centraliza todos os módulos com toggles de ativação.
+### Funcionalidades 100% Prontas
 
-### Implementação
-- Rota: `/spah/painel/core-engine`
-- Submenu no AdminSidebar com ícone dedicado (Cpu ou Boxes)
-- Dashboard com cards de cada módulo + status + toggle
-- Subrotas para cada módulo: `/spah/painel/core-engine/seo`, etc.
+| Funcionalidade | Evidencia |
+|---|---|
+| Criacao/agendamento de transmissoes | `BroadcastForm.tsx`, tabela `broadcasts` |
+| Gestao de canais | `BroadcastChannels.tsx`, tabela `broadcast_channels` |
+| Gestao de programas/grade | `BroadcastPrograms.tsx`, `BroadcastPlaylist.tsx` |
+| Dashboard com KPIs (ao vivo, proximas, canais) | `BroadcastTabContent.tsx` |
+| Integracao LiveKit completa (connect, disconnect, events) | `useLiveKit.ts` (332 linhas) |
+| Token generation via Edge Function | `livekit-token/index.ts` com JWT, roles, permissions |
+| Participantes (host, guest, viewer) com permissoes | Metadata JWT com roles, `broadcast_participants` |
+| Convite de guests via link/token | `InviteGuestModal.tsx`, validacao de `invite_token` no backend |
+| Captura de camera, microfone, tela | `toggleCamera`, `toggleMicrophone`, `toggleScreenShare` em `useLiveKit.ts` |
+| Preview local antes de conectar | `useLocalPreview()` com `createLocalTracks` |
+| Layouts de video (grid, spotlight, audio-only) | `LiveKitRoom.tsx` (374 linhas) com 3 layouts |
+| Multi-streaming RTMP real | `conexao-stream-start/index.ts` usa Egress API do LiveKit para multiplos destinos |
+| Gestao de destinos (YouTube, Facebook, Twitch, RTMP) | `useConexaoStreaming.ts`, tabela `illumina_destinations` |
+| Start/Stop streaming por destino | Edge Functions `conexao-stream-start` e `conexao-stream-stop` |
+| Gravacao em nuvem (S3) | `conexao-recording-start/index.ts` com `RoomCompositeEgress` |
+| Gravacao local (MediaRecorder) | Fallback local em `conexao-recording-start` |
+| Check de capacidades de gravacao | `conexao-recording-check/index.ts` |
+| Legendas/transcricao ao vivo | `BroadcastCaptions.tsx`, `useAudioTranscription` |
+| Chat de broadcast | `BroadcastChat.tsx` |
 
-### Tarefas
-- [ ] Adicionar rota e menu no sidebar
-- [ ] Criar página CoreEngineDashboard com grid de módulos
-- [ ] Atualizar ModuleKey para incluir novos core-* modules
-- [ ] Criar layout CoreEngineLayout com submenu lateral
+### Funcionalidades Parciais
 
----
+| Funcionalidade | Status | O que falta |
+|---|---|---|
+| Overlays/Branding | Interface criada (`OverlayRenderer.tsx`, `LogoOverlay.tsx`, `LowerThirdOverlay.tsx`, `BannerOverlay.tsx`, `TickerOverlay.tsx`, `CommentHighlightOverlay.tsx`) | Composicao visual nos overlays nao e injetada no stream RTMP de saida -- os overlays sao renderizados apenas no navegador do host, nao no egress. LiveKit Egress precisaria de `custom_base_url` com layout customizado para incluir overlays no stream de saida. |
+| Chat integrado multi-plataforma | Edge Functions existem para YouTube (`conexao-chat-youtube`) e Facebook (`conexao-chat-facebook`) | Nao ha UI de chat unificado que agregue chats de todas as plataformas em tempo real. O `UnifiedChatPanel.tsx` existe mas depende de polling nas APIs externas. |
+| Estatisticas em tempo real | Viewer count basico | Sem metricas detalhadas por destino (bitrate, dropped frames, health) |
 
-## FASE 2 — core-seo (SEO Profissional)
+### Funcionalidades Nao Implementadas
 
-### Já existe
-- Meta título/descrição no editor de notícias
-- Sitemap dinâmico (Edge Function `sitemap`)
-- Canonical automático
-- OG e Twitter Cards
-- Schema Article/NewsArticle
-- Index/noindex por post (`is_indexable`)
-- Slug inteligente
-- Google News marcação
+| Funcionalidade | Complexidade |
+|---|---|
+| Estudio virtual (backgrounds, cenarios) | Media -- requer Canvas compositing ou ML background removal |
+| Clipping automatico | Media -- requer FFmpeg server-side ou WebCodecs |
+| Transicoes entre cenas | Alta -- requer pipeline de composicao em tempo real |
 
-### Falta implementar
-- [ ] Score SEO visual em tempo real no editor (barra lateral)
-- [ ] Score de legibilidade (Flesch-Kincaid adaptado PT-BR)
-- [ ] Controle de robots.txt via painel
-- [ ] Breadcrumb estruturado (Schema)
-- [ ] Painel centralizado de SEO com métricas globais
-- [ ] Análise de keywords por post
-- [ ] Sugestões automáticas de otimização
+### Integracoes Configuradas
 
-### Banco de dados
-- Tabela `seo_scores` (news_id, seo_score, readability_score, issues JSON, updated_at)
-- Tabela `seo_settings` (robots_txt, default_meta, sitemap_config)
+| Servico | Status | Segredos |
+|---|---|---|
+| LiveKit (WebRTC SFU) | Configurado | `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, `LIVEKIT_URL` presentes |
+| S3 Storage (gravacao) | Nao configurado | `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_BUCKET`, `S3_REGION` ausentes |
+| YouTube Live API | Parcial | Destinos RTMP manuais funcionam; API nativa para chat existe |
+| Facebook Live API | Parcial | Idem YouTube |
 
----
+### Integracoes Necessarias (nao presentes)
 
-## FASE 3 — core-analytics (Analytics Interno)
+| Integracao | Motivo | Pode ser interno? |
+|---|---|---|
+| S3 ou compativel (R2, Spaces) | Gravacao em nuvem | Nao -- requer storage externo |
+| CDN (opcional) | Distribuicao de gravacoes | Nao |
 
-### Já existe
-- Contagem de views por notícia
-- Ranking "Mais Lidas"
-- Métricas básicas de ads (impressões, cliques, CTR)
-- Página Analytics.tsx (básica)
+### Veredicto Hub Central: **75-80% funcional**
 
-### Falta implementar
-- [ ] Dashboard completo com:
-  - Usuários online em tempo real (Realtime)
-  - Visitas por matéria (gráfico temporal)
-  - Matérias mais lidas (período selecionável)
-  - Tempo médio de permanência
-  - Origem de tráfego
-  - Dispositivo (mobile/desktop/tablet)
-  - CTR dos anúncios por slot
-  - Receita estimada por bloco
-- [ ] Integração GA4 (via Measurement Protocol)
-- [ ] Integração Google Search Console (API)
-- [ ] Integração Meta Pixel (eventos)
-
-### Banco de dados
-- Tabela `analytics_pageviews` (page_path, session_id, user_agent, referrer, device, country, duration_ms, created_at)
-- Tabela `analytics_sessions` (session_id, started_at, ended_at, page_count, device, source)
-- View materializada `analytics_daily_summary`
+A arquitetura esta madura. O sistema ja faz multi-streaming RTMP real via LiveKit Egress, gerencia participantes com permissoes, e tem gravacao (pendente S3). O que falta e refinamento (overlays no egress, estudio virtual).
 
 ---
 
-## FASE 4 — core-redirect (Redirecionamentos)
+## 2. AO VIVO (Web Radio + Web TV)
 
-### Não existe — criar do zero
+### Arquitetura Atual
 
-### Implementar
-- [ ] Tabela `redirects` (source_path, target_path, type 301/302, hits, created_at, is_active)
-- [ ] Tabela `404_log` (path, referrer, user_agent, count, first_seen, last_seen)
-- [ ] Página admin de gestão de redirects
-- [ ] Sugestão automática de redirect para 404 frequentes
-- [ ] Middleware no frontend para interceptar redirects
-- [ ] Importação/exportação CSV
+O modulo Radio e TV usa uma **arquitetura de proxy/gateway** onde o portal nao e o servidor de streaming, mas sim um painel de gestao que se conecta a provedores externos (VoxHD, Shoutcast, etc.) via API JSON.
 
----
+### Radio Web
 
-## FASE 5 — core-schema (Dados Estruturados Avançados)
+#### 100% Funcional
 
-### Já existe
-- Article / NewsArticle
-- Organization (parcial)
+| Funcionalidade | Evidencia |
+|---|---|
+| Gateway de status normalizado (VoxHD, Icecast, Shoutcast) | `streaming-gateway/index.ts` (571 linhas) com parsing multi-provedor |
+| Cache de 30s com fallback | `isCacheValid()`, `last_snapshot` no DB |
+| Player publico de audio | `GlobalRadioContext.tsx` com `HTMLAudioElement` |
+| Configuracao de conexao externa | `useStreamingConfig.ts` (salva `api_json_url`, `embed_mode`, etc.) |
+| Teste de conexao com latencia | `testConnectionMutation` no hook |
+| Dashboard com KPIs (ouvintes, status, tocando agora) | `RadioTabContent.tsx` |
+| Modulo isolado com types/endpoints/hooks | `src/modules/radio/` completo |
+| API Client com fallback para mock | `radioApiClient.ts` com mock transparente |
+| AutoDJ (edge function) | `autodj-stream/index.ts` com gestao de playlists e estado por canal |
+| Playlists, biblioteca de tracks, encoder config | Hooks completos em `modules/radio/hooks/` |
 
-### Falta implementar
-- [ ] LocalBusiness schema
-- [ ] FAQ schema (gerado automaticamente de conteúdo)
-- [ ] Breadcrumb schema (complementar ao SEO)
-- [ ] Validador inline contra Google Rich Results
-- [ ] Painel de gestão de schemas por tipo de conteúdo
+#### Parcial
 
----
+| Funcionalidade | Status |
+|---|---|
+| AutoDJ real (playback de audio) | Edge function gerencia estado mas nao faz playback real -- depende de servidor Icecast/Shoutcast configurado externamente |
+| Upload de tracks | Mock no `uploadTrack()` -- "gateway nao suporta upload direto ainda" |
+| Estatisticas historicas | Dados vem do mock server quando nao ha provedor externo |
 
-## FASE 6 — core-performance
+#### Nao Implementado
 
-### Já implementado (automático pela stack)
-- Minificação CSS/JS (Vite)
-- Compressão GZIP (servidor)
-- Lazy loading (React.lazy + Suspense)
-- Cache inteligente (React Query staleTime/gcTime)
+| Funcionalidade | Nota |
+|---|---|
+| Servidor Icecast/Shoutcast proprio | O sistema foi projetado para conectar a provedores externos, nao hospedar |
+| Re-stream de audio | Nao ha pipeline para capturar e redistribuir |
+| Relatorios exportaveis | Sem PDF/CSV de analytics |
 
-### Falta implementar
-- [ ] Painel de Core Web Vitals (LCP, FID, CLS)
-- [ ] Monitor de performance por página
-- [ ] Alertas de degradação
-- [ ] Preload inteligente de rotas críticas
-- [ ] Relatório de imagens não otimizadas
+### TV Web
 
-### Banco de dados
-- Tabela `performance_metrics` (page_path, lcp, fid, cls, ttfb, device, created_at)
+#### 100% Funcional
 
----
+| Funcionalidade | Evidencia |
+|---|---|
+| Gateway de status (VoxTV) | Mesmo `streaming-gateway` com parsing TV |
+| Player publico com embed | `TvPage.tsx` com suporte iframe, HTML e URL |
+| Configuracao de conexao externa | Mesmo `useStreamingConfig` com `kind: "tv"` |
+| Dashboard com KPIs | `TvTabContent.tsx` |
+| Modulo isolado completo | `src/modules/tv/` com types, endpoints, hooks |
+| Gestao de VOD (interface) | `useTvVod.ts`, `useTvUploads.ts` |
+| Grade de programacao (interface) | `useTvSchedule.ts` |
+| Ingest credentials (interface) | `useTvIngest.ts` |
+| API Client com mock | `tvApiClient.ts` |
 
-## FASE 7 — core-security
+#### Parcial
 
-### Já implementado
-- RLS rigoroso
-- DOMPurify sanitização
-- Proteção SQL injection (parameterized queries)
-- Roles e permissões granulares
-- Log de atividades admin (audit_logs)
+| Funcionalidade | Status |
+|---|---|
+| VOD real | Interface existe mas sem storage backend configurado |
+| Grade linear real | Schedule existe no mock mas sem engine de execucao |
+| Transcoding | Interface de upload jobs sem FFmpeg server-side |
 
-### Falta implementar
-- [ ] Painel de segurança centralizado
-- [ ] Monitor de tentativas de login falhas
-- [ ] Bloqueio automático de IP (rate limiting via Edge Function)
-- [ ] 2FA opcional (TOTP)
-- [ ] Scanner de vulnerabilidades interno
-- [ ] Dashboard de logs de segurança
+#### Nao Implementado
 
-### Banco de dados
-- Tabela `security_events` (event_type, ip_address, user_id, details, severity, created_at)
-- Tabela `blocked_ips` (ip_address, reason, blocked_at, expires_at)
+| Funcionalidade | Nota |
+|---|---|
+| Nginx RTMP proprio | Mesma abordagem -- conecta a provedor externo |
+| DVR / timeshift | Flag `enableDVR` em settings mas sem implementacao |
+| CDN propria | Depende de provedor externo |
 
----
+### Veredicto Ao Vivo: **60-65% funcional**
 
-## FASE 8 — core-media (Mídia Inteligente)
-
-### Já implementado
-- Compressão automática
-- WebP (parcial)
-- ALT automático
-- Geração Hero/OG/Card
-
-### Falta implementar
-- [ ] Biblioteca de mídia organizada por categoria
-- [ ] Detecção de imagem duplicada (hash perceptual)
-- [ ] Painel de gestão de mídia com filtros
-- [ ] Estatísticas de uso por imagem
-- [ ] Limpeza de mídia órfã
+O sistema funciona como **painel de gestao** para provedores externos. A camada de gateway, normalizacao e cache esta robusta. O que falta e o backend de streaming real (Icecast, RTMP server) -- por design, isso e delegado a provedores externos.
 
 ---
 
-## FASE 9 — core-leads (Captação de Leads)
+## 3. STUDIO (Conexao Studio -- Modelo Streamyard/OBS)
 
-### Já existe (parcial)
-- Formulários básicos
-- WhatsApp integration
-- Push notifications para engajamento
+### 100% Funcional
 
-### Falta implementar
-- [ ] Formulário nativo configurável (drag & drop)
-- [ ] Segmentação de listas
-- [ ] Exportação CSV
-- [ ] Automação básica de resposta (autoresponder)
-- [ ] Integração e-mail marketing (Mailchimp/Brevo)
-- [ ] Dashboard de leads com funil
+| Funcionalidade | Evidencia |
+|---|---|
+| CRUD de estuudios (nome, slug, layout, marca) | `StudioCreate.tsx`, `StudioList.tsx`, tabela `illumina_studios` |
+| Sessao ao vivo com LiveKit | `StudioSession.tsx` com `useLiveKit` |
+| Green Room (pre-show) | `GreenRoom.tsx` |
+| Barra de controles (mic, camera, tela, gravar, go live) | `StudioControlBar.tsx` |
+| Preview area com layouts (grid, spotlight, PiP, side-by-side) | `StudioPreviewArea.tsx` |
+| Medidor de nivel de audio | `AudioLevelMeter.tsx` |
+| Backstage/participantes | `StudioBackstage.tsx`, `ParticipantCard.tsx` |
+| Overlays (logo, lower third, banner, ticker, destaque de comentario) | 6 componentes em `overlays/` + `OverlayRenderer.tsx` |
+| Painel de branding | `BrandingPanel.tsx` |
+| Painel de destinos multi-stream | `DestinationsPanel.tsx` |
+| Painel de midia | `MediaPanel.tsx` |
+| Painel de configuracoes | `SettingsPanel.tsx` |
+| Chat unificado | `UnifiedChatPanel.tsx` |
+| Sala de espera de convidados | `WaitingGuestsPanel.tsx` |
+| Entrada de convidado via link | `GuestEntry.tsx` |
+| Multi-streaming (via LiveKit Egress RTMP) | Integrado com `conexao-stream-start` |
+| Gravacao cloud + local | Integrado com `conexao-recording-start/stop` |
+| Biblioteca de gravacoes | `Library.tsx` |
+| Gestao de time | `Team.tsx`, tabela `illumina_team_members` |
+| Webinars | `Webinars.tsx` |
+| Dashboard | `Dashboard.tsx` |
 
-### Banco de dados
-- Tabela `leads` (name, email, phone, source, tags, status, created_at)
-- Tabela `lead_lists` (name, description, filter_rules)
+### Parcial
 
----
+| Funcionalidade | Status |
+|---|---|
+| Overlays no stream de saida | Visivel apenas localmente; nao injetado no RTMP egress |
+| Clipping de gravacoes | Link na interface mas sem backend de corte (FFmpeg) |
+| Mixagem de audio avancada | Nivel de audio exibido, sem mixer multi-canal |
 
-## NOTAS SOBRE MÓDULOS JÁ COMPLETOS
+### Nao Implementado
 
-### core-ads ✅
-15 formatos, Campanhas 360, AdLabel 3 níveis, métricas completas.
+| Funcionalidade | Complexidade |
+|---|---|
+| Engine de cenas com transicoes | Alta -- Canvas compositor ou WebGL |
+| Filtros de video (blur, chroma key) | Media -- WebGL shaders ou ML |
+| Plugins/extensoes | Alta -- requer sistema de plugins |
+| Encoder integrado (WebAssembly) | Muito alta -- alternativa: manter LiveKit |
 
-### core-push ✅
-Web Push VAPID, segmentação, agendamento, Service Worker.
+### Veredicto Studio: **70-75% funcional**
 
-### core-editorial ✅
-Quality Gate, checklist, campos obrigatórios, histórico, controle autor.
-
-### core-roles ✅
-super_admin, admin, editor, editor_chief, reporter, columnist, moderator + permissões granulares.
-
-### core-automation ✅
-AutoPost, sitemap, indexação Google, notificações automáticas.
-
-### core-backup ⬜
-Gerenciado pelo Lovable Cloud — não requer implementação.
-
----
-
-## ORDEM DE IMPLEMENTAÇÃO
-
-1. **Painel Core Engine** (hub central + menu)
-2. **core-redirect** (não existe, alto impacto SEO)
-3. **core-analytics** (alto impacto operacional)
-4. **core-seo** (complementar existente)
-5. **core-schema** (complementar existente)
-6. **core-performance** (painel de monitoramento)
-7. **core-security** (painel + 2FA)
-8. **core-media** (biblioteca aprimorada)
-9. **core-leads** (captação avançada)
+O Conexao Studio e o modulo mais completo. Funciona como um Streamyard funcional com LiveKit como backbone. A maioria das features de producao ao vivo esta implementada. O gap principal e a composicao visual no stream de saida (overlays) e funcionalidades de pos-producao.
 
 ---
 
-## ESTRUTURA DE ARQUIVOS
+## 4. Analise Geral Consolidada
 
-```
-src/pages/admin/core-engine/
-├── CoreEngineDashboard.tsx
-├── CoreSEO.tsx
-├── CoreAnalytics.tsx
-├── CoreRedirects.tsx
-├── CoreSchema.tsx
-├── CorePerformance.tsx
-├── CoreSecurity.tsx
-├── CoreMedia.tsx
-└── CoreLeads.tsx
+### Status por Modulo
 
-src/components/core-engine/
-├── SEOScorePanel.tsx
-├── ReadabilityScore.tsx
-├── AnalyticsChart.tsx
-├── RedirectForm.tsx
-└── SecurityDashboard.tsx
-
-src/hooks/
-├── useCoreAnalytics.ts
-├── useCoreRedirects.ts
-├── useCoreSEO.ts
-└── useCorePerformance.ts
+```text
++-------------------+------------------+
+| Modulo            | Conclusao Real   |
++-------------------+------------------+
+| Hub Central       | 75-80%           |
+| Ao Vivo (Radio)   | 60-65%           |
+| Ao Vivo (TV)      | 55-60%           |
+| Studio            | 70-75%           |
++-------------------+------------------+
+| MEDIA GERAL       | 65%              |
++-------------------+------------------+
 ```
 
+### Integracoes Obrigatorias Consolidadas
+
+| Integracao | Status Atual | Necessario Para |
+|---|---|---|
+| LiveKit (WebRTC SFU) | **CONFIGURADO** (secrets presentes) | Hub Central, Studio |
+| Provedor Radio externo (VoxHD/Icecast) | Nao configurado (depende do cliente) | Radio Web |
+| Provedor TV externo (VoxTV/RTMP) | Nao configurado (depende do cliente) | TV Web |
+| S3 ou compativel | **NAO CONFIGURADO** (secrets ausentes) | Gravacao em nuvem |
+
+### Integracoes Opcionais
+
+| Integracao | Beneficio |
+|---|---|
+| YouTube Data API v3 | Gerenciar lives e ler chat diretamente |
+| Facebook Graph API | Idem para Facebook Live |
+| FFmpeg server-side | Clipping, transcoding VOD, AutoDJ real |
+| CDN (Cloudflare/CloudFront) | Distribuicao de VOD e gravacoes |
+| Whisper/Deepgram | Transcricao automatica de melhor qualidade |
+
+### O que pode ser feito internamente (sem servico externo)
+
+| Funcionalidade | Viabilidade |
+|---|---|
+| Overlays no egress | Sim -- usar `custom_base_url` do LiveKit Egress apontando para pagina de layout personalizada |
+| Background virtual | Sim -- via TensorFlow.js ou MediaPipe no browser |
+| Mixer de audio basico | Sim -- Web Audio API ja disponivel |
+| DVR/timeshift | Parcial -- HLS com buffer, mas requer storage |
+
 ---
 
-## DECISÕES TÉCNICAS
+## 5. Roadmap Recomendado
 
-1. **Analytics**: Coletar via Edge Function + inserir em batch
-2. **SEO Score**: Calcular client-side no editor, salvar resultado
-3. **Redirects**: Middleware no App.tsx + consulta em cache
-4. **Performance**: Web Vitals API nativa + enviar via beacon
-5. **Segurança**: Rate limiting via Edge Function proxy
-6. **Schema**: Renderizar via react-helmet-async
+### Fase 1 -- Operacional Minimo (1-2 semanas)
+
+1. Configurar segredos S3 (`S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_BUCKET`, `S3_REGION`) para habilitar gravacao em nuvem
+2. Testar fluxo completo: criar broadcast, conectar LiveKit, multi-stream para YouTube/Facebook, gravar
+3. Configurar pelo menos um provedor externo de Radio (VoxHD ou Icecast) para validar o gateway
+4. Configurar provedor externo de TV para validar gateway TV
+
+### Fase 2 -- Estabilidade e Qualidade (2-4 semanas)
+
+1. Implementar overlays no stream de saida via `custom_base_url` do Egress
+2. Substituir mocks do modulo Radio/TV por dados reais quando provedor estiver configurado
+3. Implementar upload real de tracks (storage backend)
+4. Adicionar monitoramento de saude por destino (bitrate, frames dropped)
+5. Implementar chat unificado agregando YouTube + Facebook em tempo real
+
+### Fase 3 -- Recursos Avancados (4-8 semanas)
+
+1. Clipping de gravacoes com FFmpeg (edge function ou worker externo)
+2. Background virtual com MediaPipe
+3. Engine de cenas basico (2-3 layouts pre-definidos com transicoes CSS)
+4. Transcoding de VOD para multiplas qualidades
+5. Analytics avancado com dashboards historicos
 
 ---
 
-## PRÓXIMO PASSO
+## 6. Notas Tecnicas Importantes
 
-Aguardando aprovação para iniciar Fase 1 (Painel Core Engine).
+1. **LiveKit esta configurado e funcional** -- os 3 secrets estao presentes. O sistema pode fazer WebRTC, multi-stream RTMP e gravacao (falta apenas S3).
+
+2. **A arquitetura de Radio/TV e de proxy, nao de hosting** -- o portal nao roda Icecast/Shoutcast. Ele conecta a provedores externos via API JSON e normaliza os dados. Isso e uma decisao de arquitetura valida (menor custo de infra).
+
+3. **O mock server e um fallback inteligente** -- quando nao ha provedor configurado, o sistema exibe dados mock transparentemente. Isso permite demonstracao e desenvolvimento sem infra real.
+
+4. **O Conexao Studio e um produto funcional** -- com LiveKit configurado, ele ja permite transmissoes ao vivo com convidados, multi-streaming e gravacao local. E o modulo mais proximo de "pronto para producao".
+
