@@ -32,6 +32,7 @@ import ResetPassword from "./pages/ResetPassword";
 import NewsListPage from "./pages/NewsListPage";
 import SearchPage from "./pages/SearchPage";
 import WebStoryViewerPage from "./pages/public/WebStoryViewer";
+import VoceNoGoogle from "./pages/VoceNoGoogle";
 
 // Admin Pages
 import Dashboard from "./pages/admin/Dashboard";
@@ -430,8 +431,9 @@ const App = () => (
                         <Route path="/comunidade/beneficios" element={<CommunityBenefits />} />
                         <Route path="/comunidade/beneficios/celular-ideal" element={<PhoneChooserPage />} />
                         <Route path="/anti-fake-news" element={<AntiFakeNews />} />
-                        <Route path="/campanha/google-maps" element={<GoogleMapsCampaign />} />
-                        <Route path="/google-maps" element={<GoogleMapsCampaign />} />
+                        <Route path="/voce-no-google" element={<VoceNoGoogle />} />
+                        <Route path="/campanha/google-maps" element={<Navigate to="/voce-no-google" replace />} />
+                        <Route path="/google-maps" element={<Navigate to="/voce-no-google" replace />} />
                         <Route path="/web-radio-tv" element={<WebRadioTVCampaign />} />
                         <Route path="/campanha/radio-tv" element={<WebRadioTVCampaign />} />
                         <Route path="/transporte-escolar" element={<TransporteEscolarHome />} />
