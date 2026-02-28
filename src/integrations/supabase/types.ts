@@ -3855,10 +3855,13 @@ export type Database = {
           address_complement: string | null
           amenities: string[] | null
           avg_rating: number | null
+          business_type: string | null
           categories_secondary: string[] | null
           category_main: string
           cep: string | null
           city: string
+          cnpj: string | null
+          complement: string | null
           cover_url: string | null
           created_at: string | null
           description_full: string | null
@@ -3868,6 +3871,7 @@ export type Database = {
           featured_until: string | null
           gallery_urls: string[] | null
           google_maps_url: string | null
+          holiday_hours: Json | null
           id: string
           instagram: string | null
           is_active: boolean | null
@@ -3878,6 +3882,7 @@ export type Database = {
           longitude: number | null
           name: string
           neighborhoods: string[] | null
+          number: string | null
           opening_hours: Json | null
           payment_methods: string[] | null
           phone: string | null
@@ -3888,7 +3893,9 @@ export type Database = {
           seo_description: string | null
           seo_keywords: string[] | null
           seo_title: string | null
+          service_areas: string[] | null
           service_radius_km: number | null
+          services: string[] | null
           slug: string
           state: string | null
           tagline: string | null
@@ -3906,16 +3913,20 @@ export type Database = {
           website_clicks: number | null
           whatsapp: string | null
           whatsapp_clicks: number | null
+          year_founded: number | null
         }
         Insert: {
           address?: string | null
           address_complement?: string | null
           amenities?: string[] | null
           avg_rating?: number | null
+          business_type?: string | null
           categories_secondary?: string[] | null
           category_main: string
           cep?: string | null
           city: string
+          cnpj?: string | null
+          complement?: string | null
           cover_url?: string | null
           created_at?: string | null
           description_full?: string | null
@@ -3925,6 +3936,7 @@ export type Database = {
           featured_until?: string | null
           gallery_urls?: string[] | null
           google_maps_url?: string | null
+          holiday_hours?: Json | null
           id?: string
           instagram?: string | null
           is_active?: boolean | null
@@ -3935,6 +3947,7 @@ export type Database = {
           longitude?: number | null
           name: string
           neighborhoods?: string[] | null
+          number?: string | null
           opening_hours?: Json | null
           payment_methods?: string[] | null
           phone?: string | null
@@ -3945,7 +3958,9 @@ export type Database = {
           seo_description?: string | null
           seo_keywords?: string[] | null
           seo_title?: string | null
+          service_areas?: string[] | null
           service_radius_km?: number | null
+          services?: string[] | null
           slug: string
           state?: string | null
           tagline?: string | null
@@ -3963,16 +3978,20 @@ export type Database = {
           website_clicks?: number | null
           whatsapp?: string | null
           whatsapp_clicks?: number | null
+          year_founded?: number | null
         }
         Update: {
           address?: string | null
           address_complement?: string | null
           amenities?: string[] | null
           avg_rating?: number | null
+          business_type?: string | null
           categories_secondary?: string[] | null
           category_main?: string
           cep?: string | null
           city?: string
+          cnpj?: string | null
+          complement?: string | null
           cover_url?: string | null
           created_at?: string | null
           description_full?: string | null
@@ -3982,6 +4001,7 @@ export type Database = {
           featured_until?: string | null
           gallery_urls?: string[] | null
           google_maps_url?: string | null
+          holiday_hours?: Json | null
           id?: string
           instagram?: string | null
           is_active?: boolean | null
@@ -3992,6 +4012,7 @@ export type Database = {
           longitude?: number | null
           name?: string
           neighborhoods?: string[] | null
+          number?: string | null
           opening_hours?: Json | null
           payment_methods?: string[] | null
           phone?: string | null
@@ -4002,7 +4023,9 @@ export type Database = {
           seo_description?: string | null
           seo_keywords?: string[] | null
           seo_title?: string | null
+          service_areas?: string[] | null
           service_radius_km?: number | null
+          services?: string[] | null
           slug?: string
           state?: string | null
           tagline?: string | null
@@ -4020,6 +4043,7 @@ export type Database = {
           website_clicks?: number | null
           whatsapp?: string | null
           whatsapp_clicks?: number | null
+          year_founded?: number | null
         }
         Relationships: [
           {
