@@ -8,6 +8,10 @@
     <meta name="author" content="Conexão na Cidade" />
     <link rel="icon" href="/favicon.png" type="image/png" />
 
+    <!-- Preconnect to critical origins -->
+    <link rel="preconnect" href="https://qfavfwvsficnqaznincz.supabase.co" crossorigin />
+    <link rel="dns-prefetch" href="https://qfavfwvsficnqaznincz.supabase.co" />
+
     <meta property="og:title" content="Conexão na Cidade - Portal de Notícias" />
     <meta property="og:description" content="Seu portal de notícias da região metropolitana. Informação de qualidade, 24 horas por dia." />
     <meta property="og:type" content="website" />
@@ -22,16 +26,31 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     
-    <!-- VLibras Widget -->
+    <!-- VLibras Widget (deferred) -->
     <div vw class="enabled">
       <div vw-access-button class="active"></div>
       <div vw-plugin-wrapper>
         <div class="vw-plugin-top-wrapper"></div>
       </div>
     </div>
-    <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+    <script defer src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
     <script>
-      new window.VLibras.Widget('https://vlibras.gov.br/app');
+      // Initialize VLibras after its script loads
+      document.addEventListener('DOMContentLoaded', function() {
+        if (window.VLibras) {
+          new window.VLibras.Widget('https://vlibras.gov.br/app');
+        } else {
+          // Wait for deferred script
+          var checkVlibras = setInterval(function() {
+            if (window.VLibras) {
+              clearInterval(checkVlibras);
+              new window.VLibras.Widget('https://vlibras.gov.br/app');
+            }
+          }, 500);
+          // Stop checking after 10s
+          setTimeout(function() { clearInterval(checkVlibras); }, 10000);
+        }
+      });
     </script>
   </body>
 </html>

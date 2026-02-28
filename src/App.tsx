@@ -1,10 +1,10 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
-// Ad components removed from global scope — they are loaded in PublicLayout only
 import { AuthProvider } from "@/contexts/AuthContext";
 import { TenantProvider } from "@/contexts/TenantContext";
 import { AccessibilityProvider } from "@/contexts/AccessibilityContext";
@@ -14,381 +14,383 @@ import { MiniPlayerProvider } from "@/contexts/MiniPlayerContext";
 import { SiteThemeProvider } from "@/providers/SiteThemeProvider";
 import { MaintenanceGuard } from "@/components/maintenance/MaintenanceGuard";
 import { RouteModuleGuard } from "@/components/guards/RouteModuleGuard";
+import { ThemeProvider } from "@/contexts/ThemeContext";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// ─── Eager: critical path (home + layout shells) ────────────────────────────
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { CampaignErrorBoundary } from "@/components/admin/campaigns/CampaignErrorBoundary";
 import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import NewsDetail from "./pages/NewsDetail";
-import CategoryPage from "./pages/CategoryPage";
 import NotFound from "./pages/NotFound";
-import StoryViewer from "./pages/StoryViewer";
-import EventDetail from "./pages/EventDetail";
-import AntiFakeNews from "./pages/AntiFakeNews";
-import EditionViewer from "./pages/EditionViewer";
-import StoriesPage from "./pages/StoriesPage";
-import ResetPassword from "./pages/ResetPassword";
-import NewsListPage from "./pages/NewsListPage";
-import SearchPage from "./pages/SearchPage";
-import WebStoryViewerPage from "./pages/public/WebStoryViewer";
-import VoceNoGoogle from "./pages/VoceNoGoogle";
-import BusinessCadastro from "./pages/BusinessCadastro";
 
-// Admin Pages
-import Dashboard from "./pages/admin/Dashboard";
-import NewsList from "./pages/admin/NewsList";
-import NewsEditor from "./pages/admin/NewsEditor";
-import Categories from "./pages/admin/Categories";
-import Tags from "./pages/admin/Tags";
-import Banners from "./pages/admin/Banners";
-import Ads from "./pages/admin/Ads";
-import StoriesList from "./pages/admin/StoriesList";
-import StoryEditor from "./pages/admin/StoryEditor";
-import Users from "./pages/admin/Users";
-import HomeEditor from "./pages/admin/HomeEditor";
-import QuickNotesAdmin from "./pages/admin/QuickNotesAdmin";
-import Analytics from "./pages/admin/Analytics";
-import ReadingAnalytics from "./pages/admin/ReadingAnalytics";
-import NewsAnalytics from "./pages/admin/NewsAnalytics";
-import WeeklyReport from "./pages/admin/WeeklyReport";
-import CommercialReports from "./pages/admin/CommercialReports";
-import AuditLogs from "./pages/admin/AuditLogs";
-import AdDiagnostics from "./pages/admin/AdDiagnostics";
-import SsoMonitor from "./pages/admin/SsoMonitor";
-import Settings from "./pages/admin/Settings";
-import NoticiasAI from "./pages/admin/NoticiasAI";
-import SocialDashboard from "./pages/admin/SocialDashboard";
-import SocialQueue from "./pages/admin/SocialQueue";
-import SocialHistory from "./pages/admin/SocialHistory";
-import SocialLogs from "./pages/admin/SocialLogs";
-import SocialSettings from "./pages/admin/SocialSettings";
-import { PostSocialDashboard, PostSocialSettings, PostSocialComposer, PostSocialPlatformSetup } from "./pages/admin/postsocial";
-import LinksDashboard from "./pages/admin/LinksDashboard";
-import LinksBuilder from "./pages/admin/LinksBuilder";
-import Solutions from "./pages/admin/Solutions";
-import EventsList from "./pages/admin/EventsList";
-import EditionsList from "./pages/admin/EditionsList";
-import EditionEditor from "./pages/admin/EditionEditor";
-import FinancialDashboard from "./pages/admin/FinancialDashboard";
-import FinancialProfiles from "./pages/admin/FinancialProfiles";
-import FinancialReceivables from "./pages/admin/FinancialReceivables";
-import FinancialInvoices from "./pages/admin/FinancialInvoices";
-import TrainingHub from "./pages/admin/TrainingHub";
-import PodcastsList from "./pages/admin/PodcastsList";
-import AntiFakeNewsAdmin from "./pages/admin/AntiFakeNewsAdmin";
-import LinksQRGenerator from "./pages/admin/LinksQRGenerator";
-import LinksBioBuilder from "./pages/admin/LinksBioBuilder";
-import LinksReports from "./pages/admin/LinksReports";
-import CampaignsHub from "./pages/admin/CampaignsHub";
-import PushNotificationsAdmin from "./pages/admin/PushNotificationsAdmin";
+// ─── Route-level loading fallback ───────────────────────────────────────────
+const RouteFallback = () => (
+  <div className="flex items-center justify-center min-h-[60vh]">
+    <Skeleton className="h-64 w-full max-w-4xl rounded-xl" />
+  </div>
+);
 
-// Campaign Proofs Module
-import CampaignProofsList from "./pages/admin/comprovantes/CampaignProofsList";
-import CampaignProofEditor from "./pages/admin/comprovantes/CampaignProofEditor";
+// ─── Lazy: Public pages ─────────────────────────────────────────────────────
+const Auth = lazy(() => import("./pages/Auth"));
+const NewsDetail = lazy(() => import("./pages/NewsDetail"));
+const CategoryPage = lazy(() => import("./pages/CategoryPage"));
+const StoryViewer = lazy(() => import("./pages/StoryViewer"));
+const EventDetail = lazy(() => import("./pages/EventDetail"));
+const AntiFakeNews = lazy(() => import("./pages/AntiFakeNews"));
+const EditionViewer = lazy(() => import("./pages/EditionViewer"));
+const StoriesPage = lazy(() => import("./pages/StoriesPage"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const NewsListPage = lazy(() => import("./pages/NewsListPage"));
+const SearchPage = lazy(() => import("./pages/SearchPage"));
+const WebStoryViewerPage = lazy(() => import("./pages/public/WebStoryViewer"));
+const VoceNoGoogle = lazy(() => import("./pages/VoceNoGoogle"));
+const BusinessCadastro = lazy(() => import("./pages/BusinessCadastro"));
 
-// Auto Post PRO Pages
-import AutoPostDashboard from "./pages/admin/autopost/AutoPostDashboard";
-import AutoPostSources from "./pages/admin/autopost/AutoPostSources";
-import AutoPostQueue from "./pages/admin/autopost/AutoPostQueue";
-import AutoPostGroups from "./pages/admin/autopost/AutoPostGroups";
-import AutoPostRules from "./pages/admin/autopost/AutoPostRules";
-import AutoPostSchedules from "./pages/admin/autopost/AutoPostSchedules";
-import AutoPostMedia from "./pages/admin/autopost/AutoPostMedia";
-import AutoPostDuplicates from "./pages/admin/autopost/AutoPostDuplicates";
-import AutoPostLogs from "./pages/admin/autopost/AutoPostLogs";
-import AutoPostReports from "./pages/admin/autopost/AutoPostReports";
-import AutoPostSettings from "./pages/admin/autopost/AutoPostSettings";
-// Auto Post Regional Pages (Independent Module)
-import { 
-  RegionalDashboard, 
-  RegionalSources, 
-  RegionalQueue, 
-  RegionalLogs,
-  RegionalSourceEdit,
-} from "./pages/admin/autopost-regional";
+// ─── Lazy: Admin pages ──────────────────────────────────────────────────────
+const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
+const NewsList = lazy(() => import("./pages/admin/NewsList"));
+const NewsEditor = lazy(() => import("./pages/admin/NewsEditor"));
+const Categories = lazy(() => import("./pages/admin/Categories"));
+const Tags = lazy(() => import("./pages/admin/Tags"));
+const Banners = lazy(() => import("./pages/admin/Banners"));
+const Ads = lazy(() => import("./pages/admin/Ads"));
+const StoriesList = lazy(() => import("./pages/admin/StoriesList"));
+const StoryEditor = lazy(() => import("./pages/admin/StoryEditor"));
+const Users = lazy(() => import("./pages/admin/Users"));
+const HomeEditor = lazy(() => import("./pages/admin/HomeEditor"));
+const QuickNotesAdmin = lazy(() => import("./pages/admin/QuickNotesAdmin"));
+const Analytics = lazy(() => import("./pages/admin/Analytics"));
+const ReadingAnalytics = lazy(() => import("./pages/admin/ReadingAnalytics"));
+const NewsAnalytics = lazy(() => import("./pages/admin/NewsAnalytics"));
+const WeeklyReport = lazy(() => import("./pages/admin/WeeklyReport"));
+const CommercialReports = lazy(() => import("./pages/admin/CommercialReports"));
+const AuditLogs = lazy(() => import("./pages/admin/AuditLogs"));
+const AdDiagnostics = lazy(() => import("./pages/admin/AdDiagnostics"));
+const SsoMonitor = lazy(() => import("./pages/admin/SsoMonitor"));
+const Settings = lazy(() => import("./pages/admin/Settings"));
+const NoticiasAI = lazy(() => import("./pages/admin/NoticiasAI"));
+const SocialDashboard = lazy(() => import("./pages/admin/SocialDashboard"));
+const SocialQueue = lazy(() => import("./pages/admin/SocialQueue"));
+const SocialHistory = lazy(() => import("./pages/admin/SocialHistory"));
+const SocialLogs = lazy(() => import("./pages/admin/SocialLogs"));
+const SocialSettings = lazy(() => import("./pages/admin/SocialSettings"));
+const LinksDashboard = lazy(() => import("./pages/admin/LinksDashboard"));
+const LinksBuilder = lazy(() => import("./pages/admin/LinksBuilder"));
+const Solutions = lazy(() => import("./pages/admin/Solutions"));
+const EventsList = lazy(() => import("./pages/admin/EventsList"));
+const EditionsList = lazy(() => import("./pages/admin/EditionsList"));
+const EditionEditor = lazy(() => import("./pages/admin/EditionEditor"));
+const FinancialDashboard = lazy(() => import("./pages/admin/FinancialDashboard"));
+const FinancialProfiles = lazy(() => import("./pages/admin/FinancialProfiles"));
+const FinancialReceivables = lazy(() => import("./pages/admin/FinancialReceivables"));
+const FinancialInvoices = lazy(() => import("./pages/admin/FinancialInvoices"));
+const PodcastsList = lazy(() => import("./pages/admin/PodcastsList"));
+const AntiFakeNewsAdmin = lazy(() => import("./pages/admin/AntiFakeNewsAdmin"));
+const LinksQRGenerator = lazy(() => import("./pages/admin/LinksQRGenerator"));
+const LinksBioBuilder = lazy(() => import("./pages/admin/LinksBioBuilder"));
+const LinksReports = lazy(() => import("./pages/admin/LinksReports"));
+const CampaignsHub = lazy(() => import("./pages/admin/CampaignsHub"));
+const PushNotificationsAdmin = lazy(() => import("./pages/admin/PushNotificationsAdmin"));
+const ClassifiedsAdmin = lazy(() => import("./pages/admin/ClassifiedsAdmin"));
+const JobsAdmin = lazy(() => import("./pages/admin/JobsAdmin"));
+const ConexaoStream = lazy(() => import("./pages/admin/ConexaoStream"));
 
-// Content Fix Module
-import {
-  ContentFixDashboard,
-  ImageFixer,
-  DateFixer,
-  ContentValidator,
-  ContentFixer,
-  TitleFixer,
-} from "./modules/content-fix/pages";
+// PostSocial
+const PostSocialModule = lazy(() => import("./pages/admin/postsocial").then(m => ({
+  default: () => null // placeholder, real components below
+})));
+const PostSocialDashboard = lazy(() => import("./pages/admin/postsocial").then(m => ({ default: m.PostSocialDashboard })));
+const PostSocialSettings = lazy(() => import("./pages/admin/postsocial").then(m => ({ default: m.PostSocialSettings })));
+const PostSocialComposer = lazy(() => import("./pages/admin/postsocial").then(m => ({ default: m.PostSocialComposer })));
+const PostSocialPlatformSetup = lazy(() => import("./pages/admin/postsocial").then(m => ({ default: m.PostSocialPlatformSetup })));
 
-// Conexão Academy Pages
-import AcademyDashboard from "./pages/admin/academy/AcademyDashboard";
-import AcademyCourse from "./pages/admin/academy/AcademyCourse";
-import AcademyLesson from "./pages/admin/academy/AcademyLesson";
-import AcademyAdminCategories from "./pages/admin/academy/AcademyAdminCategories";
-import AcademyAdminCourses from "./pages/admin/academy/AcademyAdminCourses";
-import AcademyAdminLessons from "./pages/admin/academy/AcademyAdminLessons";
+// Campaign Proofs
+const CampaignProofsList = lazy(() => import("./pages/admin/comprovantes/CampaignProofsList"));
+const CampaignProofEditor = lazy(() => import("./pages/admin/comprovantes/CampaignProofEditor"));
+const CampaignErrorBoundary = lazy(() => import("./components/admin/campaigns/CampaignErrorBoundary").then(m => ({ default: m.CampaignErrorBoundary })));
 
-// ENEM 2026 Pages
-import AcademyEnem from "./pages/admin/academy/AcademyEnem";
-import EnemModule from "./pages/admin/academy/EnemModule";
-import EnemWeek from "./pages/admin/academy/EnemWeek";
-import EnemLessonPage from "./pages/admin/academy/EnemLesson";
-import EnemSubmissions from "./pages/admin/academy/EnemSubmissions";
-import EnemSubmissionDetail from "./pages/admin/academy/EnemSubmissionDetail";
+// Auto Post PRO
+const AutoPostDashboard = lazy(() => import("./pages/admin/autopost/AutoPostDashboard"));
+const AutoPostSources = lazy(() => import("./pages/admin/autopost/AutoPostSources"));
+const AutoPostQueue = lazy(() => import("./pages/admin/autopost/AutoPostQueue"));
+const AutoPostGroups = lazy(() => import("./pages/admin/autopost/AutoPostGroups"));
+const AutoPostRules = lazy(() => import("./pages/admin/autopost/AutoPostRules"));
+const AutoPostSchedules = lazy(() => import("./pages/admin/autopost/AutoPostSchedules"));
+const AutoPostMedia = lazy(() => import("./pages/admin/autopost/AutoPostMedia"));
+const AutoPostDuplicates = lazy(() => import("./pages/admin/autopost/AutoPostDuplicates"));
+const AutoPostLogs = lazy(() => import("./pages/admin/autopost/AutoPostLogs"));
+const AutoPostReports = lazy(() => import("./pages/admin/autopost/AutoPostReports"));
+const AutoPostSettings = lazy(() => import("./pages/admin/autopost/AutoPostSettings"));
+const AutoPostSourceForm = lazy(() => import("./pages/admin/autopost/AutoPostSourceForm"));
 
-// Esportes Pages
-import EsportesDashboard from "./pages/admin/esportes/EsportesDashboard";
-import BrasileiraoHome from "./pages/admin/esportes/BrasileiraoHome";
-import EsportesEstatisticas from "./pages/admin/esportes/EsportesEstatisticas";
-import EsportesConfig from "./pages/admin/esportes/EsportesConfig";
-import BrasileiraoSync from "./pages/admin/esportes/BrasileiraoSync";
-import BrasileiraoBroadcasts from "./pages/admin/esportes/BrasileiraoBroadcasts";
-import BrasileiraoNews from "./pages/admin/esportes/BrasileiraoNews";
+// Auto Post Regional
+const RegionalDashboard = lazy(() => import("./pages/admin/autopost-regional").then(m => ({ default: m.RegionalDashboard })));
+const RegionalSources = lazy(() => import("./pages/admin/autopost-regional").then(m => ({ default: m.RegionalSources })));
+const RegionalQueue = lazy(() => import("./pages/admin/autopost-regional").then(m => ({ default: m.RegionalQueue })));
+const RegionalLogs = lazy(() => import("./pages/admin/autopost-regional").then(m => ({ default: m.RegionalLogs })));
+const RegionalSourceEdit = lazy(() => import("./pages/admin/autopost-regional").then(m => ({ default: m.RegionalSourceEdit })));
 
-// Public Esportes Pages
-import BrasileiraoPage from "./pages/public/esportes/BrasileiraoPage";
-import SerieDetailPage from "./pages/public/esportes/SerieDetailPage";
-import MatchDetailPage from "./pages/public/esportes/MatchDetailPage";
-import TeamDetailPage from "./pages/public/esportes/TeamDetailPage";
-import RoundPage from "./pages/public/esportes/RoundPage";
-import TopScorersPage from "./pages/public/esportes/TopScorersPage";
-import GeneratedNewsDetail from "./pages/public/esportes/GeneratedNewsDetail";
+// Content Fix
+const ContentFixDashboard = lazy(() => import("./modules/content-fix/pages").then(m => ({ default: m.ContentFixDashboard })));
+const ImageFixer = lazy(() => import("./modules/content-fix/pages").then(m => ({ default: m.ImageFixer })));
+const DateFixer = lazy(() => import("./modules/content-fix/pages").then(m => ({ default: m.DateFixer })));
+const ContentValidator = lazy(() => import("./modules/content-fix/pages").then(m => ({ default: m.ContentValidator })));
+const ContentFixer = lazy(() => import("./modules/content-fix/pages").then(m => ({ default: m.ContentFixer })));
+const TitleFixer = lazy(() => import("./modules/content-fix/pages").then(m => ({ default: m.TitleFixer })));
 
-// Public ENEM 2026 Page
-import Enem2026Landing from "./pages/public/Enem2026Landing";
+// Academy
+const AcademyDashboard = lazy(() => import("./pages/admin/academy/AcademyDashboard"));
+const AcademyCourse = lazy(() => import("./pages/admin/academy/AcademyCourse"));
+const AcademyLesson = lazy(() => import("./pages/admin/academy/AcademyLesson"));
+const AcademyAdminCategories = lazy(() => import("./pages/admin/academy/AcademyAdminCategories"));
+const AcademyAdminCourses = lazy(() => import("./pages/admin/academy/AcademyAdminCourses"));
+const AcademyAdminLessons = lazy(() => import("./pages/admin/academy/AcademyAdminLessons"));
 
-// Publidoor Pages
-import PublidoorDashboard from "./pages/admin/publidoor/PublidoorDashboard";
-import PublidoorCreate from "./pages/admin/publidoor/PublidoorCreate";
-import PublidoorEdit from "./pages/admin/publidoor/PublidoorEdit";
-import PublidoorCampaigns from "./pages/admin/publidoor/PublidoorCampaigns";
-import PublidoorLocations from "./pages/admin/publidoor/PublidoorLocations";
-import PublidoorSchedules from "./pages/admin/publidoor/PublidoorSchedules";
-import PublidoorAdvertisers from "./pages/admin/publidoor/PublidoorAdvertisers";
-import PublidoorMetrics from "./pages/admin/publidoor/PublidoorMetrics";
-import PublidoorTemplates from "./pages/admin/publidoor/PublidoorTemplates";
-import PublidoorApprovals from "./pages/admin/publidoor/PublidoorApprovals";
-import PublidoorSettings from "./pages/admin/publidoor/PublidoorSettings";
+// ENEM 2026
+const AcademyEnem = lazy(() => import("./pages/admin/academy/AcademyEnem"));
+const EnemModule = lazy(() => import("./pages/admin/academy/EnemModule"));
+const EnemWeek = lazy(() => import("./pages/admin/academy/EnemWeek"));
+const EnemLessonPage = lazy(() => import("./pages/admin/academy/EnemLesson"));
+const EnemSubmissions = lazy(() => import("./pages/admin/academy/EnemSubmissions"));
+const EnemSubmissionDetail = lazy(() => import("./pages/admin/academy/EnemSubmissionDetail"));
+const Enem2026Landing = lazy(() => import("./pages/public/Enem2026Landing"));
 
-// Publidoor Partner Pages
-import PartnerLogin from "./pages/partner/publidoor/PartnerLogin";
-import PartnerLayout from "./pages/partner/publidoor/PartnerLayout";
-import PartnerVitrine from "./pages/partner/publidoor/PartnerVitrine";
-import PartnerEditor from "./pages/partner/publidoor/PartnerEditor";
-import PartnerAgenda from "./pages/partner/publidoor/PartnerAgenda";
-import PartnerMetricsPage from "./pages/partner/publidoor/PartnerMetrics";
-import PartnerBusiness from "./pages/partner/publidoor/PartnerBusiness";
-import PartnerPlan from "./pages/partner/publidoor/PartnerPlan";
+// Esportes
+const EsportesDashboard = lazy(() => import("./pages/admin/esportes/EsportesDashboard"));
+const BrasileiraoHome = lazy(() => import("./pages/admin/esportes/BrasileiraoHome"));
+const EsportesEstatisticas = lazy(() => import("./pages/admin/esportes/EsportesEstatisticas"));
+const EsportesConfig = lazy(() => import("./pages/admin/esportes/EsportesConfig"));
+const BrasileiraoSync = lazy(() => import("./pages/admin/esportes/BrasileiraoSync"));
+const BrasileiraoBroadcasts = lazy(() => import("./pages/admin/esportes/BrasileiraoBroadcasts"));
+const BrasileiraoNews = lazy(() => import("./pages/admin/esportes/BrasileiraoNews"));
+const BrasileiraoPage = lazy(() => import("./pages/public/esportes/BrasileiraoPage"));
+const SerieDetailPage = lazy(() => import("./pages/public/esportes/SerieDetailPage"));
+const MatchDetailPage = lazy(() => import("./pages/public/esportes/MatchDetailPage"));
+const TeamDetailPage = lazy(() => import("./pages/public/esportes/TeamDetailPage"));
+const RoundPage = lazy(() => import("./pages/public/esportes/RoundPage"));
+const TopScorersPage = lazy(() => import("./pages/public/esportes/TopScorersPage"));
+const GeneratedNewsDetail = lazy(() => import("./pages/public/esportes/GeneratedNewsDetail"));
 
-// Conexão.AI Pages
-import ConexaoAIDashboard from "./pages/admin/conexao-ai/ConexaoAIDashboard";
-import ConexaoAIAssistant from "./pages/admin/conexao-ai/ConexaoAIAssistant";
-import ConexaoAICreator from "./pages/admin/conexao-ai/ConexaoAICreator";
-import ConexaoAITools from "./pages/admin/conexao-ai/ConexaoAITools";
-import ConexaoAIAutomations from "./pages/admin/conexao-ai/ConexaoAIAutomations";
-import ConexaoAIInsights from "./pages/admin/conexao-ai/ConexaoAIInsights";
+// Publidoor
+const PublidoorDashboard = lazy(() => import("./pages/admin/publidoor/PublidoorDashboard"));
+const PublidoorCreate = lazy(() => import("./pages/admin/publidoor/PublidoorCreate"));
+const PublidoorEdit = lazy(() => import("./pages/admin/publidoor/PublidoorEdit"));
+const PublidoorCampaigns = lazy(() => import("./pages/admin/publidoor/PublidoorCampaigns"));
+const PublidoorLocations = lazy(() => import("./pages/admin/publidoor/PublidoorLocations"));
+const PublidoorSchedules = lazy(() => import("./pages/admin/publidoor/PublidoorSchedules"));
+const PublidoorAdvertisers = lazy(() => import("./pages/admin/publidoor/PublidoorAdvertisers"));
+const PublidoorMetrics = lazy(() => import("./pages/admin/publidoor/PublidoorMetrics"));
+const PublidoorTemplates = lazy(() => import("./pages/admin/publidoor/PublidoorTemplates"));
+const PublidoorApprovals = lazy(() => import("./pages/admin/publidoor/PublidoorApprovals"));
+const PublidoorSettings = lazy(() => import("./pages/admin/publidoor/PublidoorSettings"));
 
-// Community Pages
-import CommunityHub from "./pages/community/CommunityHub";
-import CommunityUnlock from "./pages/community/CommunityUnlock";
-import CommunityAuth from "./pages/community/CommunityAuth";
-import ChallengesPage from "./pages/community/ChallengesPage";
-import HowToEarnPoints from "./pages/community/HowToEarnPoints";
-import MemberProfile from "./pages/community/MemberProfile";
-import ProfileSettings from "./pages/community/ProfileSettings";
-import GamificationPage from "./pages/community/GamificationPage";
-import CommunityMap from "./pages/community/CommunityMap";
-import RedeDoBem from "./pages/community/RedeDoBem";
-import CommunityGroups from "./pages/community/CommunityGroups";
-import CommunityBenefits from "./pages/community/CommunityBenefits";
+// Publidoor Partner
+const PartnerLogin = lazy(() => import("./pages/partner/publidoor/PartnerLogin"));
+const PartnerLayout = lazy(() => import("./pages/partner/publidoor/PartnerLayout"));
+const PartnerVitrine = lazy(() => import("./pages/partner/publidoor/PartnerVitrine"));
+const PartnerEditor = lazy(() => import("./pages/partner/publidoor/PartnerEditor"));
+const PartnerAgenda = lazy(() => import("./pages/partner/publidoor/PartnerAgenda"));
+const PartnerMetricsPage = lazy(() => import("./pages/partner/publidoor/PartnerMetrics"));
+const PartnerBusiness = lazy(() => import("./pages/partner/publidoor/PartnerBusiness"));
+const PartnerPlan = lazy(() => import("./pages/partner/publidoor/PartnerPlan"));
 
-// Auto Post PRO Form
-import AutoPostSourceForm from "./pages/admin/autopost/AutoPostSourceForm";
+// Conexão.AI
+const ConexaoAIDashboard = lazy(() => import("./pages/admin/conexao-ai/ConexaoAIDashboard"));
+const ConexaoAIAssistant = lazy(() => import("./pages/admin/conexao-ai/ConexaoAIAssistant"));
+const ConexaoAICreator = lazy(() => import("./pages/admin/conexao-ai/ConexaoAICreator"));
+const ConexaoAITools = lazy(() => import("./pages/admin/conexao-ai/ConexaoAITools"));
+const ConexaoAIAutomations = lazy(() => import("./pages/admin/conexao-ai/ConexaoAIAutomations"));
+const ConexaoAIInsights = lazy(() => import("./pages/admin/conexao-ai/ConexaoAIInsights"));
 
-// Partners Pages
-import PartnersInbox from "./pages/admin/partners/PartnersInbox";
-import PartnersManage from "./pages/admin/partners/PartnersManage";
-import PartnersSources from "./pages/admin/partners/PartnersSources";
-import PartnersPitches from "./pages/admin/partners/PartnersPitches";
+// Community
+const CommunityHub = lazy(() => import("./pages/community/CommunityHub"));
+const CommunityUnlock = lazy(() => import("./pages/community/CommunityUnlock"));
+const CommunityAuth = lazy(() => import("./pages/community/CommunityAuth"));
+const ChallengesPage = lazy(() => import("./pages/community/ChallengesPage"));
+const HowToEarnPoints = lazy(() => import("./pages/community/HowToEarnPoints"));
+const MemberProfile = lazy(() => import("./pages/community/MemberProfile"));
+const ProfileSettings = lazy(() => import("./pages/community/ProfileSettings"));
+const GamificationPage = lazy(() => import("./pages/community/GamificationPage"));
+const CommunityMap = lazy(() => import("./pages/community/CommunityMap"));
+const RedeDoBem = lazy(() => import("./pages/community/RedeDoBem"));
+const CommunityGroups = lazy(() => import("./pages/community/CommunityGroups"));
+const CommunityBenefits = lazy(() => import("./pages/community/CommunityBenefits"));
+const PhoneChooserPage = lazy(() => import("./pages/community/PhoneChooserPage"));
+const JobAlertsPage = lazy(() => import("./pages/community/JobAlertsPage"));
 
-// Community Admin Pages
-import CommunityAdmin from "./pages/admin/community/CommunityAdmin";
-import CommunityMembers from "./pages/admin/community/CommunityMembers";
-import CommunityModeration from "./pages/admin/community/CommunityModeration";
-import PhoneCatalogAdmin from "./pages/admin/community/PhoneCatalogAdmin";
-import PhoneOffersReport from "./pages/admin/community/PhoneOffersReport";
-import PhoneImportAssisted from "./pages/admin/community/PhoneImportAssisted";
+// Partners Admin
+const PartnersInbox = lazy(() => import("./pages/admin/partners/PartnersInbox"));
+const PartnersManage = lazy(() => import("./pages/admin/partners/PartnersManage"));
+const PartnersSources = lazy(() => import("./pages/admin/partners/PartnersSources"));
+const PartnersPitches = lazy(() => import("./pages/admin/partners/PartnersPitches"));
 
-// Community Benefit Pages
-import PhoneChooserPage from "./pages/community/PhoneChooserPage";
-import JobAlertsPage from "./pages/community/JobAlertsPage";
-// Campaign Pages
-import GoogleMapsCampaign from "./pages/campaigns/GoogleMapsCampaign";
-import WebRadioTVCampaign from "./pages/campaigns/WebRadioTVCampaign";
-import GoogleMapsLeads from "./pages/admin/campaigns/GoogleMapsLeads";
-import CampaignsUnified from "./pages/admin/campaigns/CampaignsUnified";
-import CampaignEditor from "./pages/admin/campaigns/CampaignEditor";
-import CampaignMetrics from "./pages/admin/campaigns/CampaignMetrics";
-import CampaignsTutorial from "./pages/admin/campaigns/CampaignsTutorial";
-import MediaKit from "./pages/admin/campaigns/MediaKit";
+// Community Admin
+const CommunityAdmin = lazy(() => import("./pages/admin/community/CommunityAdmin"));
+const CommunityMembers = lazy(() => import("./pages/admin/community/CommunityMembers"));
+const CommunityModeration = lazy(() => import("./pages/admin/community/CommunityModeration"));
+const PhoneCatalogAdmin = lazy(() => import("./pages/admin/community/PhoneCatalogAdmin"));
+const PhoneOffersReport = lazy(() => import("./pages/admin/community/PhoneOffersReport"));
+const PhoneImportAssisted = lazy(() => import("./pages/admin/community/PhoneImportAssisted"));
 
-import TransporteEscolarHome from "./pages/transporte-escolar/TransporteEscolarHome";
-import TransporteEscolarEncontrar from "./pages/transporte-escolar/TransporteEscolarEncontrar";
-import TransporteEscolarCadastrar from "./pages/transporte-escolar/TransporteEscolarCadastrar";
-import TransporteEscolarEscola from "./pages/transporte-escolar/TransporteEscolarEscola";
-import TransporteEscolarRede from "./pages/transporte-escolar/TransporteEscolarRede";
-import TransporteEscolarBairro from "./pages/transporte-escolar/TransporteEscolarBairro";
+// Campaigns
+const GoogleMapsCampaign = lazy(() => import("./pages/campaigns/GoogleMapsCampaign"));
+const WebRadioTVCampaign = lazy(() => import("./pages/campaigns/WebRadioTVCampaign"));
+const GoogleMapsLeads = lazy(() => import("./pages/admin/campaigns/GoogleMapsLeads"));
+const CampaignsUnified = lazy(() => import("./pages/admin/campaigns/CampaignsUnified"));
+const CampaignEditor = lazy(() => import("./pages/admin/campaigns/CampaignEditor"));
+const CampaignMetrics = lazy(() => import("./pages/admin/campaigns/CampaignMetrics"));
+const CampaignsTutorial = lazy(() => import("./pages/admin/campaigns/CampaignsTutorial"));
+const MediaKit = lazy(() => import("./pages/admin/campaigns/MediaKit"));
 
-// Transporte Escolar Admin Pages
-import TransporteEscolarAdmin from "./pages/admin/transporte-escolar/TransporteEscolarAdmin";
-import EscolasAdmin from "./pages/admin/transporte-escolar/EscolasAdmin";
-import TransportadoresAdmin from "./pages/admin/transporte-escolar/TransportadoresAdmin";
-import LeadsAdmin from "./pages/admin/transporte-escolar/LeadsAdmin";
-import ReportsAdmin from "./pages/admin/transporte-escolar/ReportsAdmin";
+// Transporte Escolar
+const TransporteEscolarHome = lazy(() => import("./pages/transporte-escolar/TransporteEscolarHome"));
+const TransporteEscolarEncontrar = lazy(() => import("./pages/transporte-escolar/TransporteEscolarEncontrar"));
+const TransporteEscolarCadastrar = lazy(() => import("./pages/transporte-escolar/TransporteEscolarCadastrar"));
+const TransporteEscolarEscola = lazy(() => import("./pages/transporte-escolar/TransporteEscolarEscola"));
+const TransporteEscolarRede = lazy(() => import("./pages/transporte-escolar/TransporteEscolarRede"));
+const TransporteEscolarBairro = lazy(() => import("./pages/transporte-escolar/TransporteEscolarBairro"));
+const TransporteEscolarAdmin = lazy(() => import("./pages/admin/transporte-escolar/TransporteEscolarAdmin"));
+const EscolasAdmin = lazy(() => import("./pages/admin/transporte-escolar/EscolasAdmin"));
+const TransportadoresAdmin = lazy(() => import("./pages/admin/transporte-escolar/TransportadoresAdmin"));
+const LeadsAdmin = lazy(() => import("./pages/admin/transporte-escolar/LeadsAdmin"));
+const ReportsAdmin = lazy(() => import("./pages/admin/transporte-escolar/ReportsAdmin"));
 
-// Censo PcD Pages
-import CensoPcdHome from "./pages/censo-pcd/CensoPcdHome";
-import CensoPcdQuiz from "./pages/censo-pcd/CensoPcdQuiz";
-import CensoPcdConclusao from "./pages/censo-pcd/CensoPcdConclusao";
+// Censo PcD
+const CensoPcdHome = lazy(() => import("./pages/censo-pcd/CensoPcdHome"));
+const CensoPcdQuiz = lazy(() => import("./pages/censo-pcd/CensoPcdQuiz"));
+const CensoPcdConclusao = lazy(() => import("./pages/censo-pcd/CensoPcdConclusao"));
+const CensoPcdDashboard = lazy(() => import("./pages/admin/censo-pcd/CensoPcdDashboard"));
+const CensoPcdRespostas = lazy(() => import("./pages/admin/censo-pcd/CensoPcdRespostas"));
 
-// Censo PcD Admin Pages
-import CensoPcdDashboard from "./pages/admin/censo-pcd/CensoPcdDashboard";
-import CensoPcdRespostas from "./pages/admin/censo-pcd/CensoPcdRespostas";
+// Classifieds
+const ClassifiedsPage = lazy(() => import("./pages/classifieds/ClassifiedsPage"));
+const ClassifiedDetailPage = lazy(() => import("./pages/classifieds/ClassifiedDetailPage"));
+const ClassifiedNewPage = lazy(() => import("./pages/classifieds/ClassifiedNewPage"));
 
-// Classifieds Pages
-import ClassifiedsPage from "./pages/classifieds/ClassifiedsPage";
-import ClassifiedDetailPage from "./pages/classifieds/ClassifiedDetailPage";
-import ClassifiedNewPage from "./pages/classifieds/ClassifiedNewPage";
-import ClassifiedsAdmin from "./pages/admin/ClassifiedsAdmin";
+// Jobs
+const JobsPage = lazy(() => import("./pages/jobs/JobsPage"));
+const JobDetailPage = lazy(() => import("./pages/jobs/JobDetailPage"));
 
-// Jobs Pages
-import JobsPage from "./pages/jobs/JobsPage";
-import JobDetailPage from "./pages/jobs/JobDetailPage";
-import JobsAdmin from "./pages/admin/JobsAdmin";
+// Real Estate
+const ImoveisListPage = lazy(() => import("./modules/imoveis/pages").then(m => ({ default: m.ImoveisListPage })));
+const ImovelDetailPage = lazy(() => import("./modules/imoveis/pages").then(m => ({ default: m.ImovelDetailPage })));
+const AnuncianteProfilePage = lazy(() => import("./modules/imoveis/pages").then(m => ({ default: m.AnuncianteProfilePage })));
+const ImoveisCidadePage = lazy(() => import("./modules/imoveis/pages").then(m => ({ default: m.ImoveisCidadePage })));
+const ImoveisBairroPage = lazy(() => import("./modules/imoveis/pages").then(m => ({ default: m.ImoveisBairroPage })));
+const CorretoresListPage = lazy(() => import("./modules/imoveis/pages").then(m => ({ default: m.CorretoresListPage })));
+const ImoveisAdmin = lazy(() => import("./pages/admin/imoveis/ImoveisAdmin"));
+const ImovelEditor = lazy(() => import("./pages/admin/imoveis/ImovelEditor"));
 
-// Real Estate Module
-import { 
-  ImoveisListPage, 
-  ImovelDetailPage, 
-  AnuncianteProfilePage, 
-  ImoveisCidadePage, 
-  ImoveisBairroPage, 
-  CorretoresListPage 
-} from "./modules/imoveis/pages";
+// Guia Comercial
+const GuiaComercialPage = lazy(() => import("./pages/guia").then(m => ({ default: m.GuiaComercialPage })));
+const BusinessDetailPage = lazy(() => import("./pages/guia").then(m => ({ default: m.BusinessDetailPage })));
+const GuiaCadastrarPage = lazy(() => import("./pages/guia").then(m => ({ default: m.GuiaCadastrarPage })));
+const GuiaCategoriaPage = lazy(() => import("./pages/guia").then(m => ({ default: m.GuiaCategoriaPage })));
+const GuiaCidadePage = lazy(() => import("./pages/guia").then(m => ({ default: m.GuiaCidadePage })));
+const GuiaPlanosPage = lazy(() => import("./pages/guia").then(m => ({ default: m.GuiaPlanosPage })));
+const GuiaAnuncianteDashboard = lazy(() => import("./pages/guia").then(m => ({ default: m.GuiaAnuncianteDashboard })));
+const GuiaAnuncianteLeads = lazy(() => import("./pages/guia").then(m => ({ default: m.GuiaAnuncianteLeads })));
+const GuiaAnuncianteEditar = lazy(() => import("./pages/guia").then(m => ({ default: m.GuiaAnuncianteEditar })));
 
-// Guia Comercial Module
-import { 
-  GuiaComercialPage, 
-  BusinessDetailPage, 
-  GuiaCadastrarPage,
-  GuiaCategoriaPage,
-  GuiaCidadePage,
-  GuiaPlanosPage,
-  GuiaAnuncianteDashboard,
-  GuiaAnuncianteLeads,
-  GuiaAnuncianteEditar,
-} from "./pages/guia";
-import ImoveisAdmin from "./pages/admin/imoveis/ImoveisAdmin";
-import ImovelEditor from "./pages/admin/imoveis/ImovelEditor";
-import BroadcastHub from "./pages/broadcast/BroadcastHub";
-import BroadcastWatch from "./pages/broadcast/BroadcastWatch";
-import BroadcastSchedule from "./pages/broadcast/BroadcastSchedule";
-import BroadcastArchive from "./pages/broadcast/BroadcastArchive";
-import GuestJoin from "./pages/broadcast/GuestJoin";
-import LiveStudioPromo from "./pages/broadcast/LiveStudioPromo";
-import WebRadioTVAccess from "./pages/broadcast/WebRadioTVAccess";
-import BroadcastDashboard from "./pages/admin/broadcast/BroadcastDashboard";
-import BroadcastList from "./pages/admin/broadcast/BroadcastList";
-import BroadcastForm from "./pages/admin/broadcast/BroadcastForm";
-import BroadcastChannels from "./pages/admin/broadcast/BroadcastChannels";
-import BroadcastPrograms from "./pages/admin/broadcast/BroadcastPrograms";
-import BroadcastStudio from "./pages/admin/broadcast/BroadcastStudio";
-import BroadcastPlaylist from "./pages/admin/broadcast/BroadcastPlaylist";
-import BroadcastVideoPlaylist from "./pages/admin/broadcast/BroadcastVideoPlaylist";
+// Broadcast
+const BroadcastHub = lazy(() => import("./pages/broadcast/BroadcastHub"));
+const BroadcastWatch = lazy(() => import("./pages/broadcast/BroadcastWatch"));
+const BroadcastSchedule = lazy(() => import("./pages/broadcast/BroadcastSchedule"));
+const BroadcastArchive = lazy(() => import("./pages/broadcast/BroadcastArchive"));
+const GuestJoin = lazy(() => import("./pages/broadcast/GuestJoin"));
+const LiveStudioPromo = lazy(() => import("./pages/broadcast/LiveStudioPromo"));
+const WebRadioTVAccess = lazy(() => import("./pages/broadcast/WebRadioTVAccess"));
+const BroadcastDashboard = lazy(() => import("./pages/admin/broadcast/BroadcastDashboard"));
+const BroadcastList = lazy(() => import("./pages/admin/broadcast/BroadcastList"));
+const BroadcastForm = lazy(() => import("./pages/admin/broadcast/BroadcastForm"));
+const BroadcastChannels = lazy(() => import("./pages/admin/broadcast/BroadcastChannels"));
+const BroadcastPrograms = lazy(() => import("./pages/admin/broadcast/BroadcastPrograms"));
+const BroadcastStudio = lazy(() => import("./pages/admin/broadcast/BroadcastStudio"));
+const BroadcastPlaylist = lazy(() => import("./pages/admin/broadcast/BroadcastPlaylist"));
+const BroadcastVideoPlaylist = lazy(() => import("./pages/admin/broadcast/BroadcastVideoPlaylist"));
 
-// Conexão Studio Pages
-import ConexaoStudioDashboard from "./pages/conexao-studio/Dashboard";
-import ConexaoStudioList from "./pages/conexao-studio/StudioList";
-import ConexaoStudioCreate from "./pages/conexao-studio/StudioCreate";
-import ConexaoStudioLibrary from "./pages/conexao-studio/Library";
-import ConexaoStudioDestinations from "./pages/conexao-studio/Destinations";
-import ConexaoStudioWebinars from "./pages/conexao-studio/Webinars";
-import ConexaoStudioBranding from "./pages/conexao-studio/Branding";
-import ConexaoStudioTeam from "./pages/conexao-studio/Team";
-import ConexaoStudioSession from "./pages/conexao-studio/StudioSession";
-import ConexaoStudioGuestEntry from "./pages/conexao-studio/GuestEntry";
+// Conexão Studio
+const ConexaoStudioDashboard = lazy(() => import("./pages/conexao-studio/Dashboard"));
+const ConexaoStudioList = lazy(() => import("./pages/conexao-studio/StudioList"));
+const ConexaoStudioCreate = lazy(() => import("./pages/conexao-studio/StudioCreate"));
+const ConexaoStudioLibrary = lazy(() => import("./pages/conexao-studio/Library"));
+const ConexaoStudioDestinations = lazy(() => import("./pages/conexao-studio/Destinations"));
+const ConexaoStudioWebinars = lazy(() => import("./pages/conexao-studio/Webinars"));
+const ConexaoStudioBranding = lazy(() => import("./pages/conexao-studio/Branding"));
+const ConexaoStudioTeam = lazy(() => import("./pages/conexao-studio/Team"));
+const ConexaoStudioSession = lazy(() => import("./pages/conexao-studio/StudioSession"));
+const ConexaoStudioGuestEntry = lazy(() => import("./pages/conexao-studio/GuestEntry"));
 
-// Conexão Stream (Central Hub)
-import ConexaoStream from "./pages/admin/ConexaoStream";
+// Streaming Config
+const StreamingRadioConfig = lazy(() => import("./pages/admin/streaming/StreamingRadioConfig"));
+const StreamingTvConfig = lazy(() => import("./pages/admin/streaming/StreamingTvConfig"));
+const RadioPage = lazy(() => import("./pages/public/RadioPage"));
+const TvPage = lazy(() => import("./pages/public/TvPage"));
 
-// Streaming Config Pages
-import StreamingRadioConfig from "./pages/admin/streaming/StreamingRadioConfig";
-import StreamingTvConfig from "./pages/admin/streaming/StreamingTvConfig";
+// Radio/TV Admin
+const RadioOverview = lazy(() => import("./modules/radio/pages").then(m => ({ default: m.RadioOverview })));
+const RadioStatus = lazy(() => import("./modules/radio/pages").then(m => ({ default: m.RadioStatus })));
+const RadioEncoder = lazy(() => import("./modules/radio/pages").then(m => ({ default: m.RadioEncoder })));
+const RadioAutoDJ = lazy(() => import("./modules/radio/pages").then(m => ({ default: m.RadioAutoDJ })));
+const RadioLibrary = lazy(() => import("./modules/radio/pages").then(m => ({ default: m.RadioLibrary })));
+const RadioStats = lazy(() => import("./modules/radio/pages").then(m => ({ default: m.RadioStats })));
+const RadioPlayers = lazy(() => import("./modules/radio/pages").then(m => ({ default: m.RadioPlayers })));
+const RadioSettings = lazy(() => import("./modules/radio/pages").then(m => ({ default: m.RadioSettings })));
+const TvOverview = lazy(() => import("./modules/tv/pages").then(m => ({ default: m.TvOverview })));
+const TvLive = lazy(() => import("./modules/tv/pages").then(m => ({ default: m.TvLive })));
+const TvSchedule = lazy(() => import("./modules/tv/pages").then(m => ({ default: m.TvSchedule })));
+const TvVod = lazy(() => import("./modules/tv/pages").then(m => ({ default: m.TvVod })));
+const TvUploads = lazy(() => import("./modules/tv/pages").then(m => ({ default: m.TvUploads })));
+const TvStats = lazy(() => import("./modules/tv/pages").then(m => ({ default: m.TvStats })));
+const TvPlayers = lazy(() => import("./modules/tv/pages").then(m => ({ default: m.TvPlayers })));
+const TvSettings = lazy(() => import("./modules/tv/pages").then(m => ({ default: m.TvSettings })));
 
-// Public Streaming Pages
-import RadioPage from "./pages/public/RadioPage";
-import TvPage from "./pages/public/TvPage";
+// Template Settings
+const TemplateSelector = lazy(() => import("./pages/admin/settings/TemplateSelector"));
+const VocabularyEditor = lazy(() => import("./pages/admin/settings/VocabularyEditor"));
+const ModulesManager = lazy(() => import("./pages/admin/settings/ModulesManager"));
+const AppearanceSettings = lazy(() => import("./pages/admin/settings/AppearanceSettings"));
+const MenuToggleSettings = lazy(() => import("./pages/admin/settings/MenuToggleSettings"));
+const BrandingLogoSettings = lazy(() => import("./pages/admin/settings/BrandingLogoSettings"));
+const AIProviderSettings = lazy(() => import("./pages/admin/settings/AIProviderSettings"));
 
-// Rádio Web Pages
-import {
-  RadioOverview,
-  RadioStatus,
-  RadioEncoder,
-  RadioAutoDJ,
-  RadioLibrary,
-  RadioStats,
-  RadioPlayers,
-  RadioSettings,
-} from "./modules/radio/pages";
+// Core Engine
+const CoreEngineDashboard = lazy(() => import("./pages/admin/core-engine/CoreEngineDashboard"));
+const CoreModulePage = lazy(() => import("./pages/admin/core-engine/CoreModulePage"));
+const CoreRedirects = lazy(() => import("./pages/admin/core-engine/CoreRedirects"));
+const CoreAnalytics = lazy(() => import("./pages/admin/core-engine/CoreAnalytics"));
+const CoreSEO = lazy(() => import("./pages/admin/core-engine/CoreSEO"));
+const CoreMedia = lazy(() => import("./pages/admin/core-engine/CoreMedia"));
+const CorePerformance = lazy(() => import("./pages/admin/core-engine/CorePerformance"));
+const CoreLeads = lazy(() => import("./pages/admin/core-engine/CoreLeads"));
+const CoreSchema = lazy(() => import("./pages/admin/core-engine/CoreSchema"));
+const CoreSecurity = lazy(() => import("./pages/admin/core-engine/CoreSecurity"));
+const CoreAds = lazy(() => import("./pages/admin/core-engine/CoreAds"));
+const CorePush = lazy(() => import("./pages/admin/core-engine/CorePush"));
+const CoreEditorial = lazy(() => import("./pages/admin/core-engine/CoreEditorial"));
+const CoreRoles = lazy(() => import("./pages/admin/core-engine/CoreRoles"));
+const CoreAutomation = lazy(() => import("./pages/admin/core-engine/CoreAutomation"));
 
-// TV Web Pages
-import {
-  TvOverview,
-  TvLive,
-  TvSchedule,
-  TvVod,
-  TvUploads,
-  TvStats,
-  TvPlayers,
-  TvSettings,
-} from "./modules/tv/pages";
+// Geração Cotia (if exists)
+const TrainingHub = lazy(() => import("./pages/admin/TrainingHub"));
 
-// Template Settings Pages
-import TemplateSelector from "./pages/admin/settings/TemplateSelector";
-import VocabularyEditor from "./pages/admin/settings/VocabularyEditor";
-import ModulesManager from "./pages/admin/settings/ModulesManager";
-import AppearanceSettings from "./pages/admin/settings/AppearanceSettings";
-import MenuToggleSettings from "./pages/admin/settings/MenuToggleSettings";
-import BrandingLogoSettings from "./pages/admin/settings/BrandingLogoSettings";
-import AIProviderSettings from "./pages/admin/settings/AIProviderSettings";
-
-// Core Engine Pages
-import CoreEngineDashboard from "./pages/admin/core-engine/CoreEngineDashboard";
-import CoreModulePage from "./pages/admin/core-engine/CoreModulePage";
-import CoreRedirects from "./pages/admin/core-engine/CoreRedirects";
-import CoreAnalytics from "./pages/admin/core-engine/CoreAnalytics";
-import CoreSEO from "./pages/admin/core-engine/CoreSEO";
-import CoreMedia from "./pages/admin/core-engine/CoreMedia";
-import CorePerformance from "./pages/admin/core-engine/CorePerformance";
-import CoreLeads from "./pages/admin/core-engine/CoreLeads";
-import CoreSchema from "./pages/admin/core-engine/CoreSchema";
-import CoreSecurity from "./pages/admin/core-engine/CoreSecurity";
-import CoreAds from "./pages/admin/core-engine/CoreAds";
-import CorePush from "./pages/admin/core-engine/CorePush";
-import CoreEditorial from "./pages/admin/core-engine/CoreEditorial";
-import CoreRoles from "./pages/admin/core-engine/CoreRoles";
-import CoreAutomation from "./pages/admin/core-engine/CoreAutomation";
-
-import { ThemeProvider } from "@/contexts/ThemeContext";
-
+// ─── QueryClient ────────────────────────────────────────────────────────────
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000,   // 5 minutes — data rarely changes mid-session
-      gcTime: 15 * 60 * 1000,     // 15 minutes garbage collection
+      staleTime: 5 * 60 * 1000,
+      gcTime: 15 * 60 * 1000,
       retry: 1,
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
     },
   },
 });
+
+// ─── Suspense wrapper for lazy routes ───────────────────────────────────────
+const S = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={<RouteFallback />}>{children}</Suspense>
+);
 
 const App = () => (
   <HelmetProvider>
@@ -402,443 +404,409 @@ const App = () => (
                   <NewsCreationModalProvider>
                     <MiniPlayerProvider>
                       <TooltipProvider>
-                    <Toaster />
-                    <Sonner />
-                <BrowserRouter>
-                  <MaintenanceGuard>
-                    <Routes>
-                      {/* Public Routes */}
-                      <Route element={<PublicLayout />}>
-                        <Route path="/" element={<Index />} />
-                        <Route path="/noticia/:slug" element={<NewsDetail />} />
-                        <Route path="/noticias" element={<NewsListPage />} />
-                        <Route path="/busca" element={<SearchPage />} />
-                        <Route path="/categoria/:slug" element={<CategoryPage />} />
-                        <Route path="/comunidade" element={<CommunityHub />} />
-                        <Route path="/comunidade/desbloquear" element={<CommunityUnlock />} />
-                        <Route path="/comunidade/desafios" element={<ChallengesPage />} />
-                        <Route path="/comunidade/como-ganhar-pontos" element={<HowToEarnPoints />} />
-                        <Route path="/comunidade/membro/:userId" element={<MemberProfile />} />
-                        <Route path="/comunidade/configuracoes" element={<ProfileSettings />} />
-                        <Route path="/comunidade/gamificacao" element={<GamificationPage />} />
-                        <Route path="/comunidade/guia" element={<CommunityMap />} />
-                        <Route path="/comunidade/mapa" element={<Navigate to="/comunidade/guia" replace />} />
-                        <Route path="/comunidade/rede-do-bem" element={<RedeDoBem />} />
-                        <Route path="/comunidade/grupos" element={<CommunityGroups />} />
-                        <Route path="/comunidade/grupos/:slug" element={<CommunityGroups />} />
-                        <Route path="/comunidade/beneficios" element={<CommunityBenefits />} />
-                        <Route path="/comunidade/beneficios/celular-ideal" element={<PhoneChooserPage />} />
-                        <Route path="/anti-fake-news" element={<AntiFakeNews />} />
-                        <Route path="/voce-no-google" element={<VoceNoGoogle />} />
-                        <Route path="/voce-no-google/cadastro" element={<BusinessCadastro />} />
-                        <Route path="/campanha/google-maps" element={<Navigate to="/voce-no-google" replace />} />
-                        <Route path="/google-maps" element={<Navigate to="/voce-no-google" replace />} />
-                        <Route path="/web-radio-tv" element={<WebRadioTVCampaign />} />
-                        <Route path="/campanha/radio-tv" element={<WebRadioTVCampaign />} />
-                        <Route path="/transporte-escolar" element={<TransporteEscolarHome />} />
-                        <Route path="/transporte-escolar/encontrar" element={<TransporteEscolarEncontrar />} />
-                        <Route path="/transporte-escolar/cadastrar" element={<TransporteEscolarCadastrar />} />
-                        <Route path="/transporte-escolar/escola/:slug" element={<TransporteEscolarEscola />} />
-                        <Route path="/transporte-escolar/rede/:rede" element={<TransporteEscolarRede />} />
-                        <Route path="/transporte-escolar/bairro/:bairro" element={<TransporteEscolarBairro />} />
-                        <Route path="/censo-pcd" element={<CensoPcdHome />} />
-                        <Route path="/censo-pcd/participar" element={<CensoPcdQuiz />} />
-                        <Route path="/censo-pcd/concluido" element={<CensoPcdConclusao />} />
-                        <Route path="/stories" element={<StoriesPage />} />
-                        
-                        {/* Classifieds Routes */}
-                        <Route path="/classificados" element={<ClassifiedsPage />} />
-                        <Route path="/classificados/novo" element={<ClassifiedNewPage />} />
-                        <Route path="/classificados/:id" element={<ClassifiedDetailPage />} />
-                        
-                        {/* Jobs Routes */}
-                        <Route path="/empregos" element={<JobsPage />} />
-                        <Route path="/empregos/:id" element={<JobDetailPage />} />
-                        
-                        {/* Job Alerts */}
-                        <Route path="/comunidade/alertas-vagas" element={<JobAlertsPage />} />
-                        
-                        {/* Real Estate Routes */}
-                        <Route path="/imoveis" element={<ImoveisListPage />} />
-                        <Route path="/imoveis/:slug" element={<ImovelDetailPage />} />
-                        <Route path="/imoveis/corretor/:slug" element={<AnuncianteProfilePage />} />
-                        <Route path="/imoveis/corretores" element={<CorretoresListPage />} />
-                        <Route path="/imoveis/cidade/:cidade" element={<ImoveisCidadePage />} />
-                        <Route path="/imoveis/cidade/:cidade/bairro/:bairro" element={<ImoveisBairroPage />} />
-                        
-                        {/* Guia Comercial Routes */}
-                        <Route path="/guia" element={<GuiaComercialPage />} />
-                        <Route path="/guia/cadastrar" element={<GuiaCadastrarPage />} />
-                        <Route path="/guia/planos" element={<GuiaPlanosPage />} />
-                        <Route path="/guia/categoria/:slug" element={<GuiaCategoriaPage />} />
-                        <Route path="/guia/cidade/:cidade" element={<GuiaCidadePage />} />
-                        <Route path="/guia/:slug" element={<BusinessDetailPage />} />
-                        <Route path="/guia/anunciante" element={<GuiaAnuncianteDashboard />} />
-                        <Route path="/guia/anunciante/leads" element={<GuiaAnuncianteLeads />} />
-                        <Route path="/guia/anunciante/editar/:id" element={<GuiaAnuncianteEditar />} />
-                        
-                        {/* ENEM 2026 Public Landing */}
-                        <Route path="/enem-2026" element={<Enem2026Landing />} />
-                      </Route>
-                      <Route path="/story/:slug" element={<StoryViewer />} />
-                      <Route path="/webstory/:campaignId" element={<WebStoryViewerPage />} />
-                      <Route path="/evento/:slug" element={<EventDetail />} />
-                      <Route path="/edicao/:slug" element={<EditionViewer />} />
-                      <Route path="/spah" element={<Auth />} />
-                      <Route path="/auth-comunidade" element={<CommunityAuth />} />
-                      <Route path="/reset-password" element={<ResetPassword />} />
-                       
-                      {/* Public Streaming Pages */}
-                      <Route path="/radio" element={
-                        <RouteModuleGuard module="web_radio">
-                          <RadioPage />
-                        </RouteModuleGuard>
-                      } />
-                      <Route path="/tv" element={
-                        <RouteModuleGuard module="web_tv">
-                          <TvPage />
-                        </RouteModuleGuard>
-                      } />
-                      
-                      {/* Public Esportes Routes */}
-                      <Route path="/esportes/brasileirao" element={<BrasileiraoPage />} />
-                      <Route path="/esportes/brasileirao/noticia/:slug" element={<GeneratedNewsDetail />} />
-                      <Route path="/esportes/brasileirao/:serie" element={<SerieDetailPage />} />
-                      <Route path="/esportes/brasileirao/:serie/rodada/:round" element={<RoundPage />} />
-                      <Route path="/esportes/brasileirao/:serie/jogo/:slug" element={<MatchDetailPage />} />
-                      <Route path="/esportes/brasileirao/:serie/time/:slug" element={<TeamDetailPage />} />
-                      <Route path="/esportes/brasileirao/:serie/estatisticas/artilharia" element={<TopScorersPage />} />
-                      
-                      {/* Studio Guest Entry */}
-                      <Route path="/studio/join/:token" element={<ConexaoStudioGuestEntry />} />
+                        <Toaster />
+                        <Sonner />
+                        <BrowserRouter>
+                          <MaintenanceGuard>
+                            <Suspense fallback={<RouteFallback />}>
+                              <Routes>
+                                {/* Public Routes */}
+                                <Route element={<PublicLayout />}>
+                                  <Route path="/" element={<Index />} />
+                                  <Route path="/noticia/:slug" element={<S><NewsDetail /></S>} />
+                                  <Route path="/noticias" element={<S><NewsListPage /></S>} />
+                                  <Route path="/busca" element={<S><SearchPage /></S>} />
+                                  <Route path="/categoria/:slug" element={<S><CategoryPage /></S>} />
+                                  <Route path="/comunidade" element={<S><CommunityHub /></S>} />
+                                  <Route path="/comunidade/desbloquear" element={<S><CommunityUnlock /></S>} />
+                                  <Route path="/comunidade/desafios" element={<S><ChallengesPage /></S>} />
+                                  <Route path="/comunidade/como-ganhar-pontos" element={<S><HowToEarnPoints /></S>} />
+                                  <Route path="/comunidade/membro/:userId" element={<S><MemberProfile /></S>} />
+                                  <Route path="/comunidade/configuracoes" element={<S><ProfileSettings /></S>} />
+                                  <Route path="/comunidade/gamificacao" element={<S><GamificationPage /></S>} />
+                                  <Route path="/comunidade/guia" element={<S><CommunityMap /></S>} />
+                                  <Route path="/comunidade/mapa" element={<Navigate to="/comunidade/guia" replace />} />
+                                  <Route path="/comunidade/rede-do-bem" element={<S><RedeDoBem /></S>} />
+                                  <Route path="/comunidade/grupos" element={<S><CommunityGroups /></S>} />
+                                  <Route path="/comunidade/grupos/:slug" element={<S><CommunityGroups /></S>} />
+                                  <Route path="/comunidade/beneficios" element={<S><CommunityBenefits /></S>} />
+                                  <Route path="/comunidade/beneficios/celular-ideal" element={<S><PhoneChooserPage /></S>} />
+                                  <Route path="/anti-fake-news" element={<S><AntiFakeNews /></S>} />
+                                  <Route path="/voce-no-google" element={<S><VoceNoGoogle /></S>} />
+                                  <Route path="/voce-no-google/cadastro" element={<S><BusinessCadastro /></S>} />
+                                  <Route path="/campanha/google-maps" element={<Navigate to="/voce-no-google" replace />} />
+                                  <Route path="/google-maps" element={<Navigate to="/voce-no-google" replace />} />
+                                  <Route path="/web-radio-tv" element={<S><WebRadioTVCampaign /></S>} />
+                                  <Route path="/campanha/radio-tv" element={<S><WebRadioTVCampaign /></S>} />
+                                  <Route path="/transporte-escolar" element={<S><TransporteEscolarHome /></S>} />
+                                  <Route path="/transporte-escolar/encontrar" element={<S><TransporteEscolarEncontrar /></S>} />
+                                  <Route path="/transporte-escolar/cadastrar" element={<S><TransporteEscolarCadastrar /></S>} />
+                                  <Route path="/transporte-escolar/escola/:slug" element={<S><TransporteEscolarEscola /></S>} />
+                                  <Route path="/transporte-escolar/rede/:rede" element={<S><TransporteEscolarRede /></S>} />
+                                  <Route path="/transporte-escolar/bairro/:bairro" element={<S><TransporteEscolarBairro /></S>} />
+                                  <Route path="/censo-pcd" element={<S><CensoPcdHome /></S>} />
+                                  <Route path="/censo-pcd/participar" element={<S><CensoPcdQuiz /></S>} />
+                                  <Route path="/censo-pcd/concluido" element={<S><CensoPcdConclusao /></S>} />
+                                  <Route path="/stories" element={<S><StoriesPage /></S>} />
+                                  
+                                  {/* Classifieds */}
+                                  <Route path="/classificados" element={<S><ClassifiedsPage /></S>} />
+                                  <Route path="/classificados/novo" element={<S><ClassifiedNewPage /></S>} />
+                                  <Route path="/classificados/:id" element={<S><ClassifiedDetailPage /></S>} />
+                                  
+                                  {/* Jobs */}
+                                  <Route path="/empregos" element={<S><JobsPage /></S>} />
+                                  <Route path="/empregos/:id" element={<S><JobDetailPage /></S>} />
+                                  <Route path="/comunidade/alertas-vagas" element={<S><JobAlertsPage /></S>} />
+                                  
+                                  {/* Real Estate */}
+                                  <Route path="/imoveis" element={<S><ImoveisListPage /></S>} />
+                                  <Route path="/imoveis/:slug" element={<S><ImovelDetailPage /></S>} />
+                                  <Route path="/imoveis/corretor/:slug" element={<S><AnuncianteProfilePage /></S>} />
+                                  <Route path="/imoveis/corretores" element={<S><CorretoresListPage /></S>} />
+                                  <Route path="/imoveis/cidade/:cidade" element={<S><ImoveisCidadePage /></S>} />
+                                  <Route path="/imoveis/cidade/:cidade/bairro/:bairro" element={<S><ImoveisBairroPage /></S>} />
+                                  
+                                  {/* Guia Comercial */}
+                                  <Route path="/guia" element={<S><GuiaComercialPage /></S>} />
+                                  <Route path="/guia/cadastrar" element={<S><GuiaCadastrarPage /></S>} />
+                                  <Route path="/guia/planos" element={<S><GuiaPlanosPage /></S>} />
+                                  <Route path="/guia/categoria/:slug" element={<S><GuiaCategoriaPage /></S>} />
+                                  <Route path="/guia/cidade/:cidade" element={<S><GuiaCidadePage /></S>} />
+                                  <Route path="/guia/:slug" element={<S><BusinessDetailPage /></S>} />
+                                  <Route path="/guia/anunciante" element={<S><GuiaAnuncianteDashboard /></S>} />
+                                  <Route path="/guia/anunciante/leads" element={<S><GuiaAnuncianteLeads /></S>} />
+                                  <Route path="/guia/anunciante/editar/:id" element={<S><GuiaAnuncianteEditar /></S>} />
+                                  
+                                  {/* ENEM 2026 */}
+                                  <Route path="/enem-2026" element={<S><Enem2026Landing /></S>} />
+                                </Route>
 
-                      {/* Admin Routes */}
-                      <Route path="/spah/painel" element={<AdminLayout />}>
-                        <Route index element={<Dashboard />} />
-                        <Route path="noticias-ai" element={<NoticiasAI />} />
-                        <Route path="news" element={<NewsList />} />
-                        <Route path="news/new" element={<NewsEditor />} />
-                        <Route path="news/:id/edit" element={<NewsEditor />} />
-                        <Route path="categories" element={<Categories />} />
-                        <Route path="tags" element={<Tags />} />
-                        <Route path="banners" element={<Banners />} />
-                        <Route path="ads" element={<Ads />} />
-                        <Route path="stories" element={<StoriesList />} />
-                        <Route path="stories/new" element={<StoryEditor />} />
-                        <Route path="stories/:id/edit" element={<StoryEditor />} />
-                        <Route path="users" element={<Users />} />
-                        <Route path="home-editor" element={<HomeEditor />} />
-                        <Route path="quick-notes" element={<QuickNotesAdmin />} />
-                        <Route path="analytics" element={<Analytics />} />
-                        <Route path="reading-analytics" element={<ReadingAnalytics />} />
-                        <Route path="noticias/:id" element={<NewsAnalytics />} />
-                        <Route path="relatorio-semanal" element={<WeeklyReport />} />
-                        <Route path="commercial-reports" element={<CommercialReports />} />
-                        <Route path="analytics/leitura" element={<ReadingAnalytics />} />
-                        <Route path="social" element={<SocialDashboard />} />
-                        <Route path="social/queue" element={<SocialQueue />} />
-                        <Route path="social/history" element={<SocialHistory />} />
-                        <Route path="social/logs" element={<SocialLogs />} />
-                        <Route path="social/settings" element={<SocialSettings />} />
-                        
-                        {/* PostSocial Module (New) */}
-                        <Route path="postsocial" element={<PostSocialDashboard />} />
-                        <Route path="postsocial/new" element={<PostSocialComposer />} />
-                        <Route path="postsocial/:id" element={<PostSocialComposer />} />
-                        <Route path="postsocial/settings" element={<PostSocialSettings />} />
-                        <Route path="postsocial/platforms" element={<PostSocialPlatformSetup />} />
-                        <Route path="links" element={<LinksDashboard />} />
-                        <Route path="links/create" element={<LinksBuilder />} />
-                        <Route path="links/qr" element={<LinksQRGenerator />} />
-                        <Route path="links/bio" element={<LinksBioBuilder />} />
-                        <Route path="links/reports" element={<LinksReports />} />
-                        <Route path="logs" element={<AuditLogs />} />
-                        <Route path="sso-monitor" element={<SsoMonitor />} />
-                        <Route path="settings" element={<Settings />} />
-                        <Route path="settings/template" element={<TemplateSelector />} />
-                        <Route path="settings/vocabulary" element={<VocabularyEditor />} />
-                        <Route path="settings/modules" element={<ModulesManager />} />
-                        <Route path="settings/menus" element={<MenuToggleSettings />} />
-                        <Route path="settings/appearance" element={<AppearanceSettings />} />
-                        <Route path="settings/logo" element={<BrandingLogoSettings />} />
-                        <Route path="settings/ai-providers" element={<AIProviderSettings />} />
-                        <Route path="solutions" element={<Solutions />} />
-                        <Route path="notificacoes" element={<PushNotificationsAdmin />} />
-                        <Route path="events" element={<EventsList />} />
-                        <Route path="editions" element={<EditionsList />} />
-                        <Route path="editions/new" element={<EditionEditor />} />
-                        <Route path="editions/:id/edit" element={<EditionEditor />} />
-                        <Route path="financial" element={<FinancialDashboard />} />
-                        <Route path="financial/profiles" element={<FinancialProfiles />} />
-                        <Route path="financial/receivables" element={<FinancialReceivables />} />
-                        <Route path="financial/invoices" element={<FinancialInvoices />} />
-                        {/* Redirects para rotas antigas de treinamento */}
-                        <Route path="training" element={<Navigate to="/spah/painel/academy" replace />} />
-                        <Route path="training/*" element={<Navigate to="/spah/painel/academy" replace />} />
-                        <Route path="universidade" element={<Navigate to="/spah/painel/academy" replace />} />
-                        <Route path="treinamento" element={<Navigate to="/spah/painel/academy" replace />} />
-                        <Route path="podcasts" element={<PodcastsList />} />
-                        <Route path="anti-fake-news" element={<AntiFakeNewsAdmin />} />
-                        
-                        {/* Auto Post PRO Routes */}
-                        <Route path="autopost" element={<AutoPostDashboard />} />
-                        <Route path="autopost/sources" element={<AutoPostSources />} />
-                        <Route path="autopost/queue" element={<AutoPostQueue />} />
-                        <Route path="autopost/groups" element={<AutoPostGroups />} />
-                        <Route path="autopost/rules" element={<AutoPostRules />} />
-                        <Route path="autopost/schedules" element={<AutoPostSchedules />} />
-                        <Route path="autopost/media" element={<AutoPostMedia />} />
-                        <Route path="autopost/duplicates" element={<AutoPostDuplicates />} />
-                        <Route path="autopost/logs" element={<AutoPostLogs />} />
-                        <Route path="autopost/reports" element={<AutoPostReports />} />
-                        <Route path="autopost/settings" element={<AutoPostSettings />} />
-                        <Route path="autopost/sources/new" element={<AutoPostSourceForm />} />
-                        <Route path="autopost/sources/:id/edit" element={<AutoPostSourceForm />} />
-                        
-                        {/* Auto Post Regional (Grande Cotia) - Módulo Independente */}
-                        <Route path="autopost-regional" element={<RegionalDashboard />} />
-                        <Route path="autopost-regional/fontes" element={<RegionalSources />} />
-                        <Route path="autopost-regional/fontes/:id/edit" element={<RegionalSourceEdit />} />
-                        <Route path="autopost-regional/fila" element={<RegionalQueue />} />
-                        <Route path="autopost-regional/logs" element={<RegionalLogs />} />
-                        
-                        {/* Content Fix Module */}
-                        <Route path="content-fix" element={<ContentFixDashboard />} />
-                        <Route path="content-fix/images" element={<ImageFixer />} />
-                        <Route path="content-fix/dates" element={<DateFixer />} />
-                        <Route path="content-fix/validator" element={<ContentValidator />} />
-                        <Route path="content-fix/content" element={<ContentFixer />} />
-                        <Route path="content-fix/titles" element={<TitleFixer />} />
-                        
-                        {/* Conexão Academy Routes */}
-                        <Route path="academy" element={<AcademyDashboard />} />
-                        <Route path="academy/curso/:slug" element={<AcademyCourse />} />
-                        <Route path="academy/aula/:id" element={<AcademyLesson />} />
-                        <Route path="academy/admin/categorias" element={<AcademyAdminCategories />} />
-                        <Route path="academy/admin/cursos" element={<AcademyAdminCourses />} />
-                        <Route path="academy/admin/cursos/:id/aulas" element={<AcademyAdminLessons />} />
-                        
-                        {/* ENEM 2026 Routes */}
-                        <Route path="academy/enem" element={<AcademyEnem />} />
-                        <Route path="academy/enem/:slug" element={<EnemModule />} />
-                        <Route path="academy/enem/:slug/semana/:weekNumber" element={<EnemWeek />} />
-                        <Route path="academy/enem/:slug/semana/:weekNumber/aula/:lessonId" element={<EnemLessonPage />} />
-                        <Route path="academy/enem/:slug/minhas-redacoes" element={<EnemSubmissions />} />
-                        <Route path="academy/enem/:slug/redacao/:submissionId" element={<EnemSubmissionDetail />} />
-                        
-                        {/* Esportes Routes */}
-                        <Route path="esportes" element={<EsportesDashboard />} />
-                        <Route path="esportes/brasileirao" element={<BrasileiraoHome />} />
-                        <Route path="esportes/brasileirao/sync" element={<BrasileiraoSync />} />
-                        <Route path="esportes/brasileirao/transmissoes" element={<BrasileiraoBroadcasts />} />
-                        <Route path="esportes/brasileirao/noticias" element={<BrasileiraoNews />} />
-                        <Route path="esportes/estatisticas" element={<EsportesEstatisticas />} />
-                        <Route path="esportes/configurar" element={<EsportesConfig />} />
-                        
-                        {/* Campaign Proofs Routes */}
-                        <Route path="comprovantes" element={<CampaignProofsList />} />
-                        <Route path="comprovantes/:id" element={<CampaignProofEditor />} />
-                        
-                        {/* Publidoor Routes */}
-                        <Route path="publidoor" element={<PublidoorDashboard />} />
-                        <Route path="publidoor/criar" element={<PublidoorCreate />} />
-                        <Route path="publidoor/:id/editar" element={<PublidoorEdit />} />
-                        <Route path="publidoor/campanhas" element={<PublidoorCampaigns />} />
-                        <Route path="publidoor/locais" element={<PublidoorLocations />} />
-                        <Route path="publidoor/agenda" element={<PublidoorSchedules />} />
-                        <Route path="publidoor/anunciantes" element={<PublidoorAdvertisers />} />
-                        <Route path="publidoor/metricas" element={<PublidoorMetrics />} />
-                        <Route path="publidoor/modelos" element={<PublidoorTemplates />} />
-                        <Route path="publidoor/aprovacoes" element={<PublidoorApprovals />} />
-                        <Route path="publidoor/config" element={<PublidoorSettings />} />
-                        
-                        {/* Conexão.AI Routes */}
-                        <Route path="conexao-ai" element={<ConexaoAIDashboard />} />
-                        <Route path="conexao-ai/assistente" element={<ConexaoAIAssistant />} />
-                        <Route path="conexao-ai/criador" element={<ConexaoAICreator />} />
-                        <Route path="conexao-ai/ferramentas" element={<ConexaoAITools />} />
-                        <Route path="conexao-ai/automacoes" element={<ConexaoAIAutomations />} />
-                        <Route path="conexao-ai/insights" element={<ConexaoAIInsights />} />
-                        
-                        {/* Partners Routes */}
-                        <Route path="partners" element={<PartnersInbox />} />
-                        <Route path="partners/manage" element={<PartnersManage />} />
-                        <Route path="partners/sources" element={<PartnersSources />} />
-                        <Route path="partners/pitches" element={<PartnersPitches />} />
-                        
-                        {/* Community Admin Routes */}
-                        <Route path="community" element={<CommunityAdmin />} />
-                        <Route path="community/members" element={<CommunityMembers />} />
-                        <Route path="community/moderation" element={<CommunityModeration />} />
-                        <Route path="community/phone-catalog" element={<PhoneCatalogAdmin />} />
-                        <Route path="community/phone-offers-report" element={<PhoneOffersReport />} />
-                        <Route path="community/phone-import" element={<PhoneImportAssisted />} />
-                        
-                        {/* Campaign Admin Routes */}
-                        <Route path="campaigns" element={<CampaignErrorBoundary><CampaignsHub /></CampaignErrorBoundary>} />
-                        <Route path="campaigns/google-maps" element={<CampaignErrorBoundary><GoogleMapsLeads /></CampaignErrorBoundary>} />
-                        <Route path="campaigns/unified" element={<CampaignErrorBoundary><CampaignsUnified /></CampaignErrorBoundary>} />
-                        <Route path="campaigns/new" element={<CampaignErrorBoundary><CampaignEditor /></CampaignErrorBoundary>} />
-                        <Route path="campaigns/edit/:id" element={<CampaignErrorBoundary><CampaignEditor /></CampaignErrorBoundary>} />
-                        <Route path="campaigns/metrics/:id" element={<CampaignErrorBoundary><CampaignMetrics /></CampaignErrorBoundary>} />
-                        <Route path="campaigns/tutorial" element={<CampaignErrorBoundary><CampaignsTutorial /></CampaignErrorBoundary>} />
-                        <Route path="campaigns/media-kit" element={<CampaignErrorBoundary><MediaKit /></CampaignErrorBoundary>} />
-                        <Route path="diagnostico-anuncios" element={<AdDiagnostics />} />
-                        
-                        {/* Transporte Escolar Admin Routes */}
-                        <Route path="transporte-escolar" element={<TransporteEscolarAdmin />} />
-                        <Route path="transporte-escolar/escolas" element={<EscolasAdmin />} />
-                        <Route path="transporte-escolar/transportadores" element={<TransportadoresAdmin />} />
-                        <Route path="transporte-escolar/leads" element={<LeadsAdmin />} />
-                        <Route path="transporte-escolar/reports" element={<ReportsAdmin />} />
-                        
-                        {/* Censo PcD Admin Routes */}
-                        <Route path="censo-pcd" element={<CensoPcdDashboard />} />
-                        <Route path="censo-pcd/respostas" element={<CensoPcdRespostas />} />
-                        
-                        {/* Imóveis Admin Routes */}
-                        <Route path="imoveis" element={<ImoveisAdmin />} />
-                        <Route path="imoveis/novo" element={<ImovelEditor />} />
-                        <Route path="imoveis/:id/editar" element={<ImovelEditor />} />
-                        
-                        {/* Conexão Stream Hub (Central) */}
-                        <Route path="stream" element={<ConexaoStream />} />
-                        
-                        {/* Broadcast Admin Routes */}
-                        <Route path="broadcast" element={<BroadcastDashboard />} />
-                        <Route path="broadcast/list" element={<BroadcastList />} />
-                        <Route path="broadcast/new" element={<BroadcastForm />} />
-                        <Route path="broadcast/:id/edit" element={<BroadcastForm />} />
-                        <Route path="broadcast/channels" element={<BroadcastChannels />} />
-                        <Route path="broadcast/programs" element={<BroadcastPrograms />} />
-                        <Route path="broadcast/playlist" element={<BroadcastPlaylist />} />
-                        <Route path="broadcast/videos" element={<BroadcastVideoPlaylist />} />
-                        <Route path="broadcast/studio/:id" element={<BroadcastStudio />} />
-                        
-                        {/* Conexão Studio Admin Routes */}
-                        <Route path="conexao-studio" element={<ConexaoStudioDashboard />} />
-                        <Route path="conexao-studio/studios" element={<ConexaoStudioList />} />
-                        <Route path="conexao-studio/studios/new" element={<ConexaoStudioCreate />} />
-                        <Route path="conexao-studio/studios/:slug/session" element={<ConexaoStudioSession />} />
-                        <Route path="conexao-studio/library" element={<ConexaoStudioLibrary />} />
-                        <Route path="conexao-studio/destinations" element={<ConexaoStudioDestinations />} />
-                        <Route path="conexao-studio/webinars" element={<ConexaoStudioWebinars />} />
-                        <Route path="conexao-studio/branding" element={<ConexaoStudioBranding />} />
-                        <Route path="conexao-studio/team" element={<ConexaoStudioTeam />} />
-                        
-                        {/* Rádio Web Admin Routes */}
-                        <Route path="radio" element={<RadioOverview />} />
-                        <Route path="radio/status" element={<RadioStatus />} />
-                        <Route path="radio/encoder" element={<RadioEncoder />} />
-                        <Route path="radio/autodj" element={<RadioAutoDJ />} />
-                        <Route path="radio/library" element={<RadioLibrary />} />
-                        <Route path="radio/stats" element={<RadioStats />} />
-                        <Route path="radio/players" element={<RadioPlayers />} />
-                        <Route path="radio/settings" element={<RadioSettings />} />
-                        
-                        {/* TV Web Admin Routes */}
-                        <Route path="tv" element={<TvOverview />} />
-                        <Route path="tv/live" element={<TvLive />} />
-                        <Route path="tv/schedule" element={<TvSchedule />} />
-                        <Route path="tv/vod" element={<TvVod />} />
-                        <Route path="tv/uploads" element={<TvUploads />} />
-                        <Route path="tv/stats" element={<TvStats />} />
-                        <Route path="tv/players" element={<TvPlayers />} />
-                        <Route path="tv/settings" element={<TvSettings />} />
-                        
-                        {/* Streaming Config Routes */}
-                        <Route path="streaming/radio" element={<StreamingRadioConfig />} />
-                        <Route path="streaming/tv" element={<StreamingTvConfig />} />
-                        <Route path="tv/schedule" element={<TvSchedule />} />
-                        <Route path="tv/vod" element={<TvVod />} />
-                        <Route path="tv/uploads" element={<TvUploads />} />
-                        <Route path="tv/stats" element={<TvStats />} />
-                        <Route path="tv/players" element={<TvPlayers />} />
-                        <Route path="tv/settings" element={<TvSettings />} />
-                        
-                        {/* Core Engine Routes */}
-                        <Route path="core-engine" element={<CoreEngineDashboard />} />
-                        <Route path="core-engine/redirect" element={<CoreRedirects />} />
-                        <Route path="core-engine/analytics" element={<CoreAnalytics />} />
-                        <Route path="core-engine/seo" element={<CoreSEO />} />
-                        <Route path="core-engine/media" element={<CoreMedia />} />
-                        <Route path="core-engine/performance" element={<CorePerformance />} />
-                        <Route path="core-engine/leads" element={<CoreLeads />} />
-                        <Route path="core-engine/schema" element={<CoreSchema />} />
-                        <Route path="core-engine/security" element={<CoreSecurity />} />
-                        <Route path="core-engine/ads" element={<CoreAds />} />
-                        <Route path="core-engine/push" element={<CorePush />} />
-                        <Route path="core-engine/editorial" element={<CoreEditorial />} />
-                        <Route path="core-engine/roles" element={<CoreRoles />} />
-                        <Route path="core-engine/automation" element={<CoreAutomation />} />
-                        <Route path="core-engine/:moduleId" element={<CoreModulePage />} />
+                                <Route path="/story/:slug" element={<S><StoryViewer /></S>} />
+                                <Route path="/webstory/:campaignId" element={<S><WebStoryViewerPage /></S>} />
+                                <Route path="/evento/:slug" element={<S><EventDetail /></S>} />
+                                <Route path="/edicao/:slug" element={<S><EditionViewer /></S>} />
+                                <Route path="/spah" element={<S><Auth /></S>} />
+                                <Route path="/auth-comunidade" element={<S><CommunityAuth /></S>} />
+                                <Route path="/reset-password" element={<S><ResetPassword /></S>} />
+                                 
+                                {/* Public Streaming */}
+                                <Route path="/radio" element={<S><RouteModuleGuard module="web_radio"><RadioPage /></RouteModuleGuard></S>} />
+                                <Route path="/tv" element={<S><RouteModuleGuard module="web_tv"><TvPage /></RouteModuleGuard></S>} />
+                                
+                                {/* Public Esportes */}
+                                <Route path="/esportes/brasileirao" element={<S><BrasileiraoPage /></S>} />
+                                <Route path="/esportes/brasileirao/noticia/:slug" element={<S><GeneratedNewsDetail /></S>} />
+                                <Route path="/esportes/brasileirao/:serie" element={<S><SerieDetailPage /></S>} />
+                                <Route path="/esportes/brasileirao/:serie/rodada/:round" element={<S><RoundPage /></S>} />
+                                <Route path="/esportes/brasileirao/:serie/jogo/:slug" element={<S><MatchDetailPage /></S>} />
+                                <Route path="/esportes/brasileirao/:serie/time/:slug" element={<S><TeamDetailPage /></S>} />
+                                <Route path="/esportes/brasileirao/:serie/estatisticas/artilharia" element={<S><TopScorersPage /></S>} />
+                                
+                                {/* Studio Guest Entry */}
+                                <Route path="/studio/join/:token" element={<S><ConexaoStudioGuestEntry /></S>} />
 
-                        {/* Classifieds & Jobs Admin */}
-                        <Route path="classifieds" element={<ClassifiedsAdmin />} />
-                        <Route path="jobs" element={<JobsAdmin />} />
-                      </Route>
-                      
-                      {/* Broadcast Public Routes - Protected by Module Guard */}
-                      <Route path="/ao-vivo" element={
-                        <RouteModuleGuard module="lives">
-                          <BroadcastHub />
-                        </RouteModuleGuard>
-                      } />
-                      <Route path="/ao-vivo/acesso" element={
-                        <RouteModuleGuard module="lives">
-                          <WebRadioTVAccess />
-                        </RouteModuleGuard>
-                      } />
-                      <Route path="/ao-vivo/studio" element={
-                        <RouteModuleGuard module="lives">
-                          <LiveStudioPromo />
-                        </RouteModuleGuard>
-                      } />
-                      <Route path="/ao-vivo/programacao" element={
-                        <RouteModuleGuard module="schedule">
-                          <BroadcastSchedule />
-                        </RouteModuleGuard>
-                      } />
-                      <Route path="/ao-vivo/arquivo" element={
-                        <RouteModuleGuard module="vod">
-                          <BroadcastArchive />
-                        </RouteModuleGuard>
-                      } />
-                      <Route path="/ao-vivo/:slug" element={
-                        <RouteModuleGuard module="lives">
-                          <BroadcastWatch />
-                        </RouteModuleGuard>
-                      } />
-                      <Route path="/join/:inviteToken" element={<GuestJoin />} />
+                                {/* ═══════ Admin Routes ═══════ */}
+                                <Route path="/spah/painel" element={<AdminLayout />}>
+                                  <Route index element={<S><Dashboard /></S>} />
+                                  <Route path="noticias-ai" element={<S><NoticiasAI /></S>} />
+                                  <Route path="news" element={<S><NewsList /></S>} />
+                                  <Route path="news/new" element={<S><NewsEditor /></S>} />
+                                  <Route path="news/:id/edit" element={<S><NewsEditor /></S>} />
+                                  <Route path="categories" element={<S><Categories /></S>} />
+                                  <Route path="tags" element={<S><Tags /></S>} />
+                                  <Route path="banners" element={<S><Banners /></S>} />
+                                  <Route path="ads" element={<S><Ads /></S>} />
+                                  <Route path="stories" element={<S><StoriesList /></S>} />
+                                  <Route path="stories/new" element={<S><StoryEditor /></S>} />
+                                  <Route path="stories/:id/edit" element={<S><StoryEditor /></S>} />
+                                  <Route path="users" element={<S><Users /></S>} />
+                                  <Route path="home-editor" element={<S><HomeEditor /></S>} />
+                                  <Route path="quick-notes" element={<S><QuickNotesAdmin /></S>} />
+                                  <Route path="analytics" element={<S><Analytics /></S>} />
+                                  <Route path="reading-analytics" element={<S><ReadingAnalytics /></S>} />
+                                  <Route path="noticias/:id" element={<S><NewsAnalytics /></S>} />
+                                  <Route path="relatorio-semanal" element={<S><WeeklyReport /></S>} />
+                                  <Route path="commercial-reports" element={<S><CommercialReports /></S>} />
+                                  <Route path="analytics/leitura" element={<S><ReadingAnalytics /></S>} />
+                                  <Route path="social" element={<S><SocialDashboard /></S>} />
+                                  <Route path="social/queue" element={<S><SocialQueue /></S>} />
+                                  <Route path="social/history" element={<S><SocialHistory /></S>} />
+                                  <Route path="social/logs" element={<S><SocialLogs /></S>} />
+                                  <Route path="social/settings" element={<S><SocialSettings /></S>} />
+                                  
+                                  {/* PostSocial */}
+                                  <Route path="postsocial" element={<S><PostSocialDashboard /></S>} />
+                                  <Route path="postsocial/new" element={<S><PostSocialComposer /></S>} />
+                                  <Route path="postsocial/:id" element={<S><PostSocialComposer /></S>} />
+                                  <Route path="postsocial/settings" element={<S><PostSocialSettings /></S>} />
+                                  <Route path="postsocial/platforms" element={<S><PostSocialPlatformSetup /></S>} />
+                                  
+                                  <Route path="links" element={<S><LinksDashboard /></S>} />
+                                  <Route path="links/create" element={<S><LinksBuilder /></S>} />
+                                  <Route path="links/qr" element={<S><LinksQRGenerator /></S>} />
+                                  <Route path="links/bio" element={<S><LinksBioBuilder /></S>} />
+                                  <Route path="links/reports" element={<S><LinksReports /></S>} />
+                                  <Route path="logs" element={<S><AuditLogs /></S>} />
+                                  <Route path="sso-monitor" element={<S><SsoMonitor /></S>} />
+                                  <Route path="settings" element={<S><Settings /></S>} />
+                                  <Route path="settings/template" element={<S><TemplateSelector /></S>} />
+                                  <Route path="settings/vocabulary" element={<S><VocabularyEditor /></S>} />
+                                  <Route path="settings/modules" element={<S><ModulesManager /></S>} />
+                                  <Route path="settings/menus" element={<S><MenuToggleSettings /></S>} />
+                                  <Route path="settings/appearance" element={<S><AppearanceSettings /></S>} />
+                                  <Route path="settings/logo" element={<S><BrandingLogoSettings /></S>} />
+                                  <Route path="settings/ai-providers" element={<S><AIProviderSettings /></S>} />
+                                  <Route path="solutions" element={<S><Solutions /></S>} />
+                                  <Route path="notificacoes" element={<S><PushNotificationsAdmin /></S>} />
+                                  <Route path="events" element={<S><EventsList /></S>} />
+                                  <Route path="editions" element={<S><EditionsList /></S>} />
+                                  <Route path="editions/new" element={<S><EditionEditor /></S>} />
+                                  <Route path="editions/:id/edit" element={<S><EditionEditor /></S>} />
+                                  <Route path="financial" element={<S><FinancialDashboard /></S>} />
+                                  <Route path="financial/profiles" element={<S><FinancialProfiles /></S>} />
+                                  <Route path="financial/receivables" element={<S><FinancialReceivables /></S>} />
+                                  <Route path="financial/invoices" element={<S><FinancialInvoices /></S>} />
+                                  
+                                  {/* Redirects */}
+                                  <Route path="training" element={<Navigate to="/spah/painel/academy" replace />} />
+                                  <Route path="training/*" element={<Navigate to="/spah/painel/academy" replace />} />
+                                  <Route path="universidade" element={<Navigate to="/spah/painel/academy" replace />} />
+                                  <Route path="treinamento" element={<Navigate to="/spah/painel/academy" replace />} />
+                                  
+                                  <Route path="podcasts" element={<S><PodcastsList /></S>} />
+                                  <Route path="anti-fake-news" element={<S><AntiFakeNewsAdmin /></S>} />
+                                  
+                                  {/* Auto Post PRO */}
+                                  <Route path="autopost" element={<S><AutoPostDashboard /></S>} />
+                                  <Route path="autopost/sources" element={<S><AutoPostSources /></S>} />
+                                  <Route path="autopost/queue" element={<S><AutoPostQueue /></S>} />
+                                  <Route path="autopost/groups" element={<S><AutoPostGroups /></S>} />
+                                  <Route path="autopost/rules" element={<S><AutoPostRules /></S>} />
+                                  <Route path="autopost/schedules" element={<S><AutoPostSchedules /></S>} />
+                                  <Route path="autopost/media" element={<S><AutoPostMedia /></S>} />
+                                  <Route path="autopost/duplicates" element={<S><AutoPostDuplicates /></S>} />
+                                  <Route path="autopost/logs" element={<S><AutoPostLogs /></S>} />
+                                  <Route path="autopost/reports" element={<S><AutoPostReports /></S>} />
+                                  <Route path="autopost/settings" element={<S><AutoPostSettings /></S>} />
+                                  <Route path="autopost/sources/new" element={<S><AutoPostSourceForm /></S>} />
+                                  <Route path="autopost/sources/:id/edit" element={<S><AutoPostSourceForm /></S>} />
+                                  
+                                  {/* Auto Post Regional */}
+                                  <Route path="autopost-regional" element={<S><RegionalDashboard /></S>} />
+                                  <Route path="autopost-regional/fontes" element={<S><RegionalSources /></S>} />
+                                  <Route path="autopost-regional/fontes/:id/edit" element={<S><RegionalSourceEdit /></S>} />
+                                  <Route path="autopost-regional/fila" element={<S><RegionalQueue /></S>} />
+                                  <Route path="autopost-regional/logs" element={<S><RegionalLogs /></S>} />
+                                  
+                                  {/* Content Fix */}
+                                  <Route path="content-fix" element={<S><ContentFixDashboard /></S>} />
+                                  <Route path="content-fix/images" element={<S><ImageFixer /></S>} />
+                                  <Route path="content-fix/dates" element={<S><DateFixer /></S>} />
+                                  <Route path="content-fix/validator" element={<S><ContentValidator /></S>} />
+                                  <Route path="content-fix/content" element={<S><ContentFixer /></S>} />
+                                  <Route path="content-fix/titles" element={<S><TitleFixer /></S>} />
+                                  
+                                  {/* Academy */}
+                                  <Route path="academy" element={<S><AcademyDashboard /></S>} />
+                                  <Route path="academy/curso/:slug" element={<S><AcademyCourse /></S>} />
+                                  <Route path="academy/aula/:id" element={<S><AcademyLesson /></S>} />
+                                  <Route path="academy/admin/categorias" element={<S><AcademyAdminCategories /></S>} />
+                                  <Route path="academy/admin/cursos" element={<S><AcademyAdminCourses /></S>} />
+                                  <Route path="academy/admin/cursos/:id/aulas" element={<S><AcademyAdminLessons /></S>} />
+                                  
+                                  {/* ENEM 2026 */}
+                                  <Route path="academy/enem" element={<S><AcademyEnem /></S>} />
+                                  <Route path="academy/enem/:slug" element={<S><EnemModule /></S>} />
+                                  <Route path="academy/enem/:slug/semana/:weekNumber" element={<S><EnemWeek /></S>} />
+                                  <Route path="academy/enem/:slug/semana/:weekNumber/aula/:lessonId" element={<S><EnemLessonPage /></S>} />
+                                  <Route path="academy/enem/:slug/minhas-redacoes" element={<S><EnemSubmissions /></S>} />
+                                  <Route path="academy/enem/:slug/redacao/:submissionId" element={<S><EnemSubmissionDetail /></S>} />
+                                  
+                                  {/* Esportes */}
+                                  <Route path="esportes" element={<S><EsportesDashboard /></S>} />
+                                  <Route path="esportes/brasileirao" element={<S><BrasileiraoHome /></S>} />
+                                  <Route path="esportes/brasileirao/sync" element={<S><BrasileiraoSync /></S>} />
+                                  <Route path="esportes/brasileirao/transmissoes" element={<S><BrasileiraoBroadcasts /></S>} />
+                                  <Route path="esportes/brasileirao/noticias" element={<S><BrasileiraoNews /></S>} />
+                                  <Route path="esportes/estatisticas" element={<S><EsportesEstatisticas /></S>} />
+                                  <Route path="esportes/configurar" element={<S><EsportesConfig /></S>} />
+                                  
+                                  {/* Campaign Proofs */}
+                                  <Route path="comprovantes" element={<S><CampaignProofsList /></S>} />
+                                  <Route path="comprovantes/:id" element={<S><CampaignProofEditor /></S>} />
+                                  
+                                  {/* Publidoor */}
+                                  <Route path="publidoor" element={<S><PublidoorDashboard /></S>} />
+                                  <Route path="publidoor/criar" element={<S><PublidoorCreate /></S>} />
+                                  <Route path="publidoor/:id/editar" element={<S><PublidoorEdit /></S>} />
+                                  <Route path="publidoor/campanhas" element={<S><PublidoorCampaigns /></S>} />
+                                  <Route path="publidoor/locais" element={<S><PublidoorLocations /></S>} />
+                                  <Route path="publidoor/agenda" element={<S><PublidoorSchedules /></S>} />
+                                  <Route path="publidoor/anunciantes" element={<S><PublidoorAdvertisers /></S>} />
+                                  <Route path="publidoor/metricas" element={<S><PublidoorMetrics /></S>} />
+                                  <Route path="publidoor/modelos" element={<S><PublidoorTemplates /></S>} />
+                                  <Route path="publidoor/aprovacoes" element={<S><PublidoorApprovals /></S>} />
+                                  <Route path="publidoor/config" element={<S><PublidoorSettings /></S>} />
+                                  
+                                  {/* Conexão.AI */}
+                                  <Route path="conexao-ai" element={<S><ConexaoAIDashboard /></S>} />
+                                  <Route path="conexao-ai/assistente" element={<S><ConexaoAIAssistant /></S>} />
+                                  <Route path="conexao-ai/criador" element={<S><ConexaoAICreator /></S>} />
+                                  <Route path="conexao-ai/ferramentas" element={<S><ConexaoAITools /></S>} />
+                                  <Route path="conexao-ai/automacoes" element={<S><ConexaoAIAutomations /></S>} />
+                                  <Route path="conexao-ai/insights" element={<S><ConexaoAIInsights /></S>} />
+                                  
+                                  {/* Partners */}
+                                  <Route path="partners" element={<S><PartnersInbox /></S>} />
+                                  <Route path="partners/manage" element={<S><PartnersManage /></S>} />
+                                  <Route path="partners/sources" element={<S><PartnersSources /></S>} />
+                                  <Route path="partners/pitches" element={<S><PartnersPitches /></S>} />
+                                  
+                                  {/* Community Admin */}
+                                  <Route path="community" element={<S><CommunityAdmin /></S>} />
+                                  <Route path="community/members" element={<S><CommunityMembers /></S>} />
+                                  <Route path="community/moderation" element={<S><CommunityModeration /></S>} />
+                                  <Route path="community/phone-catalog" element={<S><PhoneCatalogAdmin /></S>} />
+                                  <Route path="community/phone-offers-report" element={<S><PhoneOffersReport /></S>} />
+                                  <Route path="community/phone-import" element={<S><PhoneImportAssisted /></S>} />
+                                  
+                                  {/* Campaign Admin */}
+                                  <Route path="campaigns" element={<S><CampaignsHub /></S>} />
+                                  <Route path="campaigns/google-maps" element={<S><GoogleMapsLeads /></S>} />
+                                  <Route path="campaigns/unified" element={<S><CampaignsUnified /></S>} />
+                                  <Route path="campaigns/new" element={<S><CampaignEditor /></S>} />
+                                  <Route path="campaigns/edit/:id" element={<S><CampaignEditor /></S>} />
+                                  <Route path="campaigns/metrics/:id" element={<S><CampaignMetrics /></S>} />
+                                  <Route path="campaigns/tutorial" element={<S><CampaignsTutorial /></S>} />
+                                  <Route path="campaigns/media-kit" element={<S><MediaKit /></S>} />
+                                  <Route path="diagnostico-anuncios" element={<S><AdDiagnostics /></S>} />
+                                  
+                                  {/* Transporte Escolar Admin */}
+                                  <Route path="transporte-escolar" element={<S><TransporteEscolarAdmin /></S>} />
+                                  <Route path="transporte-escolar/escolas" element={<S><EscolasAdmin /></S>} />
+                                  <Route path="transporte-escolar/transportadores" element={<S><TransportadoresAdmin /></S>} />
+                                  <Route path="transporte-escolar/leads" element={<S><LeadsAdmin /></S>} />
+                                  <Route path="transporte-escolar/reports" element={<S><ReportsAdmin /></S>} />
+                                  
+                                  {/* Censo PcD Admin */}
+                                  <Route path="censo-pcd" element={<S><CensoPcdDashboard /></S>} />
+                                  <Route path="censo-pcd/respostas" element={<S><CensoPcdRespostas /></S>} />
+                                  
+                                  {/* Imóveis Admin */}
+                                  <Route path="imoveis" element={<S><ImoveisAdmin /></S>} />
+                                  <Route path="imoveis/novo" element={<S><ImovelEditor /></S>} />
+                                  <Route path="imoveis/:id/editar" element={<S><ImovelEditor /></S>} />
+                                  
+                                  {/* Conexão Stream Hub */}
+                                  <Route path="stream" element={<S><ConexaoStream /></S>} />
+                                  
+                                  {/* Broadcast Admin */}
+                                  <Route path="broadcast" element={<S><BroadcastDashboard /></S>} />
+                                  <Route path="broadcast/list" element={<S><BroadcastList /></S>} />
+                                  <Route path="broadcast/new" element={<S><BroadcastForm /></S>} />
+                                  <Route path="broadcast/:id/edit" element={<S><BroadcastForm /></S>} />
+                                  <Route path="broadcast/channels" element={<S><BroadcastChannels /></S>} />
+                                  <Route path="broadcast/programs" element={<S><BroadcastPrograms /></S>} />
+                                  <Route path="broadcast/playlist" element={<S><BroadcastPlaylist /></S>} />
+                                  <Route path="broadcast/videos" element={<S><BroadcastVideoPlaylist /></S>} />
+                                  <Route path="broadcast/studio/:id" element={<S><BroadcastStudio /></S>} />
+                                  
+                                  {/* Conexão Studio Admin */}
+                                  <Route path="conexao-studio" element={<S><ConexaoStudioDashboard /></S>} />
+                                  <Route path="conexao-studio/studios" element={<S><ConexaoStudioList /></S>} />
+                                  <Route path="conexao-studio/studios/new" element={<S><ConexaoStudioCreate /></S>} />
+                                  <Route path="conexao-studio/studios/:slug/session" element={<S><ConexaoStudioSession /></S>} />
+                                  <Route path="conexao-studio/library" element={<S><ConexaoStudioLibrary /></S>} />
+                                  <Route path="conexao-studio/destinations" element={<S><ConexaoStudioDestinations /></S>} />
+                                  <Route path="conexao-studio/webinars" element={<S><ConexaoStudioWebinars /></S>} />
+                                  <Route path="conexao-studio/branding" element={<S><ConexaoStudioBranding /></S>} />
+                                  <Route path="conexao-studio/team" element={<S><ConexaoStudioTeam /></S>} />
+                                  
+                                  {/* Radio Admin */}
+                                  <Route path="radio" element={<S><RadioOverview /></S>} />
+                                  <Route path="radio/status" element={<S><RadioStatus /></S>} />
+                                  <Route path="radio/encoder" element={<S><RadioEncoder /></S>} />
+                                  <Route path="radio/autodj" element={<S><RadioAutoDJ /></S>} />
+                                  <Route path="radio/library" element={<S><RadioLibrary /></S>} />
+                                  <Route path="radio/stats" element={<S><RadioStats /></S>} />
+                                  <Route path="radio/players" element={<S><RadioPlayers /></S>} />
+                                  <Route path="radio/settings" element={<S><RadioSettings /></S>} />
+                                  
+                                  {/* TV Admin */}
+                                  <Route path="tv" element={<S><TvOverview /></S>} />
+                                  <Route path="tv/live" element={<S><TvLive /></S>} />
+                                  <Route path="tv/schedule" element={<S><TvSchedule /></S>} />
+                                  <Route path="tv/vod" element={<S><TvVod /></S>} />
+                                  <Route path="tv/uploads" element={<S><TvUploads /></S>} />
+                                  <Route path="tv/stats" element={<S><TvStats /></S>} />
+                                  <Route path="tv/players" element={<S><TvPlayers /></S>} />
+                                  <Route path="tv/settings" element={<S><TvSettings /></S>} />
+                                  
+                                  {/* Streaming Config */}
+                                  <Route path="streaming/radio" element={<S><StreamingRadioConfig /></S>} />
+                                  <Route path="streaming/tv" element={<S><StreamingTvConfig /></S>} />
+                                  
+                                  {/* Core Engine */}
+                                  <Route path="core-engine" element={<S><CoreEngineDashboard /></S>} />
+                                  <Route path="core-engine/redirect" element={<S><CoreRedirects /></S>} />
+                                  <Route path="core-engine/analytics" element={<S><CoreAnalytics /></S>} />
+                                  <Route path="core-engine/seo" element={<S><CoreSEO /></S>} />
+                                  <Route path="core-engine/media" element={<S><CoreMedia /></S>} />
+                                  <Route path="core-engine/performance" element={<S><CorePerformance /></S>} />
+                                  <Route path="core-engine/leads" element={<S><CoreLeads /></S>} />
+                                  <Route path="core-engine/schema" element={<S><CoreSchema /></S>} />
+                                  <Route path="core-engine/security" element={<S><CoreSecurity /></S>} />
+                                  <Route path="core-engine/ads" element={<S><CoreAds /></S>} />
+                                  <Route path="core-engine/push" element={<S><CorePush /></S>} />
+                                  <Route path="core-engine/editorial" element={<S><CoreEditorial /></S>} />
+                                  <Route path="core-engine/roles" element={<S><CoreRoles /></S>} />
+                                  <Route path="core-engine/automation" element={<S><CoreAutomation /></S>} />
+                                  <Route path="core-engine/:moduleId" element={<S><CoreModulePage /></S>} />
 
-                      {/* Publidoor Partner Routes */}
-                      <Route path="/partner/login" element={<PartnerLogin />} />
-                      <Route path="/partner" element={<PartnerLayout />}>
-                        <Route index element={<Navigate to="/partner/publidoor" replace />} />
-                        <Route path="publidoor" element={<PartnerVitrine />} />
-                        <Route path="publidoor/editar" element={<PartnerEditor />} />
-                        <Route path="publidoor/editar/:id" element={<PartnerEditor />} />
-                        <Route path="publidoor/agenda" element={<PartnerAgenda />} />
-                        <Route path="publidoor/metricas" element={<PartnerMetricsPage />} />
-                        <Route path="publidoor/negocio" element={<PartnerBusiness />} />
-                        <Route path="publidoor/plano" element={<PartnerPlan />} />
-                      </Route>
+                                  {/* Classifieds & Jobs Admin */}
+                                  <Route path="classifieds" element={<S><ClassifiedsAdmin /></S>} />
+                                  <Route path="jobs" element={<S><JobsAdmin /></S>} />
+                                </Route>
+                                
+                                {/* Broadcast Public */}
+                                <Route path="/ao-vivo" element={<S><RouteModuleGuard module="lives"><BroadcastHub /></RouteModuleGuard></S>} />
+                                <Route path="/ao-vivo/acesso" element={<S><RouteModuleGuard module="lives"><WebRadioTVAccess /></RouteModuleGuard></S>} />
+                                <Route path="/ao-vivo/studio" element={<S><RouteModuleGuard module="lives"><LiveStudioPromo /></RouteModuleGuard></S>} />
+                                <Route path="/ao-vivo/programacao" element={<S><RouteModuleGuard module="schedule"><BroadcastSchedule /></RouteModuleGuard></S>} />
+                                <Route path="/ao-vivo/arquivo" element={<S><RouteModuleGuard module="vod"><BroadcastArchive /></RouteModuleGuard></S>} />
+                                <Route path="/ao-vivo/:slug" element={<S><RouteModuleGuard module="lives"><BroadcastWatch /></RouteModuleGuard></S>} />
+                                <Route path="/join/:inviteToken" element={<S><GuestJoin /></S>} />
 
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </MaintenanceGuard>
-                </BrowserRouter>
-                  </TooltipProvider>
-                </MiniPlayerProvider>
-              </NewsCreationModalProvider>
-            </NewsCreationProvider>
-          </AccessibilityProvider>
-          </SiteThemeProvider>
-        </TenantProvider>
-      </AuthProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-</HelmetProvider>
+                                {/* Publidoor Partner */}
+                                <Route path="/partner/login" element={<S><PartnerLogin /></S>} />
+                                <Route path="/partner" element={<S><PartnerLayout /></S>}>
+                                  <Route index element={<Navigate to="/partner/publidoor" replace />} />
+                                  <Route path="publidoor" element={<S><PartnerVitrine /></S>} />
+                                  <Route path="publidoor/editar" element={<S><PartnerEditor /></S>} />
+                                  <Route path="publidoor/editar/:id" element={<S><PartnerEditor /></S>} />
+                                  <Route path="publidoor/agenda" element={<S><PartnerAgenda /></S>} />
+                                  <Route path="publidoor/metricas" element={<S><PartnerMetricsPage /></S>} />
+                                  <Route path="publidoor/negocio" element={<S><PartnerBusiness /></S>} />
+                                  <Route path="publidoor/plano" element={<S><PartnerPlan /></S>} />
+                                </Route>
+
+                                <Route path="*" element={<NotFound />} />
+                              </Routes>
+                            </Suspense>
+                          </MaintenanceGuard>
+                        </BrowserRouter>
+                      </TooltipProvider>
+                    </MiniPlayerProvider>
+                  </NewsCreationModalProvider>
+                </NewsCreationProvider>
+              </AccessibilityProvider>
+            </SiteThemeProvider>
+          </TenantProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  </HelmetProvider>
 );
 
 export default App;
