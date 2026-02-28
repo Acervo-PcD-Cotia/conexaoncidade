@@ -559,6 +559,57 @@ export function useBusinessStats(businessId: string, days = 30) {
 }
 
 // ========================
+// CLICK HISTORY (for charts)
+// ========================
+
+export function useBusinessClickHistory(businessIds: string[], days = 30) {
+  return useQuery({
+    queryKey: ['business-click-history', businessIds, days],
+    enabled: businessIds.length > 0,
+    queryFn: async () => {
+      const since = new Date();
+      since.setDate(since.getDate() - days);
+
+      const { data, error } = await supabase
+        .from('business_clicks')
+        .select('click_type, created_at')
+        .in('business_id', businessIds)
+        .gte('created_at', since.toISOString())
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      // Group by date
+      const byDate: Record<string, { date: string; views: number; whatsapp: number; phone: number; website: number }> = {};
+      
+      for (const click of data ?? []) {
+        const date = new Date(click.created_at).toISOString().split('T')[0];
+        if (!byDate[date]) {
+          byDate[date] = { date, views: 0, whatsapp: 0, phone: 0, website: 0 };
+        }
+        const type = click.click_type as string;
+        if (type === 'view') byDate[date].views++;
+        else if (type === 'whatsapp') byDate[date].whatsapp++;
+        else if (type === 'phone') byDate[date].phone++;
+        else if (type === 'website') byDate[date].website++;
+      }
+
+      // Fill missing dates
+      const result = [];
+      const current = new Date(since);
+      const today = new Date();
+      while (current <= today) {
+        const dateStr = current.toISOString().split('T')[0];
+        result.push(byDate[dateStr] ?? { date: dateStr, views: 0, whatsapp: 0, phone: 0, website: 0 });
+        current.setDate(current.getDate() + 1);
+      }
+
+      return result;
+    },
+  });
+}
+
+// ========================
 // SEO PAGES
 // ========================
 
