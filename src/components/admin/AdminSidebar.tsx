@@ -153,6 +153,7 @@ const monetizationItems: MenuItem[] = [
   { title: "Painel de Login", url: "/spah/painel/campaigns/unified?channel=login_panel", icon: PanelTop },
   { title: "Publidoor", url: "/spah/painel/publidoor", icon: Building2, badge: "Premium", badgeColor: "bg-money" },
   { title: "Parceiros", url: "/spah/painel/partners", icon: Handshake },
+  { title: "Simulador de Ads", url: "/spah/painel/simulador-inventario", icon: Presentation },
 ];
 
 // 4️⃣ STREAMING & MÍDIA - Transmissão

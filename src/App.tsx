@@ -67,6 +67,7 @@ const WeeklyReport = lazy(() => import("./pages/admin/WeeklyReport"));
 const CommercialReports = lazy(() => import("./pages/admin/CommercialReports"));
 const AuditLogs = lazy(() => import("./pages/admin/AuditLogs"));
 const AdDiagnostics = lazy(() => import("./pages/admin/AdDiagnostics"));
+const AdInventorySimulator = lazy(() => import("./pages/admin/AdInventorySimulator"));
 const SsoMonitor = lazy(() => import("./pages/admin/SsoMonitor"));
 const Settings = lazy(() => import("./pages/admin/Settings"));
 const NoticiasAI = lazy(() => import("./pages/admin/NoticiasAI"));
@@ -682,6 +683,7 @@ const App = () => (
                                   <Route path="campaigns/tutorial" element={<S><CampaignsTutorial /></S>} />
                                   <Route path="campaigns/media-kit" element={<S><MediaKit /></S>} />
                                   <Route path="diagnostico-anuncios" element={<S><AdDiagnostics /></S>} />
+                                  <Route path="simulador-inventario" element={<S><AdInventorySimulator /></S>} />
                                   
                                   {/* Transporte Escolar Admin */}
                                   <Route path="transporte-escolar" element={<S><TransporteEscolarAdmin /></S>} />
