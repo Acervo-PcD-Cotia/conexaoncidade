@@ -33,6 +33,7 @@ import NewsListPage from "./pages/NewsListPage";
 import SearchPage from "./pages/SearchPage";
 import WebStoryViewerPage from "./pages/public/WebStoryViewer";
 import VoceNoGoogle from "./pages/VoceNoGoogle";
+import BusinessCadastro from "./pages/BusinessCadastro";
 
 // Admin Pages
 import Dashboard from "./pages/admin/Dashboard";
@@ -432,6 +433,7 @@ const App = () => (
                         <Route path="/comunidade/beneficios/celular-ideal" element={<PhoneChooserPage />} />
                         <Route path="/anti-fake-news" element={<AntiFakeNews />} />
                         <Route path="/voce-no-google" element={<VoceNoGoogle />} />
+                        <Route path="/voce-no-google/cadastro" element={<BusinessCadastro />} />
                         <Route path="/campanha/google-maps" element={<Navigate to="/voce-no-google" replace />} />
                         <Route path="/google-maps" element={<Navigate to="/voce-no-google" replace />} />
                         <Route path="/web-radio-tv" element={<WebRadioTVCampaign />} />
