@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
-  Newspaper, FileText, PlaySquare, Eye, Plus, Search, Clock,
+  Newspaper, FileText, PlaySquare, Eye, Plus, Search, Clock, Store,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -128,6 +128,12 @@ export default function Dashboard() {
           <Button onClick={openModal} className="gap-2">
             <Plus className="h-4 w-4" />
             Nova Notícia
+          </Button>
+          <Button variant="outline" asChild className="gap-2">
+            <Link to="/guia">
+              <Store className="h-4 w-4" />
+              Guia Comercial
+            </Link>
           </Button>
         </div>
       </header>
