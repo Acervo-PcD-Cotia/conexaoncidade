@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useModuleEnabled } from "@/hooks/useModuleEnabled";
 import { Link } from "react-router-dom";
-import { Menu, X, Search, Sun, Moon, LogOut, LayoutDashboard, Newspaper, FolderOpen, Megaphone, Settings, ShieldCheck, Bus, MapPin, Accessibility, Users, Radio, Tv, GraduationCap, Trophy, Home, ChevronDown } from "lucide-react";
+import { Menu, X, Search, Sun, Moon, LogOut, LayoutDashboard, Newspaper, FolderOpen, Megaphone, Settings, ShieldCheck, Bus, MapPin, Accessibility, Users, Radio, Tv, GraduationCap, Trophy, Home, ChevronDown, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTheme } from "@/hooks/useTheme";
@@ -50,6 +50,7 @@ export function Header() {
   const isMenuFakenewsEnabled = useModuleEnabled('menu_fakenews');
   const isMenuEscolarEnabled = useModuleEnabled('menu_escolar');
   const isMenuImoveisEnabled = useModuleEnabled('menu_imoveis');
+  const isMenuGuiaEnabled = useModuleEnabled('menu_guia');
   
   const hasAdminAccess = !roleLoading && (isAdmin || isEditor || ['editor_chief', 'reporter', 'columnist', 'moderator'].includes(role || ''));
   
@@ -184,8 +185,17 @@ export function Header() {
                     Imóveis
                   </Link>
                   )}
+                  {/* 10. Guia Comercial - orange */}
+                  {isMenuGuiaEnabled && (
+                  <Link
+                    to="/guia"
+                    className="flex items-center gap-2 text-orange-600 dark:text-orange-400 hover:underline font-semibold"
+                  >
+                    <Store className="h-4 w-4" />
+                    Guia Comercial
+                  </Link>
+                  )}
                 </div>
-                
                 {/* Admin Links for Mobile */}
                 {hasAdminAccess && (
                   <div className="mt-4 border-t pt-4 space-y-3">
@@ -503,6 +513,16 @@ export function Header() {
                 </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
+            )}
+            {/* 10. Guia Comercial - orange */}
+            {isMenuGuiaEnabled && (
+            <Link
+              to="/guia"
+              className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-orange-700 dark:text-orange-400 bg-orange-100 dark:bg-orange-950/60 rounded-full hover:bg-orange-200 dark:hover:bg-orange-900/60 transition-colors border border-orange-200 dark:border-orange-800"
+            >
+              <Store className="h-4 w-4" />
+              Guia Comercial
+            </Link>
             )}
           </div>
         </div>

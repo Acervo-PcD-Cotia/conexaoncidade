@@ -230,7 +230,7 @@ export type ModuleKey =
   | 'exclusive_content' | 'monetization' | 'webinars' | 'internal_content'
   | 'reports' | 'player'
   | 'menu_google' | 'menu_brasileirao' | 'menu_censo' | 'menu_conexoes'
-  | 'menu_enem' | 'menu_fakenews' | 'menu_escolar' | 'menu_imoveis';
+  | 'menu_enem' | 'menu_fakenews' | 'menu_escolar' | 'menu_imoveis' | 'menu_guia';
 
 // Core modules that are always enabled
 export const CORE_MODULES: ModuleKey[] = [
@@ -269,6 +269,7 @@ export const MODULE_METADATA: Record<ModuleKey, { label: string; description: st
   menu_fakenews: { label: 'Fake News', description: 'Menu Fake News', icon: 'ShieldCheck' },
   menu_escolar: { label: 'Escolar', description: 'Menu Escolar', icon: 'Bus' },
   menu_imoveis: { label: 'Imóveis', description: 'Menu Imóveis', icon: 'Home' },
+  menu_guia: { label: 'Guia Comercial', description: 'Guia de empresas e serviços', icon: 'Store' },
 };
 
 // ============================================
