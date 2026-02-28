@@ -267,6 +267,7 @@ const transporteEscolarItems: MenuItem[] = [
 
 // Admin only
 const adminOnlyItems: MenuItem[] = [
+  { title: "Franquias & White Label", url: "/spah/painel/tenants", icon: Building2 },
   { title: "Usuários", url: "/spah/painel/users", icon: Users },
   { title: "Conexões", url: "/spah/painel/community", icon: UsersRound },
   { title: "Cadastro Assistido", url: "/spah/painel/community/phone-import", icon: Smartphone },
