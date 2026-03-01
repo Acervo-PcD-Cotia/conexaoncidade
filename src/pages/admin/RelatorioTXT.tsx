@@ -78,6 +78,7 @@ export default function RelatorioTXT() {
 
   // Paste TXT / Upload JSON state
   const [pasteTxt, setPasteTxt] = useState("");
+  const [pasteJson, setPasteJson] = useState("");
   const [importTab, setImportTab] = useState("form");
 
   const handleChange = (field: keyof NewsItem, value: string) => {
