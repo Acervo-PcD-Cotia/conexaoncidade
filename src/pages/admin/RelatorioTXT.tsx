@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface NewsItem {
   fonte: string;
+  linkNoticia: string;
   linkImagem: string;
   dataPublicacao: string;
   titulo: string;
@@ -34,6 +35,7 @@ interface SavedReport {
 
 const emptyItem: NewsItem = {
   fonte: "",
+  linkNoticia: "",
   linkImagem: "",
   dataPublicacao: "",
   titulo: "",
@@ -105,6 +107,7 @@ export default function RelatorioTXT() {
     const lines = newsItems.map((item, i) => {
       const parts = [`NOTÍCIA ${i + 1}`];
       if (item.fonte) parts.push(`Fonte: ${item.fonte}`);
+      if (item.linkNoticia) parts.push(`Link: ${item.linkNoticia}`);
       parts.push(`Data: ${item.dataPublicacao}`);
       parts.push(`Título: ${item.titulo}`);
       if (item.subtitulo) parts.push(`Subtítulo: ${item.subtitulo}`);
@@ -336,6 +339,16 @@ export default function RelatorioTXT() {
                 onChange={(e) => handleChange("dataPublicacao", e.target.value)}
               />
             </div>
+          </div>
+
+          {/* Link da Notícia */}
+          <div>
+            <label className="text-sm font-medium">Link da Notícia</label>
+            <Input
+              placeholder="https://... (opcional)"
+              value={form.linkNoticia}
+              onChange={(e) => handleChange("linkNoticia", e.target.value)}
+            />
           </div>
 
           {/* Link Imagem */}
