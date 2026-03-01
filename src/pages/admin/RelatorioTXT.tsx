@@ -3,7 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Pencil, Copy, Download, FileText, X, Check, Save, FolderOpen, Loader2 } from "lucide-react";
+import { Plus, Trash2, Pencil, Copy, Download, FileText, X, Check, Save, FolderOpen, Loader2, ExternalLink, Globe } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -43,7 +45,22 @@ const emptyItem: NewsItem = {
   descricao: "",
 };
 
+function useFontesCadastradas() {
+  return useQuery({
+    queryKey: ["autopost-sources-links"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("autopost_sources")
+        .select("id, name, site_url, city, source_type, status")
+        .order("name");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+}
+
 export default function RelatorioTXT() {
+  const { data: fontes = [], isLoading: loadingFontes } = useFontesCadastradas();
   const [form, setForm] = useState<NewsItem>({ ...emptyItem });
   const [items, setItems] = useState<NewsItem[]>([]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -289,6 +306,52 @@ export default function RelatorioTXT() {
           <span className="text-xs text-muted-foreground whitespace-nowrap">(salvo)</span>
         )}
       </div>
+
+      {/* Fontes Cadastradas - Links rápidos */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Globe className="h-5 w-5" />
+            Links das Fontes Cadastradas
+          </CardTitle>
+          <CardDescription>
+            Acesse rapidamente os sites das fontes para buscar notícias.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loadingFontes ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Carregando fontes...
+            </div>
+          ) : fontes.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhuma fonte cadastrada.</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {fontes.map((fonte) => (
+                <a
+                  key={fonte.id}
+                  href={fonte.site_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={fonte.site_url}
+                >
+                  <Badge
+                    variant={fonte.status === 'active' ? 'default' : 'secondary'}
+                    className="gap-1.5 cursor-pointer hover:opacity-80 transition-opacity py-1.5 px-3"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    {fonte.name}
+                    {fonte.city && (
+                      <span className="opacity-70 text-[10px]">({fonte.city})</span>
+                    )}
+                  </Badge>
+                </a>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Form */}
       <Card>
