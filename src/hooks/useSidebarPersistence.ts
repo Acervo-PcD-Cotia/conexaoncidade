@@ -16,6 +16,7 @@ const ROUTE_TO_GROUP: Record<string, string> = {
   "/spah/painel/podcasts": "conteudo",
   "/spah/painel/editions": "conteudo",
   "/spah/painel/autopost-regional": "conteudo",
+  "/spah/painel/relatorio-txt": "conteudo",
   
   // DISTRIBUIÇÃO & ALCANCE
   "/spah/painel/social": "distribuicao",

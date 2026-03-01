@@ -130,6 +130,7 @@ const contentItems: MenuItem[] = [
   { title: "Edição Digital", url: "/spah/painel/editions", icon: BookOpen },
   { title: "Auto Post Regional", url: "/spah/painel/autopost-regional", icon: MapPin, badge: "Grande Cotia", badgeColor: "bg-amber-500" },
   { title: "Correção de Conteúdo", url: "/spah/painel/content-fix", icon: Wrench, badge: "Novo", badgeColor: "bg-primary" },
+  { title: "Relatório TXT", url: "/spah/painel/relatorio-txt", icon: FileText },
 ];
 
 // 2️⃣ DISTRIBUIÇÃO & ALCANCE - Audiência e tráfego
