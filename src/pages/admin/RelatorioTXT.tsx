@@ -19,6 +19,7 @@ interface NewsItem {
   dataPublicacao: string;
   titulo: string;
   subtitulo: string;
+  descricao: string;
 }
 
 const emptyItem: NewsItem = {
@@ -27,6 +28,7 @@ const emptyItem: NewsItem = {
   dataPublicacao: "",
   titulo: "",
   subtitulo: "",
+  descricao: "",
 };
 
 export default function RelatorioTXT() {
@@ -93,6 +95,7 @@ export default function RelatorioTXT() {
       parts.push(`Data: ${item.dataPublicacao}`);
       parts.push(`Título: ${item.titulo}`);
       if (item.subtitulo) parts.push(`Subtítulo: ${item.subtitulo}`);
+      if (item.descricao) parts.push(`Descrição: ${item.descricao}`);
       if (item.linkImagem) parts.push(`Imagem: ${item.linkImagem}`);
       return parts.join("\n");
     });
@@ -190,6 +193,17 @@ export default function RelatorioTXT() {
               placeholder="https://... (opcional)"
               value={form.linkImagem}
               onChange={(e) => handleChange("linkImagem", e.target.value)}
+            />
+          </div>
+
+          {/* Descrição */}
+          <div>
+            <label className="text-sm font-medium">Descrição</label>
+            <Textarea
+              placeholder="Resumo ou corpo da notícia (opcional)"
+              value={form.descricao}
+              onChange={(e) => handleChange("descricao", e.target.value)}
+              rows={3}
             />
           </div>
 
