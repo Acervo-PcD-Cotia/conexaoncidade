@@ -1,9 +1,9 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Pencil, Copy, Download, FileText, X, Check } from "lucide-react";
+import { Plus, Trash2, Pencil, Copy, Download, FileText, X, Check, Save, FolderOpen, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -12,6 +12,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
 
 interface NewsItem {
   fonte: string;
@@ -20,6 +21,15 @@ interface NewsItem {
   titulo: string;
   subtitulo: string;
   descricao: string;
+}
+
+interface SavedReport {
+  id: string;
+  title: string;
+  items: NewsItem[];
+  report_text: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 const emptyItem: NewsItem = {
@@ -37,6 +47,14 @@ export default function RelatorioTXT() {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [showReport, setShowReport] = useState(false);
   const [reportText, setReportText] = useState("");
+
+  // Save/load state
+  const [reportTitle, setReportTitle] = useState("Sem título");
+  const [currentReportId, setCurrentReportId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [showSavedList, setShowSavedList] = useState(false);
+  const [savedReports, setSavedReports] = useState<SavedReport[]>([]);
+  const [loadingSaved, setLoadingSaved] = useState(false);
 
   const handleChange = (field: keyof NewsItem, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -83,13 +101,8 @@ export default function RelatorioTXT() {
     setForm({ ...emptyItem });
   };
 
-  const generateReport = useCallback(() => {
-    if (items.length === 0) {
-      toast.error("Adicione pelo menos uma notícia.");
-      return;
-    }
-
-    const lines = items.map((item, i) => {
+  const buildReportText = useCallback((newsItems: NewsItem[]) => {
+    const lines = newsItems.map((item, i) => {
       const parts = [`NOTÍCIA ${i + 1}`];
       if (item.fonte) parts.push(`Fonte: ${item.fonte}`);
       parts.push(`Data: ${item.dataPublicacao}`);
@@ -99,11 +112,18 @@ export default function RelatorioTXT() {
       if (item.linkImagem) parts.push(`Imagem: ${item.linkImagem}`);
       return parts.join("\n");
     });
+    return lines.join("\n\n----------------------------------------\n\n");
+  }, []);
 
-    const text = lines.join("\n\n----------------------------------------\n\n");
+  const generateReport = useCallback(() => {
+    if (items.length === 0) {
+      toast.error("Adicione pelo menos uma notícia.");
+      return;
+    }
+    const text = buildReportText(items);
     setReportText(text);
     setShowReport(true);
-  }, [items]);
+  }, [items, buildReportText]);
 
   const copyToClipboard = async () => {
     try {
@@ -125,14 +145,146 @@ export default function RelatorioTXT() {
     toast.success("Download iniciado!");
   };
 
+  // Save report
+  const handleSave = async () => {
+    if (items.length === 0) {
+      toast.error("Adicione pelo menos uma notícia antes de salvar.");
+      return;
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error("Você precisa estar logado para salvar relatórios.");
+      return;
+    }
+
+    setSaving(true);
+    const text = buildReportText(items);
+
+    try {
+      if (currentReportId) {
+        const { error } = await supabase
+          .from("relatorio_txt_saved")
+          .update({
+            title: reportTitle,
+            items: items as any,
+            report_text: text,
+          })
+          .eq("id", currentReportId);
+        if (error) throw error;
+        toast.success("Relatório atualizado!");
+      } else {
+        const { data, error } = await supabase
+          .from("relatorio_txt_saved")
+          .insert({
+            user_id: user.id,
+            title: reportTitle,
+            items: items as any,
+            report_text: text,
+          })
+          .select("id")
+          .single();
+        if (error) throw error;
+        setCurrentReportId(data.id);
+        toast.success("Relatório salvo!");
+      }
+    } catch (err: any) {
+      toast.error("Erro ao salvar: " + (err.message || "desconhecido"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Load saved reports list
+  const fetchSavedReports = async () => {
+    setLoadingSaved(true);
+    const { data, error } = await supabase
+      .from("relatorio_txt_saved")
+      .select("*")
+      .order("updated_at", { ascending: false });
+
+    if (error) {
+      toast.error("Erro ao carregar relatórios salvos.");
+    } else {
+      setSavedReports((data as any[]) || []);
+    }
+    setLoadingSaved(false);
+  };
+
+  const openSavedList = () => {
+    setShowSavedList(true);
+    fetchSavedReports();
+  };
+
+  const loadReport = (report: SavedReport) => {
+    setItems(report.items);
+    setReportTitle(report.title);
+    setCurrentReportId(report.id);
+    setShowSavedList(false);
+    setEditingIndex(null);
+    setForm({ ...emptyItem });
+    toast.success("Relatório carregado!");
+  };
+
+  const deleteSavedReport = async (id: string) => {
+    const { error } = await supabase.from("relatorio_txt_saved").delete().eq("id", id);
+    if (error) {
+      toast.error("Erro ao excluir relatório.");
+    } else {
+      setSavedReports((prev) => prev.filter((r) => r.id !== id));
+      if (currentReportId === id) {
+        setCurrentReportId(null);
+      }
+      toast.success("Relatório excluído.");
+    }
+  };
+
+  const handleNewReport = () => {
+    setItems([]);
+    setForm({ ...emptyItem });
+    setEditingIndex(null);
+    setReportTitle("Sem título");
+    setCurrentReportId(null);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold">Relatório TXT de Notícias</h1>
-        <p className="text-muted-foreground">
-          Cadastre notícias e gere um relatório em texto simples para copiar e colar.
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold">Relatório TXT de Notícias</h1>
+          <p className="text-muted-foreground">
+            Cadastre notícias e gere um relatório em texto simples para copiar e colar.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleNewReport} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Novo
+          </Button>
+          <Button variant="outline" size="sm" onClick={openSavedList} className="gap-2">
+            <FolderOpen className="h-4 w-4" />
+            Abrir Salvo
+          </Button>
+          <Button size="sm" onClick={handleSave} disabled={saving || items.length === 0} className="gap-2">
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            Salvar
+          </Button>
+        </div>
+      </div>
+
+      {/* Report title */}
+      <div className="flex items-center gap-2">
+        <label className="text-sm font-medium whitespace-nowrap">Nome do relatório:</label>
+        <Input
+          value={reportTitle}
+          onChange={(e) => setReportTitle(e.target.value)}
+          className="max-w-sm"
+          placeholder="Título do relatório"
+        />
+        {currentReportId && (
+          <span className="text-xs text-muted-foreground whitespace-nowrap">(salvo)</span>
+        )}
       </div>
 
       {/* Form */}
@@ -322,6 +474,51 @@ export default function RelatorioTXT() {
               Copiar Tudo
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Saved reports modal */}
+      <Dialog open={showSavedList} onOpenChange={setShowSavedList}>
+        <DialogContent className="max-w-lg max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Relatórios Salvos</DialogTitle>
+          </DialogHeader>
+          {loadingSaved ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : savedReports.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">Nenhum relatório salvo.</p>
+          ) : (
+            <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+              {savedReports.map((report) => (
+                <div
+                  key={report.id}
+                  className="flex items-center justify-between gap-3 rounded-lg border p-3 hover:bg-muted/50 transition-colors"
+                >
+                  <button
+                    className="flex-1 text-left min-w-0"
+                    onClick={() => loadReport(report)}
+                  >
+                    <p className="font-medium text-sm truncate">{report.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {(report.items as any[]).length} notícia(s) • Atualizado em{" "}
+                      {new Date(report.updated_at).toLocaleDateString("pt-BR")}
+                    </p>
+                  </button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => deleteSavedReport(report.id)}
+                    className="text-destructive hover:text-destructive shrink-0"
+                    title="Excluir"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
