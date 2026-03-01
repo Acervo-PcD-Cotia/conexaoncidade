@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Pencil, Copy, Download, FileText, X, Check, Save, FolderOpen, Loader2, ExternalLink, Globe } from "lucide-react";
+import { Plus, Trash2, Pencil, Copy, Download, FileText, X, Check, Save, FolderOpen, Loader2, ExternalLink, Globe, ClipboardPaste, Upload } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -74,6 +75,10 @@ export default function RelatorioTXT() {
   const [showSavedList, setShowSavedList] = useState(false);
   const [savedReports, setSavedReports] = useState<SavedReport[]>([]);
   const [loadingSaved, setLoadingSaved] = useState(false);
+
+  // Paste TXT / Upload JSON state
+  const [pasteTxt, setPasteTxt] = useState("");
+  const [importTab, setImportTab] = useState("form");
 
   const handleChange = (field: keyof NewsItem, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -265,6 +270,97 @@ export default function RelatorioTXT() {
     setEditingIndex(null);
     setReportTitle("Sem título");
     setCurrentReportId(null);
+    setPasteTxt("");
+  };
+
+  // Parse pasted TXT into items
+  const handleParseTxt = () => {
+    if (!pasteTxt.trim()) {
+      toast.error("Cole o conteúdo do TXT primeiro.");
+      return;
+    }
+    const blocks = pasteTxt.split(/[-─]{5,}/).map(b => b.trim()).filter(Boolean);
+    const parsed: NewsItem[] = [];
+
+    for (const block of blocks) {
+      const lines = block.split("\n").map(l => l.trim()).filter(Boolean);
+      const item: NewsItem = { ...emptyItem };
+      for (const line of lines) {
+        if (/^NOTÍCIA\s+\d+/i.test(line)) continue;
+        const match = line.match(/^(.+?):\s*(.+)$/);
+        if (match) {
+          const key = match[1].toLowerCase().trim();
+          const val = match[2].trim();
+          if (key === "fonte") item.fonte = val;
+          else if (key === "link") item.linkNoticia = val;
+          else if (key === "data") item.dataPublicacao = val;
+          else if (key === "título" || key === "titulo") item.titulo = val;
+          else if (key === "subtítulo" || key === "subtitulo") item.subtitulo = val;
+          else if (key === "descrição" || key === "descricao") item.descricao = val;
+          else if (key === "imagem") item.linkImagem = val;
+        }
+      }
+      if (item.titulo) parsed.push(item);
+    }
+
+    if (parsed.length === 0) {
+      toast.error("Não foi possível extrair notícias do texto colado.");
+      return;
+    }
+    setItems(prev => [...prev, ...parsed]);
+    setPasteTxt("");
+    toast.success(`${parsed.length} notícia(s) importada(s) do TXT!`);
+  };
+
+  // Handle JSON file upload
+  const handleJsonUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+
+      let jsonItems: NewsItem[] = [];
+
+      // Accept array or { items: [...] }
+      const arr = Array.isArray(data) ? data : Array.isArray(data.items) ? data.items : null;
+
+      if (!arr) {
+        toast.error("JSON inválido. Esperado um array ou { items: [...] }.");
+        return;
+      }
+
+      jsonItems = arr.map((entry: any) => ({
+        fonte: entry.fonte || "",
+        linkNoticia: entry.linkNoticia || entry.link || "",
+        linkImagem: entry.linkImagem || entry.imagem || "",
+        dataPublicacao: entry.dataPublicacao || entry.data || "",
+        titulo: entry.titulo || entry.title || "",
+        subtitulo: entry.subtitulo || "",
+        descricao: entry.descricao || entry.description || "",
+      })).filter((item: NewsItem) => item.titulo);
+
+      if (jsonItems.length === 0) {
+        toast.error("Nenhuma notícia válida encontrada no JSON.");
+        return;
+      }
+
+      setItems(prev => [...prev, ...jsonItems]);
+
+      // Also save the JSON content to the report
+      if (!reportTitle || reportTitle === "Sem título") {
+        const fileName = file.name.replace(/\.json$/i, "");
+        setReportTitle(fileName);
+      }
+
+      toast.success(`${jsonItems.length} notícia(s) importada(s) do JSON!`);
+    } catch {
+      toast.error("Erro ao ler o arquivo JSON. Verifique o formato.");
+    }
+
+    // Reset file input
+    e.target.value = "";
   };
 
   return (
@@ -353,112 +449,209 @@ export default function RelatorioTXT() {
         </CardContent>
       </Card>
 
-      {/* Form */}
-      <Card>
-        <CardHeader className="pb-4">
-          <CardTitle className="text-lg">
-            {editingIndex !== null ? `Editando Notícia ${editingIndex + 1}` : "Nova Notícia"}
-          </CardTitle>
-          <CardDescription>
-            Campos com * são obrigatórios.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Título */}
-          <div>
-            <label className="text-sm font-medium">Título *</label>
-            <Input
-              placeholder="Título da notícia"
-              value={form.titulo}
-              onChange={(e) => handleChange("titulo", e.target.value)}
-            />
-          </div>
+      {/* Input Tabs: Form / Paste TXT / Upload JSON */}
+      <Tabs value={importTab} onValueChange={setImportTab}>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="form" className="gap-2">
+            <Plus className="h-4 w-4" />
+            Cadastro Manual
+          </TabsTrigger>
+          <TabsTrigger value="paste" className="gap-2">
+            <ClipboardPaste className="h-4 w-4" />
+            Colar TXT
+          </TabsTrigger>
+          <TabsTrigger value="json" className="gap-2">
+            <Upload className="h-4 w-4" />
+            Upload JSON
+          </TabsTrigger>
+        </TabsList>
 
-          {/* Subtítulo */}
-          <div>
-            <label className="text-sm font-medium">Subtítulo</label>
-            <Input
-              placeholder="Subtítulo (opcional)"
-              value={form.subtitulo}
-              onChange={(e) => handleChange("subtitulo", e.target.value)}
-            />
-          </div>
+        {/* Manual Form Tab */}
+        <TabsContent value="form">
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg">
+                {editingIndex !== null ? `Editando Notícia ${editingIndex + 1}` : "Nova Notícia"}
+              </CardTitle>
+              <CardDescription>
+                Campos com * são obrigatórios.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Título *</label>
+                <Input
+                  placeholder="Título da notícia"
+                  value={form.titulo}
+                  onChange={(e) => handleChange("titulo", e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Subtítulo</label>
+                <Input
+                  placeholder="Subtítulo (opcional)"
+                  value={form.subtitulo}
+                  onChange={(e) => handleChange("subtitulo", e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-[1fr_200px] gap-4">
+                <div>
+                  <label className="text-sm font-medium">Fonte</label>
+                  <Input
+                    placeholder="Ex: Agência Brasil (opcional)"
+                    value={form.fonte}
+                    onChange={(e) => handleChange("fonte", e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Data *</label>
+                  <Input
+                    placeholder="DD/MM/AAAA"
+                    value={form.dataPublicacao}
+                    onChange={(e) => handleChange("dataPublicacao", e.target.value)}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Link da Notícia</label>
+                <Input
+                  placeholder="https://... (opcional)"
+                  value={form.linkNoticia}
+                  onChange={(e) => handleChange("linkNoticia", e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Link da Imagem</label>
+                <Input
+                  placeholder="https://... (opcional)"
+                  value={form.linkImagem}
+                  onChange={(e) => handleChange("linkImagem", e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Descrição</label>
+                <Textarea
+                  placeholder="Resumo ou corpo da notícia (opcional)"
+                  value={form.descricao}
+                  onChange={(e) => handleChange("descricao", e.target.value)}
+                  rows={3}
+                />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <Button onClick={handleAdd} className="gap-2">
+                  {editingIndex !== null ? (
+                    <>
+                      <Check className="h-4 w-4" />
+                      Salvar Alteração
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4" />
+                      Adicionar Notícia
+                    </>
+                  )}
+                </Button>
+                {editingIndex !== null && (
+                  <Button variant="outline" onClick={handleCancelEdit} className="gap-2">
+                    <X className="h-4 w-4" />
+                    Cancelar
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          {/* Fonte + Data */}
-          <div className="grid grid-cols-1 md:grid-cols-[1fr_200px] gap-4">
-            <div>
-              <label className="text-sm font-medium">Fonte</label>
-              <Input
-                placeholder="Ex: Agência Brasil (opcional)"
-                value={form.fonte}
-                onChange={(e) => handleChange("fonte", e.target.value)}
+        {/* Paste TXT Tab */}
+        <TabsContent value="paste">
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <ClipboardPaste className="h-5 w-5" />
+                Colar Relatório TXT
+              </CardTitle>
+              <CardDescription>
+                Cole o conteúdo de um relatório TXT gerado anteriormente. O sistema irá extrair automaticamente as notícias.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Textarea
+                placeholder={`Cole aqui o conteúdo do TXT...\n\nExemplo:\nNOTÍCIA 1\nFonte: Agência Brasil\nLink: https://...\nData: 01/03/2026\nTítulo: Exemplo de notícia\n\n----------------------------------------\n\nNOTÍCIA 2\n...`}
+                value={pasteTxt}
+                onChange={(e) => setPasteTxt(e.target.value)}
+                rows={12}
+                className="font-mono text-sm"
               />
-            </div>
-            <div>
-              <label className="text-sm font-medium">Data *</label>
-              <Input
-                placeholder="DD/MM/AAAA"
-                value={form.dataPublicacao}
-                onChange={(e) => handleChange("dataPublicacao", e.target.value)}
-              />
-            </div>
-          </div>
+              <div className="flex gap-2">
+                <Button onClick={handleParseTxt} disabled={!pasteTxt.trim()} className="gap-2">
+                  <FileText className="h-4 w-4" />
+                  Importar do TXT
+                </Button>
+                {pasteTxt && (
+                  <Button variant="outline" onClick={() => setPasteTxt("")} className="gap-2">
+                    <X className="h-4 w-4" />
+                    Limpar
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          {/* Link da Notícia */}
-          <div>
-            <label className="text-sm font-medium">Link da Notícia</label>
-            <Input
-              placeholder="https://... (opcional)"
-              value={form.linkNoticia}
-              onChange={(e) => handleChange("linkNoticia", e.target.value)}
-            />
-          </div>
-
-          {/* Link Imagem */}
-          <div>
-            <label className="text-sm font-medium">Link da Imagem</label>
-            <Input
-              placeholder="https://... (opcional)"
-              value={form.linkImagem}
-              onChange={(e) => handleChange("linkImagem", e.target.value)}
-            />
-          </div>
-
-          {/* Descrição */}
-          <div>
-            <label className="text-sm font-medium">Descrição</label>
-            <Textarea
-              placeholder="Resumo ou corpo da notícia (opcional)"
-              value={form.descricao}
-              onChange={(e) => handleChange("descricao", e.target.value)}
-              rows={3}
-            />
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-2 pt-2">
-            <Button onClick={handleAdd} className="gap-2">
-              {editingIndex !== null ? (
-                <>
-                  <Check className="h-4 w-4" />
-                  Salvar Alteração
-                </>
-              ) : (
-                <>
-                  <Plus className="h-4 w-4" />
-                  Adicionar Notícia
-                </>
-              )}
-            </Button>
-            {editingIndex !== null && (
-              <Button variant="outline" onClick={handleCancelEdit} className="gap-2">
-                <X className="h-4 w-4" />
-                Cancelar
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+        {/* Upload JSON Tab */}
+        <TabsContent value="json">
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Upload className="h-5 w-5" />
+                Upload de JSON
+              </CardTitle>
+              <CardDescription>
+                Envie um arquivo .json com as notícias. Aceita um array ou um objeto com a chave "items".
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="border-2 border-dashed rounded-lg p-8 text-center space-y-4">
+                <Upload className="h-10 w-10 mx-auto text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Selecione um arquivo JSON</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Formato esperado: array de objetos com campos titulo, fonte, data, etc.
+                  </p>
+                </div>
+                <label className="inline-block">
+                  <input
+                    type="file"
+                    accept=".json,application/json"
+                    onChange={handleJsonUpload}
+                    className="hidden"
+                  />
+                  <Button asChild variant="outline" className="gap-2 cursor-pointer">
+                    <span>
+                      <Upload className="h-4 w-4" />
+                      Escolher Arquivo
+                    </span>
+                  </Button>
+                </label>
+              </div>
+              <div className="bg-muted/50 rounded-lg p-4">
+                <p className="text-xs font-medium mb-2">Exemplo de formato JSON:</p>
+                <pre className="text-xs font-mono text-muted-foreground overflow-x-auto">{`[
+  {
+    "titulo": "Título da notícia",
+    "fonte": "Nome da fonte",
+    "dataPublicacao": "01/03/2026",
+    "linkNoticia": "https://...",
+    "subtitulo": "Subtítulo",
+    "descricao": "Descrição",
+    "linkImagem": "https://..."
+  }
+]`}</pre>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Items list */}
       {items.length > 0 && (
