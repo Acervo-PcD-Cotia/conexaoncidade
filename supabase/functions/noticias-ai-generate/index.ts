@@ -50,16 +50,16 @@ interface NewsArticle {
 }
 
 // Helper: Check if string is an image URL
-function isImageUrl(url?: string): boolean {
-  if (!url) return false;
+function isImageUrl(url?: unknown): boolean {
+  if (!url || typeof url !== 'string') return false;
   const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'];
   const lowerUrl = url.toLowerCase();
   return imageExtensions.some(ext => lowerUrl.includes(ext));
 }
 
 // Helper: Sanitize source - remove image URLs
-function sanitizeSource(source?: string): string {
-  if (!source) return '';
+function sanitizeSource(source?: unknown): string {
+  if (!source || typeof source !== 'string') return '';
   if (isImageUrl(source)) return '';
   return source;
 }
