@@ -13973,6 +13973,36 @@ export type Database = {
         }
         Relationships: []
       }
+      relatorio_txt_saved: {
+        Row: {
+          created_at: string
+          id: string
+          items: Json
+          report_text: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          items?: Json
+          report_text?: string | null
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          items?: Json
+          report_text?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       schools: {
         Row: {
           bairro: string
