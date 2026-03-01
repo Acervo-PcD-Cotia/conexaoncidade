@@ -605,17 +605,82 @@ export default function RelatorioTXT() {
             <CardHeader className="pb-4">
               <CardTitle className="text-lg flex items-center gap-2">
                 <Upload className="h-5 w-5" />
-                Upload de JSON
+                Importar JSON
               </CardTitle>
               <CardDescription>
-                Envie um arquivo .json com as notícias. Aceita um array ou um objeto com a chave "items".
+                Cole o código JSON ou envie um arquivo .json. Aceita um array ou objeto com a chave "items".
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="border-2 border-dashed rounded-lg p-8 text-center space-y-4">
-                <Upload className="h-10 w-10 mx-auto text-muted-foreground" />
+              {/* Colar JSON */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Colar código JSON</label>
+                <Textarea
+                  placeholder={`Cole o JSON aqui...\n\n[\n  { "titulo": "...", "fonte": "...", "dataPublicacao": "...", ... }\n]`}
+                  value={pasteJson}
+                  onChange={(e) => setPasteJson(e.target.value)}
+                  rows={8}
+                  className="font-mono text-sm"
+                />
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => {
+                      if (!pasteJson.trim()) {
+                        toast.error("Cole o código JSON primeiro.");
+                        return;
+                      }
+                      try {
+                        const data = JSON.parse(pasteJson);
+                        const arr = Array.isArray(data) ? data : Array.isArray(data.items) ? data.items : null;
+                        if (!arr) {
+                          toast.error("JSON inválido. Esperado um array ou { items: [...] }.");
+                          return;
+                        }
+                        const jsonItems: NewsItem[] = arr.map((entry: any) => ({
+                          fonte: entry.fonte || "",
+                          linkNoticia: entry.linkNoticia || entry.link || "",
+                          linkImagem: entry.linkImagem || entry.imagem || "",
+                          dataPublicacao: entry.dataPublicacao || entry.data || "",
+                          titulo: entry.titulo || entry.title || "",
+                          subtitulo: entry.subtitulo || "",
+                          descricao: entry.descricao || entry.description || "",
+                        })).filter((item: NewsItem) => item.titulo);
+                        if (jsonItems.length === 0) {
+                          toast.error("Nenhuma notícia válida encontrada no JSON.");
+                          return;
+                        }
+                        setItems(prev => [...prev, ...jsonItems]);
+                        setPasteJson("");
+                        toast.success(`${jsonItems.length} notícia(s) importada(s) do JSON!`);
+                      } catch {
+                        toast.error("JSON inválido. Verifique a sintaxe.");
+                      }
+                    }}
+                    disabled={!pasteJson.trim()}
+                    className="gap-2"
+                  >
+                    <ClipboardPaste className="h-4 w-4" />
+                    Importar JSON
+                  </Button>
+                  {pasteJson && (
+                    <Button variant="outline" onClick={() => setPasteJson("")} className="gap-2">
+                      <X className="h-4 w-4" />
+                      Limpar
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+                <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">ou</span></div>
+              </div>
+
+              {/* Upload arquivo */}
+              <div className="border-2 border-dashed rounded-lg p-6 text-center space-y-3">
+                <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
                 <div>
-                  <p className="text-sm font-medium">Selecione um arquivo JSON</p>
+                  <p className="text-sm font-medium">Upload de arquivo .json</p>
                   <p className="text-xs text-muted-foreground mt-1">
                     Formato esperado: array de objetos com campos titulo, fonte, data, etc.
                   </p>
@@ -627,27 +692,13 @@ export default function RelatorioTXT() {
                     onChange={handleJsonUpload}
                     className="hidden"
                   />
-                  <Button asChild variant="outline" className="gap-2 cursor-pointer">
+                  <Button asChild variant="outline" size="sm" className="gap-2 cursor-pointer">
                     <span>
                       <Upload className="h-4 w-4" />
                       Escolher Arquivo
                     </span>
                   </Button>
                 </label>
-              </div>
-              <div className="bg-muted/50 rounded-lg p-4">
-                <p className="text-xs font-medium mb-2">Exemplo de formato JSON:</p>
-                <pre className="text-xs font-mono text-muted-foreground overflow-x-auto">{`[
-  {
-    "titulo": "Título da notícia",
-    "fonte": "Nome da fonte",
-    "dataPublicacao": "01/03/2026",
-    "linkNoticia": "https://...",
-    "subtitulo": "Subtítulo",
-    "descricao": "Descrição",
-    "linkImagem": "https://..."
-  }
-]`}</pre>
               </div>
             </CardContent>
           </Card>
@@ -739,9 +790,30 @@ export default function RelatorioTXT() {
               <Download className="h-4 w-4" />
               Baixar .txt
             </Button>
-            <Button onClick={copyToClipboard} className="gap-2">
+            <Button variant="outline" onClick={copyToClipboard} className="gap-2">
               <Copy className="h-4 w-4" />
               Copiar Tudo
+            </Button>
+            <Button
+              onClick={async () => {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) { toast.error("Faça login para salvar."); return; }
+                const text = reportText;
+                const title = reportTitle || "Sem título";
+                try {
+                  if (currentReportId) {
+                    await supabase.from("relatorio_txt_saved").update({ title, items: items as any, report_text: text }).eq("id", currentReportId);
+                  } else {
+                    const { data } = await supabase.from("relatorio_txt_saved").insert({ user_id: user.id, title, items: items as any, report_text: text }).select("id").single();
+                    if (data) setCurrentReportId(data.id);
+                  }
+                  toast.success("Relatório TXT salvo!");
+                } catch { toast.error("Erro ao salvar."); }
+              }}
+              className="gap-2"
+            >
+              <Save className="h-4 w-4" />
+              Salvar TXT
             </Button>
           </DialogFooter>
         </DialogContent>
