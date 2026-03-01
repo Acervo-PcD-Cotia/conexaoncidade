@@ -272,6 +272,30 @@ export default function RelatorioTXT() {
     toast.success("Relatório carregado!");
   };
 
+  const downloadReportTxt = (report: SavedReport) => {
+    const text = report.report_text || buildReportText(report.items);
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${report.title || "relatorio"}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("TXT baixado!");
+  };
+
+  const downloadReportJson = (report: SavedReport) => {
+    const json = JSON.stringify(report.items, null, 2);
+    const blob = new Blob([json], { type: "application/json;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${report.title || "relatorio"}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("JSON baixado!");
+  };
+
   const deleteSavedReport = async (id: string) => {
     const { error } = await supabase.from("relatorio_txt_saved").delete().eq("id", id);
     if (error) {
@@ -328,7 +352,7 @@ export default function RelatorioTXT() {
       toast.error("Não foi possível extrair notícias do texto colado.");
       return;
     }
-    setItems(prev => [...prev, ...parsed]);
+    setItems(parsed);
     setPasteTxt("");
     toast.success(`${parsed.length} notícia(s) importada(s) do TXT!`);
   };
@@ -359,7 +383,7 @@ export default function RelatorioTXT() {
         return;
       }
 
-      setItems(prev => [...prev, ...jsonItems]);
+      setItems(jsonItems);
 
       // Also save the JSON content to the report
       if (!reportTitle || reportTitle === "Sem título") {
@@ -653,7 +677,7 @@ export default function RelatorioTXT() {
                           toast.error("Nenhuma notícia válida encontrada no JSON.");
                           return;
                         }
-                        setItems(prev => [...prev, ...jsonItems]);
+                        setItems(jsonItems);
                         setPasteJson("");
                         toast.success(`${jsonItems.length} notícia(s) importada(s) do JSON!`);
                       } catch {
@@ -836,31 +860,44 @@ export default function RelatorioTXT() {
           ) : savedReports.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">Nenhum relatório salvo.</p>
           ) : (
-            <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+            <div className="space-y-3 max-h-[50vh] overflow-y-auto">
               {savedReports.map((report) => (
                 <div
                   key={report.id}
-                  className="flex items-center justify-between gap-3 rounded-lg border p-3 hover:bg-muted/50 transition-colors"
+                  className="rounded-lg border p-4 space-y-3"
                 >
-                  <button
-                    className="flex-1 text-left min-w-0"
-                    onClick={() => loadReport(report)}
-                  >
-                    <p className="font-medium text-sm truncate">{report.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {(report.items as any[]).length} notícia(s) • Atualizado em{" "}
-                      {new Date(report.updated_at).toLocaleDateString("pt-BR")}
-                    </p>
-                  </button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => deleteSavedReport(report.id)}
-                    className="text-destructive hover:text-destructive shrink-0"
-                    title="Excluir"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm truncate">{report.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {(report.items as any[]).length} notícia(s) • Atualizado em{" "}
+                        {new Date(report.updated_at).toLocaleDateString("pt-BR")}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => deleteSavedReport(report.id)}
+                      className="text-destructive hover:text-destructive shrink-0"
+                      title="Excluir"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" variant="outline" onClick={() => loadReport(report)} className="gap-1.5 text-xs">
+                      <FolderOpen className="h-3.5 w-3.5" />
+                      Abrir Notícias
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => downloadReportTxt(report)} className="gap-1.5 text-xs">
+                      <FileText className="h-3.5 w-3.5" />
+                      Baixar TXT
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => downloadReportJson(report)} className="gap-1.5 text-xs">
+                      <Download className="h-3.5 w-3.5" />
+                      Baixar JSON
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
