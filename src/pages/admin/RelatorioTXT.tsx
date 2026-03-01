@@ -46,6 +46,26 @@ const emptyItem: NewsItem = {
   descricao: "",
 };
 
+/** Safely convert any value to string (objects become JSON) */
+function str(val: unknown): string {
+  if (val == null) return "";
+  if (typeof val === "string") return val;
+  if (typeof val === "number" || typeof val === "boolean") return String(val);
+  return JSON.stringify(val);
+}
+
+function mapEntryToItem(entry: any): NewsItem {
+  return {
+    fonte: str(entry.fonte),
+    linkNoticia: str(entry.linkNoticia || entry.link || entry.url_original),
+    linkImagem: str(entry.linkImagem || entry.imagem || entry.image),
+    dataPublicacao: str(entry.dataPublicacao || entry.data),
+    titulo: str(entry.titulo || entry.title),
+    subtitulo: str(entry.subtitulo),
+    descricao: str(entry.descricao || entry.description || entry.conteudo),
+  };
+}
+
 function useFontesCadastradas() {
   return useQuery({
     queryKey: ["autopost-sources-links"],
@@ -332,15 +352,7 @@ export default function RelatorioTXT() {
         return;
       }
 
-      jsonItems = arr.map((entry: any) => ({
-        fonte: entry.fonte || "",
-        linkNoticia: entry.linkNoticia || entry.link || "",
-        linkImagem: entry.linkImagem || entry.imagem || "",
-        dataPublicacao: entry.dataPublicacao || entry.data || "",
-        titulo: entry.titulo || entry.title || "",
-        subtitulo: entry.subtitulo || "",
-        descricao: entry.descricao || entry.description || "",
-      })).filter((item: NewsItem) => item.titulo);
+      jsonItems = arr.map((entry: any) => mapEntryToItem(entry)).filter((item: NewsItem) => item.titulo);
 
       if (jsonItems.length === 0) {
         toast.error("Nenhuma notícia válida encontrada no JSON.");
@@ -636,15 +648,7 @@ export default function RelatorioTXT() {
                           toast.error("JSON inválido. Esperado um array ou { items: [...] }.");
                           return;
                         }
-                        const jsonItems: NewsItem[] = arr.map((entry: any) => ({
-                          fonte: entry.fonte || "",
-                          linkNoticia: entry.linkNoticia || entry.link || "",
-                          linkImagem: entry.linkImagem || entry.imagem || "",
-                          dataPublicacao: entry.dataPublicacao || entry.data || "",
-                          titulo: entry.titulo || entry.title || "",
-                          subtitulo: entry.subtitulo || "",
-                          descricao: entry.descricao || entry.description || "",
-                        })).filter((item: NewsItem) => item.titulo);
+                        const jsonItems: NewsItem[] = arr.map((entry: any) => mapEntryToItem(entry)).filter((item: NewsItem) => item.titulo);
                         if (jsonItems.length === 0) {
                           toast.error("Nenhuma notícia válida encontrada no JSON.");
                           return;
