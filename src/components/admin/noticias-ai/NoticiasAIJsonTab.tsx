@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Copy, Check, Eye, Download, AlertTriangle, Loader2, Trash2, Image, Wand2 } from 'lucide-react';
+import { useState, useMemo, useCallback, useRef } from 'react';
+import { Copy, Check, Eye, Download, AlertTriangle, Loader2, Trash2, Image, Wand2, Upload, ClipboardPaste, FileJson } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { ArticlePreviewDialog } from './ArticlePreviewDialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -67,6 +68,9 @@ export function NoticiasAIJsonTab({
 }: NoticiasAIJsonTabProps) {
   const [copied, setCopied] = useState(false);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const [pasteContent, setPasteContent] = useState('');
+  const [parseError, setParseError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   // Count duplicates
@@ -74,6 +78,49 @@ export function NoticiasAIJsonTab({
     if (!data?.noticias) return 0;
     return data.noticias.filter(a => a._duplicateInfo).length;
   }, [data]);
+
+  // Parse and validate JSON
+  const handleParseJson = useCallback((raw: string) => {
+    setParseError(null);
+    try {
+      const parsed = JSON.parse(raw);
+      // Accept { noticias: [...] } or direct array
+      const noticias = parsed.noticias ?? (Array.isArray(parsed) ? parsed : null);
+      if (!noticias || !Array.isArray(noticias) || noticias.length === 0) {
+        setParseError('JSON deve conter um array "noticias" com pelo menos 1 item.');
+        return;
+      }
+      // Basic validation
+      const invalid = noticias.findIndex((n: any) => !n.titulo && !n.title);
+      if (invalid >= 0) {
+        setParseError(`Notícia #${invalid + 1} não possui campo "titulo".`);
+        return;
+      }
+      onDataChange?.({ noticias });
+      setPasteContent('');
+      toast({ title: `${noticias.length} notícia(s) carregada(s) do JSON` });
+    } catch (e: any) {
+      setParseError(`JSON inválido: ${e.message}`);
+    }
+  }, [onDataChange, toast]);
+
+  // File upload handler
+  const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.endsWith('.json') && file.type !== 'application/json') {
+      setParseError('Apenas arquivos .json são aceitos.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string;
+      handleParseJson(text);
+    };
+    reader.readAsText(file);
+    // Reset input
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }, [handleParseJson]);
 
   // Remove duplicates handler
   const handleRemoveDuplicates = () => {
@@ -91,20 +138,76 @@ export function NoticiasAIJsonTab({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // JSON import area (shown when no data)
+  const renderImportArea = () => (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <FileJson className="h-5 w-5 text-primary" />
+          Importar JSON
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* File upload drop zone */}
+        <div
+          className="flex cursor-pointer flex-col items-center gap-3 rounded-lg border-2 border-dashed border-muted-foreground/30 p-8 transition-colors hover:border-primary/50 hover:bg-accent/30"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <Upload className="h-10 w-10 text-muted-foreground/50" />
+          <div className="text-center">
+            <p className="font-medium">Clique para fazer upload de um arquivo .json</p>
+            <p className="text-sm text-muted-foreground">ou cole o conteúdo JSON abaixo</p>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json,application/json"
+            className="hidden"
+            onChange={handleFileUpload}
+          />
+        </div>
+
+        {/* Paste area */}
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2">
+            <ClipboardPaste className="h-4 w-4" />
+            Colar JSON
+          </Label>
+          <Textarea
+            placeholder='{"noticias": [{"titulo": "...", "resumo": "...", ...}]}'
+            value={pasteContent}
+            onChange={(e) => setPasteContent(e.target.value)}
+            className="min-h-[200px] font-mono text-xs"
+          />
+        </div>
+
+        {parseError && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>{parseError}</AlertDescription>
+          </Alert>
+        )}
+
+        <Button
+          onClick={() => handleParseJson(pasteContent)}
+          disabled={!pasteContent.trim()}
+          className="w-full"
+        >
+          <Download className="mr-2 h-4 w-4" />
+          Carregar JSON
+        </Button>
+      </CardContent>
+    </Card>
+  );
+
   if (!data || !data.noticias?.length) {
-    return (
-      <Card className="border-dashed">
-        <CardContent className="flex min-h-[300px] items-center justify-center">
-          <p className="text-center text-muted-foreground">
-            Processe um conteúdo no modo JSON para ver o resultado aqui.
-          </p>
-        </CardContent>
-      </Card>
-    );
+    return renderImportArea();
   }
 
   return (
     <div className="space-y-4" data-tour="json-result">
+      {/* Import new JSON option */}
+      {renderImportArea()}
       {/* Controls */}
       <Card>
         <CardContent className="flex flex-wrap items-center justify-between gap-4 py-4">
