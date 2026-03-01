@@ -415,6 +415,10 @@ interface GeneratorNewsItem {
   linkMateria: string;
   linkImagem: string;
   dataPublicacao: string;
+  title: string;
+  subtitle: string;
+  source: string;
+  description: string;
 }
 
 export interface HighlightSettings {
@@ -478,7 +482,7 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
   
   // Gerador state
   const [generatorItems, setGeneratorItems] = useState<GeneratorNewsItem[]>([
-    { linkMateria: '', linkImagem: '', dataPublicacao: '' }
+    { linkMateria: '', linkImagem: '', dataPublicacao: '', title: '', subtitle: '', source: '', description: '' }
   ]);
   const [generatorProgress, setGeneratorProgress] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -648,7 +652,7 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
 
   // Generator helpers
   const addGeneratorItem = () => {
-    setGeneratorItems(prev => [...prev, { linkMateria: '', linkImagem: '', dataPublicacao: '' }]);
+    setGeneratorItems(prev => [...prev, { linkMateria: '', linkImagem: '', dataPublicacao: '', title: '', subtitle: '', source: '', description: '' }]);
   };
 
   const removeGeneratorItem = (index: number) => {
@@ -849,7 +853,7 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
     setSingleUrl('');
     setBatchUrls('');
     setImageUrls([]);
-    setGeneratorItems([{ linkMateria: '', linkImagem: '', dataPublicacao: '' }]);
+    setGeneratorItems([{ linkMateria: '', linkImagem: '', dataPublicacao: '', title: '', subtitle: '', source: '', description: '' }]);
     setGeneratorResult(null);
     setHighlights({
       is_home_highlight: false,
@@ -1383,7 +1387,7 @@ https://exemplo.com/noticia-3
                     onChange={(e) => updateGeneratorItem(idx, 'linkMateria', e.target.value)}
                     className="text-sm"
                   />
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-[7fr_3fr] gap-2">
                     <Input
                       placeholder="https://... (link da imagem)"
                       value={item.linkImagem}
@@ -1397,6 +1401,31 @@ https://exemplo.com/noticia-3
                       className="text-sm"
                     />
                   </div>
+                  <Input
+                    placeholder="Título (opcional)"
+                    value={item.title}
+                    onChange={(e) => updateGeneratorItem(idx, 'title', e.target.value)}
+                    className="text-sm"
+                  />
+                  <Input
+                    placeholder="Subtítulo (opcional)"
+                    value={item.subtitle}
+                    onChange={(e) => updateGeneratorItem(idx, 'subtitle', e.target.value)}
+                    className="text-sm"
+                  />
+                  <Input
+                    placeholder="Fonte (opcional)"
+                    value={item.source}
+                    onChange={(e) => updateGeneratorItem(idx, 'source', e.target.value)}
+                    className="text-sm"
+                  />
+                  <Textarea
+                    placeholder="Descrição (opcional) — resumo ou corpo da notícia"
+                    value={item.description}
+                    onChange={(e) => updateGeneratorItem(idx, 'description', e.target.value)}
+                    className="text-sm min-h-[60px]"
+                    rows={2}
+                  />
                 </Card>
               ))}
             </div>

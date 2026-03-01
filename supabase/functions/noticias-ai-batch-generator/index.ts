@@ -9,6 +9,10 @@ interface NewsInput {
   linkMateria: string;
   linkImagem: string;
   dataPublicacao: string;
+  title?: string;
+  subtitle?: string;
+  source?: string;
+  description?: string;
 }
 
 interface BatchRequest {
@@ -214,7 +218,7 @@ async function rewriteWithAI(extracted: {
   title: string;
   content: string;
   charCount: number;
-}, sourceUrl: string, imageUrl: string, dataPublicacao: string, provider: AIProviderPayload = {}): Promise<any> {
+}, sourceUrl: string, imageUrl: string, dataPublicacao: string, provider: AIProviderPayload = {}, optionalFields?: { title?: string; subtitle?: string; source?: string; description?: string }): Promise<any> {
   const { url: aiUrl, headers: aiHeaders, model } = getAIEndpointAndHeaders(provider);
 
   const minChars = Math.floor(extracted.charCount * 0.95);
@@ -258,7 +262,7 @@ Responda APENAS com este JSON (sem markdown, sem comentários):
   "resumo": "",
   "conteudo": "",
   "editor": "Redação Conexão na Cidade",
-  "fonte": "${sourceUrl}",
+  "fonte": "${optionalFields?.source || sourceUrl}",
   "dataPublicacao": "${dataPublicacao}",
   "imagem": {
     "hero": "${imageUrl}",
@@ -287,11 +291,21 @@ Responda APENAS com este JSON (sem markdown, sem comentários):
 - tags: 3-12 itens, NOMES PRÓPRIOS legíveis
 - chapeu: "CIDADE | CATEGORIA" ou "BRASIL | CATEGORIA"`;
 
+  const extraContext: string[] = [];
+  if (optionalFields?.title) extraContext.push(`Título sugerido (use como base, pode refinar): ${optionalFields.title}`);
+  if (optionalFields?.subtitle) extraContext.push(`Subtítulo sugerido: ${optionalFields.subtitle}`);
+  if (optionalFields?.source) extraContext.push(`Fonte oficial: ${optionalFields.source}`);
+  if (optionalFields?.description) extraContext.push(`Descrição/contexto adicional: ${optionalFields.description}`);
+
+  const contentToRewrite = extracted.content || optionalFields?.description || '';
+  const effectiveCharCount = contentToRewrite.length || extracted.charCount;
+
   const userPrompt = `Reescreva esta notícia mantendo ${minChars}-${maxChars} caracteres:
 
-Título: ${extracted.title}
-Conteúdo Original (${extracted.charCount} caracteres):
-${extracted.content}`;
+Título: ${optionalFields?.title || extracted.title}
+${extraContext.length > 0 ? '\n## Informações adicionais fornecidas pelo editor:\n' + extraContext.join('\n') + '\n' : ''}
+Conteúdo Original (${effectiveCharCount} caracteres):
+${contentToRewrite}`;
 
   console.log(`Using AI provider: ${provider.providerId || 'lovable'}, model: ${model}`);
 
@@ -456,8 +470,14 @@ serve(async (req) => {
           item.linkMateria,
           item.linkImagem || extracted.allImages[0] || '',
           item.dataPublicacao || new Date().toLocaleDateString('pt-BR'),
-          aiProvider || {}
+          aiProvider || {},
+          { title: item.title, subtitle: item.subtitle, source: item.source, description: item.description }
         );
+
+        // Override fonte with user-provided source if available
+        if (item.source && article.fonte !== undefined) {
+          article.fonte = item.source;
+        }
 
         results.push(article);
         console.log(`✓ Article ${i + 1} processed: ${article.titulo}`);
