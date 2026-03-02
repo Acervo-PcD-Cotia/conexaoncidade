@@ -215,11 +215,27 @@ export function NoticiasAITutorial({ open, onOpenChange }: NoticiasAITutorialPro
     "conteudo": "<p><strong>Lide</strong></p>...",
     "categoria": "...",
     "tags": ["max 12 tags"],
-    "imagem": { "hero": "url", "alt": "", "credito": "" },
+    "imagem": {
+      "hero": "url",
+      "alt": "",
+      "credito": "",
+      "galeria": ["url2.jpg", "url3.jpg"]
+    },
     "seo": { "meta_titulo": "", "meta_descricao": "" },
-    "fonte": "https://..."
+    "fonte": "https://...",
+    "links": [
+      { "label": "Inscrições", "url": "https://..." },
+      { "label": "Site Oficial", "url": "https://..." }
+    ]
   }]
 }`}</CodeExample>
+
+                  <TipBox>
+                    <strong>Galeria de imagens:</strong> Use o campo <code>imagem.galeria</code> para adicionar imagens extras (array de URLs). A primeira imagem (<code>hero</code>) será a principal.
+                  </TipBox>
+                  <TipBox>
+                    <strong>Links relacionados:</strong> Use o campo <code>links</code> para adicionar links de inscrições, formulários, sites oficiais etc. Cada link tem <code>label</code> (rótulo) e <code>url</code>.
+                  </TipBox>
                 </AccordionContent>
               </AccordionItem>
 
