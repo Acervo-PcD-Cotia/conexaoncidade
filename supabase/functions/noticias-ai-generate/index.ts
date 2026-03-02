@@ -49,6 +49,62 @@ interface NewsArticle {
   is_featured?: boolean;
 }
 
+// ── Extrator de imagens embutidas em texto (descrição/conteúdo) ──
+function extractImagesFromText(text: string): { cleanText: string; images: { url: string; caption: string; credit: string }[] } {
+  if (!text || typeof text !== 'string') return { cleanText: text || '', images: [] };
+
+  const IMG_RE = /^(https?:\/\/[^\s]+\.(jpg|jpeg|png|webp|gif|bmp)(\?[^\s]*)?)$/i;
+  const IMG_LOOSE_RE = /^(https?:\/\/[^\s]+(\/[^\s]*\.(jpg|jpeg|png|webp|gif|bmp))[^\s]*)$/i;
+  const CREDIT_RE = /(?:foto|crédito|imagem|reprodução|divulgação)\s*[:\-]?\s*(.+)/i;
+
+  const lines = text.split('\n');
+  const images: { url: string; caption: string; credit: string }[] = [];
+  const clean: string[] = [];
+  const skip = new Set<number>();
+
+  for (let i = 0; i < lines.length; i++) {
+    if (skip.has(i)) continue;
+    const t = lines[i].trim();
+    if (IMG_RE.test(t) || IMG_LOOSE_RE.test(t)) {
+      let caption = '';
+      let credit = '';
+      const next = i + 1 < lines.length ? lines[i + 1].trim() : '';
+      if (next && !/^https?:\/\//i.test(next)) {
+        caption = next;
+        const cm = next.match(CREDIT_RE);
+        if (cm) credit = cm[1].trim();
+        skip.add(i + 1);
+      }
+      images.push({ url: t, caption, credit });
+    } else {
+      clean.push(lines[i]);
+    }
+  }
+  return { cleanText: clean.join('\n').replace(/\n{3,}/g, '\n\n').trim(), images };
+}
+
+// Helper to apply extracted images to an article object
+function applyExtractedImages(article: any, extractedImages: { url: string; caption: string; credit: string }[]): any {
+  if (!extractedImages || extractedImages.length === 0) return article;
+  const imagem = article.imagem || {};
+  // Only fill hero if empty
+  if (!imagem.hero) {
+    imagem.hero = extractedImages[0].url;
+  }
+  // Add remaining to galeria
+  const existingGaleria: string[] = imagem.galeria || [];
+  const newGaleria = extractedImages
+    .filter((img: { url: string }) => img.url !== imagem.hero)
+    .map((img: { url: string }) => img.url);
+  imagem.galeria = [...existingGaleria, ...newGaleria];
+  // Set credit from first image if empty
+  if (!imagem.credito && extractedImages[0].credit) {
+    imagem.credito = extractedImages[0].credit;
+  }
+  article.imagem = imagem;
+  return article;
+}
+
 // Helper: Check if string is an image URL
 function isImageUrl(url?: unknown): boolean {
   if (!url || typeof url !== 'string') return false;
@@ -820,10 +876,16 @@ Valide TUDO antes de responder. Responda APENAS com JSON válido.`;
       
       case 'manual': {
         const cleanContent = content.replace(/^CADASTRO MANUAL\s*/i, '').trim();
-        const aiResult = await generateWithAI(cleanContent, systemPrompt);
+        
+        // Extract images from raw content before AI processing
+        const { cleanText: manualClean, images: manualExtracted } = extractImagesFromText(cleanContent);
+        
+        const aiResult = await generateWithAI(manualClean, systemPrompt);
         const parsed = JSON.parse(aiResult.replace(/```json\n?|\n?```/g, ''));
         let article = parsed.noticias[0];
         
+        // Apply extracted images first, then user-provided images override
+        article = applyExtractedImages(article, manualExtracted);
         article = applyImages(article, imageUrls);
         article = applyHighlights(article);
         article.conteudo = autoFixLide ? autoFixFirstParagraph(article.conteudo) : article.conteudo;
@@ -863,10 +925,20 @@ Valide TUDO antes de responder. Responda APENAS com JSON válido.`;
           usedAI = true;
         }
         
-        // Ensure required fields and auto-fix lide
+        // Ensure required fields, extract images, and auto-fix lide
         if (parsed.noticias) {
           parsed.noticias = parsed.noticias.map((article: NewsArticle, idx: number) => {
             let enriched = ensureRequiredFields(article);
+            
+            // Extract images from conteudo/descricao fields
+            const contentField = (enriched as any).conteudo || (enriched as any).descricao || '';
+            const { cleanText, images: contentImages } = extractImagesFromText(contentField);
+            if (contentImages.length > 0) {
+              enriched.conteudo = cleanText;
+              enriched = applyExtractedImages(enriched, contentImages);
+              console.log(`JSON mode: Extracted ${contentImages.length} image(s) from article "${enriched.titulo}"`);
+            }
+            
             enriched.conteudo = autoFixLide ? autoFixFirstParagraph(enriched.conteudo) : enriched.conteudo;
             
             // Apply images and highlights to first article only
@@ -1016,17 +1088,25 @@ Valide TUDO antes de responder. Responda APENAS com JSON válido.`;
       
       
       default: {
-        // Auto mode - let AI decide
-        const aiResult = await generateWithAI(content, systemPrompt);
+        // Auto mode - extract images from content first, then AI
+        const { cleanText: autoClean, images: autoExtracted } = extractImagesFromText(content);
+        
+        const aiResult = await generateWithAI(autoClean, systemPrompt);
         let parsed = JSON.parse(aiResult.replace(/```json\n?|\n?```/g, ''));
         
-        // Ensure required fields and auto-fix lide
+        // Ensure required fields, apply extracted images, and auto-fix lide
         if (parsed.noticias) {
           parsed.noticias = parsed.noticias.map((article: NewsArticle, idx: number) => {
             let enriched = ensureRequiredFields(article);
+            
+            // Apply images extracted from the original content
+            if (idx === 0 && autoExtracted.length > 0) {
+              enriched = applyExtractedImages(enriched, autoExtracted);
+            }
+            
             enriched.conteudo = autoFixLide ? autoFixFirstParagraph(enriched.conteudo) : enriched.conteudo;
             
-            // Apply images and highlights to first article only
+            // Apply user-provided images and highlights to first article only
             if (idx === 0) {
               enriched = applyImages(enriched, imageUrls);
               enriched = applyHighlights(enriched);

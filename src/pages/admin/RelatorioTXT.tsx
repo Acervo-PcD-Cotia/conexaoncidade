@@ -16,6 +16,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { extractImagesFromDescription } from "@/utils/extractDescriptionImages";
 
 interface NewsItem {
   fonte: string;
@@ -55,14 +56,20 @@ function str(val: unknown): string {
 }
 
 function mapEntryToItem(entry: any): NewsItem {
+  const rawDescricao = str(entry.descricao || entry.description || entry.conteudo);
+  const rawLinkImagem = str(entry.linkImagem || entry.imagem || entry.image);
+
+  // Extract images from description automatically
+  const { cleanDescription, images } = extractImagesFromDescription(rawDescricao);
+
   return {
     fonte: str(entry.fonte),
     linkNoticia: str(entry.linkNoticia || entry.link || entry.url_original),
-    linkImagem: str(entry.linkImagem || entry.imagem || entry.image),
+    linkImagem: rawLinkImagem || (images.length > 0 ? images[0].url : ''),
     dataPublicacao: str(entry.dataPublicacao || entry.data),
     titulo: str(entry.titulo || entry.title),
     subtitulo: str(entry.subtitulo),
-    descricao: str(entry.descricao || entry.description || entry.conteudo),
+    descricao: images.length > 0 ? cleanDescription : rawDescricao,
   };
 }
 
@@ -194,10 +201,15 @@ export default function RelatorioTXT() {
       return;
     }
 
+    // Extract images from description
+    const { cleanDescription, images: extractedImages } = extractImagesFromDescription(form.descricao);
+
     // Auto-fill fonte from reportTitle if empty
     const finalForm = {
       ...form,
       fonte: form.fonte || (reportTitle !== "Sem título" ? reportTitle : ""),
+      descricao: extractedImages.length > 0 ? cleanDescription : form.descricao,
+      linkImagem: form.linkImagem || (extractedImages.length > 0 ? extractedImages[0].url : ''),
     };
 
     if (editingIndex !== null) {
@@ -206,7 +218,11 @@ export default function RelatorioTXT() {
       toast.success("Notícia atualizada!");
     } else {
       setItems((prev) => [...prev, { ...finalForm }]);
-      toast.success("Notícia adicionada!");
+      if (extractedImages.length > 0) {
+        toast.success(`Notícia adicionada! ${extractedImages.length} imagem(ns) extraída(s) da descrição.`);
+      } else {
+        toast.success("Notícia adicionada!");
+      }
     }
     setForm({ ...emptyItem });
   };
@@ -618,11 +634,40 @@ export default function RelatorioTXT() {
               <div>
                 <label className="text-sm font-medium">Descrição</label>
                 <Textarea
-                  placeholder="Resumo ou corpo da notícia (opcional)"
+                  placeholder="Resumo ou corpo da notícia (opcional). URLs de imagens serão extraídas automaticamente."
                   value={form.descricao}
                   onChange={(e) => handleChange("descricao", e.target.value)}
                   rows={3}
                 />
+                {/* Image extraction preview */}
+                {(() => {
+                  const { images } = extractImagesFromDescription(form.descricao);
+                  if (images.length === 0) return null;
+                  return (
+                    <div className="mt-2 p-3 rounded-lg border border-primary/20 bg-primary/5 space-y-2">
+                      <p className="text-xs font-medium text-primary">
+                        📷 {images.length} imagem(ns) detectada(s) — serão extraídas automaticamente
+                      </p>
+                      <div className="flex gap-2 flex-wrap">
+                        {images.map((img, idx) => (
+                          <div key={idx} className="relative group">
+                            <img
+                              src={img.url}
+                              alt={img.caption || `Imagem ${idx + 1}`}
+                              className="h-16 w-24 object-cover rounded border"
+                              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                            />
+                            {img.caption && (
+                              <p className="text-[10px] text-muted-foreground mt-0.5 max-w-24 truncate" title={img.caption}>
+                                {img.caption}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
               <div className="flex gap-2 pt-2">
                 <Button onClick={handleAdd} className="gap-2">
