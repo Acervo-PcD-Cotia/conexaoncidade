@@ -1,64 +1,101 @@
 
+# Extrator Automatico de Imagens da Descricao
 
-# Correcao: Pagina de noticia em branco para usuarios logados
+## Problema
+Quando o usuario cadastra noticias (Relatorio TXT, Noticias AI ou qualquer modo), a descricao frequentemente contem URLs de imagens seguidas de legendas/creditos. Exemplo real:
 
-## Problema identificado
+```
+https://imagens.ebc.com.br/nx_rzBAG6oCC-c6fa2IsMlQBA8g=/1170x700/smart/...0g0a4305.jpg?
+https://imagens.ebc.com.br/fZUbYwNoEVxMwJlbHab8dXGdCQ=/754x0/smart/...0g0a4196_0.jpg
+Moradores denunciam saques nos imoveis interditados - Foto Rovena Rosa/Agencia Brasil
+```
 
-Ao analisar as politicas de seguranca (RLS) da tabela `news`, encontrei a causa raiz:
-
-A tabela `news` tem duas politicas de SELECT:
-1. **"Noticias publicadas sao publicas"** - para role `public` - permite ver noticias publicadas
-2. **"Editores podem ver todas noticias"** - para role `authenticated` - exige que o usuario seja admin/editor
-
-Quando um usuario comum esta **logado**, ele usa o role `authenticated`. Embora a politica `TO public` teoricamente cubra todos os roles, na pratica o Supabase pode priorizar a politica mais especifica para `authenticated`, que exige `is_admin_or_editor()`. Isso faz com que usuarios logados sem role de admin/editor nao consigam ver as noticias publicadas.
-
-Alem disso, a tabela `sites` tambem tem um problema similar: a politica SELECT so permite acesso para admins/editores, impedindo o `TenantContext` de resolver o tenant para usuarios comuns logados.
+Essas imagens sao ignoradas e ficam como texto lixo na descricao. Devem ser extraidas e adicionadas automaticamente a noticia.
 
 ## Solucao
 
-### 1. Adicionar politica SELECT explicita na tabela `news` para usuarios autenticados
+### 1. Criar funcao utilitaria `extractImagesFromDescription`
 
-Criar uma nova politica RLS que permita qualquer usuario autenticado ver noticias publicadas:
+**Arquivo novo**: `src/utils/extractDescriptionImages.ts`
 
-```sql
-CREATE POLICY "Usuarios autenticados podem ver noticias publicadas"
-  ON public.news FOR SELECT
-  TO authenticated
-  USING (status = 'published' AND deleted_at IS NULL);
+Uma funcao pura que:
+- Recebe uma string de descricao
+- Identifica todas as URLs de imagens (`.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`)
+- Captura a linha seguinte a cada imagem como legenda/credito (se nao for outra URL)
+- Retorna: `{ cleanDescription, images: [{ url, caption }] }`
+- Remove as URLs de imagens e suas legendas da descricao limpa
+
+Logica de deteccao:
+```text
+Linha 1: https://...image.jpg  --> imagem detectada
+Linha 2: Foto Fulano/Agencia   --> legenda associada (nao comeca com http)
+Linha 3: texto normal           --> faz parte da descricao limpa
 ```
 
-### 2. Adicionar politica SELECT publica na tabela `sites`
+### 2. Integrar no Relatorio TXT (`handleAdd`)
 
-Permitir que qualquer usuario (logado ou nao) possa consultar sites, necessario para o TenantContext funcionar:
+**Arquivo**: `src/pages/admin/RelatorioTXT.tsx`
 
-```sql
-CREATE POLICY "Sites sao visiveis publicamente"
-  ON public.sites FOR SELECT
-  TO public
-  USING (true);
+- No `handleAdd`, antes de salvar o item, chamar `extractImagesFromDescription(form.descricao)`
+- Se imagens forem encontradas:
+  - A primeira imagem preenche `linkImagem` (se estiver vazio)
+  - A descricao e substituida pela versao limpa (sem as URLs)
+  - Mostrar toast informando quantas imagens foram extraidas
+- No `mapEntryToItem`, aplicar a mesma logica para importacoes TXT/JSON
+
+### 3. Integrar no Noticias AI (edge function)
+
+**Arquivo**: `supabase/functions/noticias-ai-generate/index.ts`
+
+- Adicionar funcao `extractImagesFromText(text)` na edge function
+- Nos modos `manual`, `json` (direct parse) e `auto`:
+  - Antes de enviar para a IA ou ao processar JSON direto, extrair imagens do conteudo/descricao
+  - As imagens extraidas sao adicionadas ao campo `imagem.galeria`
+  - A primeira imagem extraida preenche `imagem.hero` (se estiver vazio)
+- No modo `batch`, cada item do lote passa pela mesma extracao
+
+### 4. Integrar no campo `descricao` do formulario (UX)
+
+**Arquivo**: `src/pages/admin/RelatorioTXT.tsx`
+
+- Adicionar um indicador visual abaixo do campo Descricao quando imagens forem detectadas
+- Mostrar preview das imagens encontradas com as legendas
+- Exemplo: "2 imagens detectadas na descricao - serao extraidas automaticamente"
+
+## Detalhes Tecnicos
+
+### Regex de deteccao:
+```typescript
+const IMAGE_URL_REGEX = /^(https?:\/\/[^\s]+\.(jpg|jpeg|png|webp|gif)(\?[^\s]*)?)$/i;
 ```
 
-Remover a politica antiga que restringe SELECT a admins, ou mante-la como complementar (ambas PERMISSIVE fazem OR).
+### Estrutura de retorno:
+```typescript
+interface ExtractedImage {
+  url: string;
+  caption: string;  // linha seguinte se nao for URL
+  credit: string;   // extraido da legenda (ex: "Foto Fulano/Agencia")
+}
 
-### 3. Verificar tabela `site_users`
-
-A politica SELECT de `site_users` exige `is_site_member()`, o que impede usuarios comuns de resolver seu tenant. Adicionar politica que permita o usuario ver sua propria associacao:
-
-```sql
-CREATE POLICY "Usuarios podem ver suas proprias associacoes"
-  ON public.site_users FOR SELECT
-  TO authenticated
-  USING (user_id = auth.uid());
+interface ExtractionResult {
+  cleanDescription: string;
+  images: ExtractedImage[];
+}
 ```
 
-## Arquivos modificados
+### Fluxo no Relatorio TXT:
+1. Usuario cola descricao com URLs de imagens
+2. Ao clicar "Adicionar Noticia", o sistema extrai as imagens
+3. `linkImagem` e preenchido com a primeira (se vazio)
+4. Descricao salva fica limpa, sem URLs
+5. Toast: "2 imagens extraidas da descricao"
 
-Nenhum arquivo de codigo precisa ser alterado - o problema e exclusivamente nas politicas de seguranca do banco de dados. As migracoes SQL serao aplicadas via ferramenta de migracao.
+### Fluxo no Noticias AI:
+1. No modo `json` (direct parse), antes de inserir, extrair imagens de cada `conteudo` ou `descricao`
+2. No modo `manual`/`auto`, o conteudo enviado para a IA ja vai limpo, e as imagens extraidas sao aplicadas ao resultado
+3. No modo `batch`, cada item processado passa pela extracao
 
-## Impacto
-
-- Usuarios logados poderao ver noticias publicadas normalmente
-- O TenantContext conseguira resolver o tenant para todos os usuarios
-- Nenhuma alteracao visual ou funcional no front-end
-- A seguranca e mantida: usuarios comuns so verao noticias publicadas, enquanto admins/editores continuam podendo ver todas
-
+### Arquivos modificados:
+1. `src/utils/extractDescriptionImages.ts` - Novo: funcao utilitaria
+2. `src/pages/admin/RelatorioTXT.tsx` - Integrar extracao no handleAdd e mapEntryToItem
+3. `supabase/functions/noticias-ai-generate/index.ts` - Integrar extracao nos modos manual/json/batch/auto
