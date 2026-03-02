@@ -135,8 +135,7 @@ export function LocalEngagementSection() {
   const hasEvents = events && events.length > 0;
   const hasJobs = jobs && jobs.length > 0;
 
-  // Don't render if no data at all
-  if (!eventsLoading && !jobsLoading && !hasEvents && !hasJobs) return null;
+  // Always render — weather and emergency phones are always useful
 
   return (
     <section className="home-container home-section-spacing" aria-label="Engajamento local">
