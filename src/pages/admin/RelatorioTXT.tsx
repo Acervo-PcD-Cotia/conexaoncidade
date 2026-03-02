@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Pencil, Copy, Download, FileText, X, Check, Save, FolderOpen, Loader2, ExternalLink, Globe, ClipboardPaste, Upload, CloudOff, Cloud, ImagePlus } from "lucide-react";
+import { Plus, Trash2, Pencil, Copy, Download, FileText, X, Check, Save, FolderOpen, Loader2, ExternalLink, Globe, ClipboardPaste, Upload, CloudOff, Cloud, ImagePlus, Link2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,11 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { extractImagesFromDescription } from "@/utils/extractDescriptionImages";
 
+interface NewsLink {
+  label: string;
+  url: string;
+}
+
 interface NewsItem {
   fonte: string;
   linkNoticia: string;
@@ -26,6 +31,7 @@ interface NewsItem {
   titulo: string;
   subtitulo: string;
   descricao: string;
+  links?: NewsLink[];
 }
 
 interface SavedReport {
@@ -45,6 +51,7 @@ const emptyItem: NewsItem = {
   titulo: "",
   subtitulo: "",
   descricao: "",
+  links: [],
 };
 
 /** Safely convert any value to string (objects become JSON) */
@@ -62,6 +69,11 @@ function mapEntryToItem(entry: any): NewsItem {
   // Extract images from description automatically
   const { cleanDescription, images } = extractImagesFromDescription(rawDescricao);
 
+  const rawLinks = entry.links;
+  const parsedLinks: NewsLink[] = Array.isArray(rawLinks)
+    ? rawLinks.map((l: any) => ({ label: str(l.label || l.titulo || ''), url: str(l.url || l.link || '') })).filter((l: NewsLink) => l.url)
+    : [];
+
   return {
     fonte: str(entry.fonte),
     linkNoticia: str(entry.linkNoticia || entry.link || entry.url_original),
@@ -70,6 +82,7 @@ function mapEntryToItem(entry: any): NewsItem {
     titulo: str(entry.titulo || entry.title),
     subtitulo: str(entry.subtitulo),
     descricao: images.length > 0 ? cleanDescription : rawDescricao,
+    links: parsedLinks,
   };
 }
 
@@ -214,6 +227,11 @@ export default function RelatorioTXT() {
       parts.push(`Título: ${item.titulo}`);
       if (item.subtitulo) parts.push(`Subtítulo: ${item.subtitulo}`);
       if (item.descricao) parts.push(`Descrição: ${item.descricao}`);
+      if (item.links && item.links.length > 0) {
+        item.links.forEach((link) => {
+          parts.push(`${link.label ? link.label + ': ' : 'Link: '}${link.url}`);
+        });
+      }
       if (item.linkImagem) parts.push(`Imagem: ${item.linkImagem}`);
       return parts.join("\n");
     });
@@ -756,6 +774,69 @@ export default function RelatorioTXT() {
                   );
                 })()}
               </div>
+
+              {/* Links section */}
+              <div>
+                <label className="text-sm font-medium flex items-center gap-1.5">
+                  <Link2 className="h-3.5 w-3.5" />
+                  Links da Notícia
+                </label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Adicione links relacionados (ex: inscrições, formulários, sites oficiais)
+                </p>
+                <div className="space-y-2">
+                  {(form.links || []).map((link, idx) => (
+                    <div key={idx} className="flex gap-2 items-center">
+                      <Input
+                        placeholder="Rótulo (ex: Inscrições)"
+                        value={link.label}
+                        onChange={(e) => {
+                          const updated = [...(form.links || [])];
+                          updated[idx] = { ...updated[idx], label: e.target.value };
+                          setForm((prev) => ({ ...prev, links: updated }));
+                        }}
+                        className="w-1/3"
+                      />
+                      <Input
+                        placeholder="https://..."
+                        value={link.url}
+                        onChange={(e) => {
+                          const updated = [...(form.links || [])];
+                          updated[idx] = { ...updated[idx], url: e.target.value };
+                          setForm((prev) => ({ ...prev, links: updated }));
+                        }}
+                        className="flex-1"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          const updated = (form.links || []).filter((_, i) => i !== idx);
+                          setForm((prev) => ({ ...prev, links: updated }));
+                        }}
+                        className="shrink-0 text-destructive hover:text-destructive"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setForm((prev) => ({
+                        ...prev,
+                        links: [...(prev.links || []), { label: "", url: "" }],
+                      }));
+                    }}
+                    className="gap-1.5 text-xs"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Adicionar Link
+                  </Button>
+                </div>
+              </div>
               <div className="flex gap-2 pt-2">
                 <Button onClick={handleAdd} className="gap-2">
                   {editingIndex !== null ? (
@@ -982,6 +1063,22 @@ export default function RelatorioTXT() {
                     <p className="font-medium text-sm truncate">{item.titulo}</p>
                     {item.subtitulo && (
                       <p className="text-xs text-muted-foreground truncate">{item.subtitulo}</p>
+                    )}
+                    {item.links && item.links.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-1">
+                        {item.links.map((link, li) => (
+                          <a
+                            key={li}
+                            href={link.url.startsWith('http') ? link.url : `https://${link.url}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline bg-primary/5 px-1.5 py-0.5 rounded"
+                          >
+                            <Link2 className="h-3 w-3" />
+                            {link.label || link.url}
+                          </a>
+                        ))}
+                      </div>
                     )}
                   </div>
                   <div className="flex gap-1 shrink-0">
