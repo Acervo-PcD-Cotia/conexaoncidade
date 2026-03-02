@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Pencil, Copy, Download, FileText, X, Check, Save, FolderOpen, Loader2, ExternalLink, Globe, ClipboardPaste, Upload, CloudOff, Cloud } from "lucide-react";
+import { Plus, Trash2, Pencil, Copy, Download, FileText, X, Check, Save, FolderOpen, Loader2, ExternalLink, Globe, ClipboardPaste, Upload, CloudOff, Cloud, ImagePlus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -85,6 +85,97 @@ function useFontesCadastradas() {
       return data || [];
     },
   });
+}
+
+function ImageUploadField({
+  linkImagem,
+  onLinkChange,
+}: {
+  linkImagem: string;
+  onLinkChange: (val: string) => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Selecione um arquivo de imagem.");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Imagem muito grande. Máximo: 5MB.");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const fileName = `relatorio/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("news-images")
+        .upload(fileName, file, { cacheControl: "3600", upsert: false });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("news-images")
+        .getPublicUrl(fileName);
+
+      onLinkChange(urlData.publicUrl);
+      toast.success("Imagem enviada!");
+    } catch (err: any) {
+      toast.error("Erro ao enviar imagem: " + (err.message || "desconhecido"));
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  return (
+    <div>
+      <label className="text-sm font-medium">Imagem</label>
+      <div className="flex gap-2">
+        <Input
+          placeholder="https://... (opcional)"
+          value={linkImagem}
+          onChange={(e) => onLinkChange(e.target.value)}
+          className="flex-1"
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          disabled={uploading}
+          onClick={() => fileInputRef.current?.click()}
+          title="Fazer upload de imagem"
+        >
+          {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+        </Button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileUpload}
+        />
+      </div>
+      {linkImagem && linkImagem.startsWith("http") && (
+        <div className="mt-2">
+          <img
+            src={linkImagem}
+            alt="Preview"
+            className="h-20 w-32 object-cover rounded border"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+          />
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function RelatorioTXT() {
@@ -623,14 +714,10 @@ export default function RelatorioTXT() {
                   onChange={(e) => handleChange("linkNoticia", e.target.value)}
                 />
               </div>
-              <div>
-                <label className="text-sm font-medium">Link da Imagem</label>
-                <Input
-                  placeholder="https://... (opcional)"
-                  value={form.linkImagem}
-                  onChange={(e) => handleChange("linkImagem", e.target.value)}
-                />
-              </div>
+              <ImageUploadField
+                linkImagem={form.linkImagem}
+                onLinkChange={(val) => handleChange("linkImagem", val)}
+              />
               <div>
                 <label className="text-sm font-medium">Descrição</label>
                 <Textarea
