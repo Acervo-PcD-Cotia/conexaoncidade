@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Pencil, Copy, Download, FileText, X, Check, Save, FolderOpen, Loader2, ExternalLink, Globe, ClipboardPaste, Upload, CloudOff, Cloud, ImagePlus, Link2 } from "lucide-react";
+import { Plus, Trash2, Pencil, Copy, Download, FileText, X, Check, Save, FolderOpen, Loader2, ExternalLink, Globe, ClipboardPaste, Upload, CloudOff, Cloud, ImagePlus, Link2, Images } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +32,7 @@ interface NewsItem {
   subtitulo: string;
   descricao: string;
   links?: NewsLink[];
+  extraImages?: string[];
 }
 
 interface SavedReport {
@@ -52,6 +53,7 @@ const emptyItem: NewsItem = {
   subtitulo: "",
   descricao: "",
   links: [],
+  extraImages: [],
 };
 
 /** Safely convert any value to string (objects become JSON) */
@@ -74,6 +76,11 @@ function mapEntryToItem(entry: any): NewsItem {
     ? rawLinks.map((l: any) => ({ label: str(l.label || l.titulo || ''), url: str(l.url || l.link || '') })).filter((l: NewsLink) => l.url)
     : [];
 
+  const rawExtraImages = entry.extraImages || entry.maisImagens || entry.gallery;
+  const parsedExtraImages: string[] = Array.isArray(rawExtraImages)
+    ? rawExtraImages.map((img: any) => str(typeof img === 'string' ? img : img.url || '')).filter(Boolean)
+    : [];
+
   return {
     fonte: str(entry.fonte),
     linkNoticia: str(entry.linkNoticia || entry.link || entry.url_original),
@@ -83,6 +90,7 @@ function mapEntryToItem(entry: any): NewsItem {
     subtitulo: str(entry.subtitulo),
     descricao: images.length > 0 ? cleanDescription : rawDescricao,
     links: parsedLinks,
+    extraImages: parsedExtraImages.length > 0 ? parsedExtraImages : (images.length > 1 ? images.slice(1).map(i => i.url) : []),
   };
 }
 
@@ -191,6 +199,90 @@ function ImageUploadField({
   );
 }
 
+function ExtraImageItem({
+  url,
+  index,
+  onUrlChange,
+  onRemove,
+}: {
+  url: string;
+  index: number;
+  onUrlChange: (val: string) => void;
+  onRemove: () => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Selecione um arquivo de imagem."); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Imagem muito grande. Máximo: 5MB."); return; }
+
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const fileName = `relatorio/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("news-images")
+        .upload(fileName, file, { cacheControl: "3600", upsert: false });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from("news-images").getPublicUrl(fileName);
+      onUrlChange(urlData.publicUrl);
+      toast.success("Imagem enviada!");
+    } catch (err: any) {
+      toast.error("Erro ao enviar imagem: " + (err.message || "desconhecido"));
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex gap-2 items-center">
+        <span className="text-xs text-muted-foreground w-6 text-center shrink-0">{index + 2}</span>
+        <Input
+          placeholder="https://... ou faça upload"
+          value={url}
+          onChange={(e) => onUrlChange(e.target.value)}
+          className="flex-1"
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          disabled={uploading}
+          onClick={() => fileInputRef.current?.click()}
+          title="Upload de imagem"
+          className="shrink-0"
+        >
+          {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+        </Button>
+        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onRemove}
+          className="shrink-0 text-destructive hover:text-destructive"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+      {url && url.startsWith("http") && (
+        <div className="ml-8">
+          <img
+            src={url}
+            alt={`Imagem extra ${index + 2}`}
+            className="h-16 w-24 object-cover rounded border"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function RelatorioTXT() {
   const { data: fontes = [], isLoading: loadingFontes } = useFontesCadastradas();
   const [form, setForm] = useState<NewsItem>({ ...emptyItem });
@@ -233,6 +325,11 @@ export default function RelatorioTXT() {
         });
       }
       if (item.linkImagem) parts.push(`Imagem: ${item.linkImagem}`);
+      if (item.extraImages && item.extraImages.length > 0) {
+        item.extraImages.forEach((img, imgIdx) => {
+          parts.push(`Imagem ${imgIdx + 2}: ${img}`);
+        });
+      }
       return parts.join("\n");
     });
     return lines.join("\n\n----------------------------------------\n\n");
@@ -837,6 +934,50 @@ export default function RelatorioTXT() {
                   </Button>
                 </div>
               </div>
+
+              {/* Extra Images section */}
+              <div>
+                <label className="text-sm font-medium flex items-center gap-1.5">
+                  <Images className="h-3.5 w-3.5" />
+                  Mais Imagens
+                </label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Adicione imagens extras por link ou upload (galeria)
+                </p>
+                <div className="space-y-2">
+                  {(form.extraImages || []).map((imgUrl, idx) => (
+                    <ExtraImageItem
+                      key={idx}
+                      url={imgUrl}
+                      index={idx}
+                      onUrlChange={(val) => {
+                        const updated = [...(form.extraImages || [])];
+                        updated[idx] = val;
+                        setForm((prev) => ({ ...prev, extraImages: updated }));
+                      }}
+                      onRemove={() => {
+                        const updated = (form.extraImages || []).filter((_, i) => i !== idx);
+                        setForm((prev) => ({ ...prev, extraImages: updated }));
+                      }}
+                    />
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setForm((prev) => ({
+                        ...prev,
+                        extraImages: [...(prev.extraImages || []), ""],
+                      }));
+                    }}
+                    className="gap-1.5 text-xs"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Adicionar Imagem
+                  </Button>
+                </div>
+              </div>
               <div className="flex gap-2 pt-2">
                 <Button onClick={handleAdd} className="gap-2">
                   {editingIndex !== null ? (
@@ -1078,6 +1219,20 @@ export default function RelatorioTXT() {
                             {link.label || link.url}
                           </a>
                         ))}
+                      </div>
+                    )}
+                    {item.extraImages && item.extraImages.length > 0 && (
+                      <div className="flex gap-1.5 mt-1.5 flex-wrap">
+                        {item.extraImages.map((img, ii) => (
+                          <img
+                            key={ii}
+                            src={img}
+                            alt={`Extra ${ii + 2}`}
+                            className="h-10 w-14 object-cover rounded border"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                          />
+                        ))}
+                        <span className="text-[10px] text-muted-foreground self-end">+{item.extraImages.length} img</span>
                       </div>
                     )}
                   </div>
