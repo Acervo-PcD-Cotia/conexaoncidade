@@ -24,10 +24,11 @@ import {
 import {
   Tabs, TabsContent, TabsList, TabsTrigger,
 } from '@/components/ui/tabs';
-import { 
+import {
   MapPin, ArrowLeft, RefreshCw, ExternalLink, Eye, SkipForward, Search,
   Sparkles, Send, Image, FileText, Tags, Rocket, Upload, Trash2,
   CheckCircle2, Circle, Loader2, AlertCircle, ChevronDown, ChevronUp,
+  Copy, ClipboardCheck,
 } from 'lucide-react';
 import { 
   useRegionalQueue, useReprocessRegionalItem, useSkipRegionalItem,
@@ -36,6 +37,7 @@ import {
   useDeleteRegionalItems, useDeleteRegionalItemsByStatus, usePublishAllDirect,
   RegionalIngestItem,
 } from '@/hooks/useRegionalAutoPost';
+import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -194,6 +196,8 @@ export default function RegionalQueue() {
   const [selectedItem, setSelectedItem] = useState<RegionalIngestItem | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [progress, setProgress] = useState<ProgressState>(INITIAL_PROGRESS);
+  const [showErrorPanel, setShowErrorPanel] = useState(false);
+  const [copiedErrors, setCopiedErrors] = useState(false);
   const progressTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const { data: queue, isLoading, refetch } = useRegionalQueue();
@@ -535,8 +539,27 @@ export default function RegionalQueue() {
 
   const newItemsCount = queue?.filter(item => item.status === 'new').length || 0;
   const processedItemsCount = queue?.filter(item => item.status === 'processed').length || 0;
-  const failedItemsCount = queue?.filter(item => item.status === 'failed').length || 0;
+  const failedItems = queue?.filter(item => item.status === 'failed') || [];
+  const failedItemsCount = failedItems.length;
   const isAnyPending = fullPipeline.isPending || processAllNew.isPending || publishAllProcessed.isPending || runIngest.isPending || publishAllDirect.isPending;
+
+  // Group errors by type
+  const errorGroups = failedItems.reduce<Record<string, typeof failedItems>>((acc, item) => {
+    const errorType = item.error_message?.split(':').slice(0, 2).join(':').trim() || 'Erro desconhecido';
+    if (!acc[errorType]) acc[errorType] = [];
+    acc[errorType].push(item);
+    return acc;
+  }, {});
+
+  const copyAllErrors = () => {
+    const lines = failedItems.map((item, i) => 
+      `${i + 1}. [${item.regional_sources?.city || 'N/A'}] ${item.title || 'Sem título'}\n   Erro: ${item.error_message || 'N/A'}\n   URL: ${item.canonical_url || 'N/A'}`
+    ).join('\n\n');
+    const header = `=== Relatório de Erros — Fila Editorial ===\nTotal: ${failedItems.length} item(s) com erro\nData: ${new Date().toLocaleString('pt-BR')}\n\n`;
+    navigator.clipboard.writeText(header + lines);
+    setCopiedErrors(true);
+    setTimeout(() => setCopiedErrors(false), 2500);
+  };
 
   const toggleItemSelection = (id: string) => {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
@@ -723,6 +746,76 @@ export default function RegionalQueue() {
         </CardContent>
       </Card>
 
+      {/* Error Summary Panel */}
+      {failedItemsCount > 0 && (
+        <Card className="border-destructive/30 bg-destructive/5">
+          <CardHeader className="pb-2 cursor-pointer" onClick={() => setShowErrorPanel(v => !v)}>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2 text-destructive">
+                <AlertCircle className="h-5 w-5" />
+                {failedItemsCount} notícia(s) com erro
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => { e.stopPropagation(); copyAllErrors(); }}
+                  className="gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/10"
+                >
+                  {copiedErrors ? <ClipboardCheck className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copiedErrors ? 'Copiado!' : 'Copiar Todos os Erros'}
+                </Button>
+                {showErrorPanel ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+              </div>
+            </div>
+            <CardDescription>
+              Clique para expandir o relatório detalhado — {Object.keys(errorGroups).length} tipo(s) de erro
+            </CardDescription>
+          </CardHeader>
+          {showErrorPanel && (
+            <CardContent className="pt-0 space-y-3">
+              {Object.entries(errorGroups).map(([errorType, items]) => (
+                <div key={errorType} className="rounded-lg border border-destructive/20 bg-background p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-semibold text-destructive flex items-center gap-1.5">
+                      <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
+                      {errorType}
+                    </h4>
+                    <Badge variant="outline" className="text-destructive border-destructive/30 text-xs">
+                      {items.length} item(ns)
+                    </Badge>
+                  </div>
+                  <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                    {items.map(item => (
+                      <div key={item.id} className="flex items-start gap-2 text-xs p-1.5 rounded bg-muted/50">
+                        <Badge variant="outline" className="text-[10px] flex-shrink-0 mt-0.5">
+                          {item.regional_sources?.city || 'N/A'}
+                        </Badge>
+                        <span className="truncate text-muted-foreground flex-1">{item.title || 'Sem título'}</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5 flex-shrink-0"
+                          onClick={() => {
+                            navigator.clipboard.writeText(
+                              `Título: ${item.title}\nErro: ${item.error_message}\nURL: ${item.canonical_url}`
+                            );
+                            toast.success('Erro copiado');
+                          }}
+                          title="Copiar este erro"
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          )}
+        </Card>
+      )}
+
       {/* Filters */}
       <Card>
         <CardContent className="pt-6">
@@ -803,9 +896,23 @@ export default function RegionalQueue() {
                           </p>
                         )}
                         {item.error_message && (
-                          <p className="text-xs text-red-500 truncate mt-1">
-                            ⚠️ {item.error_message}
-                          </p>
+                          <div className="mt-1 flex items-start gap-1.5 group">
+                            <AlertCircle className="h-3 w-3 text-destructive mt-0.5 flex-shrink-0" />
+                            <p className="text-xs text-destructive line-clamp-2" title={item.error_message}>
+                              {item.error_message}
+                            </p>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigator.clipboard.writeText(`Título: ${item.title}\nErro: ${item.error_message}\nURL: ${item.canonical_url}`);
+                                toast.success('Erro copiado');
+                              }}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                              title="Copiar erro"
+                            >
+                              <Copy className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                            </button>
+                          </div>
                         )}
                       </div>
                     </TableCell>

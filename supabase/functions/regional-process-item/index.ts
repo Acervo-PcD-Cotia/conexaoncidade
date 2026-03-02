@@ -80,6 +80,31 @@ async function validateImageUrl(url: string): Promise<string | null> {
 }
 
 // ============================================================
+// HTML ENTITY DECODER: Converts HTML entities to plain text
+// ============================================================
+function decodeHtmlEntities(text: string): string {
+  if (!text) return text;
+  const entityMap: Record<string, string> = {
+    '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"',
+    '&apos;': "'", '&nbsp;': ' ', '&ndash;': '–', '&mdash;': '—',
+    '&lsquo;': '\u2018', '&rsquo;': '\u2019', '&ldquo;': '\u201C', '&rdquo;': '\u201D',
+    '&bull;': '•', '&hellip;': '…', '&copy;': '©', '&reg;': '®',
+    '&trade;': '™', '&deg;': '°', '&frac12;': '½', '&frac14;': '¼',
+    '&frac34;': '¾', '&times;': '×', '&divide;': '÷',
+  };
+  let result = text;
+  // Named entities
+  for (const [entity, char] of Object.entries(entityMap)) {
+    result = result.replaceAll(entity, char);
+  }
+  // Numeric decimal entities (&#8216; -> ')
+  result = result.replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code, 10)));
+  // Numeric hex entities (&#x2019; -> ')
+  result = result.replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+  return result;
+}
+
+// ============================================================
 // QUALITY GATE: Validates news before publishing
 // Returns array of blocking errors (empty = OK to publish)
 // ============================================================
@@ -90,20 +115,6 @@ function validateNewsQuality(params: {
   imageUrl: string | null;
 }): string[] {
   const errors: string[] = [];
-
-  // 1. Title must not contain HTML entities
-  if (
-    params.title &&
-    (/&#[0-9]+;/.test(params.title) ||
-      /&amp;/.test(params.title) ||
-      /&lt;/.test(params.title) ||
-      /&gt;/.test(params.title) ||
-      /&quot;/.test(params.title) ||
-      /&#x[0-9a-fA-F]+;/.test(params.title) ||
-      /&[a-z]+;/.test(params.title))
-  ) {
-    errors.push('Título contém entidades HTML não decodificadas (ex: &#250; ou &amp;)');
-  }
 
   // 2. Content must exist and have meaningful length
   const plainText = extractText(params.content || '');
@@ -314,7 +325,7 @@ async function checkDuplicate(supabase: any, canonicalUrl: string, title: string
 }
 
 async function publishItemToNews(supabase: any, item: any, source: any): Promise<{ newsId: string; slug: string; title: string }> {
-  const rewrittenTitle = item.rewritten_title || item.title || 'Notícia';
+  const rewrittenTitle = decodeHtmlEntities(item.rewritten_title || item.title || 'Notícia');
   const rewrittenContent = item.rewritten_content || item.content || '';
 
   // ── QUALITY GATE ────────────────────────────────────────────
