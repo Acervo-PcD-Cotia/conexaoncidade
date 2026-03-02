@@ -115,12 +115,18 @@ export default function RelatorioTXT() {
       return;
     }
 
+    // Auto-fill fonte from reportTitle if empty
+    const finalForm = {
+      ...form,
+      fonte: form.fonte || (reportTitle !== "Sem título" ? reportTitle : ""),
+    };
+
     if (editingIndex !== null) {
-      setItems((prev) => prev.map((item, i) => (i === editingIndex ? { ...form } : item)));
+      setItems((prev) => prev.map((item, i) => (i === editingIndex ? { ...finalForm } : item)));
       setEditingIndex(null);
       toast.success("Notícia atualizada!");
     } else {
-      setItems((prev) => [...prev, { ...form }]);
+      setItems((prev) => [...prev, { ...finalForm }]);
       toast.success("Notícia adicionada!");
     }
     setForm({ ...emptyItem });
@@ -440,52 +446,6 @@ export default function RelatorioTXT() {
         )}
       </div>
 
-      {/* Fontes Cadastradas - Links rápidos */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Globe className="h-5 w-5" />
-            Links das Fontes Cadastradas
-          </CardTitle>
-          <CardDescription>
-            Acesse rapidamente os sites das fontes para buscar notícias.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loadingFontes ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Carregando fontes...
-            </div>
-          ) : fontes.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhuma fonte cadastrada.</p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {fontes.map((fonte) => (
-                <a
-                  key={fonte.id}
-                  href={fonte.site_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title={fonte.site_url}
-                >
-                  <Badge
-                    variant={fonte.status === 'active' ? 'default' : 'secondary'}
-                    className="gap-1.5 cursor-pointer hover:opacity-80 transition-opacity py-1.5 px-3"
-                  >
-                    <ExternalLink className="h-3 w-3" />
-                    {fonte.name}
-                    {fonte.city && (
-                      <span className="opacity-70 text-[10px]">({fonte.city})</span>
-                    )}
-                  </Badge>
-                </a>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Input Tabs: Form / Paste TXT / Upload JSON */}
       <Tabs value={importTab} onValueChange={setImportTab}>
         <TabsList className="grid w-full grid-cols-3">
@@ -536,7 +496,7 @@ export default function RelatorioTXT() {
                   <label className="text-sm font-medium">Fonte</label>
                   <Input
                     placeholder="Ex: Agência Brasil (opcional)"
-                    value={form.fonte}
+                    value={form.fonte || (reportTitle !== "Sem título" ? reportTitle : "")}
                     onChange={(e) => handleChange("fonte", e.target.value)}
                   />
                 </div>
@@ -732,6 +692,45 @@ export default function RelatorioTXT() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Fontes Cadastradas - Links rápidos (collapsible, compact) */}
+      <details className="group">
+        <summary className="flex items-center gap-2 cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2">
+          <Globe className="h-4 w-4" />
+          Links das Fontes Cadastradas
+          <span className="text-xs opacity-60">({fontes.length})</span>
+        </summary>
+        <div className="pt-2 pb-1">
+          {loadingFontes ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Carregando fontes...
+            </div>
+          ) : fontes.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhuma fonte cadastrada.</p>
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {fontes.map((fonte) => (
+                <a
+                  key={fonte.id}
+                  href={fonte.site_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={fonte.site_url}
+                >
+                  <Badge
+                    variant={fonte.status === 'active' ? 'default' : 'secondary'}
+                    className="gap-1 cursor-pointer hover:opacity-80 transition-opacity py-1 px-2 text-[11px]"
+                  >
+                    <ExternalLink className="h-2.5 w-2.5" />
+                    {fonte.name}
+                  </Badge>
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+      </details>
 
       {/* Items list */}
       {items.length > 0 && (
