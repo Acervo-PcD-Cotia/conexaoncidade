@@ -1,98 +1,64 @@
 
 
-# Atualizar Layout de Noticias - Estilo Agencia Brasil + UOL
+# Correcao: Pagina de noticia em branco para usuarios logados
 
-## Resumo
-Atualizar a pagina de noticias do Conexao na Cidade para seguir o padrao visual da Agencia Brasil (tipografia, player de audio compacto) e UOL (caixa de resumo), alem de adicionar janela flutuante de live e cores dinamicas por categoria.
+## Problema identificado
 
----
+Ao analisar as politicas de seguranca (RLS) da tabela `news`, encontrei a causa raiz:
 
-## 1. Player de Audio Compacto (Estilo Agencia Brasil)
+A tabela `news` tem duas politicas de SELECT:
+1. **"Noticias publicadas sao publicas"** - para role `public` - permite ver noticias publicadas
+2. **"Editores podem ver todas noticias"** - para role `authenticated` - exige que o usuario seja admin/editor
 
-**Arquivo**: `src/components/news/NewsAudioBlock.tsx`
+Quando um usuario comum esta **logado**, ele usa o role `authenticated`. Embora a politica `TO public` teoricamente cubra todos os roles, na pratica o Supabase pode priorizar a politica mais especifica para `authenticated`, que exige `is_admin_or_editor()`. Isso faz com que usuarios logados sem role de admin/editor nao consigam ver as noticias publicadas.
 
-O player atual ja e funcional mas e grande demais. A mudanca sera:
-- Reduzir o header "Ouça agora" para um layout mais fino com label "Versao em audio" em caixa alta
-- Player compacto: botao play menor (h-10 w-10), barra de progresso fina, controles inline
-- Fundo cinza claro sutil (`bg-[#f6f7fb]`), borda suave
-- Remover o footer "Powered by Portal Conexao"
-- Manter todas as funcionalidades (velocidade, volume, download, Spotify)
+Alem disso, a tabela `sites` tambem tem um problema similar: a politica SELECT so permite acesso para admins/editores, impedindo o `TenantContext` de resolver o tenant para usuarios comuns logados.
 
-## 2. Caixa de Resumo com Cores por Categoria
+## Solucao
 
-**Arquivo**: `src/components/news/NewsContentNavigator.tsx`
+### 1. Adicionar politica SELECT explicita na tabela `news` para usuarios autenticados
 
-O componente ja existe e funciona. As mudancas serao:
-- Aplicar cor da categoria (`var(--category-color)`) nos marcadores dos bullet points e no label "Resumo"
-- Bordas usando tom da categoria com opacidade (border-color com 40% opacity)
-- Marcadores quadrados ja existem -- manter, mas usar a cor da categoria
-- Label "Resumo da noticia" em uppercase com a cor da categoria
+Criar uma nova politica RLS que permita qualquer usuario autenticado ver noticias publicadas:
 
-**Arquivo**: `src/pages/NewsDetail.tsx`
-- Passar `categoryColor` (hex string do `categoryTheme.color`) para o `NewsContentNavigator`
+```sql
+CREATE POLICY "Usuarios autenticados podem ver noticias publicadas"
+  ON public.news FOR SELECT
+  TO authenticated
+  USING (status = 'published' AND deleted_at IS NULL);
+```
 
-## 3. Janela Flutuante de TV Web / Live
+### 2. Adicionar politica SELECT publica na tabela `sites`
 
-**Arquivo novo**: `src/components/broadcast/LiveFloatingPopup.tsx`
+Permitir que qualquer usuario (logado ou nao) possa consultar sites, necessario para o TenantContext funcionar:
 
-O sistema de MiniPlayer ja existe (`MiniPlayerContext`, `MiniPlayer.tsx`), mas so aparece quando o usuario sai de uma pagina de broadcast. A nova janela:
-- Aparece automaticamente quando ha uma transmissao ao vivo (consultando `useLiveBroadcasts`)
-- Posicionada no canto inferior direito (fixed, right-20, bottom-20)
-- Inicia mudo com autoplay
-- Header com badge "Ao Vivo" vermelho + titulo
-- Botao de fechar (X)
-- Embed iframe do video (usando o embed_url da transmissao)
-- Respeita `sessionStorage` para nao reaparecer se o usuario ja fechou
+```sql
+CREATE POLICY "Sites sao visiveis publicamente"
+  ON public.sites FOR SELECT
+  TO public
+  USING (true);
+```
 
-**Arquivo**: `src/components/layout/PublicLayout.tsx`
-- Adicionar `<LiveFloatingPopup />` ao layout publico
+Remover a politica antiga que restringe SELECT a admins, ou mante-la como complementar (ambas PERMISSIVE fazem OR).
 
-## 4. Cores Dinamicas por Categoria
+### 3. Verificar tabela `site_users`
 
-O sistema ja existe em `src/lib/categoryTheme.ts` com `--category-color` CSS variable aplicada em `article-themed`. As mudancas:
+A politica SELECT de `site_users` exige `is_site_member()`, o que impede usuarios comuns de resolver seu tenant. Adicionar politica que permita o usuario ver sua propria associacao:
 
-**Arquivo**: `src/components/news/NewsContentNavigator.tsx`
-- Aceitar prop `categoryColor?: string`
-- Usar `style={{ borderColor: categoryColor }}` na borda do resumo
-- Usar `style={{ color: categoryColor }}` no label "Resumo"
-- Marcadores com `style={{ backgroundColor: categoryColor }}`
+```sql
+CREATE POLICY "Usuarios podem ver suas proprias associacoes"
+  ON public.site_users FOR SELECT
+  TO authenticated
+  USING (user_id = auth.uid());
+```
 
-**Arquivo**: `src/components/news/NewsAudioBlock.tsx`
-- Aceitar prop `categoryColor?: string` opcional
-- Usar como accent no botao play
+## Arquivos modificados
 
-## 5. Ajustes de Tipografia (Agencia Brasil)
+Nenhum arquivo de codigo precisa ser alterado - o problema e exclusivamente nas politicas de seguranca do banco de dados. As migracoes SQL serao aplicadas via ferramenta de migracao.
 
-**Arquivo**: `src/index.css`
-- Ja esta muito proximo do padrao. Pequenos ajustes:
-  - `font-family` do body incluir "Noto Sans" como fallback
-  - Garantir `line-height: 1.6` no `.prose-news`
-  - `max-width: 760px` no `.prose-news` (atualmente 780px, diferenca minima)
+## Impacto
 
----
-
-## Detalhes Tecnicos
-
-### Ordem dos componentes na pagina (NewsDetail.tsx):
-1. Header (categoria, titulo, subtitulo, autor, data, share)
-2. Imagem Hero
-3. Player de Audio (compacto, estilo Agencia Brasil)
-4. Resumo (estilo UOL, cores da categoria)
-5. Indice "Nesta materia"
-6. Conteudo da noticia
-7. Footer, tags, autor, relacionadas
-
-### LiveFloatingPopup - Logica:
-- Hook `useLiveBroadcasts()` para verificar se ha transmissao ativa
-- `sessionStorage.getItem('live-popup-closed-{id}')` para nao reexibir
-- Video mudo com autoplay
-- Z-index 9999, responsivo (340px desktop, 280px mobile)
-
-### Arquivos modificados:
-1. `src/components/news/NewsAudioBlock.tsx` - Player compacto
-2. `src/components/news/NewsContentNavigator.tsx` - Cores por categoria
-3. `src/pages/NewsDetail.tsx` - Passar categoryColor aos componentes
-4. `src/components/broadcast/LiveFloatingPopup.tsx` - Novo componente
-5. `src/components/layout/PublicLayout.tsx` - Incluir LiveFloatingPopup
-6. `src/index.css` - Ajustes tipograficos menores
+- Usuarios logados poderao ver noticias publicadas normalmente
+- O TenantContext conseguira resolver o tenant para todos os usuarios
+- Nenhuma alteracao visual ou funcional no front-end
+- A seguranca e mantida: usuarios comuns so verao noticias publicadas, enquanto admins/editores continuam podendo ver todas
 
