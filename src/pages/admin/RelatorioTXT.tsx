@@ -23,16 +23,22 @@ interface NewsLink {
   url: string;
 }
 
+interface ExtraImage {
+  url: string;
+  credito?: string;
+}
+
 interface NewsItem {
   fonte: string;
   linkNoticia: string;
   linkImagem: string;
+  creditoImagem?: string;
   dataPublicacao: string;
   titulo: string;
   subtitulo: string;
   descricao: string;
   links?: NewsLink[];
-  extraImages?: string[];
+  extraImages?: ExtraImage[];
 }
 
 interface SavedReport {
@@ -48,6 +54,7 @@ const emptyItem: NewsItem = {
   fonte: "",
   linkNoticia: "",
   linkImagem: "",
+  creditoImagem: "",
   dataPublicacao: "",
   titulo: "",
   subtitulo: "",
@@ -77,20 +84,24 @@ function mapEntryToItem(entry: any): NewsItem {
     : [];
 
   const rawExtraImages = entry.extraImages || entry.maisImagens || entry.gallery;
-  const parsedExtraImages: string[] = Array.isArray(rawExtraImages)
-    ? rawExtraImages.map((img: any) => str(typeof img === 'string' ? img : img.url || '')).filter(Boolean)
+  const parsedExtraImages: ExtraImage[] = Array.isArray(rawExtraImages)
+    ? rawExtraImages.map((img: any) => {
+        if (typeof img === 'string') return { url: img, credito: '' };
+        return { url: str(img.url || ''), credito: str(img.credito || img.credit || '') };
+      }).filter((img: ExtraImage) => img.url)
     : [];
 
   return {
     fonte: str(entry.fonte),
     linkNoticia: str(entry.linkNoticia || entry.link || entry.url_original),
     linkImagem: rawLinkImagem || (images.length > 0 ? images[0].url : ''),
+    creditoImagem: str(entry.creditoImagem || entry.creditoFoto || ''),
     dataPublicacao: str(entry.dataPublicacao || entry.data),
     titulo: str(entry.titulo || entry.title),
     subtitulo: str(entry.subtitulo),
     descricao: images.length > 0 ? cleanDescription : rawDescricao,
     links: parsedLinks,
-    extraImages: parsedExtraImages.length > 0 ? parsedExtraImages : (images.length > 1 ? images.slice(1).map(i => i.url) : []),
+    extraImages: parsedExtraImages.length > 0 ? parsedExtraImages : (images.length > 1 ? images.slice(1).map(i => ({ url: i.url, credito: '' })) : []),
   };
 }
 
@@ -201,13 +212,17 @@ function ImageUploadField({
 
 function ExtraImageItem({
   url,
+  credito,
   index,
   onUrlChange,
+  onCreditoChange,
   onRemove,
 }: {
   url: string;
+  credito: string;
   index: number;
   onUrlChange: (val: string) => void;
+  onCreditoChange: (val: string) => void;
   onRemove: () => void;
 }) {
   const [uploading, setUploading] = useState(false);
@@ -270,12 +285,18 @@ function ExtraImageItem({
         </Button>
       </div>
       {url && url.startsWith("http") && (
-        <div className="ml-8">
+        <div className="ml-8 flex items-end gap-3">
           <img
             src={url}
             alt={`Imagem extra ${index + 2}`}
             className="h-16 w-24 object-cover rounded border"
             onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+          />
+          <Input
+            placeholder="Crédito da foto (opcional)"
+            value={credito}
+            onChange={(e) => onCreditoChange(e.target.value)}
+            className="max-w-xs text-xs h-8"
           />
         </div>
       )}
@@ -324,10 +345,14 @@ export default function RelatorioTXT() {
           parts.push(`${link.label ? link.label + ': ' : 'Link: '}${link.url}`);
         });
       }
-      if (item.linkImagem) parts.push(`Imagem: ${item.linkImagem}`);
+      if (item.linkImagem) {
+        parts.push(`Imagem: ${item.linkImagem}`);
+        if (item.creditoImagem) parts.push(`Crédito foto: ${item.creditoImagem}`);
+      }
       if (item.extraImages && item.extraImages.length > 0) {
         item.extraImages.forEach((img, imgIdx) => {
-          parts.push(`Imagem ${imgIdx + 2}: ${img}`);
+          parts.push(`Imagem ${imgIdx + 2}: ${img.url}`);
+          if (img.credito) parts.push(`Crédito foto ${imgIdx + 2}: ${img.credito}`);
         });
       }
       return parts.join("\n");
@@ -834,6 +859,14 @@ export default function RelatorioTXT() {
                 onLinkChange={(val) => handleChange("linkImagem", val)}
               />
               <div>
+                <Input
+                  placeholder="Crédito da foto principal (ex: Foto: João Silva)"
+                  value={form.creditoImagem || ""}
+                  onChange={(e) => handleChange("creditoImagem" as keyof NewsItem, e.target.value)}
+                  className="text-sm"
+                />
+              </div>
+              <div>
                 <label className="text-sm font-medium">Descrição</label>
                 <Textarea
                   placeholder="Resumo ou corpo da notícia (opcional). URLs de imagens serão extraídas automaticamente."
@@ -945,14 +978,20 @@ export default function RelatorioTXT() {
                   Adicione imagens extras por link ou upload (galeria)
                 </p>
                 <div className="space-y-2">
-                  {(form.extraImages || []).map((imgUrl, idx) => (
+                  {(form.extraImages || []).map((img, idx) => (
                     <ExtraImageItem
                       key={idx}
-                      url={imgUrl}
+                      url={img.url}
+                      credito={img.credito || ''}
                       index={idx}
                       onUrlChange={(val) => {
                         const updated = [...(form.extraImages || [])];
-                        updated[idx] = val;
+                        updated[idx] = { ...updated[idx], url: val };
+                        setForm((prev) => ({ ...prev, extraImages: updated }));
+                      }}
+                      onCreditoChange={(val) => {
+                        const updated = [...(form.extraImages || [])];
+                        updated[idx] = { ...updated[idx], credito: val };
                         setForm((prev) => ({ ...prev, extraImages: updated }));
                       }}
                       onRemove={() => {
@@ -968,7 +1007,7 @@ export default function RelatorioTXT() {
                     onClick={() => {
                       setForm((prev) => ({
                         ...prev,
-                        extraImages: [...(prev.extraImages || []), ""],
+                        extraImages: [...(prev.extraImages || []), { url: "", credito: "" }],
                       }));
                     }}
                     className="gap-1.5 text-xs"
@@ -1226,9 +1265,10 @@ export default function RelatorioTXT() {
                         {item.extraImages.map((img, ii) => (
                           <img
                             key={ii}
-                            src={img}
+                            src={img.url}
                             alt={`Extra ${ii + 2}`}
                             className="h-10 w-14 object-cover rounded border"
+                            title={img.credito || undefined}
                             onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                           />
                         ))}
@@ -1344,7 +1384,8 @@ export default function RelatorioTXT() {
                       <p className="font-medium text-sm truncate">{report.title}</p>
                       <p className="text-xs text-muted-foreground">
                         {(report.items as any[]).length} notícia(s) • Atualizado em{" "}
-                        {new Date(report.updated_at).toLocaleDateString("pt-BR")}
+                        {new Date(report.updated_at).toLocaleDateString("pt-BR")}{" "}
+                        às {new Date(report.updated_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                       </p>
                     </div>
                     <Button
