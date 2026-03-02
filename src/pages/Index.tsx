@@ -12,6 +12,7 @@ const MostReadSection = lazy(() => import("@/components/home/MostReadSection").t
 const SuperBanner = lazy(() => import("@/components/home/SuperBanner").then(m => ({ default: m.SuperBanner })));
 const QuickNotes = lazy(() => import("@/components/home/QuickNotes").then(m => ({ default: m.QuickNotes })));
 const HomeVideoBlock = lazy(() => import("@/components/home/HomeVideoBlock").then(m => ({ default: m.HomeVideoBlock })));
+const LocalEngagementSection = lazy(() => import("@/components/home/LocalEngagementSection").then(m => ({ default: m.LocalEngagementSection })));
 
 
 const LOADING_TIMEOUT_MS = 5000;
@@ -111,6 +112,11 @@ const Index = () => {
         {/* 6. Video Block (Web TV) */}
         <Suspense fallback={<SectionSkeleton h="h-48" />}>
           <HomeVideoBlock />
+        </Suspense>
+
+        {/* 6.5. Bloco Híbrido: Agenda Cultural + Utilidade Pública */}
+        <Suspense fallback={<SectionSkeleton h="h-64" />}>
+          <LocalEngagementSection />
         </Suspense>
 
         {/* 7. Notas Rápidas — carrossel de chips */}
