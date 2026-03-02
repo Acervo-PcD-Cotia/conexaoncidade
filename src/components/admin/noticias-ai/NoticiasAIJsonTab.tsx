@@ -12,6 +12,11 @@ import { useToast } from '@/hooks/use-toast';
 import { ArticlePreviewDialog } from './ArticlePreviewDialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
+interface NewsLink {
+  label: string;
+  url: string;
+}
+
 interface NewsArticle {
   titulo: string;
   slug: string;
@@ -37,7 +42,8 @@ interface NewsArticle {
   chapeu?: string;
   editor?: string;
   destaque?: 'none' | 'home' | 'featured' | 'urgent';
-  generateWebStory?: boolean;  // Flag para geração de WebStory
+  generateWebStory?: boolean;
+  links?: NewsLink[];
   _duplicateInfo?: {
     matchType: string;
     existingId: string;
@@ -402,6 +408,11 @@ export function NoticiasAIJsonTab({
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
+                    )}
+                    {article.links && article.links.length > 0 && (
+                      <Badge variant="outline" className="text-xs text-blue-600 border-blue-300 bg-blue-50 gap-1">
+                        🔗 {article.links.length} link(s)
+                      </Badge>
                     )}
                   </div>
                 </div>

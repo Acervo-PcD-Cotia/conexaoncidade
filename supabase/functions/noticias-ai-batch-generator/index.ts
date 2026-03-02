@@ -5,6 +5,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+interface NewsLink {
+  label: string;
+  url: string;
+}
+
 interface NewsInput {
   linkMateria: string;
   linkImagem: string;
@@ -13,6 +18,8 @@ interface NewsInput {
   subtitle?: string;
   source?: string;
   description?: string;
+  extraImages?: string[];
+  links?: NewsLink[];
 }
 
 interface BatchRequest {
@@ -477,6 +484,21 @@ serve(async (req) => {
         // Override fonte with user-provided source if available
         if (item.source && article.fonte !== undefined) {
           article.fonte = item.source;
+        }
+
+        // Merge extra images into galeria
+        if (item.extraImages && item.extraImages.length > 0) {
+          const existingGaleria = article.imagem?.galeria || [];
+          const validExtras = item.extraImages.filter((img: string) => img && img.startsWith('http'));
+          article.imagem = {
+            ...article.imagem,
+            galeria: [...existingGaleria, ...validExtras],
+          };
+        }
+
+        // Pass through links
+        if (item.links && item.links.length > 0) {
+          article.links = item.links.filter((l: NewsLink) => l.url);
         }
 
         results.push(article);

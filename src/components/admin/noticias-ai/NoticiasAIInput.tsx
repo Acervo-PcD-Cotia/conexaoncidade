@@ -42,7 +42,11 @@ const JSON_TEMPLATE = {
         meta_descricao: "Meta descrição para SEO (máx 160 caracteres)."
       },
       destaque: "none",
-      generateWebStory: true
+      generateWebStory: true,
+      links: [
+        { label: "Inscrições", url: "https://www.e-inscricao.com/exemplo" },
+        { label: "Site Oficial", url: "https://www.exemplo.gov.br" }
+      ]
     }
   ]
 };
@@ -411,6 +415,11 @@ const validateNewsJson = (text: string): ValidationError[] => {
 type DetectedMode = 'exclusiva' | 'manual' | 'json' | 'url' | 'batch' | 'auto';
 type TabType = 'cadastro' | 'manual' | 'json' | 'link' | 'lote' | 'gerador';
 
+interface GeneratorNewsLink {
+  label: string;
+  url: string;
+}
+
 interface GeneratorNewsItem {
   linkMateria: string;
   linkImagem: string;
@@ -419,6 +428,8 @@ interface GeneratorNewsItem {
   subtitle: string;
   source: string;
   description: string;
+  extraImages: string[];
+  links: GeneratorNewsLink[];
 }
 
 export interface HighlightSettings {
@@ -482,7 +493,7 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
   
   // Gerador state
   const [generatorItems, setGeneratorItems] = useState<GeneratorNewsItem[]>([
-    { linkMateria: '', linkImagem: '', dataPublicacao: '', title: '', subtitle: '', source: '', description: '' }
+    { linkMateria: '', linkImagem: '', dataPublicacao: '', title: '', subtitle: '', source: '', description: '', extraImages: [], links: [] }
   ]);
   const [generatorProgress, setGeneratorProgress] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -652,7 +663,7 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
 
   // Generator helpers
   const addGeneratorItem = () => {
-    setGeneratorItems(prev => [...prev, { linkMateria: '', linkImagem: '', dataPublicacao: '', title: '', subtitle: '', source: '', description: '' }]);
+    setGeneratorItems(prev => [...prev, { linkMateria: '', linkImagem: '', dataPublicacao: '', title: '', subtitle: '', source: '', description: '', extraImages: [], links: [] }]);
   };
 
   const removeGeneratorItem = (index: number) => {
@@ -853,7 +864,7 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
     setSingleUrl('');
     setBatchUrls('');
     setImageUrls([]);
-    setGeneratorItems([{ linkMateria: '', linkImagem: '', dataPublicacao: '', title: '', subtitle: '', source: '', description: '' }]);
+    setGeneratorItems([{ linkMateria: '', linkImagem: '', dataPublicacao: '', title: '', subtitle: '', source: '', description: '', extraImages: [], links: [] }]);
     setGeneratorResult(null);
     setHighlights({
       is_home_highlight: false,
@@ -1292,7 +1303,11 @@ Estrutura esperada:
       "seo": {
         "meta_titulo": "Título SEO (máx 60)",
         "meta_descricao": "Descrição SEO (máx 160)"
-      }
+      },
+      "links": [
+        {"label": "Inscrições", "url": "https://..."},
+        {"label": "Site Oficial", "url": "https://..."}
+      ]
     }
   ]
 }`}
@@ -1426,6 +1441,98 @@ https://exemplo.com/noticia-3
                     className="text-sm min-h-[60px]"
                     rows={2}
                   />
+
+                  {/* Extra Images */}
+                  <div className="space-y-1.5">
+                    <span className="text-xs font-medium text-muted-foreground">Mais Imagens (galeria)</span>
+                    {item.extraImages.map((img, imgIdx) => (
+                      <div key={imgIdx} className="flex gap-2 items-center">
+                        <Input
+                          placeholder="https://... (imagem extra)"
+                          value={img}
+                          onChange={(e) => {
+                            const updated = [...item.extraImages];
+                            updated[imgIdx] = e.target.value;
+                            setGeneratorItems(prev => prev.map((it, i) => i === idx ? { ...it, extraImages: updated } : it));
+                          }}
+                          className="text-sm flex-1"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 text-destructive"
+                          onClick={() => {
+                            const updated = item.extraImages.filter((_, i) => i !== imgIdx);
+                            setGeneratorItems(prev => prev.map((it, i) => i === idx ? { ...it, extraImages: updated } : it));
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs h-7 gap-1"
+                      onClick={() => {
+                        setGeneratorItems(prev => prev.map((it, i) => i === idx ? { ...it, extraImages: [...it.extraImages, ''] } : it));
+                      }}
+                    >
+                      <PlusCircle className="h-3 w-3" />
+                      Imagem
+                    </Button>
+                  </div>
+
+                  {/* Links */}
+                  <div className="space-y-1.5">
+                    <span className="text-xs font-medium text-muted-foreground">Links relacionados</span>
+                    {item.links.map((link, linkIdx) => (
+                      <div key={linkIdx} className="flex gap-2 items-center">
+                        <Input
+                          placeholder="Rótulo (ex: Inscrições)"
+                          value={link.label}
+                          onChange={(e) => {
+                            const updated = [...item.links];
+                            updated[linkIdx] = { ...updated[linkIdx], label: e.target.value };
+                            setGeneratorItems(prev => prev.map((it, i) => i === idx ? { ...it, links: updated } : it));
+                          }}
+                          className="text-sm w-1/3"
+                        />
+                        <Input
+                          placeholder="https://..."
+                          value={link.url}
+                          onChange={(e) => {
+                            const updated = [...item.links];
+                            updated[linkIdx] = { ...updated[linkIdx], url: e.target.value };
+                            setGeneratorItems(prev => prev.map((it, i) => i === idx ? { ...it, links: updated } : it));
+                          }}
+                          className="text-sm flex-1"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 text-destructive"
+                          onClick={() => {
+                            const updated = item.links.filter((_, i) => i !== linkIdx);
+                            setGeneratorItems(prev => prev.map((it, i) => i === idx ? { ...it, links: updated } : it));
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs h-7 gap-1"
+                      onClick={() => {
+                        setGeneratorItems(prev => prev.map((it, i) => i === idx ? { ...it, links: [...it.links, { label: '', url: '' }] } : it));
+                      }}
+                    >
+                      <PlusCircle className="h-3 w-3" />
+                      Link
+                    </Button>
+                  </div>
                 </Card>
               ))}
             </div>
