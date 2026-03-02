@@ -34,8 +34,8 @@ function validateNewsQuality(params: {
 
   // 2. Content must be meaningful
   const plainText = extractPlainText(params.content || "");
-  if (!params.content || plainText.length < 200) {
-    errors.push(`Conteúdo insuficiente: ${plainText.length} chars (mínimo: 200)`);
+  if (!params.content || plainText.length < 20) {
+    errors.push(`Conteúdo insuficiente: ${plainText.length} chars (mínimo: 20)`);
   }
 
   // 3. Source mandatory
