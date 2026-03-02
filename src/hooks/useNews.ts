@@ -66,34 +66,54 @@ export interface NewsItem {
 // ── Batch helpers ──────────────────────────────────────────────
 // Fetch all authors for a list of news items in a single query
 async function batchFetchAuthors(items: any[]) {
-  const authorIds = [...new Set(items.map(n => n.author_id).filter(Boolean))];
-  if (authorIds.length === 0) return new Map();
+  try {
+    const authorIds = [...new Set(items.map(n => n.author_id).filter(Boolean))];
+    if (authorIds.length === 0) return new Map();
 
-  const { data: authors } = await supabase
-    .from('profiles')
-    .select('id, full_name, avatar_url, bio')
-    .in('id', authorIds);
+    const { data: authors, error } = await supabase
+      .from('profiles')
+      .select('id, full_name, avatar_url, bio')
+      .in('id', authorIds);
 
-  return new Map((authors || []).map(a => [a.id, a]));
+    if (error) {
+      console.warn('[useNews] Erro ao buscar autores (não-bloqueante):', error.message);
+      return new Map();
+    }
+
+    return new Map((authors || []).map(a => [a.id, a]));
+  } catch (err) {
+    console.warn('[useNews] Falha ao buscar autores:', err);
+    return new Map();
+  }
 }
 
 // Fetch all tags for a list of news items in a single query
 async function batchFetchTags(items: any[]) {
-  const newsIds = items.map(n => n.id);
-  if (newsIds.length === 0) return new Map<string, any[]>();
+  try {
+    const newsIds = items.map(n => n.id);
+    if (newsIds.length === 0) return new Map<string, any[]>();
 
-  const { data: allTags } = await supabase
-    .from('news_tags')
-    .select('news_id, tag:tags(id, name, slug)')
-    .in('news_id', newsIds);
+    const { data: allTags, error } = await supabase
+      .from('news_tags')
+      .select('news_id, tag:tags(id, name, slug)')
+      .in('news_id', newsIds);
 
-  const tagsMap = new Map<string, any[]>();
-  (allTags || []).forEach((t: any) => {
-    if (!t.tag) return;
-    if (!tagsMap.has(t.news_id)) tagsMap.set(t.news_id, []);
-    tagsMap.get(t.news_id)!.push(t.tag);
-  });
-  return tagsMap;
+    if (error) {
+      console.warn('[useNews] Erro ao buscar tags (não-bloqueante):', error.message);
+      return new Map<string, any[]>();
+    }
+
+    const tagsMap = new Map<string, any[]>();
+    (allTags || []).forEach((t: any) => {
+      if (!t.tag) return;
+      if (!tagsMap.has(t.news_id)) tagsMap.set(t.news_id, []);
+      tagsMap.get(t.news_id)!.push(t.tag);
+    });
+    return tagsMap;
+  } catch (err) {
+    console.warn('[useNews] Falha ao buscar tags:', err);
+    return new Map<string, any[]>();
+  }
 }
 
 // Enrich news items with batch-fetched authors and tags
