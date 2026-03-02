@@ -118,8 +118,8 @@ function validateNewsQuality(params: {
 
   // 2. Content must exist and have meaningful length
   const plainText = extractText(params.content || '');
-  if (!params.content || plainText.length < 200) {
-    errors.push(`Conteúdo insuficiente: apenas ${plainText.length} caracteres de texto (mínimo: 200)`);
+  if (!params.content || plainText.length < 20) {
+    errors.push(`Conteúdo insuficiente: apenas ${plainText.length} caracteres de texto (mínimo: 20)`);
   }
 
   // 3. Source is mandatory
