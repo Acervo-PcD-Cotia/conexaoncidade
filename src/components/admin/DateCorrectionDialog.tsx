@@ -39,7 +39,7 @@ interface DateCorrectionDialogProps {
   onSuccess: () => void;
 }
 
-type CorrectionMode = "original" | "manual";
+type CorrectionMode = "original" | "manual" | "normalize";
 
 interface ProcessResult {
   id: string;
@@ -139,7 +139,7 @@ export function DateCorrectionDialog({
         onSuccess();
       }
     } else {
-      // Original mode: use Edge Function to fetch dates from sources
+      // Original or normalize mode: use Edge Function
       try {
         const newsIds = selectedNews.map((n) => n.id);
         
@@ -149,6 +149,7 @@ export function DateCorrectionDialog({
             newsIds,
             limit: newsIds.length,
             onlyMissing: false,
+            normalizeSourceNames: mode === "normalize" || mode === "original",
           },
         });
 
@@ -162,7 +163,7 @@ export function DateCorrectionDialog({
           title: r.title,
           status: r.status,
           newDate: r.newDate,
-          message: r.message,
+          message: r.message || r.method,
         }));
 
         setResults(newResults);
@@ -226,10 +227,22 @@ export function DateCorrectionDialog({
                   <RadioGroupItem value="original" id="original" className="mt-0.5" />
                   <div className="space-y-1">
                     <Label htmlFor="original" className="font-medium cursor-pointer">
-                      Buscar data original da fonte
+                      Buscar data original + normalizar fonte
                     </Label>
                     <p className="text-sm text-muted-foreground">
-                      Extrai automaticamente a data real de publicação acessando a página original
+                      Extrai a data da URL ou página original e normaliza o nome da fonte (ex: "Prefeitura de Cotia")
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-3 rounded-lg border p-4 hover:bg-muted/50">
+                  <RadioGroupItem value="normalize" id="normalize" className="mt-0.5" />
+                  <div className="space-y-1">
+                    <Label htmlFor="normalize" className="font-medium cursor-pointer">
+                      Apenas normalizar fonte
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Padroniza o campo fonte sem alterar as datas
                     </p>
                   </div>
                 </div>
