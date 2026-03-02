@@ -1,9 +1,9 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Pencil, Copy, Download, FileText, X, Check, Save, FolderOpen, Loader2, ExternalLink, Globe, ClipboardPaste, Upload } from "lucide-react";
+import { Plus, Trash2, Pencil, Copy, Download, FileText, X, Check, Save, FolderOpen, Loader2, ExternalLink, Globe, ClipboardPaste, Upload, CloudOff, Cloud } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -101,6 +101,85 @@ export default function RelatorioTXT() {
   const [pasteJson, setPasteJson] = useState("");
   const [importTab, setImportTab] = useState("form");
 
+  // Auto-save state
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isInitialLoadRef = useRef(true);
+
+  const buildReportText = useCallback((newsItems: NewsItem[]) => {
+    const lines = newsItems.map((item, i) => {
+      const parts = [`NOTÍCIA ${i + 1}`];
+      if (item.fonte) parts.push(`Fonte: ${item.fonte}`);
+      if (item.linkNoticia) parts.push(`Link: ${item.linkNoticia}`);
+      parts.push(`Data: ${item.dataPublicacao}`);
+      parts.push(`Título: ${item.titulo}`);
+      if (item.subtitulo) parts.push(`Subtítulo: ${item.subtitulo}`);
+      if (item.descricao) parts.push(`Descrição: ${item.descricao}`);
+      if (item.linkImagem) parts.push(`Imagem: ${item.linkImagem}`);
+      return parts.join("\n");
+    });
+    return lines.join("\n\n----------------------------------------\n\n");
+  }, []);
+
+  // Auto-save function
+  const autoSave = useCallback(async (currentItems: NewsItem[], title: string, reportId: string | null) => {
+    if (currentItems.length === 0) return;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    setAutoSaveStatus('saving');
+    const text = buildReportText(currentItems);
+
+    try {
+      if (reportId) {
+        const { error } = await supabase
+          .from("relatorio_txt_saved")
+          .update({ title, items: currentItems as any, report_text: text })
+          .eq("id", reportId);
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase
+          .from("relatorio_txt_saved")
+          .insert({ user_id: user.id, title, items: currentItems as any, report_text: text })
+          .select("id")
+          .single();
+        if (error) throw error;
+        if (data) setCurrentReportId(data.id);
+      }
+      setAutoSaveStatus('saved');
+      setLastSavedAt(new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }));
+    } catch {
+      setAutoSaveStatus('error');
+    }
+  }, [buildReportText]);
+
+  // Debounced auto-save effect
+  useEffect(() => {
+    // Skip auto-save on initial load
+    if (isInitialLoadRef.current) {
+      isInitialLoadRef.current = false;
+      return;
+    }
+
+    if (items.length === 0) return;
+
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    autoSaveTimerRef.current = setTimeout(() => {
+      autoSave(items, reportTitle, currentReportId);
+    }, 2000);
+
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [items, reportTitle]);
+
   const handleChange = (field: keyof NewsItem, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
@@ -152,20 +231,6 @@ export default function RelatorioTXT() {
     setForm({ ...emptyItem });
   };
 
-  const buildReportText = useCallback((newsItems: NewsItem[]) => {
-    const lines = newsItems.map((item, i) => {
-      const parts = [`NOTÍCIA ${i + 1}`];
-      if (item.fonte) parts.push(`Fonte: ${item.fonte}`);
-      if (item.linkNoticia) parts.push(`Link: ${item.linkNoticia}`);
-      parts.push(`Data: ${item.dataPublicacao}`);
-      parts.push(`Título: ${item.titulo}`);
-      if (item.subtitulo) parts.push(`Subtítulo: ${item.subtitulo}`);
-      if (item.descricao) parts.push(`Descrição: ${item.descricao}`);
-      if (item.linkImagem) parts.push(`Imagem: ${item.linkImagem}`);
-      return parts.join("\n");
-    });
-    return lines.join("\n\n----------------------------------------\n\n");
-  }, []);
 
   const generateReport = useCallback(() => {
     if (items.length === 0) {
@@ -269,12 +334,15 @@ export default function RelatorioTXT() {
   };
 
   const loadReport = (report: SavedReport) => {
+    isInitialLoadRef.current = true;
     setItems(report.items);
     setReportTitle(report.title);
     setCurrentReportId(report.id);
     setShowSavedList(false);
     setEditingIndex(null);
     setForm({ ...emptyItem });
+    setAutoSaveStatus('saved');
+    setLastSavedAt(new Date(report.updated_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }));
     toast.success("Relatório carregado!");
   };
 
@@ -316,12 +384,15 @@ export default function RelatorioTXT() {
   };
 
   const handleNewReport = () => {
+    isInitialLoadRef.current = true;
     setItems([]);
     setForm({ ...emptyItem });
     setEditingIndex(null);
     setReportTitle("Sem título");
     setCurrentReportId(null);
     setPasteTxt("");
+    setAutoSaveStatus('idle');
+    setLastSavedAt(null);
   };
 
   // Parse pasted TXT into items
@@ -416,7 +487,26 @@ export default function RelatorioTXT() {
             Cadastre notícias e gere um relatório em texto simples para copiar e colar.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          {/* Auto-save status */}
+          {autoSaveStatus === 'saving' && (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Salvando...
+            </span>
+          )}
+          {autoSaveStatus === 'saved' && lastSavedAt && (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Cloud className="h-3 w-3" />
+              Salvo às {lastSavedAt}
+            </span>
+          )}
+          {autoSaveStatus === 'error' && (
+            <span className="flex items-center gap-1 text-xs text-destructive">
+              <CloudOff className="h-3 w-3" />
+              Erro ao salvar
+            </span>
+          )}
           <Button variant="outline" size="sm" onClick={handleNewReport} className="gap-2">
             <Plus className="h-4 w-4" />
             Novo
