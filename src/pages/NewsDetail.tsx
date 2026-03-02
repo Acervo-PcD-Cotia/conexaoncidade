@@ -428,7 +428,7 @@ function NewsDetailContent({ news }: NewsDetailContentProps) {
 
           {/* 2. Audio Block - UOL/Trinity Audio Style (BEFORE summary) */}
           <div id="accessibility">
-            <NewsAudioBlock
+          <NewsAudioBlock
               newsId={news.id}
               audioUrl={news.audio_url}
               audioStatus={news.audio_status}
@@ -438,6 +438,7 @@ function NewsDetailContent({ news }: NewsDetailContentProps) {
               spotifyUrl={news.spotify_url}
               podcastStatus={news.podcast_status}
               podcastAudioUrl={news.podcast_audio_url}
+              categoryColor={categoryTheme.color}
               className="mb-6"
               onAudioPlay={trackAudioPlay}
               onAudioStop={trackAudioStop}
@@ -451,6 +452,7 @@ function NewsDetailContent({ news }: NewsDetailContentProps) {
             summaryMedium={news.summary_medium}
             keyPoints={news.ai_summary_bullets}
             contentHtml={news.content}
+            categoryColor={categoryTheme.color}
             onSummaryExpand={trackSummaryExpand}
             onTocClick={trackTocClick}
             className="mb-8"

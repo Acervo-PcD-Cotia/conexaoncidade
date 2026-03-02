@@ -6,14 +6,12 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
 interface NewsContentNavigatorProps {
-  // Summary props
   summaryShort?: string | null;
   summaryMedium?: string | null;
   keyPoints?: string[] | null;
   isGenerating?: boolean;
-  // Table of contents props
   contentHtml?: string | null;
-  // Callbacks
+  categoryColor?: string;
   onSummaryExpand?: () => void;
   onTocClick?: () => void;
   className?: string;
@@ -31,36 +29,32 @@ export function NewsContentNavigator({
   keyPoints,
   isGenerating,
   contentHtml,
+  categoryColor,
   onSummaryExpand,
   onTocClick,
   className
 }: NewsContentNavigatorProps) {
-  // UOL behavior: Open by default on desktop (>=768px), collapsed on mobile
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [tocOpen, setTocOpen] = useState(false);
   const [feedbackGiven, setFeedbackGiven] = useState<'up' | 'down' | null>(null);
   const [hasTrackedExpand, setHasTrackedExpand] = useState(false);
 
-  // Set initial state based on viewport width (client-side only)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const isDesktop = window.innerWidth >= 768;
       setSummaryOpen(isDesktop);
       if (isDesktop) {
-        setHasTrackedExpand(true); // Don't track auto-expand on desktop
+        setHasTrackedExpand(true);
       }
     }
   }, []);
 
-  // Parse headings for table of contents
   const tocItems = useMemo(() => {
     if (!contentHtml) return [];
-
     const items: TocItem[] = [];
     const h2Regex = /<h2[^>]*>(.*?)<\/h2>/gi;
     let match;
     let index = 0;
-
     while ((match = h2Regex.exec(contentHtml)) !== null) {
       const text = match[1].replace(/<[^>]*>/g, '').trim();
       if (text) {
@@ -69,17 +63,13 @@ export function NewsContentNavigator({
         index++;
       }
     }
-
     return items;
   }, [contentHtml]);
 
   const hasSummary = keyPoints?.length || summaryShort || summaryMedium || isGenerating;
   const hasToc = tocItems.length >= 3;
 
-  // Don't render if no content
-  if (!hasSummary && !hasToc) {
-    return null;
-  }
+  if (!hasSummary && !hasToc) return null;
 
   const handleSummaryToggle = (open: boolean) => {
     setSummaryOpen(open);
@@ -96,10 +86,8 @@ export function NewsContentNavigator({
   const handleScrollTo = (index: number) => {
     const articleContent = document.querySelector('.prose-news');
     if (!articleContent) return;
-
     const headings = articleContent.querySelectorAll('h2');
     const targetHeading = headings[index];
-
     if (targetHeading) {
       targetHeading.scrollIntoView({ behavior: 'smooth', block: 'start' });
       onTocClick?.();
@@ -111,28 +99,42 @@ export function NewsContentNavigator({
     toast.success(type === 'up' ? 'Obrigado pelo feedback!' : 'Vamos melhorar!');
   };
 
-  // Get summary content to display - limit to max 4 points (UOL standard)
   const summaryPoints = keyPoints?.length 
     ? keyPoints.slice(0, 4) 
     : (summaryMedium || summaryShort)?.split(/[.!?]\s+/).filter(s => s.trim().length > 20).slice(0, 4) || [];
 
+  // Dynamic border color with opacity
+  const summaryBorderStyle = categoryColor
+    ? { borderColor: `${categoryColor}66` } // 40% opacity via hex alpha
+    : undefined;
+
+  const summaryBorderActiveStyle = categoryColor
+    ? { borderColor: `${categoryColor}99` } // 60% opacity
+    : undefined;
+
   return (
     <div className={cn("space-y-3", className)}>
-      {/* Summary Section - UOL Style */}
+      {/* Summary Section - UOL Style with Category Colors */}
       {hasSummary && (
         <Collapsible open={summaryOpen} onOpenChange={handleSummaryToggle}>
-          <div className={cn(
-            "border-2 rounded-lg overflow-hidden transition-all duration-200",
-            summaryOpen 
-              ? "border-primary/40 bg-primary/5 dark:bg-primary/10" 
-              : "border-border hover:border-primary/30"
-          )}>
+          <div 
+            className={cn(
+              "border-2 rounded-lg overflow-hidden transition-all duration-200 bg-white dark:bg-card",
+              !categoryColor && (summaryOpen 
+                ? "border-primary/40 bg-primary/5 dark:bg-primary/10" 
+                : "border-border hover:border-primary/30")
+            )}
+            style={summaryOpen ? summaryBorderActiveStyle : summaryBorderStyle}
+          >
             <CollapsibleTrigger className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
-              <span className="font-semibold text-foreground">
+              <span 
+                className="font-bold text-sm uppercase tracking-widest"
+                style={categoryColor ? { color: categoryColor } : undefined}
+              >
                 {summaryOpen ? "Resumo da notícia" : "Ler resumo da notícia"}
               </span>
               {summaryOpen ? (
-                <ChevronUp className="h-5 w-5 text-primary" />
+                <ChevronUp className="h-5 w-5" style={categoryColor ? { color: categoryColor } : undefined} />
               ) : (
                 <ChevronDown className="h-5 w-5 text-muted-foreground" />
               )}
@@ -147,13 +149,13 @@ export function NewsContentNavigator({
                   </div>
                 ) : (
                   <>
-                    {/* Key Points with square markers */}
                     {summaryPoints.length > 0 && (
                       <ul className="space-y-3">
                         {summaryPoints.map((point, i) => (
                           <li key={i} className="flex items-start gap-3">
                             <span 
-                              className="mt-2 h-1.5 w-1.5 bg-primary shrink-0" 
+                              className="mt-2 h-1.5 w-1.5 shrink-0" 
+                              style={{ backgroundColor: categoryColor || 'hsl(var(--primary))' }}
                               aria-hidden="true"
                             />
                             <span className="text-sm leading-relaxed text-foreground">{point}</span>
@@ -193,7 +195,6 @@ export function NewsContentNavigator({
                       </Button>
                     </div>
 
-                    {/* AI Disclaimer */}
                     <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                       <Sparkles className="h-3 w-3" />
                       Resumo gerado por ferramenta de IA treinada com padrões editoriais do Portal Conexão.
