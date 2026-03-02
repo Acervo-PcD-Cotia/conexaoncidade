@@ -36,6 +36,7 @@ const NewsDetail = lazy(() => import("./pages/NewsDetail"));
 const CategoryPage = lazy(() => import("./pages/CategoryPage"));
 const StoryViewer = lazy(() => import("./pages/StoryViewer"));
 const EventDetail = lazy(() => import("./pages/EventDetail"));
+const EventosPublic = lazy(() => import("./pages/EventosPublic"));
 const AntiFakeNews = lazy(() => import("./pages/AntiFakeNews"));
 const EditionViewer = lazy(() => import("./pages/EditionViewer"));
 const StoriesPage = lazy(() => import("./pages/StoriesPage"));
@@ -487,6 +488,7 @@ const App = () => (
 
                                 <Route path="/story/:slug" element={<S><StoryViewer /></S>} />
                                 <Route path="/webstory/:campaignId" element={<S><WebStoryViewerPage /></S>} />
+                                <Route path="/eventos" element={<S><EventosPublic /></S>} />
                                 <Route path="/evento/:slug" element={<S><EventDetail /></S>} />
                                 <Route path="/edicao/:slug" element={<S><EditionViewer /></S>} />
                                 <Route path="/spah" element={<S><Auth /></S>} />
