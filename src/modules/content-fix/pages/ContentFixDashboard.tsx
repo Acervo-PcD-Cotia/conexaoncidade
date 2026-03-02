@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Wrench, Image, Calendar, ShieldCheck, ArrowRight, AlertCircle, FileText, Type } from "lucide-react";
+import { Wrench, Image, Calendar, ShieldCheck, ArrowRight, AlertCircle, FileText, Type, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -138,6 +138,25 @@ export default function ContentFixDashboard() {
           <CardContent>
             <CardDescription className="mb-3">
               Aprimore títulos (máx. 60 chars) e gere subtítulos (máx. 160 chars) com IA sem alterar o conteúdo
+            </CardDescription>
+            <Button variant="ghost" size="sm" className="group-hover:translate-x-1 transition-transform">
+              Acessar <ArrowRight className="h-4 w-4 ml-1" />
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-md transition-shadow cursor-pointer group" onClick={() => navigate("/spah/painel/content-fix/dates")}>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-teal-100 dark:bg-teal-950/30">
+                <Globe className="h-5 w-5 text-teal-600" />
+              </div>
+              <CardTitle className="text-base">Normalizar Fontes</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="mb-3">
+              Padronize nomes de fontes (ex: URL → "Prefeitura de Cotia") e corrija duplicidades
             </CardDescription>
             <Button variant="ghost" size="sm" className="group-hover:translate-x-1 transition-transform">
               Acessar <ArrowRight className="h-4 w-4 ml-1" />
