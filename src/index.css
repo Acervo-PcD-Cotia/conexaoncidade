@@ -487,9 +487,9 @@
 
   .prose-news {
     @apply text-foreground leading-relaxed;
-    max-width: 780px;
+    max-width: 760px;
     font-size: 1.0625rem;
-    line-height: 1.75;
+    line-height: 1.6;
   }
 
   /* First paragraph (lead) - Agência Brasil: normal weight, strong only on key phrase */

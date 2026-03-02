@@ -6,6 +6,7 @@ import { AccessibilityPanel } from "@/components/accessibility/AccessibilityPane
 import { PushSubscribePrompt } from "@/components/PushSubscribePrompt";
 import { useKeyboardNavigation } from "@/hooks/useKeyboardNavigation";
 import MiniPlayer from "@/components/broadcast/MiniPlayer";
+import { LiveFloatingPopup } from "@/components/broadcast/LiveFloatingPopup";
 import { useMiniPlayer } from "@/contexts/MiniPlayerContext";
 import { GlobalRadioProvider } from "@/contexts/GlobalRadioContext";
 import { lazy, Suspense } from "react";
@@ -61,6 +62,9 @@ export function PublicLayout() {
           onExpand={hideMiniPlayer}
         />
       )}
+
+      {/* Live floating popup - auto-shows when broadcast is live */}
+      {!shouldShowMiniPlayer && <LiveFloatingPopup />}
 
       {/* Global floating ad (1x per session, campaign-driven, desktop only) */}
       <Suspense fallback={null}>

@@ -23,6 +23,7 @@ interface NewsAudioBlockProps {
   podcastStatus?: string | null;
   podcastAudioUrl?: string | null;
   className?: string;
+  categoryColor?: string;
   onAudioPlay?: () => void;
   onAudioStop?: () => void;
   onPodcastPlay?: () => void;
@@ -41,87 +42,81 @@ export function NewsAudioBlock({
   podcastStatus,
   podcastAudioUrl,
   className,
+  categoryColor,
   onAudioPlay,
   onAudioStop,
   onPodcastPlay,
 }: NewsAudioBlockProps) {
-  // Determine audio state - unified player (prioritize TTS, fallback to podcast)
   const effectiveAudioUrl = audioUrl || podcastAudioUrl;
   const isReady = (audioStatus === 'ready' && audioUrl) || 
                   ((podcastStatus === 'ready' || podcastStatus === 'published') && podcastAudioUrl);
   const isGenerating = audioStatus === 'generating';
   const hasFailed = audioStatus === 'failed';
   const notGenerated = !audioStatus || audioStatus === 'not_generated';
-
-  // Show fallback (Web Speech) when audio is not ready
   const showFallback = !isReady && !isGenerating;
 
   return (
     <div className={cn("", className)}>
-      {/* =========================================== */}
-      {/* 🎧 PLAYER UOL/TRINITY AUDIO STYLE          */}
-      {/* =========================================== */}
       <section 
-        className="border rounded-lg overflow-hidden bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800"
+        className="rounded-lg overflow-hidden"
+        style={{
+          background: '#f6f7fb',
+          border: '1px solid #e1e3f0',
+        }}
         aria-label="Versão em áudio da matéria"
       >
-        {/* Audio Player - Ready State */}
         {isReady && effectiveAudioUrl && (
-          <UOLAudioPlayer
+          <CompactAudioPlayer
             audioUrl={effectiveAudioUrl}
             duration={audioDuration || 0}
             newsId={newsId}
             spotifyUrl={spotifyUrl}
+            categoryColor={categoryColor}
             onPlay={onAudioPlay}
             onPause={onAudioStop}
           />
         )}
 
-        {/* Generating State */}
         {isGenerating && (
-          <div className="p-6">
-            <div className="flex items-center justify-center gap-3">
-              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Loader2 className="h-5 w-5 animate-spin text-primary" />
-              </div>
-              <div>
-                <p className="font-semibold text-foreground">Preparando áudio...</p>
-                <p className="text-sm text-muted-foreground">Versão em áudio será disponibilizada em breve</p>
-              </div>
+          <div className="px-5 py-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            </div>
+            <div>
+              <p className="font-semibold text-sm text-foreground">Preparando áudio...</p>
+              <p className="text-xs text-muted-foreground">Versão em áudio será disponibilizada em breve</p>
             </div>
           </div>
         )}
 
-        {/* Failed State */}
         {hasFailed && (
-          <div className="p-6">
-            <div className="flex items-center justify-center gap-3">
-              <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                <Headphones className="h-5 w-5 text-muted-foreground" />
+          <div className="px-5 py-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+                <Headphones className="h-4 w-4 text-muted-foreground" />
               </div>
               <div>
-                <p className="font-semibold text-foreground">Áudio indisponível</p>
-                <p className="text-sm text-muted-foreground">Use o leitor do navegador abaixo</p>
+                <p className="font-semibold text-sm text-foreground">Áudio indisponível</p>
+                <p className="text-xs text-muted-foreground">Use o leitor do navegador abaixo</p>
               </div>
             </div>
             {contentHtml && (
-              <div className="mt-4">
+              <div className="mt-3">
                 <WebSpeechPlayer text={contentHtml} />
               </div>
             )}
           </div>
         )}
 
-        {/* Fallback: Web Speech API */}
         {showFallback && !hasFailed && contentHtml && (
-          <div className="p-6">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Headphones className="h-5 w-5 text-primary" />
+          <div className="px-5 py-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <Headphones className="h-4 w-4 text-primary" />
               </div>
               <div>
-                <p className="font-semibold text-foreground">Ouça pelo navegador</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="font-semibold text-sm text-foreground">Ouça pelo navegador</p>
+                <p className="text-xs text-muted-foreground">
                   {notGenerated ? 'Áudio em preparação' : 'Use o leitor do navegador'}
                 </p>
               </div>
@@ -135,26 +130,28 @@ export function NewsAudioBlock({
 }
 
 // ============================================
-// UOL/Trinity Audio Style Player
+// Compact Audio Player - Agência Brasil Style
 // ============================================
 
-interface UOLAudioPlayerProps {
+interface CompactAudioPlayerProps {
   audioUrl: string;
   duration?: number;
   newsId: string;
   spotifyUrl?: string | null;
+  categoryColor?: string;
   onPlay?: () => void;
   onPause?: () => void;
 }
 
-function UOLAudioPlayer({
+function CompactAudioPlayer({
   audioUrl,
   duration = 0,
   newsId,
   spotifyUrl,
+  categoryColor,
   onPlay,
   onPause,
-}: UOLAudioPlayerProps) {
+}: CompactAudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -174,7 +171,6 @@ function UOLAudioPlayer({
 
   const togglePlay = useCallback(() => {
     if (!audioRef.current) return;
-    
     if (isPlaying) {
       audioRef.current.pause();
       onPause?.();
@@ -232,14 +228,12 @@ function UOLAudioPlayer({
     }
   }, [isMuted, volume]);
 
-  // Track initial play
   useEffect(() => {
     if (isPlaying && !hasStartedTracking) {
       setHasStartedTracking(true);
     }
   }, [isPlaying, hasStartedTracking]);
 
-  // Track when user leaves page
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (hasStartedTracking && audioRef.current && currentTime > 5) {
@@ -251,10 +245,13 @@ function UOLAudioPlayer({
         });
       }
     };
-
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasStartedTracking, newsId, currentTime, audioDuration, trackListen]);
+
+  const playButtonStyle = categoryColor
+    ? { backgroundColor: categoryColor, color: '#fff' }
+    : undefined;
 
   return (
     <div>
@@ -267,129 +264,107 @@ function UOLAudioPlayer({
         preload="metadata"
       />
 
-      {/* Header with "Ouça agora" */}
-      <div className="flex items-center justify-between px-4 py-4 border-b border-slate-200 dark:border-slate-700">
-        <div className="flex items-center gap-3">
-          {/* Large Play Button */}
-          <Button
-            variant="default"
-            size="icon"
-            className="h-12 w-12 rounded-full shrink-0 shadow-lg"
-            onClick={togglePlay}
-            aria-label={isPlaying ? "Pausar áudio" : "Reproduzir áudio"}
-          >
-            {isPlaying ? (
-              <Pause className="h-5 w-5" />
-            ) : (
-              <Play className="h-5 w-5 ml-0.5" />
-            )}
-          </Button>
-          <div>
-            <p className="font-semibold text-foreground">Ouça agora</p>
-            <p className="text-xs text-muted-foreground">Versão em áudio desta matéria</p>
-          </div>
+      {/* Compact Header - "VERSÃO EM ÁUDIO" */}
+      <div className="px-5 py-3 flex items-center gap-3">
+        <Button
+          variant="default"
+          size="icon"
+          className="h-10 w-10 rounded-full shrink-0 shadow-md"
+          style={playButtonStyle}
+          onClick={togglePlay}
+          aria-label={isPlaying ? "Pausar áudio" : "Reproduzir áudio"}
+        >
+          {isPlaying ? (
+            <Pause className="h-4 w-4" />
+          ) : (
+            <Play className="h-4 w-4 ml-0.5" />
+          )}
+        </Button>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-bold uppercase tracking-widest text-foreground/70 mb-1.5">
+            Versão em áudio
+          </p>
+          {/* Progress Bar - thin */}
+          <Slider
+            value={[currentTime]}
+            max={audioDuration || 100}
+            step={1}
+            onValueChange={handleSeek}
+            className="cursor-pointer"
+          />
         </div>
-        <span className="text-sm tabular-nums text-muted-foreground font-medium">
-          {formatTime(audioDuration)}
+        <span className="text-xs tabular-nums text-muted-foreground font-medium shrink-0">
+          {formatTime(currentTime)} / {formatTime(audioDuration)}
         </span>
       </div>
 
-      {/* Progress Bar and Controls */}
-      <div className="px-4 py-4 space-y-3">
-        {/* Progress Slider */}
-        <Slider
-          value={[currentTime]}
-          max={audioDuration || 100}
-          step={1}
-          onValueChange={handleSeek}
-          className="cursor-pointer"
-        />
-        
-        {/* Time + Controls Row */}
-        <div className="flex items-center justify-between">
-          {/* Current Time / Duration */}
-          <span className="text-xs tabular-nums text-muted-foreground">
-            {formatTime(currentTime)} / {formatTime(audioDuration)}
-          </span>
-          
-          {/* Controls */}
-          <div className="flex items-center gap-1">
-            {/* Speed Selector */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button 
-                  className="px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
-                  aria-label="Velocidade de reprodução"
-                >
-                  {playbackSpeed}x
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-24">
-                {PLAYBACK_SPEEDS.map((speed) => (
-                  <DropdownMenuItem
-                    key={speed}
-                    onClick={() => handleSpeedChange(speed)}
-                    className={cn(
-                      "text-sm justify-center",
-                      playbackSpeed === speed && "bg-muted font-medium"
-                    )}
-                  >
-                    {speed}x
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Volume Button */}
+      {/* Controls Row - compact inline */}
+      <div className="px-5 pb-3 flex items-center justify-end gap-1">
+        {/* Speed Selector */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
             <button 
-              onClick={toggleMute} 
-              className="p-2 hover:bg-muted rounded transition-colors shrink-0"
-              aria-label={isMuted ? "Ativar som" : "Silenciar"}
+              className="px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-black/5 rounded transition-colors"
+              aria-label="Velocidade de reprodução"
             >
-              {isMuted ? (
-                <VolumeX className="h-4 w-4 text-muted-foreground" />
-              ) : (
-                <Volume2 className="h-4 w-4 text-muted-foreground" />
-              )}
+              {playbackSpeed}x
             </button>
-
-            {/* Options Menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button 
-                  className="p-2 hover:bg-muted rounded transition-colors shrink-0" 
-                  aria-label="Mais opções"
-                >
-                  <MoreVertical className="h-4 w-4 text-muted-foreground" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40">
-                {/* Download */}
-                <DropdownMenuItem asChild>
-                  <a href={audioUrl} download target="_blank" rel="noopener noreferrer" className="gap-2">
-                    <Download className="h-3.5 w-3.5" />
-                    Baixar MP3
-                  </a>
-                </DropdownMenuItem>
-                {/* Spotify */}
-                {spotifyUrl && (
-                  <DropdownMenuItem asChild>
-                    <a href={spotifyUrl} target="_blank" rel="noopener noreferrer" className="gap-2 text-green-600">
-                      Ouvir no Spotify
-                    </a>
-                  </DropdownMenuItem>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-24">
+            {PLAYBACK_SPEEDS.map((speed) => (
+              <DropdownMenuItem
+                key={speed}
+                onClick={() => handleSpeedChange(speed)}
+                className={cn(
+                  "text-sm justify-center",
+                  playbackSpeed === speed && "bg-muted font-medium"
                 )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </div>
+              >
+                {speed}x
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-      {/* Footer Attribution */}
-      <div className="px-4 py-2 border-t border-slate-200 dark:border-slate-700 bg-slate-100/50 dark:bg-slate-800/50">
-        <p className="text-xs text-muted-foreground text-center">
-          Powered by Portal Conexão
-        </p>
+        {/* Volume */}
+        <button 
+          onClick={toggleMute} 
+          className="p-1.5 hover:bg-black/5 rounded transition-colors shrink-0"
+          aria-label={isMuted ? "Ativar som" : "Silenciar"}
+        >
+          {isMuted ? (
+            <VolumeX className="h-3.5 w-3.5 text-muted-foreground" />
+          ) : (
+            <Volume2 className="h-3.5 w-3.5 text-muted-foreground" />
+          )}
+        </button>
+
+        {/* More Options */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button 
+              className="p-1.5 hover:bg-black/5 rounded transition-colors shrink-0" 
+              aria-label="Mais opções"
+            >
+              <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuItem asChild>
+              <a href={audioUrl} download target="_blank" rel="noopener noreferrer" className="gap-2">
+                <Download className="h-3.5 w-3.5" />
+                Baixar MP3
+              </a>
+            </DropdownMenuItem>
+            {spotifyUrl && (
+              <DropdownMenuItem asChild>
+                <a href={spotifyUrl} target="_blank" rel="noopener noreferrer" className="gap-2 text-green-600">
+                  Ouvir no Spotify
+                </a>
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
