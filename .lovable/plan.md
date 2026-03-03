@@ -1,82 +1,116 @@
 
 
-# Plano: Sistema de Vendas "Fórmula Conexão"
+# Plano: Dossiê de Autoridade Premium — Fórmula Conexão
 
 ## Visão Geral
 
-Criar um funil de vendas completo em uma nova rota `/formula-conexao` com quiz de captura de leads, countdown de 36h persistente por CNPJ, e landing page hiper-personalizada com o nome do negócio. Seguiremos o padrão já existente na campanha Google Maps (step-based flow com componentes separados).
+Transformar a landing page atual (pós-quiz) em uma experiência de venda consultiva de alto padrão com estética **Dark Premium/SaaS**, glassmorphism, scroll-reveal animations e seções de conversão avançadas (timeline, vagas por região, pacto do fundador, prova social).
 
-## Arquitetura
+Os componentes existentes (quiz, countdown hook, confetti, contexto) permanecem intactos. O foco é reescrever **FormulaLandingPage**, **FormulaPillarCards**, **FormulaPriceSection**, **FormulaCountdown** e criar novos componentes de conversão.
+
+---
+
+## Arquitetura de Componentes
 
 ```text
-/formula-conexao
-  ├── FormulaConexaoPage.tsx        (orquestrador de steps: quiz → confetti → landing)
-  ├── contexts/FormulaConexaoContext.tsx  (estado global: nome, CNPJ, etc.)
-  ├── components/formula-conexao/
-  │   ├── FormulaQuizWizard.tsx     (5 steps com validação + máscaras)
-  │   ├── FormulaCountdown.tsx      (hook useCountdown + banner sticky)
-  │   ├── FormulaLandingPage.tsx    (LP personalizada com 5 pilares)
-  │   ├── FormulaPriceSection.tsx   (preço dinâmico baseado no countdown)
-  │   ├── FormulaPillarCards.tsx    (cards dos 5 pilares com ícones Lucide)
-  │   └── FormulaConfetti.tsx      (efeito canvas confetti na transição)
-  └── hooks/useFormulaCountdown.ts  (lógica de 36h persistida por CNPJ)
+components/formula-conexao/
+  ├── FormulaLandingPage.tsx       ← REESCREVER (orquestrador de seções)
+  ├── FormulaCountdown.tsx         ← REESCREVER (sticky premium com glassmorphism)
+  ├── FormulaPillarCards.tsx        ← REESCREVER (seções ricas com detalhes por pilar)
+  ├── FormulaPriceSection.tsx       ← REESCREVER (card premium + CTA magnético)
+  ├── FormulaTimeline.tsx           ← CRIAR (roadmap visual: Imediato → Set → Dez)
+  ├── FormulaFounderPact.tsx        ← CRIAR (card "Pague 10, Use 13")
+  ├── FormulaAvailability.tsx       ← CRIAR (vagas por região com status)
+  ├── FormulaTestimonials.tsx       ← CRIAR (prova social com placeholders)
+  ├── FormulaQuizWizard.tsx        (sem alteração)
+  ├── FormulaConfetti.tsx          (sem alteração)
 ```
 
-## Módulos
+**Sem alteração**: contexto, hook useFormulaCountdown, quiz, confetti, rota, banco de dados.
 
-### 1. Quiz Interativo (Lead Capture)
-- 5 telas step-by-step com `framer-motion` (como PhoneQuizWizard existente)
-- Campos: Nome Completo, Nome do Negócio, CPF/CNPJ (máscara + validação de dígitos), E-mail, WhatsApp (máscara DDD)
-- Validação com regex para CNPJ e telefone
-- Barra de progresso (componente `Progress` existente)
-- Ao concluir: efeito confetti via canvas + transição fade-in para a LP
+---
 
-### 2. Hook `useFormulaCountdown`
-- Inicia cronômetro de 36h ao concluir o quiz
-- Persiste no `localStorage` com chave vinculada ao CPF/CNPJ
-- Se recarregar, calcula tempo restante a partir do timestamp salvo
-- Retorna `{ hours, minutes, seconds, isExpired }`
-- Se expirado: preço muda de R$ 1.997 para R$ 5.997, CTA bloqueado
+## Módulos e Detalhes
 
-### 3. Landing Page Personalizada
-- **Header dinâmico**: "🚀 [Nome do Negócio], sua vaga está reservada!"
-- **Banner sticky** no topo com countdown HH:MM:SS em fundo laranja (#FF6600)
-- **5 Pillar Cards** com ícones Lucide: Tecnologia (Bot), Mídia (Radio), Evento (Award), Promoção (Gift), Social (Heart)
-- **Seção de preços**: R$ 5.997 riscado + R$ 1.997 em destaque (ou invertido se expirado)
-- **CTA principal**: "QUERO GARANTIR A VAGA DA [NOME] NA FÓRMULA CONEXÃO" → link externo Mercado Pago
-- Design mobile-first, scroll vertical sem distrações laterais
-- Paleta: Laranja #FF6600, Branco #FFFFFF, Cinza Escuro #1A1A1A
+### 1. Estética Dark Premium
+- Fundo `slate-950` (#0f172a) em vez de `#1A1A1A`
+- Cards com `backdrop-blur-xl`, `bg-white/5`, `border border-white/10`
+- Acentos em `orange-500` (#f97316) para CTAs e destaques
+- Tipografia: Inter (corpo) + Plus Jakarta Sans Bold (títulos) — ambas já instaladas via `@fontsource`
+- Gradientes sutis em ícones e bordas de seção
 
-### 4. Persistência de Leads (Banco)
-- Tabela `formula_conexao_leads` com campos: id, nome, negocio, cpf_cnpj, email, whatsapp, quiz_completed_at, created_at
-- RLS: insert para anon (formulário público), select/update para authenticated admins
-- Salvar lead ao concluir quiz (antes de mostrar LP)
+### 2. FormulaCountdown (Reescrita)
+- Sticky top com glassmorphism (`backdrop-blur-md bg-black/60 border-b border-orange-500/30`)
+- Dígitos do timer em caixas individuais estilizadas (estilo flip-clock)
+- Pulso suave animado no container quando < 1h restante
 
-### 5. Rota e Integração
-- Adicionar lazy import e rota `/formula-conexao` no `App.tsx` dentro do `PublicLayout`
-- Contexto `FormulaConexaoContext` para compartilhar nome do negócio entre componentes
+### 3. FormulaPillarCards (Reescrita — Seções Ricas)
+- Cada pilar vira uma seção full-width com layout alternado (texto esquerda/direita)
+- Conteúdo detalhado conforme o prompt:
+  - **Cérebro Digital**: IA 24h no WhatsApp, SSL, hospedagem premium
+  - **Mídia 360º**: Portal 100k+ acessos, Rádio, TV, Google Meu Negócio
+  - **Selo de Autoridade**: Palco em Setembro, networking de elite
+  - **Máquina de Vendas**: Mecânica de cupons R$20 = 1 cupom
+  - **Manifesto Social**: Rede de apoio PCD, reputação moral
+- Cards com glassmorphism, ícone com gradiente, badge de número do pilar
+- Animação `framer-motion` scroll-triggered (whileInView)
 
-## Detalhes Técnicos
+### 4. FormulaTimeline (Novo)
+- Linha vertical com 3 marcos: **Imediato** (IA + Mídia), **Setembro** (Evento + Selo), **Dezembro** (Sorteio + Vendas)
+- Nós animados que aparecem ao scroll
+- Cada nó com ícone, título e descrição curta
 
-- **Confetti**: Canvas nativo leve (sem biblioteca externa), ~50 linhas de código
-- **Máscaras**: CNPJ (`XX.XXX.XXX/XXXX-XX`) e WhatsApp (`(XX) XXXXX-XXXX`) via funções puras
-- **Validação CNPJ**: Algoritmo de dígitos verificadores
-- **Countdown**: `setInterval` de 1s + `localStorage` com key `formula_countdown_{cnpj_limpo}`
-- **Responsividade**: Grid de pilares 1 col mobile, 2 cols tablet, 3 cols desktop
+### 5. FormulaFounderPact (Novo)
+- Card de destaque com borda gradiente laranja
+- Título "O Pacto do Parceiro Fundador"
+- Explicação "Pague 10, Use 13" — mensalidades 11, 12 e 1ª do próximo ano inclusas
+- Badge "EXCLUSIVO FUNDADORES" com glow
+
+### 6. FormulaAvailability (Novo)
+- Grid de regiões de Cotia com status de vagas
+- Centro de Cotia: 🔥 "Apenas 2 vagas" (texto laranja pulsante)
+- Granja Viana: 🚫 "Esgotado" (texto cinza, riscado)
+- Caucaia do Alto, Jardim da Glória: vagas limitadas
+- Dados estáticos (hardcoded) — sem banco
+
+### 7. FormulaTestimonials (Novo)
+- 3 cards placeholder com avatar genérico, nome fictício, nome do negócio e depoimento
+- Layout horizontal com scroll em mobile
+- Badge "Empresa Verificada" em cada card
+
+### 8. FormulaPriceSection (Reescrita)
+- Card com borda gradiente e glassmorphism
+- Preço riscado e preço ativo com tamanhos contrastantes
+- Lista de benefícios com checkmarks animados
+- **CTA magnético**: botão com `animate-pulse` suave + `box-shadow` glow laranja
+- Texto dinâmico: "QUERO GARANTIR A VAGA DA [NEGÓCIO] E O SELO DE AUTORIDADE"
+
+### 9. FormulaLandingPage (Reescrita)
+- Orquestra todas as seções na ordem:
+  1. Countdown sticky
+  2. Hero com nome do negócio
+  3. Pilares (5 seções)
+  4. Timeline
+  5. Pacto do Fundador
+  6. Disponibilidade por região
+  7. Depoimentos
+  8. Preço + CTA
+  9. Footer
+
+---
 
 ## Arquivos a Criar/Editar
 
 | Ação | Arquivo |
 |------|---------|
-| Criar | `src/pages/campaigns/FormulaConexaoPage.tsx` |
-| Criar | `src/contexts/FormulaConexaoContext.tsx` |
-| Criar | `src/components/formula-conexao/FormulaQuizWizard.tsx` |
-| Criar | `src/components/formula-conexao/FormulaCountdown.tsx` |
-| Criar | `src/components/formula-conexao/FormulaLandingPage.tsx` |
-| Criar | `src/components/formula-conexao/FormulaPriceSection.tsx` |
-| Criar | `src/components/formula-conexao/FormulaPillarCards.tsx` |
-| Criar | `src/components/formula-conexao/FormulaConfetti.tsx` |
-| Criar | `src/hooks/useFormulaCountdown.ts` |
-| Editar | `src/App.tsx` (adicionar rota `/formula-conexao`) |
-| Migration | Tabela `formula_conexao_leads` |
+| Reescrever | `src/components/formula-conexao/FormulaLandingPage.tsx` |
+| Reescrever | `src/components/formula-conexao/FormulaCountdown.tsx` |
+| Reescrever | `src/components/formula-conexao/FormulaPillarCards.tsx` |
+| Reescrever | `src/components/formula-conexao/FormulaPriceSection.tsx` |
+| Criar | `src/components/formula-conexao/FormulaTimeline.tsx` |
+| Criar | `src/components/formula-conexao/FormulaFounderPact.tsx` |
+| Criar | `src/components/formula-conexao/FormulaAvailability.tsx` |
+| Criar | `src/components/formula-conexao/FormulaTestimonials.tsx` |
+
+Nenhuma alteração em banco de dados, rotas, contexto ou hook.
 
