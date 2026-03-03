@@ -6,6 +6,8 @@ interface FormulaConexaoData {
   cpfCnpj: string;
   email: string;
   whatsapp: string;
+  nicho: string;
+  codigo: string;
 }
 
 interface FormulaConexaoContextType {
@@ -24,6 +26,8 @@ export function FormulaConexaoProvider({ children }: { children: React.ReactNode
     cpfCnpj: "",
     email: "",
     whatsapp: "",
+    nicho: "",
+    codigo: "",
   });
   const [quizCompleted, setQuizCompleted] = useState(false);
 

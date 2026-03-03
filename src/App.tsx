@@ -239,6 +239,7 @@ const PhoneImportAssisted = lazy(() => import("./pages/admin/community/PhoneImpo
 // Campaigns
 const GoogleMapsCampaign = lazy(() => import("./pages/campaigns/GoogleMapsCampaign"));
 const FormulaConexaoPage = lazy(() => import("./pages/campaigns/FormulaConexaoPage"));
+const RegulamentoCaminhaoPage = lazy(() => import("./pages/campaigns/RegulamentoCaminhaoPage"));
 const WebRadioTVCampaign = lazy(() => import("./pages/campaigns/WebRadioTVCampaign"));
 const GoogleMapsLeads = lazy(() => import("./pages/admin/campaigns/GoogleMapsLeads"));
 const CampaignsUnified = lazy(() => import("./pages/admin/campaigns/CampaignsUnified"));
@@ -490,6 +491,7 @@ const App = () => (
 
                                 {/* Fórmula Conexão — fora do PublicLayout para tela limpa */}
                                 <Route path="/formula-conexao" element={<S><FormulaConexaoPage /></S>} />
+                                <Route path="/regulamento-caminhao-premios" element={<S><RegulamentoCaminhaoPage /></S>} />
 
                                 <Route path="/story/:slug" element={<S><StoryViewer /></S>} />
                                 <Route path="/webstory/:campaignId" element={<S><WebStoryViewerPage /></S>} />

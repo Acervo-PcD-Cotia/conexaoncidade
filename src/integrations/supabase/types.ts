@@ -9134,6 +9134,51 @@ export type Database = {
         }
         Relationships: []
       }
+      formula_access_codes: {
+        Row: {
+          codigo: string
+          cpf_cnpj: string | null
+          created_at: string | null
+          email: string | null
+          expires_at: string | null
+          generated_at: string | null
+          id: string
+          nicho: string
+          nome: string | null
+          nome_negocio: string
+          status: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          codigo: string
+          cpf_cnpj?: string | null
+          created_at?: string | null
+          email?: string | null
+          expires_at?: string | null
+          generated_at?: string | null
+          id?: string
+          nicho: string
+          nome?: string | null
+          nome_negocio: string
+          status?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          codigo?: string
+          cpf_cnpj?: string | null
+          created_at?: string | null
+          email?: string | null
+          expires_at?: string | null
+          generated_at?: string | null
+          id?: string
+          nicho?: string
+          nome?: string | null
+          nome_negocio?: string
+          status?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
       formula_conexao_leads: {
         Row: {
           cpf_cnpj: string
@@ -9141,6 +9186,7 @@ export type Database = {
           email: string
           id: string
           negocio: string
+          nicho: string | null
           nome: string
           quiz_completed_at: string
           whatsapp: string
@@ -9151,6 +9197,7 @@ export type Database = {
           email: string
           id?: string
           negocio: string
+          nicho?: string | null
           nome: string
           quiz_completed_at?: string
           whatsapp: string
@@ -9161,6 +9208,7 @@ export type Database = {
           email?: string
           id?: string
           negocio?: string
+          nicho?: string | null
           nome?: string
           quiz_completed_at?: string
           whatsapp?: string
