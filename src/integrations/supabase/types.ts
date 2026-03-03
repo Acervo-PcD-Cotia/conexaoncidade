@@ -9134,6 +9134,39 @@ export type Database = {
         }
         Relationships: []
       }
+      formula_conexao_leads: {
+        Row: {
+          cpf_cnpj: string
+          created_at: string
+          email: string
+          id: string
+          negocio: string
+          nome: string
+          quiz_completed_at: string
+          whatsapp: string
+        }
+        Insert: {
+          cpf_cnpj: string
+          created_at?: string
+          email: string
+          id?: string
+          negocio: string
+          nome: string
+          quiz_completed_at?: string
+          whatsapp: string
+        }
+        Update: {
+          cpf_cnpj?: string
+          created_at?: string
+          email?: string
+          id?: string
+          negocio?: string
+          nome?: string
+          quiz_completed_at?: string
+          whatsapp?: string
+        }
+        Relationships: []
+      }
       guia_seo_pages: {
         Row: {
           category_slug: string | null
