@@ -238,6 +238,7 @@ const PhoneImportAssisted = lazy(() => import("./pages/admin/community/PhoneImpo
 
 // Campaigns
 const GoogleMapsCampaign = lazy(() => import("./pages/campaigns/GoogleMapsCampaign"));
+const FormulaConexaoPage = lazy(() => import("./pages/campaigns/FormulaConexaoPage"));
 const WebRadioTVCampaign = lazy(() => import("./pages/campaigns/WebRadioTVCampaign"));
 const GoogleMapsLeads = lazy(() => import("./pages/admin/campaigns/GoogleMapsLeads"));
 const CampaignsUnified = lazy(() => import("./pages/admin/campaigns/CampaignsUnified"));
@@ -484,6 +485,9 @@ const App = () => (
                                   
                                   {/* ENEM 2026 */}
                                   <Route path="/enem-2026" element={<S><Enem2026Landing /></S>} />
+                                  
+                                  {/* Fórmula Conexão */}
+                                  <Route path="/formula-conexao" element={<S><FormulaConexaoPage /></S>} />
                                 </Route>
 
                                 <Route path="/story/:slug" element={<S><StoryViewer /></S>} />
