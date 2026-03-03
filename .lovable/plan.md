@@ -1,164 +1,126 @@
 
 
-# Plano: Fórmula Conexão — Sistema Completo com Nichos, Tour e Códigos de Acesso
+# Plano: Premium Visual Overhaul — Sites de Nicho Fórmula Conexão
 
-## Visão Geral
+## Objetivo
 
-Transformação completa do funil em um sistema com: tela de entrada dupla (código/quiz), seleção de nicho, 8 sites premium dinâmicos, tour guiado, códigos de acesso com validade 36h, e página de regulamento. A arquitetura atual (quiz, countdown, contexto) será expandida significativamente.
-
----
-
-## Mudanças no Banco de Dados
-
-### Tabela `formula_access_codes` (nova)
-```sql
-CREATE TABLE formula_access_codes (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  codigo TEXT UNIQUE NOT NULL,
-  nome_negocio TEXT NOT NULL,
-  nicho TEXT NOT NULL,
-  cpf_cnpj TEXT,
-  email TEXT,
-  whatsapp TEXT,
-  nome TEXT,
-  generated_at TIMESTAMPTZ DEFAULT now(),
-  expires_at TIMESTAMPTZ DEFAULT now() + INTERVAL '36 hours',
-  status TEXT DEFAULT 'pendente',
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-ALTER TABLE formula_access_codes ENABLE ROW LEVEL SECURITY;
--- Public insert (para geração), admin select
-CREATE POLICY "Public can read own code" ON formula_access_codes FOR SELECT TO public USING (true);
-CREATE POLICY "Public can insert" ON formula_access_codes FOR INSERT TO public WITH CHECK (true);
-```
-
-### Tabela `formula_conexao_leads` — adicionar coluna `nicho`
-```sql
-ALTER TABLE formula_conexao_leads ADD COLUMN IF NOT EXISTS nicho TEXT;
-```
+Transformar o `FormulaNicheSite` de um layout funcional básico em uma landing page premium estilo Apple/Stripe, com glassmorphism, animações, tipografia refinada e CTAs de alta conversão. Também melhorar os componentes auxiliares (EntryScreen, NicheSelector, TourGuide, CheckoutModal, Countdown).
 
 ---
 
-## Arquitetura de Componentes
+## Componentes a Reescrever
 
-```text
-src/
-├── contexts/FormulaConexaoContext.tsx      ← EXPANDIR (adicionar nicho, codigo)
-├── hooks/useFormulaCountdown.ts           ← SEM ALTERAÇÃO
-├── pages/campaigns/
-│   ├── FormulaConexaoPage.tsx             ← REESCREVER (orquestrador de fases)
-│   └── RegulamentoCaminhaoPage.tsx        ← CRIAR
-├── components/formula-conexao/
-│   ├── FormulaEntryScreen.tsx             ← CRIAR (2 botões: código/quiz)
-│   ├── FormulaAccessCodeInput.tsx         ← CRIAR (input + validação DB)
-│   ├── FormulaQuizWizard.tsx              ← SEM ALTERAÇÃO SIGNIFICATIVA
-│   ├── FormulaNicheSelector.tsx           ← CRIAR (9 cards de nicho)
-│   ├── FormulaNicheSite.tsx               ← CRIAR (site premium dinâmico)
-│   ├── FormulaNicheData.ts                ← CRIAR (dados dos 8+1 nichos)
-│   ├── FormulaTourGuide.tsx               ← CRIAR (overlay de tour 8 passos)
-│   ├── FormulaCheckoutModal.tsx           ← CRIAR (modal final com preço)
-│   ├── FormulaConfetti.tsx                ← SEM ALTERAÇÃO
-│   ├── FormulaCountdown.tsx               ← SEM ALTERAÇÃO
-│   └── (demais componentes existentes permanecem como fallback)
-```
+### 1. `FormulaNicheSite.tsx` — Reescrita completa
 
----
+**Hero Section:**
+- Background com gradient radial multi-camada (niche-colored accent + deep navy)
+- Headline massiva (text-5xl/6xl) com font-family Plus Jakarta Sans, tracking-tight
+- Trust badges row abaixo do CTA (Empresa Verificada ✓ | Selo PCD ✓ | Conexão AI 24h ✓)
+- Animações de entrada com framer-motion staggered
 
-## Fluxo de Fases (FormulaConexaoPage)
+**Conexão AI Section:**
+- Card estilo "AI Dashboard" com glassmorphism (backdrop-blur, bg-white/5, border white/10)
+- Preview de chat simulado (3 mensagens fictícias do nicho)
+- Borda com glow sutil animado (box-shadow pulsante em laranja)
+- Badge "24h no WhatsApp" com ícone animado
 
-```text
-entry → [código válido?] → nicheSite + tour
-      → [quiz] → nicheSelect → nicheSite + tour → checkoutModal
-```
+**Services Grid:**
+- Cards grandes com ícones Lucide por serviço (mapeamento no NicheData)
+- Efeito hover: lift (translateY -4px) + shadow increase
+- Glassmorphism sutil nos cards
+- Tag "Destaque" no primeiro serviço
 
-**Fases**: `entry` | `code-input` | `quiz` | `confetti` | `niche-select` | `niche-site`
+**Testimonials:**
+- Layout Bento Grid (1 grande + 2 menores) em desktop, carousel em mobile
+- Avatares gerados (iniciais coloridas em círculos)
+- Checkmark verificado ao lado do nome
+- Stars com preenchimento gradual
 
----
+**Selo Verificado + PCD:**
+- Lado a lado em desktop, empilhados em mobile
+- Cards com ícone grande, borda premium, gradiente sutil
 
-## Detalhes dos Módulos
+**Caminhão de Prêmios:**
+- Card hero-style com ilustração abstrata
+- Destaque "R$20 = 1 cupom" em badge grande
+- Link para regulamento
 
-### 1. FormulaEntryScreen
-- 2 botões sobre fundo slate-950
-- "🔑 Tenho Código de Acesso" → fase `code-input`
-- "🚀 Quero Conhecer" → fase `quiz`
+**Mapa:**
+- Placeholder estilizado com gradiente e pin animado
 
-### 2. FormulaAccessCodeInput
-- Input estilizado para código (ex: FC2024-001)
-- Busca na tabela `formula_access_codes` por código
-- Se válido e dentro de 36h → preenche contexto (nome, negocio, nicho) → abre site do nicho
-- Se expirado → mostra preço cheio R$ 5.997 e botão "Falar com Consultor"
+**WhatsApp CTA Final:**
+- Full-width section com gradient background
+- Botão com pulse animation
+- Texto de urgência com countdown inline
 
-### 3. FormulaNicheSelector
-- Grid de 9 cards (8 nichos + "Outro")
-- Ao clicar → salva nicho no contexto → avança para `niche-site`
+**Footer:**
+- Redesign com links úteis e branding Conexão
 
-### 4. FormulaNicheData.ts
-- Objeto com dados de cada nicho: hero text, serviços, depoimentos (3 cada), CTA, ícone
-- Os 8 nichos: clinica, escola, restaurante, salao, comercio, advocacia, academia, imobiliaria
-- "Outro" usa template genérico
+### 2. `FormulaNicheData.ts` — Expandir dados
 
-### 5. FormulaNicheSite
-- Site completo renderizado dinamicamente baseado no nicho selecionado
-- Seções: Hero (com nomeNegocio), Serviços, Conexão AI, Depoimentos, Mapa placeholder, Selo Verificado, Selo PCD, WhatsApp CTA, Footer
-- IDs nas seções para o tour guiado poder referenciá-las
+- Adicionar array `servicoIcons: string[]` (nomes de ícones Lucide para cada serviço)
+- Adicionar `accentColor: string` por nicho (ex: clinica = blue, restaurante = amber)
+- Adicionar `avatarColors: string[]` para depoimentos
 
-### 6. FormulaTourGuide
-- Implementação leve sem dependência externa (tooltip posicionado + backdrop)
-- 8 passos com highlight de seção + texto explicativo
-- Passo final abre FormulaCheckoutModal
+### 3. `FormulaEntryScreen.tsx` — Premium upgrade
 
-### 7. FormulaCheckoutModal
-- Modal com preço dinâmico (R$ 1.997 ou R$ 5.997 baseado no countdown)
-- Lista de benefícios
-- CTA: "QUERO GARANTIR A VAGA DA [NEGÓCIO] AGORA" → link Mercado Pago
-- Se expirado → "Falar com Consultor"
+- Background com pattern sutil (dots/grid via CSS)
+- Logo/badge animado no topo
+- Cards em vez de botões simples (glassmorphism)
+- Animação de entrada staggered
 
-### 8. RegulamentoCaminhaoPage
-- Rota `/regulamento-caminhao-premios`
-- Página estática com o regulamento completo (campanha Set-Dez, cupons, regras)
+### 4. `FormulaNicheSelector.tsx` — Premium cards
 
----
+- Cards maiores com hover glow effect
+- Ícone + label + descrição curta
+- Glassmorphism com backdrop-blur
+- Animação de entrada em cascade
 
-## Contexto Expandido
+### 5. `FormulaTourGuide.tsx` — Visual upgrade
 
-```typescript
-interface FormulaConexaoData {
-  nome: string;
-  negocio: string;
-  cpfCnpj: string;
-  email: string;
-  whatsapp: string;
-  nicho: string;       // NOVO
-  codigo: string;      // NOVO
-}
-```
+- Tooltip com glassmorphism mais forte
+- Progress bar visual (dots ou barra)
+- Ícone por passo
+- Animação de transição melhorada
+
+### 6. `FormulaCheckoutModal.tsx` — High-conversion redesign
+
+- Glassmorphism card
+- Preço com efeito "savings" (mostrar economia: "Você economiza R$ 4.000")
+- Timer inline no modal
+- Garantia / selo de segurança visual
+- Urgência textual dinâmica
+
+### 7. `FormulaCountdown.tsx` — Sticky bar premium
+
+- Mais compacto e elegante
+- Gradient background sutil
+- Botão CTA inline no countdown bar
 
 ---
 
-## Arquivos a Criar/Editar
+## Padrões Visuais Globais
+
+- **Cores**: Deep Navy (#0A0F1E base), Slate (#1E293B surfaces), Orange (#FF6600 primary), sem preto puro
+- **Glassmorphism**: `backdrop-blur-xl bg-white/[0.03] border border-white/[0.08]`
+- **Shadows**: Layered (`shadow-lg shadow-black/20`)
+- **Typography**: Plus Jakarta Sans headlines, Inter body, tracking-tight em títulos
+- **Spacing**: Seções com py-24 md:py-32 (mais respiro)
+- **Animações**: framer-motion whileInView com stagger, hover lift nos cards
+
+---
+
+## Arquivos Afetados
 
 | Ação | Arquivo |
 |------|---------|
-| Editar | `src/contexts/FormulaConexaoContext.tsx` (add nicho, codigo) |
-| Reescrever | `src/pages/campaigns/FormulaConexaoPage.tsx` (novo fluxo de fases) |
-| Criar | `src/components/formula-conexao/FormulaEntryScreen.tsx` |
-| Criar | `src/components/formula-conexao/FormulaAccessCodeInput.tsx` |
-| Criar | `src/components/formula-conexao/FormulaNicheSelector.tsx` |
-| Criar | `src/components/formula-conexao/FormulaNicheData.ts` |
-| Criar | `src/components/formula-conexao/FormulaNicheSite.tsx` |
-| Criar | `src/components/formula-conexao/FormulaTourGuide.tsx` |
-| Criar | `src/components/formula-conexao/FormulaCheckoutModal.tsx` |
-| Criar | `src/pages/campaigns/RegulamentoCaminhaoPage.tsx` |
-| Editar | `src/App.tsx` (rota regulamento) |
-| Editar | `src/components/formula-conexao/FormulaQuizWizard.tsx` (remover redirect para landing, chamar onComplete sem landing) |
-| Migration | `formula_access_codes` table + nicho column |
+| Reescrever | `src/components/formula-conexao/FormulaNicheSite.tsx` |
+| Editar | `src/components/formula-conexao/FormulaNicheData.ts` |
+| Reescrever | `src/components/formula-conexao/FormulaEntryScreen.tsx` |
+| Reescrever | `src/components/formula-conexao/FormulaNicheSelector.tsx` |
+| Reescrever | `src/components/formula-conexao/FormulaTourGuide.tsx` |
+| Reescrever | `src/components/formula-conexao/FormulaCheckoutModal.tsx` |
+| Editar | `src/components/formula-conexao/FormulaCountdown.tsx` |
 
-Componentes existentes (FormulaLandingPage, FormulaPillarCards, etc.) permanecem no projeto mas não serão usados no fluxo principal — o novo fluxo usa o FormulaNicheSite.
-
----
-
-## Escopo Excluído (já existente ou não necessário agora)
-- Hook useFormulaCountdown: sem alteração
-- Edge function WhatsApp: já implementada
-- Confetti: reutilizado
+Nenhuma mudança no banco de dados. Nenhuma nova dependência. Tudo com Tailwind + framer-motion + Lucide existentes.
 
