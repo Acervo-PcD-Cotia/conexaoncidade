@@ -1,101 +1,82 @@
 
-# Extrator Automatico de Imagens da Descricao
 
-## Problema
-Quando o usuario cadastra noticias (Relatorio TXT, Noticias AI ou qualquer modo), a descricao frequentemente contem URLs de imagens seguidas de legendas/creditos. Exemplo real:
+# Plano: Sistema de Vendas "Fórmula Conexão"
 
-```
-https://imagens.ebc.com.br/nx_rzBAG6oCC-c6fa2IsMlQBA8g=/1170x700/smart/...0g0a4305.jpg?
-https://imagens.ebc.com.br/fZUbYwNoEVxMwJlbHab8dXGdCQ=/754x0/smart/...0g0a4196_0.jpg
-Moradores denunciam saques nos imoveis interditados - Foto Rovena Rosa/Agencia Brasil
-```
+## Visão Geral
 
-Essas imagens sao ignoradas e ficam como texto lixo na descricao. Devem ser extraidas e adicionadas automaticamente a noticia.
+Criar um funil de vendas completo em uma nova rota `/formula-conexao` com quiz de captura de leads, countdown de 36h persistente por CNPJ, e landing page hiper-personalizada com o nome do negócio. Seguiremos o padrão já existente na campanha Google Maps (step-based flow com componentes separados).
 
-## Solucao
+## Arquitetura
 
-### 1. Criar funcao utilitaria `extractImagesFromDescription`
-
-**Arquivo novo**: `src/utils/extractDescriptionImages.ts`
-
-Uma funcao pura que:
-- Recebe uma string de descricao
-- Identifica todas as URLs de imagens (`.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`)
-- Captura a linha seguinte a cada imagem como legenda/credito (se nao for outra URL)
-- Retorna: `{ cleanDescription, images: [{ url, caption }] }`
-- Remove as URLs de imagens e suas legendas da descricao limpa
-
-Logica de deteccao:
 ```text
-Linha 1: https://...image.jpg  --> imagem detectada
-Linha 2: Foto Fulano/Agencia   --> legenda associada (nao comeca com http)
-Linha 3: texto normal           --> faz parte da descricao limpa
+/formula-conexao
+  ├── FormulaConexaoPage.tsx        (orquestrador de steps: quiz → confetti → landing)
+  ├── contexts/FormulaConexaoContext.tsx  (estado global: nome, CNPJ, etc.)
+  ├── components/formula-conexao/
+  │   ├── FormulaQuizWizard.tsx     (5 steps com validação + máscaras)
+  │   ├── FormulaCountdown.tsx      (hook useCountdown + banner sticky)
+  │   ├── FormulaLandingPage.tsx    (LP personalizada com 5 pilares)
+  │   ├── FormulaPriceSection.tsx   (preço dinâmico baseado no countdown)
+  │   ├── FormulaPillarCards.tsx    (cards dos 5 pilares com ícones Lucide)
+  │   └── FormulaConfetti.tsx      (efeito canvas confetti na transição)
+  └── hooks/useFormulaCountdown.ts  (lógica de 36h persistida por CNPJ)
 ```
 
-### 2. Integrar no Relatorio TXT (`handleAdd`)
+## Módulos
 
-**Arquivo**: `src/pages/admin/RelatorioTXT.tsx`
+### 1. Quiz Interativo (Lead Capture)
+- 5 telas step-by-step com `framer-motion` (como PhoneQuizWizard existente)
+- Campos: Nome Completo, Nome do Negócio, CPF/CNPJ (máscara + validação de dígitos), E-mail, WhatsApp (máscara DDD)
+- Validação com regex para CNPJ e telefone
+- Barra de progresso (componente `Progress` existente)
+- Ao concluir: efeito confetti via canvas + transição fade-in para a LP
 
-- No `handleAdd`, antes de salvar o item, chamar `extractImagesFromDescription(form.descricao)`
-- Se imagens forem encontradas:
-  - A primeira imagem preenche `linkImagem` (se estiver vazio)
-  - A descricao e substituida pela versao limpa (sem as URLs)
-  - Mostrar toast informando quantas imagens foram extraidas
-- No `mapEntryToItem`, aplicar a mesma logica para importacoes TXT/JSON
+### 2. Hook `useFormulaCountdown`
+- Inicia cronômetro de 36h ao concluir o quiz
+- Persiste no `localStorage` com chave vinculada ao CPF/CNPJ
+- Se recarregar, calcula tempo restante a partir do timestamp salvo
+- Retorna `{ hours, minutes, seconds, isExpired }`
+- Se expirado: preço muda de R$ 1.997 para R$ 5.997, CTA bloqueado
 
-### 3. Integrar no Noticias AI (edge function)
+### 3. Landing Page Personalizada
+- **Header dinâmico**: "🚀 [Nome do Negócio], sua vaga está reservada!"
+- **Banner sticky** no topo com countdown HH:MM:SS em fundo laranja (#FF6600)
+- **5 Pillar Cards** com ícones Lucide: Tecnologia (Bot), Mídia (Radio), Evento (Award), Promoção (Gift), Social (Heart)
+- **Seção de preços**: R$ 5.997 riscado + R$ 1.997 em destaque (ou invertido se expirado)
+- **CTA principal**: "QUERO GARANTIR A VAGA DA [NOME] NA FÓRMULA CONEXÃO" → link externo Mercado Pago
+- Design mobile-first, scroll vertical sem distrações laterais
+- Paleta: Laranja #FF6600, Branco #FFFFFF, Cinza Escuro #1A1A1A
 
-**Arquivo**: `supabase/functions/noticias-ai-generate/index.ts`
+### 4. Persistência de Leads (Banco)
+- Tabela `formula_conexao_leads` com campos: id, nome, negocio, cpf_cnpj, email, whatsapp, quiz_completed_at, created_at
+- RLS: insert para anon (formulário público), select/update para authenticated admins
+- Salvar lead ao concluir quiz (antes de mostrar LP)
 
-- Adicionar funcao `extractImagesFromText(text)` na edge function
-- Nos modos `manual`, `json` (direct parse) e `auto`:
-  - Antes de enviar para a IA ou ao processar JSON direto, extrair imagens do conteudo/descricao
-  - As imagens extraidas sao adicionadas ao campo `imagem.galeria`
-  - A primeira imagem extraida preenche `imagem.hero` (se estiver vazio)
-- No modo `batch`, cada item do lote passa pela mesma extracao
+### 5. Rota e Integração
+- Adicionar lazy import e rota `/formula-conexao` no `App.tsx` dentro do `PublicLayout`
+- Contexto `FormulaConexaoContext` para compartilhar nome do negócio entre componentes
 
-### 4. Integrar no campo `descricao` do formulario (UX)
+## Detalhes Técnicos
 
-**Arquivo**: `src/pages/admin/RelatorioTXT.tsx`
+- **Confetti**: Canvas nativo leve (sem biblioteca externa), ~50 linhas de código
+- **Máscaras**: CNPJ (`XX.XXX.XXX/XXXX-XX`) e WhatsApp (`(XX) XXXXX-XXXX`) via funções puras
+- **Validação CNPJ**: Algoritmo de dígitos verificadores
+- **Countdown**: `setInterval` de 1s + `localStorage` com key `formula_countdown_{cnpj_limpo}`
+- **Responsividade**: Grid de pilares 1 col mobile, 2 cols tablet, 3 cols desktop
 
-- Adicionar um indicador visual abaixo do campo Descricao quando imagens forem detectadas
-- Mostrar preview das imagens encontradas com as legendas
-- Exemplo: "2 imagens detectadas na descricao - serao extraidas automaticamente"
+## Arquivos a Criar/Editar
 
-## Detalhes Tecnicos
+| Ação | Arquivo |
+|------|---------|
+| Criar | `src/pages/campaigns/FormulaConexaoPage.tsx` |
+| Criar | `src/contexts/FormulaConexaoContext.tsx` |
+| Criar | `src/components/formula-conexao/FormulaQuizWizard.tsx` |
+| Criar | `src/components/formula-conexao/FormulaCountdown.tsx` |
+| Criar | `src/components/formula-conexao/FormulaLandingPage.tsx` |
+| Criar | `src/components/formula-conexao/FormulaPriceSection.tsx` |
+| Criar | `src/components/formula-conexao/FormulaPillarCards.tsx` |
+| Criar | `src/components/formula-conexao/FormulaConfetti.tsx` |
+| Criar | `src/hooks/useFormulaCountdown.ts` |
+| Editar | `src/App.tsx` (adicionar rota `/formula-conexao`) |
+| Migration | Tabela `formula_conexao_leads` |
 
-### Regex de deteccao:
-```typescript
-const IMAGE_URL_REGEX = /^(https?:\/\/[^\s]+\.(jpg|jpeg|png|webp|gif)(\?[^\s]*)?)$/i;
-```
-
-### Estrutura de retorno:
-```typescript
-interface ExtractedImage {
-  url: string;
-  caption: string;  // linha seguinte se nao for URL
-  credit: string;   // extraido da legenda (ex: "Foto Fulano/Agencia")
-}
-
-interface ExtractionResult {
-  cleanDescription: string;
-  images: ExtractedImage[];
-}
-```
-
-### Fluxo no Relatorio TXT:
-1. Usuario cola descricao com URLs de imagens
-2. Ao clicar "Adicionar Noticia", o sistema extrai as imagens
-3. `linkImagem` e preenchido com a primeira (se vazio)
-4. Descricao salva fica limpa, sem URLs
-5. Toast: "2 imagens extraidas da descricao"
-
-### Fluxo no Noticias AI:
-1. No modo `json` (direct parse), antes de inserir, extrair imagens de cada `conteudo` ou `descricao`
-2. No modo `manual`/`auto`, o conteudo enviado para a IA ja vai limpo, e as imagens extraidas sao aplicadas ao resultado
-3. No modo `batch`, cada item processado passa pela extracao
-
-### Arquivos modificados:
-1. `src/utils/extractDescriptionImages.ts` - Novo: funcao utilitaria
-2. `src/pages/admin/RelatorioTXT.tsx` - Integrar extracao no handleAdd e mapEntryToItem
-3. `supabase/functions/noticias-ai-generate/index.ts` - Integrar extracao nos modos manual/json/batch/auto
