@@ -82,6 +82,11 @@ export function FormulaQuizWizard({ onComplete }: Props) {
           email: data.email,
           whatsapp: data.whatsapp.replace(/\D/g, ""),
         });
+
+        // Send WhatsApp confirmation (best-effort, non-blocking)
+        supabase.functions.invoke("send-whatsapp-confirmation", {
+          body: { phone: data.whatsapp, nome: data.nome, negocio: data.negocio },
+        }).catch(() => {});
       } catch {
         // silent fail — lead saved is best-effort
       }
