@@ -30,7 +30,7 @@ export default function BroadcastPlayer({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
-  const controlsTimeoutRef = useRef<NodeJS.Timeout>();
+  const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const isLive = broadcast.status === "live";
   const isRadio = broadcast.channel?.type === "radio";

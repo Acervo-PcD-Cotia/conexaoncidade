@@ -42,7 +42,7 @@ export function useLocalRecording(
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<RecordingChunk[]>([]);
   const startTimeRef = useRef<number>(0);
-  const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const durationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const finalBlobRef = useRef<Blob | null>(null);
 
   const getSupportedMimeType = useCallback(() => {

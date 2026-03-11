@@ -88,7 +88,7 @@ export interface UseStudioOverlaysReturn {
 
 export function useStudioOverlays(sessionId: string): UseStudioOverlaysReturn {
   const queryClient = useQueryClient();
-  const [activeTemporary, setActiveTemporary] = useState<Map<string, NodeJS.Timeout>>(new Map());
+  const [activeTemporary, setActiveTemporary] = useState<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   // Fetch overlays from database (using session metadata for now)
   // In production, this would be a dedicated overlays table

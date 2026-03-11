@@ -63,7 +63,7 @@ export function useAutoDJ({ channelId, enabled = true, autoPlay = false }: UseAu
   const [duration, setDuration] = useState(0);
 
   const audioRef = useRef<HTMLAudioElement>(null);
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pollIntervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchState = useCallback(async (action: string = "get-current") => {
     if (!channelId || !enabled) return;
