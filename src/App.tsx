@@ -72,6 +72,7 @@ const AdInventorySimulator = lazy(() => import("./pages/admin/AdInventorySimulat
 const SsoMonitor = lazy(() => import("./pages/admin/SsoMonitor"));
 const Settings = lazy(() => import("./pages/admin/Settings"));
 const NoticiasAI = lazy(() => import("./pages/admin/NoticiasAI"));
+const NewsImport = lazy(() => import("./pages/admin/NewsImport"));
 const RelatorioTXT = lazy(() => import("./pages/admin/RelatorioTXT"));
 const SocialDashboard = lazy(() => import("./pages/admin/SocialDashboard"));
 const SocialQueue = lazy(() => import("./pages/admin/SocialQueue"));
@@ -524,6 +525,7 @@ const App = () => (
                                   <Route path="noticias-ai" element={<S><NoticiasAI /></S>} />
                                   <Route path="relatorio-txt" element={<S><RelatorioTXT /></S>} />
                                   <Route path="news" element={<S><NewsList /></S>} />
+                                  <Route path="news/import" element={<S><NewsImport /></S>} />
                                   <Route path="news/new" element={<S><NewsEditor /></S>} />
                                   <Route path="news/:id/edit" element={<S><NewsEditor /></S>} />
                                   <Route path="categories" element={<S><Categories /></S>} />
