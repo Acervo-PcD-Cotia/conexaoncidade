@@ -16226,7 +16226,7 @@ export type Database = {
       get_autopost_stats: {
         Args: { p_days?: number; p_tenant_id: string }
         Returns: {
-          avg_processing_time: unknown
+          avg_processing_time: string
           captured_today: number
           duplicates_blocked: number
           in_queue: number
