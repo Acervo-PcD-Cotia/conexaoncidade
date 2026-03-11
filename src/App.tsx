@@ -72,6 +72,7 @@ const AdInventorySimulator = lazy(() => import("./pages/admin/AdInventorySimulat
 const SsoMonitor = lazy(() => import("./pages/admin/SsoMonitor"));
 const Settings = lazy(() => import("./pages/admin/Settings"));
 const NoticiasAI = lazy(() => import("./pages/admin/NoticiasAI"));
+const NewsImport = lazy(() => import("./pages/admin/NewsImport"));
 const RelatorioTXT = lazy(() => import("./pages/admin/RelatorioTXT"));
 const SocialDashboard = lazy(() => import("./pages/admin/SocialDashboard"));
 const SocialQueue = lazy(() => import("./pages/admin/SocialQueue"));
