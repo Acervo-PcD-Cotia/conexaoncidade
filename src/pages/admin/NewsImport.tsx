@@ -66,7 +66,7 @@ export default function NewsImport() {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<ImportResult[] | null>(null);
   const [summary, setSummary] = useState<ImportSummary | null>(null);
-  const [apiEndpoint, setApiEndpoint] = useState('');
+  
 
   const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
   const fullEndpoint = `https://${projectId}.supabase.co/functions/v1/news-import`;
