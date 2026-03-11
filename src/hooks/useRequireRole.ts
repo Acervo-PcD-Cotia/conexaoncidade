@@ -15,7 +15,7 @@ export function useRequireRole(allowedRoles: AppRole[]) {
   const [userRole, setUserRole] = useState<AppRole | null>(null);
   const [showDenied, setShowDenied] = useState<DeniedReason>(null);
   const [redirectCountdown, setRedirectCountdown] = useState(3);
-  const redirectTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     async function checkRole() {

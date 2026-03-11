@@ -61,7 +61,7 @@ export function useNewsAnalytics(newsId: string) {
     readCompleted: false,
   });
 
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const audioStartTimeRef = useRef<number | null>(null);
   const isActiveRef = useRef(true);
 

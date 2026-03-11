@@ -156,7 +156,7 @@ export default function StudioSession() {
 
   // Recording timer
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     if (isRecording) {
       interval = setInterval(() => {
         setRecordingDuration(prev => prev + 1);
@@ -167,7 +167,7 @@ export default function StudioSession() {
 
   // Streaming timer
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     if (isStreaming) {
       interval = setInterval(() => {
         setStreamDuration(prev => prev + 1);

@@ -33,7 +33,7 @@ export function useConexaoRecording(options: UseConexaoRecordingOptions) {
   const [recordingId, setRecordingId] = useState<string | null>(null);
   const [recordingUrl, setRecordingUrl] = useState<string | null>(null);
   
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startTimeRef = useRef<Date | null>(null);
   
   // Local recording refs
