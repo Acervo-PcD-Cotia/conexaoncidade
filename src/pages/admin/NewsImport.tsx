@@ -112,9 +112,6 @@ export default function NewsImport() {
     try {
       const { data, error } = await supabase.functions.invoke('news-import', {
         body: { format, data: content },
-        headers: {
-          'x-api-key': '___FROM_ADMIN___',
-        },
       });
 
       if (error) throw error;
