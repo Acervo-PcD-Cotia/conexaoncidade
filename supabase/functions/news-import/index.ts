@@ -164,20 +164,49 @@ serve(async (req) => {
   }
 
   try {
-    // Validate API Key
+    // Auth: accept API Key OR authenticated admin user
     const apiKey = req.headers.get('x-api-key');
     const expectedKey = Deno.env.get('NEWS_IMPORT_API_KEY');
+    const authHeader = req.headers.get('Authorization');
 
-    if (!expectedKey || apiKey !== expectedKey) {
+    let isAuthenticated = false;
+
+    // Check API key first
+    if (apiKey && expectedKey && apiKey === expectedKey) {
+      isAuthenticated = true;
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+
+    // If no API key, check JWT auth (admin panel)
+    if (!isAuthenticated && authHeader?.startsWith('Bearer ')) {
+      const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: claimsData, error: claimsErr } = await userClient.auth.getClaims(authHeader.replace('Bearer ', ''));
+      if (!claimsErr && claimsData?.claims?.sub) {
+        const userId = claimsData.claims.sub;
+        const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+        const { data: roleData } = await adminClient
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId)
+          .in('role', ['admin', 'super_admin', 'editor', 'editor_chief'])
+          .maybeSingle();
+        if (roleData) isAuthenticated = true;
+      }
+    }
+
+    if (!isAuthenticated) {
       return new Response(
-        JSON.stringify({ error: 'API Key inválida ou ausente. Envie no header x-api-key.' }),
+        JSON.stringify({ error: 'Não autorizado. Use x-api-key ou faça login como admin.' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const supabase = createClient(supabaseUrl, supabaseServiceKey
     );
 
     const contentType = req.headers.get('content-type') || '';
