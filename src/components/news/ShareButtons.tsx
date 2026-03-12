@@ -28,10 +28,17 @@ export function ShareButtons({
   const encodedUrl = encodeURIComponent(url);
   const encodedTitle = encodeURIComponent(title);
 
+  // Build share-og proxy URL for better social previews (crawlers get proper OG meta tags)
+  const slug = url.includes('/noticia/') ? url.split('/noticia/').pop()?.split('?')[0] : null;
+  const ogProxyUrl = slug 
+    ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/share-og?slug=${encodeURIComponent(slug)}`
+    : url;
+  const encodedOgUrl = encodeURIComponent(ogProxyUrl);
+
   const shareLinks = {
-    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedOgUrl}`,
     twitter: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
-    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
+    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedOgUrl}`,
     whatsapp: `https://api.whatsapp.com/send?text=${encodedTitle}%20${encodedUrl}`,
   };
 

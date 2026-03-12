@@ -486,6 +486,10 @@ function NewsDetailContent({ news }: NewsDetailContentProps) {
             newsId={news.id}
             newsTitle={news.title}
             currentUrl={currentUrl}
+            newsExcerpt={news.excerpt || news.summary_short || undefined}
+            newsImageUrl={ogImage || undefined}
+            newsCategory={news.category?.name}
+            newsSlug={news.slug}
             onShare={trackShare}
           />
 
