@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ShareButtons } from '@/components/news/ShareButtons';
+import { NewsCardGenerator } from '@/components/news/NewsCardGenerator';
 
 interface Tag {
   id: string;
@@ -12,6 +13,10 @@ interface ArticleFooterProps {
   newsId: string;
   newsTitle: string;
   currentUrl: string;
+  newsExcerpt?: string;
+  newsImageUrl?: string;
+  newsCategory?: string;
+  newsSlug?: string;
   onShare?: (platform: string) => void;
 }
 
@@ -20,6 +25,10 @@ export function ArticleFooter({
   newsId,
   newsTitle,
   currentUrl,
+  newsExcerpt,
+  newsImageUrl,
+  newsCategory,
+  newsSlug,
   onShare,
 }: ArticleFooterProps) {
   return (
@@ -53,6 +62,19 @@ export function ArticleFooter({
           />
         </div>
       </div>
+
+      {/* Card Generator */}
+      {newsSlug && (
+        <div className="max-w-sm mx-auto">
+          <NewsCardGenerator
+            title={newsTitle}
+            excerpt={newsExcerpt}
+            imageUrl={newsImageUrl}
+            category={newsCategory}
+            slug={newsSlug}
+          />
+        </div>
+      )}
     </footer>
   );
 }
