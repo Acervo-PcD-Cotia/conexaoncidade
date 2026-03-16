@@ -1402,7 +1402,7 @@ https://exemplo.com/noticia-3
                     onChange={(e) => updateGeneratorItem(idx, 'linkMateria', e.target.value)}
                     className="text-sm"
                   />
-                  <div className="grid grid-cols-[7fr_3fr] gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-[7fr_3fr] gap-2">
                     <Input
                       placeholder="https://... (link da imagem)"
                       value={item.linkImagem}

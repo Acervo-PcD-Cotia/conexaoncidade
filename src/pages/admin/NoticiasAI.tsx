@@ -614,7 +614,7 @@ export default function NoticiasAI() {
 
             {/* Result Tabs */}
             <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className="grid w-full grid-cols-6">
+              <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 h-auto">
                 <TabsTrigger value="manual" className="gap-1">
                   <FileText className="h-4 w-4" />
                   <span className="hidden sm:inline">Manual</span>
