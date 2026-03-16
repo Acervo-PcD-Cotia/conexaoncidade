@@ -914,7 +914,7 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
           </Alert>
 
           {/* Image Upload + Highlights Section (Common for all tabs) */}
-          <div className="grid gap-4 md:grid-cols-2 mt-4" data-tour="image-upload">
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2 mt-4" data-tour="image-upload">
             {/* Image Upload Card */}
             <Card className="p-3 space-y-3">
               <div className="flex items-center gap-2">
