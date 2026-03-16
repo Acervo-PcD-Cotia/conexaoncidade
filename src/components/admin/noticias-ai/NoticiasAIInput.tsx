@@ -887,7 +887,7 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
       <CardContent className="space-y-4">
         {/* Tabs Navigation */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabType)} className="w-full">
-          <TabsList className="grid w-full grid-cols-6 h-auto">
+          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 h-auto">
             {Object.entries(TAB_CONFIG).map(([key, config]) => {
               const Icon = config.icon;
               return (
