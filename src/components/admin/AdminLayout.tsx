@@ -94,7 +94,7 @@ export function AdminLayout() {
           <AdminSidebar />
           <div className="flex flex-1 flex-col overflow-hidden">
             <AdminHeader />
-            <main className="flex-1 overflow-hidden bg-muted/30 p-4">
+            <main className="flex-1 overflow-y-auto bg-muted/30 p-2 sm:p-4">
               <Breadcrumb />
               <AdminErrorBoundary>
                 <Outlet />

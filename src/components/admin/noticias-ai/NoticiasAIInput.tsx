@@ -887,7 +887,7 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
       <CardContent className="space-y-4">
         {/* Tabs Navigation */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabType)} className="w-full">
-          <TabsList className="grid w-full grid-cols-6 h-auto">
+          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 h-auto">
             {Object.entries(TAB_CONFIG).map(([key, config]) => {
               const Icon = config.icon;
               return (
@@ -914,7 +914,7 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
           </Alert>
 
           {/* Image Upload + Highlights Section (Common for all tabs) */}
-          <div className="grid gap-4 md:grid-cols-2 mt-4" data-tour="image-upload">
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2 mt-4" data-tour="image-upload">
             {/* Image Upload Card */}
             <Card className="p-3 space-y-3">
               <div className="flex items-center gap-2">
@@ -1402,7 +1402,7 @@ https://exemplo.com/noticia-3
                     onChange={(e) => updateGeneratorItem(idx, 'linkMateria', e.target.value)}
                     className="text-sm"
                   />
-                  <div className="grid grid-cols-[7fr_3fr] gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-[7fr_3fr] gap-2">
                     <Input
                       placeholder="https://... (link da imagem)"
                       value={item.linkImagem}

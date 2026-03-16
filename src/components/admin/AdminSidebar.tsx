@@ -527,7 +527,10 @@ export function AdminSidebar() {
               <button
                 onClick={() => {
                   toggleSidebar();
-                  toggleGroup(group.id);
+                  // Always open the group when expanding from collapsed state
+                  if (openGroup !== group.id) {
+                    toggleGroup(group.id);
+                  }
                 }}
                 className={cn(
                   "flex w-full items-center justify-center p-2 my-1 rounded-md transition-colors",
