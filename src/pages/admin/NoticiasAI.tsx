@@ -569,7 +569,7 @@ export default function NoticiasAI() {
 
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-violet-100/20 via-background to-background">
-      <div className="container max-w-7xl space-y-6 p-6">
+      <div className="container max-w-7xl space-y-4 p-2 sm:space-y-6 sm:p-6">
         {/* Header */}
         <NoticiasAIHeader
           level={progress?.level || 'beginner'}
