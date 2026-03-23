@@ -72,6 +72,7 @@ export default function NewsEditor() {
     is_home_highlight: false,
     is_urgent: false,
     is_featured: false,
+    is_blog: false,
     meta_title: "",
     meta_description: "",
     scheduled_at: "",
