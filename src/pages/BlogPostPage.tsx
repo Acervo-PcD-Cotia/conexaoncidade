@@ -20,7 +20,7 @@ export default function BlogPostPage() {
   const { data: related } = useRelatedNews(
     post?.id || '',
     post?.category_id || '',
-    post?.id ? true : false
+    4
   );
 
   // Increment view count
