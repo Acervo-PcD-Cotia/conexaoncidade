@@ -699,6 +699,16 @@ export default function NewsEditor() {
                     onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_featured: checked }))}
                   />
                 </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-sm">Blog</Label>
+                    <p className="text-xs text-muted-foreground">Publicar também no Blog</p>
+                  </div>
+                  <Switch
+                    checked={formData.is_blog}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_blog: checked }))}
+                  />
+                </div>
               </div>
               <div>
                 <Label>Categoria *</Label>
