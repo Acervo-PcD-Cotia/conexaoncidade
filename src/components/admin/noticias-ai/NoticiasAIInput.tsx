@@ -436,6 +436,7 @@ export interface HighlightSettings {
   is_home_highlight: boolean;
   is_urgent: boolean;
   is_featured: boolean;
+  is_blog: boolean;
   generateWebStory: boolean;
 }
 
@@ -507,6 +508,7 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
     is_home_highlight: false,
     is_urgent: false,
     is_featured: false,
+    is_blog: false,
     generateWebStory: true, // WebStory habilitado por padrão
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -870,6 +872,7 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
       is_home_highlight: false,
       is_urgent: false,
       is_featured: false,
+      is_blog: false,
       generateWebStory: true,
     });
   };
@@ -1066,6 +1069,21 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
                     id="highlight-webstory"
                     checked={highlights.generateWebStory}
                     onCheckedChange={(checked) => setHighlights(prev => ({ ...prev, generateWebStory: checked }))}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between border-t pt-3">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="highlight-blog" className="text-sm flex items-center gap-1.5">
+                      <Newspaper className="h-3.5 w-3.5 text-cyan-500" />
+                      Blog
+                    </Label>
+                    <p className="text-xs text-muted-foreground">Publicar também no Blog do site</p>
+                  </div>
+                  <Switch
+                    id="highlight-blog"
+                    checked={highlights.is_blog}
+                    onCheckedChange={(checked) => setHighlights(prev => ({ ...prev, is_blog: checked }))}
                   />
                 </div>
               </div>

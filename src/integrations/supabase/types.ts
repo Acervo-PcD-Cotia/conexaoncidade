@@ -11458,6 +11458,7 @@ export type Database = {
           id: string
           image_alt: string | null
           image_credit: string | null
+          is_blog: boolean | null
           is_featured: boolean | null
           is_home_highlight: boolean | null
           is_indexable: boolean | null
@@ -11525,6 +11526,7 @@ export type Database = {
           id?: string
           image_alt?: string | null
           image_credit?: string | null
+          is_blog?: boolean | null
           is_featured?: boolean | null
           is_home_highlight?: boolean | null
           is_indexable?: boolean | null
@@ -11592,6 +11594,7 @@ export type Database = {
           id?: string
           image_alt?: string | null
           image_credit?: string | null
+          is_blog?: boolean | null
           is_featured?: boolean | null
           is_home_highlight?: boolean | null
           is_indexable?: boolean | null

@@ -160,6 +160,8 @@ const EnemLessonPage = lazy(() => import("./pages/admin/academy/EnemLesson"));
 const EnemSubmissions = lazy(() => import("./pages/admin/academy/EnemSubmissions"));
 const EnemSubmissionDetail = lazy(() => import("./pages/admin/academy/EnemSubmissionDetail"));
 const Enem2026Landing = lazy(() => import("./pages/public/Enem2026Landing"));
+const BlogPage = lazy(() => import("./pages/BlogPage"));
+const BlogPostPage = lazy(() => import("./pages/BlogPostPage"));
 
 // Esportes
 const EsportesDashboard = lazy(() => import("./pages/admin/esportes/EsportesDashboard"));
@@ -488,6 +490,10 @@ const App = () => (
                                   
                                   {/* ENEM 2026 */}
                                   <Route path="/enem-2026" element={<S><Enem2026Landing /></S>} />
+                                  
+                                  {/* Blog */}
+                                  <Route path="/blog" element={<S><BlogPage /></S>} />
+                                  <Route path="/blog/:slug" element={<S><BlogPostPage /></S>} />
                                   
                                 </Route>
 

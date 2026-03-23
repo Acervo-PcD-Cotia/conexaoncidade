@@ -51,6 +51,7 @@ interface ManualData {
   is_home_highlight?: boolean;
   is_urgent?: boolean;
   is_featured?: boolean;
+  is_blog?: boolean;
   generateWebStory?: boolean;  // Flag para geração automática de WebStory
 }
 
@@ -333,6 +334,7 @@ export default function NoticiasAI() {
           is_home_highlight: article.is_home_highlight || false,
           is_urgent: article.is_urgent || false,
           is_featured: article.is_featured || false,
+          is_blog: article.is_blog || false,
           auto_generate_webstory: article.generateWebStory ?? true,  // Explicitamente definir a flag de WebStory
           status: 'published',
           published_at: new Date().toISOString(),

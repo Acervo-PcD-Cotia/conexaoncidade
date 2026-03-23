@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useModuleEnabled } from "@/hooks/useModuleEnabled";
 import { Link } from "react-router-dom";
-import { Menu, X, Search, Sun, Moon, LogOut, LayoutDashboard, Newspaper, FolderOpen, Megaphone, Settings, ShieldCheck, Bus, MapPin, Accessibility, Users, Radio, Tv, GraduationCap, Trophy, Home, ChevronDown, Store } from "lucide-react";
+import { Menu, X, Search, Sun, Moon, LogOut, LayoutDashboard, Newspaper, FolderOpen, Megaphone, Settings, ShieldCheck, Bus, MapPin, Accessibility, Users, Radio, Tv, GraduationCap, Trophy, Home, ChevronDown, Store, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTheme } from "@/hooks/useTheme";
@@ -195,6 +195,14 @@ export function Header() {
                     Guia Comercial
                   </Link>
                   )}
+                  {/* 11. Blog - cyan */}
+                  <Link
+                    to="/blog"
+                    className="flex items-center gap-2 text-cyan-600 dark:text-cyan-400 hover:underline"
+                  >
+                    <BookOpen className="h-4 w-4" />
+                    Blog
+                  </Link>
                 </div>
                 {/* Admin Links for Mobile */}
                 {hasAdminAccess && (
@@ -524,6 +532,14 @@ export function Header() {
               Guia Comercial
             </Link>
             )}
+            {/* 11. Blog - cyan */}
+            <Link
+              to="/blog"
+              className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-cyan-700 dark:text-cyan-400 bg-cyan-100 dark:bg-cyan-950/60 rounded-full hover:bg-cyan-200 dark:hover:bg-cyan-900/60 transition-colors border border-cyan-200 dark:border-cyan-800"
+            >
+              <BookOpen className="h-4 w-4" />
+              Blog
+            </Link>
           </div>
         </div>
 

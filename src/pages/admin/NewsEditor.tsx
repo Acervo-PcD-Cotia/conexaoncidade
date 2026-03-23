@@ -72,6 +72,7 @@ export default function NewsEditor() {
     is_home_highlight: false,
     is_urgent: false,
     is_featured: false,
+    is_blog: false,
     meta_title: "",
     meta_description: "",
     scheduled_at: "",
@@ -213,6 +214,7 @@ export default function NewsEditor() {
         is_home_highlight: (news as any).is_home_highlight || false,
         is_urgent: (news as any).is_urgent || false,
         is_featured: (news as any).is_featured || false,
+        is_blog: (news as any).is_blog || false,
         meta_title: news.meta_title || "",
         meta_description: news.meta_description || "",
         scheduled_at: news.scheduled_at || "",
@@ -695,6 +697,16 @@ export default function NewsEditor() {
                   <Switch
                     checked={formData.is_featured}
                     onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_featured: checked }))}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-sm">Blog</Label>
+                    <p className="text-xs text-muted-foreground">Publicar também no Blog</p>
+                  </div>
+                  <Switch
+                    checked={formData.is_blog}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_blog: checked }))}
                   />
                 </div>
               </div>
