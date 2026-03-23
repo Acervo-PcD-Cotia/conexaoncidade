@@ -508,6 +508,7 @@ export function NoticiasAIInput({ onGenerate, isProcessing, onImageUpload, canUs
     is_home_highlight: false,
     is_urgent: false,
     is_featured: false,
+    is_blog: false,
     generateWebStory: true, // WebStory habilitado por padrão
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
