@@ -532,6 +532,14 @@ export function Header() {
               Guia Comercial
             </Link>
             )}
+            {/* 11. Blog - cyan */}
+            <Link
+              to="/blog"
+              className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-cyan-700 dark:text-cyan-400 bg-cyan-100 dark:bg-cyan-950/60 rounded-full hover:bg-cyan-200 dark:hover:bg-cyan-900/60 transition-colors border border-cyan-200 dark:border-cyan-800"
+            >
+              <BookOpen className="h-4 w-4" />
+              Blog
+            </Link>
           </div>
         </div>
 
