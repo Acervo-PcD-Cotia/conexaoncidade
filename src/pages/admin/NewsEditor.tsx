@@ -214,6 +214,7 @@ export default function NewsEditor() {
         is_home_highlight: (news as any).is_home_highlight || false,
         is_urgent: (news as any).is_urgent || false,
         is_featured: (news as any).is_featured || false,
+        is_blog: (news as any).is_blog || false,
         meta_title: news.meta_title || "",
         meta_description: news.meta_description || "",
         scheduled_at: news.scheduled_at || "",
