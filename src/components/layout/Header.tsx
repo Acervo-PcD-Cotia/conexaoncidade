@@ -195,6 +195,14 @@ export function Header() {
                     Guia Comercial
                   </Link>
                   )}
+                  {/* 11. Blog - cyan */}
+                  <Link
+                    to="/blog"
+                    className="flex items-center gap-2 text-cyan-600 dark:text-cyan-400 hover:underline"
+                  >
+                    <BookOpen className="h-4 w-4" />
+                    Blog
+                  </Link>
                 </div>
                 {/* Admin Links for Mobile */}
                 {hasAdminAccess && (
