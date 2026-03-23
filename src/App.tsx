@@ -491,6 +491,10 @@ const App = () => (
                                   {/* ENEM 2026 */}
                                   <Route path="/enem-2026" element={<S><Enem2026Landing /></S>} />
                                   
+                                  {/* Blog */}
+                                  <Route path="/blog" element={<S><BlogPage /></S>} />
+                                  <Route path="/blog/:slug" element={<S><BlogPostPage /></S>} />
+                                  
                                 </Route>
 
                                 {/* Fórmula Conexão — fora do PublicLayout para tela limpa */}
