@@ -152,7 +152,6 @@ export default function BlogPostPage() {
             <ShareButtons
               url={canonicalUrl}
               title={post.title}
-              imageUrl={post.featured_image_url || undefined}
             />
           </div>
         </div>
