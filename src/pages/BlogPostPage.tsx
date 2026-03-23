@@ -160,7 +160,7 @@ export default function BlogPostPage() {
         {related && related.length > 0 && (
           <div className="container max-w-4xl mb-16">
             <h2 className="text-2xl font-bold mb-6">Leia também</h2>
-            <RelatedNews articles={related} />
+            <RelatedNews news={related} />
           </div>
         )}
       </article>
