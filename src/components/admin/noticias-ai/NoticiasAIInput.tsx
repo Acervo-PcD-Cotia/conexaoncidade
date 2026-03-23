@@ -436,6 +436,7 @@ export interface HighlightSettings {
   is_home_highlight: boolean;
   is_urgent: boolean;
   is_featured: boolean;
+  is_blog: boolean;
   generateWebStory: boolean;
 }
 
