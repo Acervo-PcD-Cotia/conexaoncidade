@@ -315,7 +315,7 @@ export function SuperBanner() {
       page="home"
     >
       <div
-        className="relative w-full max-w-[1200px] mx-auto"
+        className="relative w-full max-w-[1600px] mx-auto px-2"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
         style={{ perspective: '1200px' }}
