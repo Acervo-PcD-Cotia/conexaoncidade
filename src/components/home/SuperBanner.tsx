@@ -9,6 +9,7 @@ import { trackCampaignEvent } from "@/lib/trackCampaignEvent";
 import { AdSlotWrapper } from "@/components/ads/AdSlotWrapper";
 import { AdLabel } from "@/components/ads/AdLabel";
 import { useAdDebugLevel } from "@/hooks/useAdDebugLevel";
+import { cn } from "@/lib/utils";
 
 interface BannerItem {
   id: string;
@@ -25,6 +26,7 @@ interface BannerItem {
 export function SuperBanner() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const trackedImpressions = useRef<Set<string>>(new Set());
   const device = useDeviceType();
   const adDebugLevel = useAdDebugLevel();
@@ -106,12 +108,10 @@ export function SuperBanner() {
 
           const config = adsChannel.config as Record<string, any> | null;
           const slot = config?.slot_type;
-          // Only include if slot is for top banner area
           if (slot && !['home_top', 'home_banner', 'super_banner'].includes(slot)) continue;
 
           const asset = c.assets?.find((a: any) => a.channel_type === 'ads');
           if (asset?.file_url) {
-            // Avoid duplicates if already in legacy
             const alreadyExists = results.some(r => r.image_url === asset.file_url);
             if (!alreadyExists) {
               results.push({
@@ -135,17 +135,24 @@ export function SuperBanner() {
   });
 
   const goToNext = useCallback(() => {
-    if (banners.length === 0) return;
+    if (banners.length === 0 || isTransitioning) return;
+    setIsTransitioning(true);
     setCurrentIndex((prev) => (prev + 1) % banners.length);
-  }, [banners.length]);
+    setTimeout(() => setIsTransitioning(false), 600);
+  }, [banners.length, isTransitioning]);
 
-  const goToPrev = () => {
-    if (banners.length === 0) return;
+  const goToPrev = useCallback(() => {
+    if (banners.length === 0 || isTransitioning) return;
+    setIsTransitioning(true);
     setCurrentIndex((prev) => (prev - 1 + banners.length) % banners.length);
-  };
+    setTimeout(() => setIsTransitioning(false), 600);
+  }, [banners.length, isTransitioning]);
 
   const goToSlide = (index: number) => {
+    if (isTransitioning || index === currentIndex) return;
+    setIsTransitioning(true);
     setCurrentIndex(index);
+    setTimeout(() => setIsTransitioning(false), 600);
   };
 
   useEffect(() => {
@@ -225,6 +232,64 @@ export function SuperBanner() {
     }
   };
 
+  // Calculate 3D transform for each slide based on its position relative to current
+  const getSlideStyle = (index: number): React.CSSProperties => {
+    const total = banners.length;
+    if (total === 0) return {};
+
+    // Calculate relative position (-2, -1, 0, 1, 2, etc.)
+    let diff = index - currentIndex;
+    // Wrap around for infinite feel
+    if (diff > total / 2) diff -= total;
+    if (diff < -total / 2) diff += total;
+
+    const isActive = diff === 0;
+    const isAdjacent = Math.abs(diff) === 1;
+    const isVisible = Math.abs(diff) <= 2;
+
+    if (!isVisible) {
+      return {
+        opacity: 0,
+        pointerEvents: 'none',
+        transform: `translate3d(${diff > 0 ? '100%' : '-100%'}, 0, -200px) scale(0.5)`,
+        zIndex: 0,
+      };
+    }
+
+    if (isActive) {
+      return {
+        opacity: 1,
+        zIndex: 10,
+        transform: 'translate3d(0, 0, 0) scale(1)',
+        transformOrigin: 'center center',
+        pointerEvents: 'auto',
+      };
+    }
+
+    if (isAdjacent) {
+      const translateX = diff > 0 ? 'calc(78% + 0px)' : 'calc(-78% + 0px)';
+      const origin = diff > 0 ? 'left center' : 'right center';
+      return {
+        opacity: 1,
+        zIndex: 5,
+        transform: `translate3d(${translateX}, 0, -60px) scale(0.7)`,
+        transformOrigin: origin,
+        pointerEvents: 'auto',
+      };
+    }
+
+    // Far slides
+    const translateX = diff > 0 ? 'calc(120% + 0px)' : 'calc(-120% + 0px)';
+    const origin = diff > 0 ? 'left center' : 'right center';
+    return {
+      opacity: 0.5,
+      zIndex: 2,
+      transform: `translate3d(${translateX}, 0, -120px) scale(0.5)`,
+      transformOrigin: origin,
+      pointerEvents: 'none',
+    };
+  };
+
   if (banners.length === 0) {
     return (
       <AdSlotWrapper
@@ -238,6 +303,8 @@ export function SuperBanner() {
     );
   }
 
+  const currentBanner = banners[currentIndex];
+
   return (
     <AdSlotWrapper
       slotId="super_banner"
@@ -248,91 +315,122 @@ export function SuperBanner() {
       page="home"
     >
       <div
-        className="relative w-full max-w-[970px] mx-auto overflow-visible"
+        className="relative w-full max-w-[1200px] mx-auto"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
+        style={{ perspective: '1200px' }}
       >
         {/* Ad label */}
-        <div className="absolute left-2 top-2 z-10">
+        <div className="absolute left-2 top-2 z-20">
           <AdLabel
             level={adDebugLevel}
             adType="MEGA DESTAQUE"
-            adId={banners[currentIndex]?.id}
+            adId={currentBanner?.id}
             variant="ADS"
             position="TOPO"
             area="HOME"
-            campaignId={banners[currentIndex]?.campaignId}
+            campaignId={currentBanner?.campaignId}
             overlay
           />
         </div>
-        <div className="overflow-hidden">
-          <div
-            className="flex transition-transform duration-700 ease-out"
-            style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-          >
-            {banners.map((banner) => (
-              <a
-                key={banner.id}
-                href={banner.link_url || "#"}
-                target={banner.link_target || "_blank"}
-                rel="noopener noreferrer"
-                className="relative w-full shrink-0"
-                onClick={(e) => handleBannerClick(e, banner)}
-              >
-                <img
-                  src={banner.image_url}
-                  alt={banner.alt_text || banner.title || "Banner promocional"}
-                  className="w-full h-auto block"
-                  loading="eager"
-                  decoding="async"
-                />
-              </a>
-            ))}
-          </div>
+
+        {/* 3D Carousel Container */}
+        <div 
+          className="relative w-full overflow-hidden"
+          style={{ 
+            aspectRatio: '16/9',
+            maxHeight: '480px',
+            transformStyle: 'preserve-3d',
+          }}
+        >
+          {banners.map((banner, index) => (
+            <a
+              key={banner.id}
+              href={banner.link_url || "#"}
+              target={banner.link_target || "_blank"}
+              rel="noopener noreferrer"
+              className={cn(
+                "absolute inset-0 w-[60%] mx-auto rounded-xl overflow-hidden shadow-2xl",
+                "transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)]",
+                index === currentIndex && "ring-0",
+                index !== currentIndex && "cursor-pointer"
+              )}
+              style={getSlideStyle(index)}
+              onClick={(e) => {
+                // If clicking a side slide, navigate to it instead
+                let diff = index - currentIndex;
+                if (diff > banners.length / 2) diff -= banners.length;
+                if (diff < -banners.length / 2) diff += banners.length;
+                
+                if (diff !== 0) {
+                  e.preventDefault();
+                  goToSlide(index);
+                } else {
+                  handleBannerClick(e, banner);
+                }
+              }}
+            >
+              <img
+                src={banner.image_url}
+                alt={banner.alt_text || banner.title || "Banner promocional"}
+                className="w-full h-full object-cover"
+                loading={index <= 2 ? "eager" : "lazy"}
+                decoding="async"
+              />
+              {/* Subtle gradient overlay on side slides */}
+              {index !== currentIndex && (
+                <div className="absolute inset-0 bg-black/20" />
+              )}
+            </a>
+          ))}
         </div>
 
+        {/* Navigation Arrows */}
         {banners.length > 1 && (
           <>
             <Button
               variant="ghost"
               size="icon"
-              className="absolute left-2 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full bg-black/40 text-white backdrop-blur-sm hover:bg-black/60 hover:text-white md:left-4 md:h-12 md:w-12"
+              className="absolute left-2 top-1/2 z-20 h-10 w-10 -translate-y-1/2 rounded-full bg-background/80 text-foreground backdrop-blur-sm shadow-lg border border-border/50 hover:bg-background hover:text-foreground md:left-4 md:h-12 md:w-12"
               onClick={(e) => { e.preventDefault(); goToPrev(); }}
             >
-              <ChevronLeft className="h-6 w-6 md:h-8 md:w-8" />
+              <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="absolute right-2 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full bg-black/40 text-white backdrop-blur-sm hover:bg-black/60 hover:text-white md:right-4 md:h-12 md:w-12"
+              className="absolute right-2 top-1/2 z-20 h-10 w-10 -translate-y-1/2 rounded-full bg-background/80 text-foreground backdrop-blur-sm shadow-lg border border-border/50 hover:bg-background hover:text-foreground md:right-4 md:h-12 md:w-12"
               onClick={(e) => { e.preventDefault(); goToNext(); }}
             >
-              <ChevronRight className="h-6 w-6 md:h-8 md:w-8" />
+              <ChevronRight className="h-5 w-5 md:h-6 md:w-6" />
             </Button>
           </>
         )}
 
+        {/* Dot indicators below carousel */}
         {banners.length > 1 && (
-          <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2 md:bottom-4 md:gap-3">
+          <div className="flex items-center justify-center gap-2 mt-4">
             {banners.map((_, index) => (
               <button
                 key={index}
                 onClick={(e) => { e.preventDefault(); goToSlide(index); }}
-                className={`h-2.5 w-2.5 rounded-full transition-all duration-300 md:h-3 md:w-3 ${
+                className={cn(
+                  "rounded-full transition-all duration-300",
                   index === currentIndex
-                    ? "w-6 scale-110 bg-white md:w-8"
-                    : "bg-white/50 hover:bg-white/75"
-                }`}
+                    ? "h-2.5 w-7 bg-primary"
+                    : "h-2.5 w-2.5 bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                )}
                 aria-label={`Ir para slide ${index + 1}`}
               />
             ))}
           </div>
         )}
 
-        {banners.length > 1 && (
-          <div className="absolute right-2 top-2 rounded-full bg-black/50 px-2 py-1 text-xs font-medium text-white backdrop-blur-sm md:right-4 md:top-4 md:px-3 md:text-sm">
-            {currentIndex + 1} / {banners.length}
-          </div>
+        {/* Title below carousel (Sympla style) */}
+        {currentBanner?.title && (
+          <h3 className="text-center mt-3 text-lg md:text-xl font-bold text-foreground tracking-tight truncate px-4">
+            {currentBanner.title}
+          </h3>
         )}
       </div>
     </AdSlotWrapper>
