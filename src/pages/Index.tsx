@@ -13,6 +13,7 @@ const SuperBanner = lazy(() => import("@/components/home/SuperBanner").then(m =>
 const QuickNotes = lazy(() => import("@/components/home/QuickNotes").then(m => ({ default: m.QuickNotes })));
 const HomeVideoBlock = lazy(() => import("@/components/home/HomeVideoBlock").then(m => ({ default: m.HomeVideoBlock })));
 const LocalEngagementSection = lazy(() => import("@/components/home/LocalEngagementSection").then(m => ({ default: m.LocalEngagementSection })));
+const GuiaCategoriesSlider = lazy(() => import("@/components/home/GuiaCategoriesSlider").then(m => ({ default: m.GuiaCategoriesSlider })));
 
 
 const LOADING_TIMEOUT_MS = 5000;
