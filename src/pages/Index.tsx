@@ -71,6 +71,17 @@ const Index = () => {
           <GuiaCategoriesSlider />
         </Suspense>
 
+        {/* 2.6. Banner de publicidade abaixo do Guia (estilo Sympla) */}
+        <div className="home-container">
+          <ResponsiveAdUnit
+            format="ANUNCIO_HOME"
+            slotId="guia-below-ad"
+            source="ads"
+            className="w-full rounded-xl overflow-hidden"
+            page="home"
+          />
+        </div>
+
         {/* 3. Ticker de Notícias Urgentes */}
         <Suspense fallback={null}>
           <UrgentNewsTicker />
