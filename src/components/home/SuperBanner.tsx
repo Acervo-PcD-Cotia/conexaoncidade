@@ -338,8 +338,8 @@ export function SuperBanner() {
         <div 
           className="relative w-full overflow-hidden"
           style={{ 
-            aspectRatio: '16/9',
-            maxHeight: '480px',
+            aspectRatio: '21/7',
+            maxHeight: '360px',
             transformStyle: 'preserve-3d',
           }}
         >
