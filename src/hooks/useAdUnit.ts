@@ -16,6 +16,8 @@ const SLOT_ALIASES: Record<string, string[]> = {
   retangulo_medio: ['retangulo_medio', 'rectangle', 'sidebar', 'content'],
   arranha_ceu: ['arranha_ceu', 'skyscraper'],
   popup: ['popup'],
+  'guia-below-ad': ['guia-below-ad', 'leaderboard', 'home_top'],
+  banner_fullwidth: ['banner_fullwidth', 'guia-below-ad', 'leaderboard', 'home_top'],
 };
 
 function getSlotAliases(slotId: string): string[] {
