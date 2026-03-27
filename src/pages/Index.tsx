@@ -66,6 +66,11 @@ const Index = () => {
           </div>
         </Suspense>
 
+        {/* 2.5. Categorias do Guia Comercial — slider estilo Sympla */}
+        <Suspense fallback={<SectionSkeleton h="h-36" />}>
+          <GuiaCategoriesSlider />
+        </Suspense>
+
         {/* 3. Ticker de Notícias Urgentes */}
         <Suspense fallback={null}>
           <UrgentNewsTicker />
