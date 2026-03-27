@@ -337,9 +337,9 @@ export function SuperBanner() {
         {/* 3D Carousel Container */}
         <div 
           className="relative w-full overflow-hidden"
-          style={{ 
-            aspectRatio: '1700/300',
-            maxHeight: '300px',
+           style={{ 
+            aspectRatio: '820/312',
+            maxHeight: '312px',
             transformStyle: 'preserve-3d',
           }}
         >
