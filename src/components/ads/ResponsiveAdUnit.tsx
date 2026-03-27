@@ -38,6 +38,7 @@ export function ResponsiveAdUnit({
   const slotMap: Record<string, { channel: string; placement: string; w: number; h: number; reserve?: boolean; cond?: boolean }> = {
     SUPER_BANNER_TOPO: { channel: 'ads', placement: 'top', w: 970, h: 250 },
     ANUNCIO_HOME: { channel: 'ads', placement: 'top', w: 728, h: 90 },
+    BANNER_FULLWIDTH: { channel: 'ads', placement: 'inline', w: 1200, h: 180 },
     RETANGULO_MEDIO: { channel: 'ads', placement: 'inline', w: 300, h: 250 },
     ARRANHA_CEU: { channel: 'ads', placement: 'sidebar', w: 300, h: 600 },
     POPUP_INTELIGENTE: { channel: 'ads', placement: 'modal', w: 580, h: 400, reserve: false, cond: true },

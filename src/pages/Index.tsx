@@ -72,14 +72,21 @@ const Index = () => {
         </Suspense>
 
         {/* 2.6. Banner de publicidade abaixo do Guia (estilo Sympla) */}
-        <div className="home-container">
-          <ResponsiveAdUnit
-            format="ANUNCIO_HOME"
-            slotId="guia-below-ad"
-            source="ads"
-            className="w-full rounded-xl overflow-hidden"
-            page="home"
-          />
+        <div className="home-container py-4">
+          <div className="relative w-full overflow-hidden rounded-xl bg-muted/40 border border-border/30">
+            <ResponsiveAdUnit
+              format="BANNER_FULLWIDTH"
+              slotId="guia-below-ad"
+              source="ads"
+              className="w-full"
+              page="home"
+            />
+            <div className="absolute bottom-2 left-2 z-10">
+              <span className="inline-flex items-center gap-1 rounded bg-background/80 px-2 py-0.5 text-[10px] text-muted-foreground backdrop-blur-sm">
+                Publicidade ↗
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* 3. Ticker de Notícias Urgentes */}

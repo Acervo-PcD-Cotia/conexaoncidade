@@ -52,6 +52,16 @@ export const AD_FORMATS: Record<string, AdFormat> = {
     aspectRatio: '97/25',
     preload: false,
   },
+  BANNER_FULLWIDTH: {
+    id: 'banner_fullwidth',
+    label: 'Banner Full Width',
+    labelPt: 'Banner Largura Total',
+    desktop: { width: 1200, height: 180 },
+    tablet: { width: 728, height: 120 },
+    mobile: { width: 320, height: 100 },
+    aspectRatio: '20/3',
+    preload: false,
+  },
   RETANGULO_MEDIO: {
     id: 'retangulo_medio',
     label: 'Destaque Inteligente',
@@ -219,6 +229,9 @@ export function slotTypeToFormatKey(slotType: string): AdFormatKey {
     'alerta_full_saida': 'ALERTA_FULL_SAIDA',
     'exit_full': 'ALERTA_FULL_SAIDA',
     '1280x720': 'ALERTA_FULL_SAIDA',
+    'guia-below-ad': 'BANNER_FULLWIDTH',
+    'banner_fullwidth': 'BANNER_FULLWIDTH',
+    '1200x180': 'BANNER_FULLWIDTH',
   };
   
   return mapping[slotType] || 'RETANGULO_MEDIO';
