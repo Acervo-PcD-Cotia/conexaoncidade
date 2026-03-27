@@ -54,7 +54,7 @@ export function HeroSection() {
   ];
 
   const heroNews = allNews[0];
-  const miniCards = allNews.slice(1, 3);
+  const miniCards = allNews.slice(1, 7);
 
   const getNewsCategory = (news: typeof heroNews) => {
     const tagNames = news?.tags?.map(t => t.name) || [];
@@ -182,9 +182,9 @@ export function HeroSection() {
         </div>
       </div>
 
-      {/* Mini Cards abaixo do hero - 2 cards lado a lado */}
+      {/* Mini Cards abaixo do hero - 6 cards em grid 3x2 */}
       {miniCards.length > 0 && (
-        <div className="grid gap-4 mt-5 sm:grid-cols-2">
+        <div className="grid gap-4 mt-5 sm:grid-cols-2 lg:grid-cols-3">
           {miniCards.map((news) => (
             <article 
               key={news.id} 
