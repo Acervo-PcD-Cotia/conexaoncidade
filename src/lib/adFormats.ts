@@ -229,6 +229,9 @@ export function slotTypeToFormatKey(slotType: string): AdFormatKey {
     'alerta_full_saida': 'ALERTA_FULL_SAIDA',
     'exit_full': 'ALERTA_FULL_SAIDA',
     '1280x720': 'ALERTA_FULL_SAIDA',
+    'guia-below-ad': 'BANNER_FULLWIDTH',
+    'banner_fullwidth': 'BANNER_FULLWIDTH',
+    '1200x180': 'BANNER_FULLWIDTH',
   };
   
   return mapping[slotType] || 'RETANGULO_MEDIO';
