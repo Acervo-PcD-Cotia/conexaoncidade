@@ -108,6 +108,29 @@ function decodeHtmlEntities(text: string): string {
 // QUALITY GATE: Validates news before publishing
 // Returns array of blocking errors (empty = OK to publish)
 // ============================================================
+// Removes WordPress thumbnail dimension suffixes like -120x86, -350x250, -150x150
+function cleanThumbnailSuffix(url: string): string {
+  if (!url) return url;
+  return url.replace(/-\d+x\d+(\.\w+)$/, '$1');
+}
+
+// Known placeholder/lazy-loading images to ignore
+function isPlaceholderImage(url: string): boolean {
+  const lowerUrl = url.toLowerCase();
+  return (
+    lowerUrl.includes('jeg-empty') ||
+    lowerUrl.includes('placeholder') ||
+    lowerUrl.includes('default-image') ||
+    lowerUrl.includes('no-image') ||
+    lowerUrl.includes('generico') ||
+    lowerUrl.includes('data:image') ||
+    lowerUrl.includes('1x1') ||
+    lowerUrl.includes('blank.gif') ||
+    lowerUrl.includes('lazy') ||
+    lowerUrl.endsWith('.svg')
+  );
+}
+
 function validateNewsQuality(params: {
   title: string;
   content: string;
@@ -127,20 +150,11 @@ function validateNewsQuality(params: {
     errors.push('Notícia sem fonte de referência');
   }
 
-  // 4. Image must not be a known generic/thumbnail image
+  // 4. Image validation — clean thumbnail suffix before checking
   if (params.imageUrl) {
-    const lowerUrl = params.imageUrl.toLowerCase();
-    if (
-      lowerUrl.includes('_0001') ||
-      lowerUrl.includes('-120x86') ||
-      lowerUrl.includes('-150x') ||
-      lowerUrl.includes('generico') ||
-      lowerUrl.includes('placeholder') ||
-      lowerUrl.includes('default-image') ||
-      lowerUrl.includes('no-image') ||
-      lowerUrl.includes('thumbnail')
-    ) {
-      errors.push('Imagem genérica ou thumbnail detectada (muito pequena ou sem relação com a notícia)');
+    const cleanedUrl = cleanThumbnailSuffix(params.imageUrl);
+    if (isPlaceholderImage(cleanedUrl)) {
+      errors.push('Imagem genérica ou placeholder detectada');
     }
   }
 
@@ -161,6 +175,16 @@ async function fetchFullContent(url: string): Promise<{ content: string; images:
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
     const html = await response.text();
+
+    // ── Extract og:image from <head> as priority image ──
+    let ogImage: string | null = null;
+    const ogMatch = html.match(/<meta\s+(?:property|name)=["']og:image["']\s+content=["']([^"']+)["']/i)
+      || html.match(/<meta\s+content=["']([^"']+)["']\s+(?:property|name)=["']og:image["']/i);
+    if (ogMatch && ogMatch[1]) {
+      ogImage = ogMatch[1];
+      console.log(`[Fetch] Found og:image: ${ogImage}`);
+    }
+
     let content = '';
     const contentPatterns = [
       /<article[^>]*>([\s\S]*?)<\/article>/i,
@@ -179,13 +203,39 @@ async function fetchFullContent(url: string): Promise<{ content: string; images:
       content = bodyMatch ? bodyMatch[1] : html;
     }
 
+    // ── Extract images: support data-src, data-lazy-src for lazy loading ──
     const images: string[] = [];
-    const imgRegex = /<img[^>]+src=["']([^"']+)["']/gi;
-    let imgMatch;
-    while ((imgMatch = imgRegex.exec(content)) !== null) {
-      if (imgMatch[1] && !imgMatch[1].includes('logo') && !imgMatch[1].includes('icon')) {
-        images.push(imgMatch[1]);
+    // Regex captures the full <img> tag to extract multiple attributes
+    const imgTagRegex = /<img[^>]+>/gi;
+    let tagMatch;
+    while ((tagMatch = imgTagRegex.exec(content)) !== null) {
+      const imgTag = tagMatch[0];
+      // Skip logos and icons
+      if (/logo|icon|avatar/i.test(imgTag)) continue;
+
+      // Priority: data-src > data-lazy-src > data-srcset (first URL) > src
+      let imgUrl: string | null = null;
+
+      const dataSrcMatch = imgTag.match(/data-src=["']([^"']+)["']/i);
+      const dataLazySrcMatch = imgTag.match(/data-lazy-src=["']([^"']+)["']/i);
+      const srcMatch = imgTag.match(/\bsrc=["']([^"']+)["']/i);
+
+      imgUrl = dataSrcMatch?.[1] || dataLazySrcMatch?.[1] || srcMatch?.[1] || null;
+
+      if (imgUrl && !isPlaceholderImage(imgUrl)) {
+        // Clean thumbnail suffix to get full-size image
+        images.push(cleanThumbnailSuffix(imgUrl));
       }
+    }
+
+    // og:image is the highest priority — prepend it
+    if (ogImage && !isPlaceholderImage(ogImage)) {
+      const cleanOg = cleanThumbnailSuffix(ogImage);
+      // Remove duplicates
+      const filteredImages = images.filter(img => img !== cleanOg);
+      filteredImages.unshift(cleanOg);
+      content = sanitizeHtml(content);
+      return { content, images: filteredImages };
     }
 
     content = sanitizeHtml(content);
