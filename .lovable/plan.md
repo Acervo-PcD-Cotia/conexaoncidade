@@ -1,126 +1,58 @@
 
 
-# Plano: Premium Visual Overhaul — Sites de Nicho Fórmula Conexão
+# Correção: Quality Gate bloqueando imagens do cotia.sp.gov.br
 
-## Objetivo
+## Problema Identificado
 
-Transformar o `FormulaNicheSite` de um layout funcional básico em uma landing page premium estilo Apple/Stripe, com glassmorphism, animações, tipografia refinada e CTAs de alta conversão. Também melhorar os componentes auxiliares (EntryScreen, NicheSelector, TourGuide, CheckoutModal, Countdown).
+Todas as 49 notícias de Cotia estão sendo bloqueadas porque o site usa **lazy loading** (JNews/WordPress):
+- O atributo `src` das imagens contém um placeholder (`jeg-empty.png`)
+- As imagens reais estão em `data-src` e `data-srcset`
+- As imagens extraídas do HTML sidebar contêm sufixos como `-120x86` (thumbnails), que são bloqueados pelo Quality Gate
 
----
+## Plano de Correção
 
-## Componentes a Reescrever
+### 1. Melhorar extração de imagens na função `regional-process-item`
 
-### 1. `FormulaNicheSite.tsx` — Reescrita completa
+**Arquivo:** `supabase/functions/regional-process-item/index.ts`
 
-**Hero Section:**
-- Background com gradient radial multi-camada (niche-colored accent + deep navy)
-- Headline massiva (text-5xl/6xl) com font-family Plus Jakarta Sans, tracking-tight
-- Trust badges row abaixo do CTA (Empresa Verificada ✓ | Selo PCD ✓ | Conexão AI 24h ✓)
-- Animações de entrada com framer-motion staggered
+Na função `fetchFullContent`:
 
-**Conexão AI Section:**
-- Card estilo "AI Dashboard" com glassmorphism (backdrop-blur, bg-white/5, border white/10)
-- Preview de chat simulado (3 mensagens fictícias do nicho)
-- Borda com glow sutil animado (box-shadow pulsante em laranja)
-- Badge "24h no WhatsApp" com ícone animado
+- **Extrair og:image** do `<head>` da página como fonte prioritária de imagem (full-size, sem thumbnail)
+- **Extrair `data-src`** além de `src` nas tags `<img>`, para suportar lazy loading
+- **Remover sufixos de thumbnail** (`-120x86`, `-150x`, `-350x250`) da URL da imagem para obter a versão original em tamanho completo
+- Retornar og:image como primeira opção na lista de imagens
 
-**Services Grid:**
-- Cards grandes com ícones Lucide por serviço (mapeamento no NicheData)
-- Efeito hover: lift (translateY -4px) + shadow increase
-- Glassmorphism sutil nos cards
-- Tag "Destaque" no primeiro serviço
+### 2. Ajustar o Quality Gate para ser menos restritivo com imagens válidas
 
-**Testimonials:**
-- Layout Bento Grid (1 grande + 2 menores) em desktop, carousel em mobile
-- Avatares gerados (iniciais coloridas em círculos)
-- Checkmark verificado ao lado do nome
-- Stars com preenchimento gradual
+**Arquivos:** `supabase/functions/regional-process-item/index.ts` e `supabase/functions/autopost-publish/index.ts`
 
-**Selo Verificado + PCD:**
-- Lado a lado em desktop, empilhados em mobile
-- Cards com ícone grande, borda premium, gradiente sutil
+- Remover a regra `-120x86` do Quality Gate, pois a correção na extração já vai fornecer URLs limpas
+- Manter as demais regras (placeholder, generico, no-image, default-image)
+- Alternativamente: em vez de bloquear, tentar limpar o sufixo de thumbnail da URL antes de validar
 
-**Caminhão de Prêmios:**
-- Card hero-style com ilustração abstrata
-- Destaque "R$20 = 1 cupom" em badge grande
-- Link para regulamento
+### 3. Fallback para geração de imagem por IA
 
-**Mapa:**
-- Placeholder estilizado com gradiente e pin animado
+Quando nenhuma imagem válida for encontrada após a extração melhorada, invocar o gerador de imagens AI (`autopost-image-generator`) como fallback, em vez de bloquear a publicação.
 
-**WhatsApp CTA Final:**
-- Full-width section com gradient background
-- Botão com pulse animation
-- Texto de urgência com countdown inline
+## Detalhes Técnicos
 
-**Footer:**
-- Redesign com links úteis e branding Conexão
+```text
+Fluxo atual:
+  fetchFullContent → extrai src (placeholder) → images[0] = null ou thumbnail
+  → Quality Gate → BLOQUEIA (-120x86 detectado)
 
-### 2. `FormulaNicheData.ts` — Expandir dados
+Fluxo corrigido:
+  fetchFullContent → extrai og:image (full-size) + data-src (limpo)
+  → images[0] = URL full-size válida
+  → Quality Gate → APROVADO
+```
 
-- Adicionar array `servicoIcons: string[]` (nomes de ícones Lucide para cada serviço)
-- Adicionar `accentColor: string` por nicho (ex: clinica = blue, restaurante = amber)
-- Adicionar `avatarColors: string[]` para depoimentos
+Mudanças na função `fetchFullContent`:
+1. Antes de extrair imagens do conteúdo, buscar `<meta property="og:image" content="...">` no HTML completo
+2. No regex de imagens, capturar `data-src` e `data-srcset` além de `src`
+3. Função auxiliar `cleanThumbnailSuffix(url)` que remove padrões como `-\d+x\d+` do nome do arquivo
 
-### 3. `FormulaEntryScreen.tsx` — Premium upgrade
-
-- Background com pattern sutil (dots/grid via CSS)
-- Logo/badge animado no topo
-- Cards em vez de botões simples (glassmorphism)
-- Animação de entrada staggered
-
-### 4. `FormulaNicheSelector.tsx` — Premium cards
-
-- Cards maiores com hover glow effect
-- Ícone + label + descrição curta
-- Glassmorphism com backdrop-blur
-- Animação de entrada em cascade
-
-### 5. `FormulaTourGuide.tsx` — Visual upgrade
-
-- Tooltip com glassmorphism mais forte
-- Progress bar visual (dots ou barra)
-- Ícone por passo
-- Animação de transição melhorada
-
-### 6. `FormulaCheckoutModal.tsx` — High-conversion redesign
-
-- Glassmorphism card
-- Preço com efeito "savings" (mostrar economia: "Você economiza R$ 4.000")
-- Timer inline no modal
-- Garantia / selo de segurança visual
-- Urgência textual dinâmica
-
-### 7. `FormulaCountdown.tsx` — Sticky bar premium
-
-- Mais compacto e elegante
-- Gradient background sutil
-- Botão CTA inline no countdown bar
-
----
-
-## Padrões Visuais Globais
-
-- **Cores**: Deep Navy (#0A0F1E base), Slate (#1E293B surfaces), Orange (#FF6600 primary), sem preto puro
-- **Glassmorphism**: `backdrop-blur-xl bg-white/[0.03] border border-white/[0.08]`
-- **Shadows**: Layered (`shadow-lg shadow-black/20`)
-- **Typography**: Plus Jakarta Sans headlines, Inter body, tracking-tight em títulos
-- **Spacing**: Seções com py-24 md:py-32 (mais respiro)
-- **Animações**: framer-motion whileInView com stagger, hover lift nos cards
-
----
-
-## Arquivos Afetados
-
-| Ação | Arquivo |
-|------|---------|
-| Reescrever | `src/components/formula-conexao/FormulaNicheSite.tsx` |
-| Editar | `src/components/formula-conexao/FormulaNicheData.ts` |
-| Reescrever | `src/components/formula-conexao/FormulaEntryScreen.tsx` |
-| Reescrever | `src/components/formula-conexao/FormulaNicheSelector.tsx` |
-| Reescrever | `src/components/formula-conexao/FormulaTourGuide.tsx` |
-| Reescrever | `src/components/formula-conexao/FormulaCheckoutModal.tsx` |
-| Editar | `src/components/formula-conexao/FormulaCountdown.tsx` |
-
-Nenhuma mudança no banco de dados. Nenhuma nova dependência. Tudo com Tailwind + framer-motion + Lucide existentes.
+Mudanças no `validateNewsQuality`:
+1. Aplicar `cleanThumbnailSuffix` na URL antes de validar
+2. Adicionar filtro para placeholder images conhecidas (`jeg-empty.png`, `placeholder`)
 
