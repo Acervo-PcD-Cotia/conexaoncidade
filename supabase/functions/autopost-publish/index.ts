@@ -11,6 +11,28 @@ function extractPlainText(html: string): string {
   return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+// Removes WordPress thumbnail dimension suffixes like -120x86, -350x250
+function cleanThumbnailSuffix(url: string): string {
+  if (!url) return url;
+  return url.replace(/-\d+x\d+(\.\w+)$/, '$1');
+}
+
+function isPlaceholderImage(url: string): boolean {
+  const lowerUrl = url.toLowerCase();
+  return (
+    lowerUrl.includes('jeg-empty') ||
+    lowerUrl.includes('placeholder') ||
+    lowerUrl.includes('default-image') ||
+    lowerUrl.includes('no-image') ||
+    lowerUrl.includes('generico') ||
+    lowerUrl.includes('data:image') ||
+    lowerUrl.includes('1x1') ||
+    lowerUrl.includes('blank.gif') ||
+    lowerUrl.includes('lazy') ||
+    lowerUrl.endsWith('.svg')
+  );
+}
+
 function validateNewsQuality(params: {
   title: string;
   content: string;
@@ -43,20 +65,11 @@ function validateNewsQuality(params: {
     errors.push("Notícia sem fonte de referência");
   }
 
-  // 4. Image must not be a generic thumbnail
+  // 4. Image validation — clean thumbnail suffix before checking
   if (params.imageUrl) {
-    const lowerUrl = params.imageUrl.toLowerCase();
-    if (
-      lowerUrl.includes("_0001") ||
-      lowerUrl.includes("-120x86") ||
-      lowerUrl.includes("-150x") ||
-      lowerUrl.includes("generico") ||
-      lowerUrl.includes("placeholder") ||
-      lowerUrl.includes("default-image") ||
-      lowerUrl.includes("no-image") ||
-      lowerUrl.includes("thumbnail")
-    ) {
-      errors.push("Imagem genérica ou thumbnail detectada");
+    const cleanedUrl = cleanThumbnailSuffix(params.imageUrl);
+    if (isPlaceholderImage(cleanedUrl)) {
+      errors.push("Imagem genérica ou placeholder detectada");
     }
   }
 
