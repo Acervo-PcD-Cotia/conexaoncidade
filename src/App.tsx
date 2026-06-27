@@ -533,6 +533,7 @@ const App = () => (
                                   <Route path="relatorio-txt" element={<S><RelatorioTXT /></S>} />
                                   <Route path="news" element={<S><NewsList /></S>} />
                                   <Route path="news/import" element={<S><NewsImport /></S>} />
+                                  <Route path="github-status" element={<S><GitHubStatus /></S>} />
                                   <Route path="news/instagram" element={<S><InstagramGenerator /></S>} />
                                   <Route path="news/new" element={<S><NewsEditor /></S>} />
                                   <Route path="news/:id/edit" element={<S><NewsEditor /></S>} />
